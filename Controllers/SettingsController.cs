@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
-using SafeguardDevOpsService.ConfigDb;
+using OneIdentity.SafeguardDevOpsService.ConfigDb;
 
-namespace SafeguardDevOpsService.Controllers
+namespace OneIdentity.SafeguardDevOpsService.Controllers
 {
     [Controller]
     [Route("config/[controller]")]

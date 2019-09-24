@@ -2,7 +2,7 @@
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 
-namespace SafeguardDevOpsService
+namespace OneIdentity.SafeguardDevOpsService
 {
     internal class SafeguardDevOpsService
     {

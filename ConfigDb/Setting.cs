@@ -1,4 +1,4 @@
-﻿namespace SafeguardDevOpsService.ConfigDb
+﻿namespace OneIdentity.SafeguardDevOpsService.ConfigDb
 {
     public class Setting
     {

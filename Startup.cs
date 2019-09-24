@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SafeguardDevOpsService.ConfigDb;
+using OneIdentity.SafeguardDevOpsService.ConfigDb;
 
-namespace SafeguardDevOpsService
+namespace OneIdentity.SafeguardDevOpsService
 {
     internal class Startup
     {

@@ -1,6 +1,6 @@
 ﻿using Topshelf;
 
-namespace SafeguardDevOpsService
+namespace OneIdentity.SafeguardDevOpsService
 {
     class Program
     {

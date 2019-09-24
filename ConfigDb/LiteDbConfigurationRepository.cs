@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LiteDB;
 
-namespace SafeguardDevOpsService.ConfigDb
+namespace OneIdentity.SafeguardDevOpsService.ConfigDb
 {
     internal class LiteDbConfigurationRepository : IConfigurationRepository, IDisposable
     {
