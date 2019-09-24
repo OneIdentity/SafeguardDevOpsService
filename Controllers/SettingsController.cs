@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using SafeguardDevOpsService.ConfigDb;
 
-namespace SafeguardDevOpsService.ConfigAPI
+namespace SafeguardDevOpsService.Controllers
 {
-    [ApiController]
+    [Controller]
     [Route("config/[controller]")]
-    public class SettingsController : ControllerBase
+    public class SettingsController : Controller
     {
         private readonly IConfigurationRepository _configurationRepository;
 
@@ -30,11 +31,11 @@ namespace SafeguardDevOpsService.ConfigAPI
         }
 
         [HttpPut("{name}")]
-        public void PutSetting(string name, Setting value)
+        public void PutSetting(string name, Setting valueString)
         {
-            if (!name.Equals(value.Name))
+            if (!name.Equals(valueString.Name))
                 throw new Exception("bad put TODO:");
-            _configurationRepository.SetSetting(value);
+            _configurationRepository.SetSetting(valueString);
         }
     }
 }

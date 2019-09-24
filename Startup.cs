@@ -1,9 +1,11 @@
 ﻿using Autofac;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SafeguardDevOpsService.ConfigDb;
 
 namespace SafeguardDevOpsService
 {
@@ -16,10 +18,10 @@ namespace SafeguardDevOpsService
                 .AddJsonFile("appsettings.json", optional:true, reloadOnChange:true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
-            this.Configuration = builder.Build();
+            Configuration = builder.Build();
         }
 
-        public IConfigurationRoot Configuration { get; private set; }
+        public IConfigurationRoot Configuration { get; }
 
         // ConfigureServices is where you register dependencies. This gets
         // called by the runtime before the ConfigureContainer method, below.
@@ -28,7 +30,17 @@ namespace SafeguardDevOpsService
             // Add services to the collection. Don't build or return
             // any IServiceProvider or the ConfigureContainer method
             // won't get called.
-            services.AddMvc();
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+        }
+
+        // This only gets called if your environment is Development. The
+        // default ConfigureServices won't be automatically called if this
+        // one is called.
+        public void ConfigureDevelopmentServices(IServiceCollection services)
+        {
+            // Add things to the service collection that are only for the
+            // development environment.
         }
 
         // ConfigureContainer is where you can register things directly
@@ -39,7 +51,7 @@ namespace SafeguardDevOpsService
         // "Without ConfigureContainer" mechanism shown later.
         public void ConfigureContainer(ContainerBuilder builder)
         {
-            // builder.RegisterModule(new AutofacModule());
+            builder.Register(c => new LiteDbConfigurationRepository()).As<IConfigurationRepository>().SingleInstance();
         }
 
         // Configure is where you add middleware. This is called after

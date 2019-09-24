@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SafeguardDevOpsService.ConfigAPI
+namespace SafeguardDevOpsService.ConfigDb
 {
     public interface IConfigurationRepository
     {
