@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace OneIdentity.SafeguardDevOpsService
 {
@@ -10,6 +11,8 @@ namespace OneIdentity.SafeguardDevOpsService
 
         public SafeguardDevOpsService()
         {
+            
+
             _host = new WebHostBuilder()
                 .UseKestrel()
                 .ConfigureServices(services => services.AddAutofac())

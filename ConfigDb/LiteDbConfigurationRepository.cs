@@ -32,7 +32,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
             var obj = new Setting()
             {
                 Name = name,
-                Value = value
+                Value = value ?? ""
             };
             if (!_settings.Update(obj))
             {
@@ -53,6 +53,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
         public void SetSetting(Setting value)
         {
             _settings.Upsert(value);
+        }
+
+        public void RemoveSetting(string name)
+        {
+            _settings.Delete(s => s.Name.Equals(name));
         }
 
         public string SafeguardAddress
