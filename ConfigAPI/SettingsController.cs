@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SafeguardDevOpsService.ConfigAPI
@@ -9,11 +8,11 @@ namespace SafeguardDevOpsService.ConfigAPI
     [Route("config/[controller]")]
     public class SettingsController : ControllerBase
     {
-        private readonly ConfigurationRepository _configurationRepository;
+        private readonly IConfigurationRepository _configurationRepository;
 
-        public SettingsController()
+        public SettingsController(IConfigurationRepository configurationRepository)
         {
-            
+            _configurationRepository = configurationRepository;
         }
 
         [HttpGet]

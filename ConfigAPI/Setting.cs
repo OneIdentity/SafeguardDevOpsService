@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SafeguardDevOpsService.ConfigAPI
+﻿namespace SafeguardDevOpsService.ConfigAPI
 {
     public class Setting
     {

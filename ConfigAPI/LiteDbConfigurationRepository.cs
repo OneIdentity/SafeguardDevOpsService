@@ -5,13 +5,13 @@ using LiteDB;
 
 namespace SafeguardDevOpsService.ConfigAPI
 {
-    internal class ConfigurationRepository : IDisposable
+    internal class LiteDbConfigurationRepository : IConfigurationRepository, IDisposable
     {
         private bool _disposed;
         private LiteDatabase _configurationDb;
         private readonly LiteCollection<Setting> _settings;
 
-        public ConfigurationRepository()
+        public LiteDbConfigurationRepository()
         {
             _configurationDb = new LiteDatabase(@"Configuration.db");
             _settings = _configurationDb.GetCollection<Setting>("settings");
@@ -20,7 +20,7 @@ namespace SafeguardDevOpsService.ConfigAPI
         private string GetSimpleSetting(string name)
         {
             if (_disposed)
-                throw new ObjectDisposedException("ConfigurationRepository");
+                throw new ObjectDisposedException("LiteDbConfigurationRepository");
             var obj = _settings.Find(s => s.Name.Equals(name)).FirstOrDefault();
             return obj?.Value;
         }
@@ -28,7 +28,7 @@ namespace SafeguardDevOpsService.ConfigAPI
         private void SetSimpleSetting(string name, string value)
         {
             if (_disposed)
-                throw new ObjectDisposedException("ConfigurationRepository");
+                throw new ObjectDisposedException("LiteDbConfigurationRepository");
             var obj = new Setting()
             {
                 Name = name,
