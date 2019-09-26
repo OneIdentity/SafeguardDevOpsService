@@ -12,5 +12,6 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         IEnumerable<AccountMapping> GetAccountMappings(string accountName, string vaultName);
         IEnumerable<AccountMapping> SaveAccountMappings(IEnumerable<AccountMapping> newAccountMappings);
         IEnumerable<AccountMapping> RemoveAccountMappings(bool removeAll, string accountName, string vaultName);
+        IEnumerable<RetrievableAccount> GetRetrievableAccounts();
     }
 }

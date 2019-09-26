@@ -1,11 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using LiteDB;
 
 namespace OneIdentity.SafeguardDevOpsService.Data
 {
     public class AccountMapping
     {
+        [BsonId]
+        public string ApiKey { get; set; }
         public string AccountName { get; set; }
         public string VaultName { get; set; }
 

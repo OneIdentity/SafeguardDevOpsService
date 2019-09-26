@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using LiteDB;
+using OneIdentity.SafeguardDevOpsService.Data;
 
 namespace OneIdentity.SafeguardDevOpsService.ConfigDb
 {
@@ -10,11 +11,13 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
         private bool _disposed;
         private LiteDatabase _configurationDb;
         private readonly LiteCollection<Setting> _settings;
+        private readonly LiteCollection<Configuration> _configuration;
 
         public LiteDbConfigurationRepository()
         {
             _configurationDb = new LiteDatabase(@"Configuration.db");
             _settings = _configurationDb.GetCollection<Setting>("settings");
+            _configuration = _configurationDb.GetCollection<Configuration>("configuration");
         }
 
         private string GetSimpleSetting(string name)
@@ -58,6 +61,21 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
         public void RemoveSetting(string name)
         {
             _settings.Delete(s => s.Name.Equals(name));
+        }
+
+        public Configuration GetConfiguration()
+        {
+            return _configuration.FindById(1);
+        }
+
+        public void SaveConfiguration(Configuration configuration)
+        {
+            _configuration.Upsert(configuration);
+        }
+
+        public void DeleteConfiguration()
+        {
+            _configuration.Delete(1);
         }
 
         public string SafeguardAddress
