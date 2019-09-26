@@ -27,12 +27,6 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         {
             //TODO: Create a new configuration element here
             //TODO: Check to see if there is already a configuration.  If so, throw.
-            //TODO: Upload the trusted certificate to SPP
-            //TODO: Store the certificate and private key in the windows certificate store
-            //TODO: Create a new certificate user with the thumb print from the trusted certificate
-            //TODO: Create a new A2A registration with well known name and description
-            //TODO: Add the account names to the A2A registration
-            //TODO: Pull and cache the ApiKeys for the A2A accounts
             //TODO: Get the registration and store the configuration in the database
 
             if (initialConfig == null)
@@ -42,33 +36,42 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             if (initialConfig.SpsAddress == null)
                 throw new Exception("The SPS network address cannot be null.");
 
-            var connection = Safeguard.Connect(initialConfig.SpsAddress, initialConfig.CertificateUserThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
-//            var a2aContext = Safeguard.A2A.GetContext(_safeguardAddress, _safeguardClientCertificateThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
-
-            var rawJson = connection.InvokeMethod(Service.Core, Method.Get, "A2ARegistrations");
-
-            var registrations = JsonHelper.DeserializeObject<IEnumerable<SppRegistration>>(rawJson);
-
-            // TODO: Assume that we only have one registration that belongs to the cert user
-            var registration = registrations?.FirstOrDefault();
-            if (registration != null)
+            ISafeguardConnection connection = null;
+            try
             {
-                var configuration = new Configuration
-                {
-                    SpsAddress = initialConfig.SpsAddress,
-                    A2ARegistrationId = registration.Id,
-                    A2ARegistrationName = registration.AppName,
-                    CertificateUser = registration.CertificateUser,
-                    CertificateUserThumbPrint = registration.CertificateUserThumbPrint,
-                    CreatedByUserId = registration.CreatedByUserId,
-                    CreatedByUserDisplayName = registration.CreatedByUserDisplayName,
-                    CreatedDate = registration.CreatedDate,
-                    AccountMapping = new List<AccountMapping>()
-                };
 
-                var configJson = JsonHelper.SerializeObject<Configuration>(configuration);
-                _configurationRepository.SetSetting(new Setting(){Name = WellKnownData.ConfigurationName,Value = configJson});
-                return configuration;
+                connection = Safeguard.Connect(initialConfig.SpsAddress, initialConfig.CertificateUserThumbprint,
+                    _safeguardApiVersion, _safeguardIgnoreSsl);
+
+                var rawJson = connection.InvokeMethod(Service.Core, Method.Get, "A2ARegistrations");
+
+                var registrations = JsonHelper.DeserializeObject<IEnumerable<SppRegistration>>(rawJson);
+
+                // TODO: Assume that we only have one registration that belongs to the cert user
+                var registration = registrations?.FirstOrDefault();
+                if (registration != null)
+                {
+                    var configuration = new Configuration
+                    {
+                        SpsAddress = initialConfig.SpsAddress,
+                        A2ARegistrationId = registration.Id,
+                        A2ARegistrationName = registration.AppName,
+                        CertificateUser = registration.CertificateUser,
+                        CertificateUserThumbPrint = registration.CertificateUserThumbPrint,
+                        CreatedByUserId = registration.CreatedByUserId,
+                        CreatedByUserDisplayName = registration.CreatedByUserDisplayName,
+                        CreatedDate = registration.CreatedDate,
+                        AccountMapping = new List<AccountMapping>()
+                    };
+//                configuration.AccountMapping = GetAccountMappings(configuration);
+
+                    _configurationRepository.SaveConfiguration(configuration);
+                    return configuration;
+                }
+            }
+            finally
+            {
+                connection?.LogOut();
             }
 
             throw new Exception("Failed to configure devops.");
@@ -76,12 +79,12 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
 
         public void DeleteConfiguration()
         {
-            _configurationRepository.RemoveSetting(WellKnownData.ConfigurationName);
+            _configurationRepository.DeleteConfiguration();
         }
 
         public Registration GetRegistration()
         {
-            return GetConfiguration();
+            return _configurationRepository.GetConfiguration();
         }
 
         public Configuration UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig)
@@ -93,24 +96,25 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             if (connectionConfig.SpsAddress == null)
                 throw new Exception("The SPS network address cannot be null.");
 
-            var configuration = GetConfiguration();
+            var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null) return null;
 
             configuration.CertificateUserThumbPrint = connectionConfig.CertificateUserThumbprint;
             configuration.SpsAddress = connectionConfig.SpsAddress;
 
             //Validate the connection information
-            var connection = Safeguard.Connect(connectionConfig.SpsAddress, connectionConfig.CertificateUserThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
+            var connection = Safeguard.Connect(connectionConfig.SpsAddress,
+                connectionConfig.CertificateUserThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
+            connection?.LogOut();
 
-            var configJson = JsonHelper.SerializeObject<Configuration>(configuration);
-            _configurationRepository.SetSetting(new Setting(){Name = WellKnownData.ConfigurationName,Value = configJson});
+            _configurationRepository.SaveConfiguration(configuration);
 
             return configuration;
         }
 
         public IEnumerable<AccountMapping> GetAccountMappings(string accountName = "", string vaultName = "")
         {
-            var configuration = GetConfiguration();
+            var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null) return null;
 
 
@@ -124,7 +128,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
 
         public IEnumerable<AccountMapping> SaveAccountMappings(IEnumerable<AccountMapping> newAccountMappings)
         {
-            var configuration = GetConfiguration();
+            var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null) return null;
 
             var accountMappingList = configuration.AccountMapping.ToList();
@@ -133,14 +137,13 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             accountMappingList.AddRange(newAccountMappingsList.Where(p2 => accountMappingList.All(p1 => !p1.Equals(p2))));
             configuration.AccountMapping = accountMappingList;
 
-            var configJson = JsonHelper.SerializeObject<Configuration>(configuration);
-            _configurationRepository.SetSetting(new Setting(){Name = WellKnownData.ConfigurationName,Value = configJson});
+            _configurationRepository.SaveConfiguration(configuration);
             return accountMappingList;
         }
 
         public IEnumerable<AccountMapping> RemoveAccountMappings(bool removeAll, string accountName, string vaultName)
         {
-            var configuration = GetConfiguration();
+            var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null) return null;
 
             if (removeAll && accountName == null && vaultName == null)
@@ -166,19 +169,102 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             }
 
             var configJson = JsonHelper.SerializeObject<Configuration>(configuration);
-            _configurationRepository.SetSetting(new Setting(){Name = WellKnownData.ConfigurationName,Value = configJson});
+            _configurationRepository.SaveConfiguration(configuration);
 
             return configuration.AccountMapping;
         }
 
-        private Configuration GetConfiguration()
+        public IEnumerable<RetrievableAccount> GetRetrievableAccounts()
         {
-            var setting = _configurationRepository.GetSetting(WellKnownData.ConfigurationName);
-            if (setting == null)
-                return null;
+            var configuration = _configurationRepository.GetConfiguration();
+            if (configuration == null) return null;
 
-            var configuration = JsonHelper.DeserializeObject<Configuration>(setting.Value);
-            return configuration;
+            ISafeguardConnection connection = null;
+            try
+            {
+                connection = Safeguard.Connect(configuration.SpsAddress, configuration.CertificateUserThumbPrint,
+                    _safeguardApiVersion, _safeguardIgnoreSsl);
+                var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
+                    $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts");
+                var retrievableAccounts = JsonHelper.DeserializeObject<IEnumerable<RetrievableAccount>>(rawJson);
+
+                return retrievableAccounts.ToList();
+            }
+            finally
+            {
+                connection?.LogOut();
+            }
         }
+
+        private IEnumerable<AccountMapping> GetAccountMappings(Configuration configuration)
+        {
+            ISafeguardConnection connection = null;
+            try
+            {
+                connection = Safeguard.Connect(configuration.SpsAddress, configuration.CertificateUserThumbPrint,
+                    _safeguardApiVersion, _safeguardIgnoreSsl);
+                var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
+                    $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts");
+
+                var retrievableAccounts = JsonHelper.DeserializeObject<IEnumerable<RetrievableAccount>>(rawJson);
+
+                var accountMappings = new List<AccountMapping>();
+                foreach (var account in retrievableAccounts)
+                {
+                    accountMappings.Add(new AccountMapping()
+                    {
+                        AccountName = account.AccountName,
+                        ApiKey = account.ApiKey,
+                        VaultName = ""
+                    });
+                }
+
+                return accountMappings;
+            }
+            finally
+            {
+                connection?.LogOut();
+            }
+        }
+
+        private RetrievableAccount GetRetrievableAccount(Configuration configuration, string apiKey)
+        {
+            var apiKeyInfo = _configurationRepository.GetSetting(apiKey);
+
+            ISafeguardConnection connection = null;
+            try
+            {
+
+                connection = Safeguard.Connect(configuration.SpsAddress, configuration.CertificateUserThumbPrint,
+                    _safeguardApiVersion, _safeguardIgnoreSsl);
+                var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
+                    $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts/{apiKeyInfo.Value}");
+
+                var retrievableAccount = JsonHelper.DeserializeObject<IEnumerable<RetrievableAccount>>(rawJson);
+
+                return retrievableAccount?.FirstOrDefault();
+            }
+            finally
+            {
+                connection?.LogOut();
+            }
+        }
+
+        private void SaveRetrievableAccount(Configuration configuration, RetrievableAccount retrievableAccount)
+        {
+            var apiKeyInfo = new Setting()
+            {
+                Name = retrievableAccount.ApiKey,
+                Value = retrievableAccount.AccountId.ToString()
+            };
+
+            _configurationRepository.SetSetting(apiKeyInfo);
+        }
+
+        private void DeleteRetrievableAccount(Configuration configuration, string apiKey)
+        {
+            _configurationRepository.RemoveSetting(apiKey);
+        }
+
     }
 }

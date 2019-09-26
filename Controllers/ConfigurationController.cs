@@ -30,12 +30,11 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         [HttpGet]
         public ActionResult<Configuration> GetConfiguration()
         {
-            var setting = _configurationRepository.GetSetting(WellKnownData.ConfigurationName);
-            if (setting == null)
+            var configuration = _configurationRepository.GetConfiguration();
+            if (configuration == null)
                 return NotFound();
 
-            var config = JsonHelper.DeserializeObject<Configuration>(setting.Value);
-            return Ok(config);
+            return Ok(configuration);
         }
 
         /// <summary>
@@ -48,11 +47,11 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         [HttpPost]
         public ActionResult<Configuration> PostConfiguration([FromBody]InitialConfiguration initialConfig)
         {
-            var setting = _configurationRepository.GetSetting(WellKnownData.ConfigurationName);
-            if (setting != null)
+            var configuration = _configurationRepository.GetConfiguration();
+            if (configuration != null)
                 return BadRequest("DevOps service has already been configured.");
 
-            var configuration = _configurationLogic.InitialConfiguration(initialConfig);
+            configuration = _configurationLogic.InitialConfiguration(initialConfig);
             return Ok(configuration);
         }
 
@@ -145,6 +144,21 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         {
             var accountMappings = _configurationLogic.RemoveAccountMappings(removeAll, accountName, vaultName);
             return Ok(accountMappings);
+        }
+
+        /// <summary>
+        /// Get the list of requestable accounts and api keys.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [HttpGet("RetrievableAccounts")]
+        public ActionResult<IEnumerable<RetrievableAccount>> GetRetrievableAccounts()
+        {
+            var retrievableAccounts = _configurationLogic.GetRetrievableAccounts();
+            if (retrievableAccounts == null)
+                return NotFound();
+
+            return Ok(retrievableAccounts.ToArray());
         }
 
         /// <summary>
