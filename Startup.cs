@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneIdentity.SafeguardDevOpsService.ConfigDb;
+using OneIdentity.SafeguardDevOpsService.ConfigurationImpl;
 
 namespace OneIdentity.SafeguardDevOpsService
 {
@@ -52,6 +53,7 @@ namespace OneIdentity.SafeguardDevOpsService
         public void ConfigureContainer(ContainerBuilder builder)
         {
             builder.Register(c => new LiteDbConfigurationRepository()).As<IConfigurationRepository>().SingleInstance();
+            builder.RegisterType<ConfigurationLogic>().As<IConfigurationLogic>();
         }
 
         // Configure is where you add middleware. This is called after

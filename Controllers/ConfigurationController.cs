@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using OneIdentity.SafeguardDevOpsService.ConfigDb;
+using OneIdentity.SafeguardDevOpsService.ConfigurationImpl;
 using OneIdentity.SafeguardDevOpsService.Data;
 using OneIdentity.SafeguardDevOpsService.Impl;
 
@@ -14,12 +14,19 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
     public class ConfigurationController : Controller
     {
         private readonly IConfigurationRepository _configurationRepository;
+        private readonly IConfigurationLogic _configurationLogic;
 
-        public ConfigurationController(IConfigurationRepository configurationRepository)
+        public ConfigurationController(IConfigurationRepository configurationRepository, IConfigurationLogic configurationLogic)
         {
             _configurationRepository = configurationRepository;
+            _configurationLogic = configurationLogic;
         }
 
+        /// <summary>
+        /// Get the current configuration of the DevOps service.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
         [HttpGet]
         public ActionResult<Configuration> GetConfiguration()
         {
@@ -28,111 +35,123 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
                 return NotFound();
 
             var config = JsonHelper.DeserializeObject<Configuration>(setting.Value);
-            return config;
+            return Ok(config);
         }
 
+        /// <summary>
+        /// Configure the DevOps service for the first time.  The API assumes that a certificate user and A2A
+        /// registration has been defined on the SPS appliance and that the certificate and private key have
+        /// been imported into the Windows certificate on the appliances that is running the DevOps service.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
         [HttpPost]
-        public ActionResult<Configuration> PostConfiguration(InitialConfiguration initialConfig)
+        public ActionResult<Configuration> PostConfiguration([FromBody]InitialConfiguration initialConfig)
         {
-            //TODO: Create a new configuration element here
-            //TODO: Check to see if there is already a configuration.  If so, throw.
-            //TODO: Upload the trusted certificate to SPP
-            //TODO: Store the certificate and private key in the windows certificate store
-            //TODO: Create a new certificate user with the thumb print from the trusted certificate
-            //TODO: Create a new A2A registration with well known name and description
-            //TODO: Add the account names to the A2A registration
-            //TODO: Pull and cache the ApiKeys for the A2A accounts
-            //TODO: Get the registration and store the configuration in the database
-            //TODO:
             var setting = _configurationRepository.GetSetting(WellKnownData.ConfigurationName);
-            if (setting == null)
-                return NotFound();
+            if (setting != null)
+                return BadRequest("DevOps service has already been configured.");
 
-            var config = JsonHelper.DeserializeObject<Configuration>(setting.Value);
-            return config;
+            var configuration = _configurationLogic.InitialConfiguration(initialConfig);
+            return Ok(configuration);
         }
 
+        /// <summary>
+        /// Completely deletes the current configuration.
+        /// </summary>
+        /// <response code="200">Success</response>
         [HttpDelete]
-        public void DeleteConfiguration()
+        public ActionResult DeleteConfiguration()
         {
-            //TODO: Delete the stored configuration and start clean
+            _configurationLogic.DeleteConfiguration();
+            return Ok();
         }
 
+        /// <summary>
+        /// Get the current A2A registration information.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
         [HttpGet("Registration")]
         public ActionResult<Registration> GetRegistration()
         {
-            var setting = _configurationRepository.GetSetting(WellKnownData.ConfigurationName);
-            if (setting == null)
+            var registration = _configurationLogic.GetRegistration();
+            if (registration == null)
                 return NotFound();
 
-            var config = JsonHelper.DeserializeObject<Registration>(setting.Value);
-            return config;
+            return Ok(registration);
         }
 
-        [HttpPut("Certificate")]
-        public ActionResult<Configuration> PutClientCertificate(ClientCertificate cert)
+        /// <summary>
+        /// Updates the network address and user thumbprint.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        /// <response code="404">Not found</response>
+        [HttpPut("Connection")]
+        public ActionResult<Configuration> PutConnectionConfiguration([FromBody]ConnectionConfiguration connectionConfig)
         {
-            //TODO: Update the new trusted certificate to SPP
-            //TODO: Update the certificate user with the thumbprint of the new certificate
-            //TODO: Remove the old certificate
-            //TODO: Update the windows certificate store with the new certificate and private key
-            //TODO: Update the thumbprint in the configuration
-            //TODO:
-            var setting = _configurationRepository.GetSetting(WellKnownData.ConfigurationName);
-            if (setting == null)
+            var configuration = _configurationLogic.UpdateConnectionConfiguration(connectionConfig);
+            if (configuration == null)
                 return NotFound();
 
-            var config = JsonHelper.DeserializeObject<Configuration>(setting.Value);
-            return config;
+            return Ok(configuration);
         }
 
+        /// <summary>
+        /// Get the list of accounts and mapped vault names.
+        /// </summary>
+        /// <param name="accountName">Filter the results by matching accountName.</param>
+        /// <param name="vaultName">Filter the results by matching vaultName</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
         [HttpGet("AccountMapping")]
-        public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromQuery] string filter)
+        public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromQuery] string accountName, [FromQuery] string vaultName)
         {
-            //TODO: Check if there is a filter and if the contains AccountName and/or VaultName
-            //TODO: Get all of the accout mappings and filter if necessary
-            //TODO:
-            var setting = _configurationRepository.GetSetting(WellKnownData.ConfigurationName);
-            if (setting == null)
+            var accountMappings = _configurationLogic.GetAccountMappings(accountName, vaultName);
+            if (accountMappings == null)
                 return NotFound();
 
-            var config = JsonHelper.DeserializeObject<Configuration>(setting.Value);
-            return config.AccountMapping.ToArray();
+            return Ok(accountMappings.ToArray());
         }
 
+        /// <summary>
+        /// Add non duplicate account mappings to the list.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
         [HttpPut("AccountMapping")]
-        public ActionResult<IEnumerable<AccountMapping>> PutAccountMapping(IEnumerable<AccountMapping> accountMapping)
+        public ActionResult<IEnumerable<AccountMapping>> PutAccountMapping([FromBody]IEnumerable<AccountMapping> newAccountMappings)
         {
-            //TODO: Get the account mapping list
-            //TODO: Add all non-duplicate account mappings
-            //TODO: Save the new account mapping list to the database
-            //TODO:
-            var setting = _configurationRepository.GetSetting(WellKnownData.ConfigurationName);
-            if (setting == null)
-                return NotFound();
-
-            var config = JsonHelper.DeserializeObject<Configuration>(setting.Value);
-            return config.AccountMapping.ToArray();
+            var accountMappings = _configurationLogic.SaveAccountMappings(newAccountMappings);
+            return Ok(accountMappings);
         }
 
+        /// <summary>
+        /// Remove matching account mappings from the list. (Case sensitive)
+        /// If there is no accountName and/or vaultName and removeAll is true, remove all account mappings.
+        /// If there is an accountName and no vaultName then remove all matching account mappings for accountName.
+        /// If there is a vaultName and no accountName then remove all matching account mappings for vaultName.
+        /// If there is an accountName and a vaultName then remove the matching account mapping.
+        /// </summary>
+        /// <param name="removeAll">Remove all account mappings.</param>
+        /// <param name="accountName">Filter the results by matching accountName.</param>
+        /// <param name="vaultName">Filter the results by matching vaultName</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        /// <response code="404">Not found</response>
         [HttpDelete("AccountMapping")]
         public ActionResult<IEnumerable<AccountMapping>> PutAccountMapping([FromQuery] bool removeAll, [FromQuery] string accountName, [FromQuery] string vaultName)
         {
-            //TODO: Get the account mapping list
-            //TODO: If there is no accountName and/or vaultName and removeAll is true, just delete all of the account mappings
-            //TODO: If there is an accountName and no vaultName then remove all matching account mappings for accountName
-            //TODO: If there is a vaultName and no accountName then remove all matching account mappings for vaultName
-            //TODO: If there is an accountName and a vaultName then remove the matching account mapping
-            //TODO: Save the new account mapping list to the database
-            //TODO:
-            var setting = _configurationRepository.GetSetting(WellKnownData.ConfigurationName);
-            if (setting == null)
-                return NotFound();
-
-            var config = JsonHelper.DeserializeObject<Configuration>(setting.Value);
-            return config.AccountMapping.ToArray();
+            var accountMappings = _configurationLogic.RemoveAccountMappings(removeAll, accountName, vaultName);
+            return Ok(accountMappings);
         }
 
+        /// <summary>
+        /// Get a list of all registered plugins.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
         [HttpGet("Plugins")]
         public ActionResult<IEnumerable<Plugin>> GetPlugins()
         {
@@ -147,6 +166,12 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
             return plugins.ToArray();
         }
 
+        /// <summary>
+        /// Get the information for a specific plugin.
+        /// </summary>
+        /// <param name="name">Name of the plugin.
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
         [HttpGet("Plugins/{name}")]
         public ActionResult<Plugin> GetPlugin([FromRoute] string name)
         {
@@ -161,6 +186,13 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
             return plugins.FirstOrDefault();
         }
 
+        /// <summary>
+        /// Update the configuration for a plugin.
+        /// </summary>
+        /// <param name="PluginConfiguration">Object containing a JSON configuration string.</param>
+        /// <param name="name">Name of plugin to update</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
         [HttpPut("Plugins/{name}/Configuration")]
         public ActionResult<Plugin> GetPlugins([FromBody] PluginConfiguration pluginConfiguration, [FromRoute] string name)
         {
