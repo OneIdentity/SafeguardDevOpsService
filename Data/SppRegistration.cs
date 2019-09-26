@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace OneIdentity.SafeguardDevOpsService.Data
 {
-    public class Registration
+    internal class SppRegistration
     {
-        public string SpsAddress { get; set; }
-        public int A2ARegistrationId { get; set; }
-        public string A2ARegistrationName { get; set; }
+        public int Id { get; set; }
+        public string AppName { get; set; }
+        public string Description { get; set; }
+        public bool Disabled { get; set; }
+        public int CertificateUserId { get; set; }
         public string CertificateUserThumbPrint { get; set; }
         public string CertificateUser { get; set; }
         public DateTime CreatedDate { get; set; }
