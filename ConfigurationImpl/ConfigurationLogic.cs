@@ -2,10 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using OneIdentity.SafeguardDevOpsService.ConfigDb;
 using OneIdentity.SafeguardDevOpsService.Data;
 using OneIdentity.SafeguardDevOpsService.Impl;
 using OneIdentity.SafeguardDotNet;
+using OneIdentity.SafeguardDotNet.A2A;
+using OneIdentity.SafeguardDotNet.Event;
 
 
 namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
@@ -71,7 +74,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             }
             finally
             {
-                connection?.LogOut();
+                connection?.Dispose();
             }
 
             throw new Exception("Failed to configure devops.");
@@ -192,8 +195,16 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             }
             finally
             {
-                connection?.LogOut();
+                connection?.Dispose();
             }
+        }
+
+        public void EnableMonitoring(bool enable)
+        {
+            if (enable)
+                StartMonitoring();
+            else
+                StopMonitoring();
         }
 
         private IEnumerable<AccountMapping> GetAccountMappings(Configuration configuration)
@@ -223,7 +234,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             }
             finally
             {
-                connection?.LogOut();
+                connection?.Dispose();
             }
         }
 
@@ -246,7 +257,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             }
             finally
             {
-                connection?.LogOut();
+                connection?.Dispose();
             }
         }
 
@@ -265,6 +276,79 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         {
             _configurationRepository.RemoveSetting(apiKey);
         }
+
+        private static ISafeguardEventListener _eventListener = null;
+        private static ISafeguardA2AContext _a2aContext = null;
+        private static List<RetrievableAccount> _retrievableAccounts = null;
+
+        private void StartMonitoring()
+        {
+            if (_eventListener != null)
+                throw new Exception("Listener is already running.");
+
+            var configuration = _configurationRepository.GetConfiguration();
+            if (configuration == null) return;
+
+            // connect to Safeguard
+            _a2aContext = Safeguard.A2A.GetContext(configuration.SpsAddress, configuration.CertificateUserThumbPrint,
+                _safeguardApiVersion, _safeguardIgnoreSsl);
+
+            // figure out what API keys to monitor
+            _retrievableAccounts = GetRetrievableAccounts().ToList();
+            if (_retrievableAccounts.Count == 0)
+                throw new Exception("No API keys found in A2A registrations.  Nothing to do.");
+
+            var apiKeys = new List<SecureString>();
+            foreach (var account in _retrievableAccounts)
+            {
+                apiKeys.Add(account.ApiKey.ToSecureString());
+            }
+
+            _eventListener = _a2aContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);
+            _eventListener.Start();
+        }
+
+        private void StopMonitoring()
+        {
+            try
+            {
+                _eventListener?.Stop();
+                _a2aContext?.Dispose();
+            }
+            finally
+            {
+                _eventListener = null;
+                _a2aContext = null;
+                _retrievableAccounts = null;
+            }
+        }
+
+        private void PasswordChangeHandler(string eventName, string eventBody)
+        {
+            var configuration = _configurationRepository.GetConfiguration();
+            if (configuration == null || _retrievableAccounts == null) return;
+
+            var eventInfo = JsonHelper.DeserializeObject<EventInfo>(eventBody);
+
+            try
+            {
+                var apiKey = _retrievableAccounts.Single(mp => mp.SystemName == eventInfo.AssetName && mp.AccountName == eventInfo.AccountName).ApiKey;
+                using (var password = _a2aContext.RetrievePassword(apiKey.ToSecureString()))
+                {
+                    // TODO: Add useful code here to do something with the fetched password
+
+                    // Also, note that the password you get back is a SecureString.  In order to turn it back into a regular string
+                    // you can use the provided convenience function:
+
+                    var justBecause = password.ToInsecureString();
+                }
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.Message;
+            }
+        }
+
 
     }
 }
