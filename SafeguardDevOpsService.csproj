@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>OneIdentity.SafeguardDevOpsService</RootNamespace>
+    <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +17,7 @@
     <PackageReference Include="Serilog.Extensions.Autofac.DependencyInjection" Version="1.2.1" />
     <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.0.0-rc3" />
     <PackageReference Include="Topshelf" Version="4.2.1" />
     <PackageReference Include="Topshelf.Serilog" Version="4.2.1" />
   </ItemGroup>

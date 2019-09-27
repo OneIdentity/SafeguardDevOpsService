@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneIdentity.SafeguardDevOpsService.ConfigDb;
 using OneIdentity.SafeguardDevOpsService.ConfigurationImpl;
+using Microsoft.OpenApi.Models;
 
 namespace OneIdentity.SafeguardDevOpsService
 {
@@ -33,6 +34,8 @@ namespace OneIdentity.SafeguardDevOpsService
             // won't get called.
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
+            services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo {Title = "DevOps Service API", Version = "v1"}); });
         }
 
         // This only gets called if your environment is Development. The
@@ -61,6 +64,16 @@ namespace OneIdentity.SafeguardDevOpsService
         // here if you need to resolve things from the container.
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
         {
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+            // specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "DevOps Service API V1");
+            });
+
             app.UseMvc();
         }
     }
