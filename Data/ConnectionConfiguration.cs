@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace OneIdentity.SafeguardDevOpsService.Data
+﻿namespace OneIdentity.SafeguardDevOpsService.Data
 {
     public class ConnectionConfiguration
     {

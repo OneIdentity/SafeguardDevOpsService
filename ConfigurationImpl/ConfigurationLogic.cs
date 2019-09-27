@@ -87,7 +87,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
 
         public Registration GetRegistration()
         {
-            return _configurationRepository.GetConfiguration();
+            return JsonHelper.DeserializeObject<Registration>(JsonHelper.SerializeObject<Configuration>(_configurationRepository.GetConfiguration()));
         }
 
         public Configuration UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig)
