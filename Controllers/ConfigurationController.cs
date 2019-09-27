@@ -162,6 +162,19 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         }
 
         /// <summary>
+        /// Enable or disable monitoring for password changes.  When monitoring is enabled, all retrievable accounts
+        /// will be monitored for password changes.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [HttpPost("Monitoring")]
+        public ActionResult<bool> PostMonitoring([FromQuery]bool enable = true)
+        {
+            _configurationLogic.EnableMonitoring(enable);
+            return Ok();
+        }
+
+        /// <summary>
         /// Get a list of all registered plugins.
         /// </summary>
         /// <response code="200">Success</response>
