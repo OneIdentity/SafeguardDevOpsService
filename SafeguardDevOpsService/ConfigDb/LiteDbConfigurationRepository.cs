@@ -12,12 +12,14 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
         private LiteDatabase _configurationDb;
         private readonly LiteCollection<Setting> _settings;
         private readonly LiteCollection<Configuration> _configuration;
+        private readonly LiteCollection<Plugin> _plugins;
 
         public LiteDbConfigurationRepository()
         {
             _configurationDb = new LiteDatabase(@"Configuration.db");
             _settings = _configurationDb.GetCollection<Setting>("settings");
             _configuration = _configurationDb.GetCollection<Configuration>("configuration");
+            _plugins = _configurationDb.GetCollection<Plugin>("plugins");
         }
 
         private string GetSimpleSetting(string name)
@@ -76,6 +78,27 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
         public void DeleteConfiguration()
         {
             _configuration.Delete(1);
+        }
+
+        public IEnumerable<Plugin> GetAllPlugins()
+        {
+            return _plugins.FindAll();
+        }
+
+        public Plugin GetPluginByName(string name)
+        {
+            return _plugins.FindOne(s => s.Name.Equals(name));
+        }
+
+        public Plugin SavePluginConfiguration(Plugin plugin)
+        {
+            _plugins.Upsert(plugin);
+            return plugin;
+        }
+
+        public void DeletePluginByName(string name)
+        {
+            _plugins.Delete(s => s.Name.Equals(name));
         }
 
         public string SafeguardAddress

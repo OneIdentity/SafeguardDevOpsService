@@ -182,15 +182,11 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         [HttpGet("Plugins")]
         public ActionResult<IEnumerable<Plugin>> GetPlugins()
         {
-            //TODO: Get the list of registered plugins
-            //TODO: Registering a plugin happens somewhere else
-            //TODO:
-            var setting = _configurationRepository.GetSetting(WellKnownData.PluginsName);
-            if (setting == null)
+            var plugins = _configurationLogic.GetAllPlugins();
+            if (plugins == null)
                 return NotFound();
 
-            var plugins = JsonHelper.DeserializeObject<IEnumerable<Plugin>>(setting.Value);
-            return plugins.ToArray();
+            return Ok(plugins.ToArray());
         }
 
         /// <summary>
@@ -202,15 +198,11 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         [HttpGet("Plugins/{name}")]
         public ActionResult<Plugin> GetPlugin([FromRoute] string name)
         {
-            //TODO: Get the list of registered plugins
-            //TODO: Find the plugin that matches the name
-            //TODO:
-            var setting = _configurationRepository.GetSetting(WellKnownData.PluginsName);
-            if (setting == null)
+            var plugin = _configurationLogic.GetPluginByName(name);
+            if (plugin == null)
                 return NotFound();
 
-            var plugins = JsonHelper.DeserializeObject<IEnumerable<Plugin>>(setting.Value);
-            return plugins.FirstOrDefault();
+            return Ok(plugin);
         }
 
         /// <summary>
@@ -223,16 +215,11 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         [HttpPut("Plugins/{name}/Configuration")]
         public ActionResult<Plugin> GetPlugins([FromBody] PluginConfiguration pluginConfiguration, [FromRoute] string name)
         {
-            //TODO: Get the list of registered plugins
-            //TODO: Find the plugin that matches the name
-            //TODO: Replace the configuration with the new configuration
-            //TODO:
-            var setting = _configurationRepository.GetSetting(WellKnownData.PluginsName);
-            if (setting == null)
+            var plugin = _configurationLogic.SavePluginConfigurationByName(pluginConfiguration, name);
+            if (plugin == null)
                 return NotFound();
 
-            var plugins = JsonHelper.DeserializeObject<IEnumerable<Plugin>>(setting.Value);
-            return plugins.FirstOrDefault();
+            return Ok(plugin);
         }
 
     }
