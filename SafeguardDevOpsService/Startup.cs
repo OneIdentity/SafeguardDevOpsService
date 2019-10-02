@@ -58,7 +58,7 @@ namespace OneIdentity.SafeguardDevOpsService
         public void ConfigureContainer(ContainerBuilder builder)
         {
             builder.Register(c => new LiteDbConfigurationRepository()).As<IConfigurationRepository>().SingleInstance();
-            builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>())).As<IService>().SingleInstance();
+            builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>())).As<IPluginManager>().SingleInstance();
 
             builder.RegisterType<ConfigurationLogic>().As<IConfigurationLogic>();
         }

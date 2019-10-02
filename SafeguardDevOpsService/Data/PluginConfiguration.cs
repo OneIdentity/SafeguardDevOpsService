@@ -1,8 +1,10 @@
 ﻿
+using System.Collections.Generic;
+
 namespace OneIdentity.SafeguardDevOpsService.Data
 {
     public class PluginConfiguration
     {
-        public string Configuration { get; set; }
+        public Dictionary<string,string> Configuration { get; set; }
     }
 }

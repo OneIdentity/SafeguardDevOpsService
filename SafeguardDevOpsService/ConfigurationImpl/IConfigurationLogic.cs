@@ -17,5 +17,6 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         IEnumerable<Plugin> GetAllPlugins();
         Plugin GetPluginByName(string name);
         Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name);
+        void DeletePluginByName(string name);
     }
 }
