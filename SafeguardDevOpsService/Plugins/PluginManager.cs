@@ -2,10 +2,12 @@
 using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Security;
 using OneIdentity.Common;
 using OneIdentity.SafeguardDevOpsService.ConfigDb;
 using OneIdentity.SafeguardDevOpsService.Data;
 using OneIdentity.SafeguardDevOpsService.Impl;
+using OneIdentity.SafeguardDotNet;
 
 namespace OneIdentity.SafeguardDevOpsService.Plugins
 {
@@ -13,6 +15,7 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
     {
         private static Dictionary<string,ILoadablePlugin> _loadedPlugins = new Dictionary<string, ILoadablePlugin>();
         private FileSystemWatcher _watcher = null;
+        private Serilog.ILogger _logger;
 
         public string ServiceName => GetType().Name;
 
@@ -22,6 +25,7 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
         public PluginManager(IConfigurationRepository configurationRepository)
         {
             _configurationRepository = configurationRepository;
+            _logger = Serilog.Log.Logger;
         }
 
         public void Dispose()
@@ -59,6 +63,17 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
                     pluginInstance.SetPluginConfiguration(configuration);
                 }
             }
+        }
+
+        public bool SendPassword(string name, string accountName, SecureString password)
+        {
+            if (_loadedPlugins.ContainsKey(name))
+            {
+                var pluginInstance = _loadedPlugins[name];
+                if (pluginInstance != null)
+                    return pluginInstance.SetPassword(accountName, password.ToInsecureString());
+            }
+            return false;
         }
 
         private void DetectPlugins(string exePath)
@@ -118,6 +133,7 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
             }
             catch (Exception ex)
             {
+                _logger.Error($"Failed to load plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
             }
         }
 

@@ -18,6 +18,8 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
     {
         private int _safeguardApiVersion = 3;
         private bool _safeguardIgnoreSsl = true;
+        private Serilog.ILogger _logger;
+
 
         private readonly IConfigurationRepository _configurationRepository;
         private readonly IPluginManager _pluginManager;
@@ -26,6 +28,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         {
             _configurationRepository = configurationRepository;
             _pluginManager = pluginManager;
+            _logger = Serilog.Log.Logger;
         }
 
         public Configuration InitialConfiguration(InitialConfiguration initialConfig)
@@ -366,6 +369,15 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 var apiKey = _retrievableAccounts.Single(mp => mp.SystemName == eventInfo.AssetName && mp.AccountName == eventInfo.AccountName).ApiKey;
                 using (var password = _a2aContext.RetrievePassword(apiKey.ToSecureString()))
                 {
+                    var accounts = configuration.AccountMapping.ToList();
+                    var account = accounts.FirstOrDefault(a => a.ApiKey.Equals(apiKey));
+                    if (account != null)
+                    {
+                        var plugin = _configurationRepository.GetPluginByName(account.VaultName);
+
+                        if (!_pluginManager.SendPassword(account.VaultName, account.AccountName, password))
+                            _logger.Error($"Unable to set the password for {account.AccountName} to {account.VaultName}.");
+                    }
                     // TODO: Add useful code here to do something with the fetched password
 
                     // Also, note that the password you get back is a SecureString.  In order to turn it back into a regular string
@@ -376,7 +388,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             }
             catch (Exception ex)
             {
-                string msg = ex.Message;
+                _logger.Error($"Password change handler failed: {ex.Message}.");
             }
         }
 
