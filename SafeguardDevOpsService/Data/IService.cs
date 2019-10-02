@@ -17,8 +17,10 @@ namespace OneIdentity.SafeguardDevOpsService.Data
         /// </summary>
         /// <param name="token">Cancellation token indicating that the service should stop.</param>
         /// <returns></returns>
-        Task RunAsync(CancellationToken token);
+        void Run();
 
+//        void Stop();
+//
 //        /// <summary>
 //        /// Implementations should provide notification when startup is complete.
 //        /// </summary>

@@ -207,6 +207,27 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 StopMonitoring();
         }
 
+        public IEnumerable<Plugin> GetAllPlugins()
+        {
+            return _configurationRepository.GetAllPlugins();
+        }
+
+        public Plugin GetPluginByName(string name)
+        {
+            return _configurationRepository.GetPluginByName(name);
+        }
+
+        public Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name)
+        {
+            var plugin = _configurationRepository.GetPluginByName(name);
+
+            if (plugin == null)
+                return null;
+
+            plugin.Configuration = pluginConfiguration.Configuration;
+            return _configurationRepository.SavePluginConfiguration(plugin);
+        }
+
         private IEnumerable<AccountMapping> GetAccountMappings(Configuration configuration)
         {
             ISafeguardConnection connection = null;
