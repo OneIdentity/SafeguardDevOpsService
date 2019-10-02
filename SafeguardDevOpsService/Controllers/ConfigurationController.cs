@@ -192,7 +192,7 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         /// <summary>
         /// Get the information for a specific plugin.
         /// </summary>
-        /// <param name="name">Name of the plugin.
+        /// <param name="name">Name of the plugin.</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [HttpGet("Plugins/{name}")]
@@ -206,9 +206,23 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         }
 
         /// <summary>
+        /// Delete the information for a specific plugin.
+        /// </summary>
+        /// <param name="name">Name of the plugin.</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [HttpDelete("Plugins/{name}")]
+        public ActionResult<Plugin> DeletePlugin([FromRoute] string name)
+        {
+            _configurationLogic.DeletePluginByName(name);
+
+            return Ok();
+        }
+
+        /// <summary>
         /// Update the configuration for a plugin.
         /// </summary>
-        /// <param name="PluginConfiguration">Object containing a JSON configuration string.</param>
+        /// <param name="pluginConfiguration">Object containing a JSON configuration string.</param>
         /// <param name="name">Name of plugin to update</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>

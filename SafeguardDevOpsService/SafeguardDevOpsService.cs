@@ -13,7 +13,7 @@ namespace OneIdentity.SafeguardDevOpsService
     internal class SafeguardDevOpsService
     {
         private readonly IWebHost _host;
-        private readonly IEnumerable<IService> _services;
+        private readonly IEnumerable<IPluginManager> _services;
 
         public SafeguardDevOpsService()
         {
@@ -26,7 +26,7 @@ namespace OneIdentity.SafeguardDevOpsService
                 .UseStartup<Startup>()
                 .Build();
 
-            _services = (IEnumerable<IService>)_host.Services.GetService(typeof(IEnumerable<IService>));
+            _services = (IEnumerable<IPluginManager>)_host.Services.GetService(typeof(IEnumerable<IPluginManager>));
         }
 
         public void Start()

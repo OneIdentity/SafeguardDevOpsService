@@ -6,6 +6,7 @@ using System.Security;
 using OneIdentity.SafeguardDevOpsService.ConfigDb;
 using OneIdentity.SafeguardDevOpsService.Data;
 using OneIdentity.SafeguardDevOpsService.Impl;
+using OneIdentity.SafeguardDevOpsService.Plugins;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Event;
@@ -19,12 +20,13 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         private bool _safeguardIgnoreSsl = true;
 
         private readonly IConfigurationRepository _configurationRepository;
+        private readonly IPluginManager _pluginManager;
 
-        public ConfigurationLogic(IConfigurationRepository configurationRepository)
+        public ConfigurationLogic(IConfigurationRepository configurationRepository, IPluginManager pluginManager)
         {
             _configurationRepository = configurationRepository;
+            _pluginManager = pluginManager;
         }
-
 
         public Configuration InitialConfiguration(InitialConfiguration initialConfig)
         {
@@ -66,7 +68,6 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                         CreatedDate = registration.CreatedDate,
                         AccountMapping = new List<AccountMapping>()
                     };
-//                configuration.AccountMapping = GetAccountMappings(configuration);
 
                     _configurationRepository.SaveConfiguration(configuration);
                     return configuration;
@@ -217,6 +218,12 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             return _configurationRepository.GetPluginByName(name);
         }
 
+        public void DeletePluginByName(string name)
+        {
+            _configurationRepository.DeletePluginByName(name);
+        }
+
+
         public Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name)
         {
             var plugin = _configurationRepository.GetPluginByName(name);
@@ -225,7 +232,10 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 return null;
 
             plugin.Configuration = pluginConfiguration.Configuration;
-            return _configurationRepository.SavePluginConfiguration(plugin);
+            plugin = _configurationRepository.SavePluginConfiguration(plugin);
+            _pluginManager.SetConfigurationforPlugin(name);
+
+            return plugin;
         }
 
         private IEnumerable<AccountMapping> GetAccountMappings(Configuration configuration)

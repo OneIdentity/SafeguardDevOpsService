@@ -9,7 +9,7 @@ using OneIdentity.SafeguardDevOpsService.Impl;
 
 namespace OneIdentity.SafeguardDevOpsService.Plugins
 {
-    public class PluginManager : IDisposable, IService
+    public class PluginManager : IDisposable, IPluginManager
     {
         private static Dictionary<string,ILoadablePlugin> _loadedPlugins = new Dictionary<string, ILoadablePlugin>();
         private FileSystemWatcher _watcher = null;
@@ -47,6 +47,20 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
 
         }
 
+        public void SetConfigurationforPlugin(string name)
+        {
+            if (_loadedPlugins.ContainsKey(name))
+            {
+                var pluginInstance = _loadedPlugins[name];
+                var pluginInfo = _configurationRepository.GetPluginByName(name);
+                var configuration = pluginInfo?.Configuration;
+                if (configuration != null)
+                {
+                    pluginInstance.SetPluginConfiguration(configuration);
+                }
+            }
+        }
+
         private void DetectPlugins(string exePath)
         {
             var dirPath = Path.GetDirectoryName(exePath);
@@ -71,17 +85,34 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
                 {
                     if (type.Name.Equals(WellKnownData.PluginInfoClassName) && type.IsClass)
                     {
-                        ILoadablePlugin plugin = (ILoadablePlugin)Activator.CreateInstance(type);
+                        var plugin = (ILoadablePlugin)Activator.CreateInstance(type);
+
                         var name = plugin.Name;
+                        var description = plugin.Description;
+                        Dictionary<string,string> configuration = null;
+                        ILoadablePlugin pluginInstance = plugin;
+
                         if (!_loadedPlugins.ContainsKey(name))
                         {
-                            _loadedPlugins.Add(name, plugin);
+                            _loadedPlugins.Add(name, pluginInstance);
+                        } else
+                        {
+                            pluginInstance = _loadedPlugins[name];
                         }
 
-                        if (_configurationRepository.GetPluginByName(name) == null)
+                        var pluginInfo = _configurationRepository.GetPluginByName(name);
+                        if (pluginInfo == null)
                         {
-                            _configurationRepository.SavePluginConfiguration(new Plugin() { Name = name });
+                            pluginInfo = new Plugin() { Name = name, Description = description };
+                            _configurationRepository.SavePluginConfiguration(pluginInfo);
+                            configuration = new Dictionary<string, string>();
+                        } else
+                        {
+                            configuration = pluginInfo.Configuration;
                         }
+
+                        if (configuration != null)
+                            pluginInstance.SetPluginConfiguration(configuration);
                     }
                 }
             }
