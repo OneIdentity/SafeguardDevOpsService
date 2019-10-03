@@ -2,7 +2,7 @@
 {
     public class ConnectionConfiguration
     {
-        public string SpsAddress { get; set; }
+        public string SppAddress { get; set; }
         public string CertificateUserThumbprint { get; set; }
     }
 }
