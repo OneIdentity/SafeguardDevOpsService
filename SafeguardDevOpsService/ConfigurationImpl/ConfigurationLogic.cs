@@ -370,13 +370,23 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 using (var password = _a2aContext.RetrievePassword(apiKey.ToSecureString()))
                 {
                     var accounts = configuration.AccountMapping.ToList();
-                    var account = accounts.FirstOrDefault(a => a.ApiKey.Equals(apiKey));
-                    if (account != null)
+//                    var account = accounts.FirstOrDefault(a => a.ApiKey.Equals(apiKey));
+                    var selectedAccounts = accounts.Where(a => a.ApiKey.Equals(apiKey));
+                    foreach (var account in selectedAccounts)
                     {
                         var plugin = _configurationRepository.GetPluginByName(account.VaultName);
 
-                        if (!_pluginManager.SendPassword(account.VaultName, account.AccountName, password))
-                            _logger.Error($"Unable to set the password for {account.AccountName} to {account.VaultName}.");
+                        try
+                        {
+                            if (!_pluginManager.SendPassword(account.VaultName, account.AccountName, password))
+                                _logger.Error(
+                                    $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error(
+                                $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
+                        }
                     }
                     // TODO: Add useful code here to do something with the fetched password
 
