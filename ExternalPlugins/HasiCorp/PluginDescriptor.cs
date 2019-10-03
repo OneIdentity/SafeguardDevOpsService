@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using OneIdentity.Common;
 using VaultSharp;
@@ -70,7 +71,7 @@ namespace OneIdentity.HashiCorp
                     .Wait();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
                 return false;
             }

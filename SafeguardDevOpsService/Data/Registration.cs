@@ -4,7 +4,7 @@ namespace OneIdentity.SafeguardDevOpsService.Data
 {
     public class Registration
     {
-        public string SpsAddress { get; set; }
+        public string SppAddress { get; set; }
         public int A2ARegistrationId { get; set; }
         public string A2ARegistrationName { get; set; }
         public string CertificateUserThumbPrint { get; set; }

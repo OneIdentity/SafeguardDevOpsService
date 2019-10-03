@@ -41,14 +41,14 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 throw new Exception("The initial configuration cannot be null.");
             if (initialConfig.CertificateUserThumbprint == null)
                 throw new Exception("The user certificate thumbprint cannot be null.");
-            if (initialConfig.SpsAddress == null)
-                throw new Exception("The SPS network address cannot be null.");
+            if (initialConfig.SppAddress == null)
+                throw new Exception("The SPP network address cannot be null.");
 
             ISafeguardConnection connection = null;
             try
             {
 
-                connection = Safeguard.Connect(initialConfig.SpsAddress, initialConfig.CertificateUserThumbprint,
+                connection = Safeguard.Connect(initialConfig.SppAddress, initialConfig.CertificateUserThumbprint,
                     _safeguardApiVersion, _safeguardIgnoreSsl);
 
                 var rawJson = connection.InvokeMethod(Service.Core, Method.Get, "A2ARegistrations");
@@ -61,7 +61,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 {
                     var configuration = new Configuration
                     {
-                        SpsAddress = initialConfig.SpsAddress,
+                        SppAddress = initialConfig.SppAddress,
                         A2ARegistrationId = registration.Id,
                         A2ARegistrationName = registration.AppName,
                         CertificateUser = registration.CertificateUser,
@@ -100,17 +100,17 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 throw new Exception("The initial configuration cannot be null.");
             if (connectionConfig.CertificateUserThumbprint == null)
                 throw new Exception("The user certificate thumbprint cannot be null.");
-            if (connectionConfig.SpsAddress == null)
+            if (connectionConfig.SppAddress == null)
                 throw new Exception("The SPS network address cannot be null.");
 
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null) return null;
 
             configuration.CertificateUserThumbPrint = connectionConfig.CertificateUserThumbprint;
-            configuration.SpsAddress = connectionConfig.SpsAddress;
+            configuration.SppAddress = connectionConfig.SppAddress;
 
             //Validate the connection information
-            var connection = Safeguard.Connect(connectionConfig.SpsAddress,
+            var connection = Safeguard.Connect(connectionConfig.SppAddress,
                 connectionConfig.CertificateUserThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
             connection?.LogOut();
 
@@ -189,7 +189,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             ISafeguardConnection connection = null;
             try
             {
-                connection = Safeguard.Connect(configuration.SpsAddress, configuration.CertificateUserThumbPrint,
+                connection = Safeguard.Connect(configuration.SppAddress, configuration.CertificateUserThumbPrint,
                     _safeguardApiVersion, _safeguardIgnoreSsl);
                 var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
                     $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts");
@@ -246,7 +246,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             ISafeguardConnection connection = null;
             try
             {
-                connection = Safeguard.Connect(configuration.SpsAddress, configuration.CertificateUserThumbPrint,
+                connection = Safeguard.Connect(configuration.SppAddress, configuration.CertificateUserThumbPrint,
                     _safeguardApiVersion, _safeguardIgnoreSsl);
                 var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
                     $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts");
@@ -280,7 +280,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             try
             {
 
-                connection = Safeguard.Connect(configuration.SpsAddress, configuration.CertificateUserThumbPrint,
+                connection = Safeguard.Connect(configuration.SppAddress, configuration.CertificateUserThumbPrint,
                     _safeguardApiVersion, _safeguardIgnoreSsl);
                 var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
                     $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts/{apiKeyInfo.Value}");
@@ -324,7 +324,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             if (configuration == null) return;
 
             // connect to Safeguard
-            _a2aContext = Safeguard.A2A.GetContext(configuration.SpsAddress, configuration.CertificateUserThumbPrint,
+            _a2aContext = Safeguard.A2A.GetContext(configuration.SppAddress, configuration.CertificateUserThumbPrint,
                 _safeguardApiVersion, _safeguardIgnoreSsl);
 
             // figure out what API keys to monitor
@@ -370,7 +370,6 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 using (var password = _a2aContext.RetrievePassword(apiKey.ToSecureString()))
                 {
                     var accounts = configuration.AccountMapping.ToList();
-//                    var account = accounts.FirstOrDefault(a => a.ApiKey.Equals(apiKey));
                     var selectedAccounts = accounts.Where(a => a.ApiKey.Equals(apiKey));
                     foreach (var account in selectedAccounts)
                     {
