@@ -11,19 +11,18 @@ namespace OneIdentity.Common
 {
     public class SafeguardDevOpsPluginBase
     {
-        private readonly Dictionary<string, string> _configuration;
+        private Dictionary<string, string> _configuration;
         private Serilog.Core.Logger _baseLog;
 
-        public SafeguardDevOpsPluginBase(Dictionary<string, string> configuration)
+        public SafeguardDevOpsPluginBase()
         {
-            _configuration = configuration;
-
             SetLog();
         }
 
-        protected Dictionary<string, string> Configuration
+        public Dictionary<string, string> Configuration
         {
             get { return _configuration; }
+            set { _configuration = value; }
         }
 
         public Serilog.Core.Logger BaseLog
@@ -54,6 +53,7 @@ namespace OneIdentity.Common
             baseConfig.Add("Username", "");
             baseConfig.Add("Password", "");
             baseConfig.Add("LogLevel", "Possible values: 'Debug', 'Warning', 'Error'");
+            baseConfig.Add("IsConfigured", "false");
 
             return baseConfig;
         }
