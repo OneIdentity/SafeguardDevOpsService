@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.757
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29306.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevOpsService", "SafeguardDevOpsService\SafeguardDevOpsService.csproj", "{60B8D62D-E862-46C3-AB7A-94C746F6F65B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevOpsPluginTerraForm", "ExternalPlugins\SafeguardDevOpsPluginTerraForm\SafeguardDevOpsPluginTerraForm.csproj", "{22B1DCC3-9022-4276-85B9-E150B9934115}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestPlugins", "ExternalPlugins\TestPlugins\TestPlugins.csproj", "{9F40690E-5CAE-45EC-8047-408D35D4FC50}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{22B1DCC3-9022-4276-85B9-E150B9934115}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22B1DCC3-9022-4276-85B9-E150B9934115}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22B1DCC3-9022-4276-85B9-E150B9934115}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F40690E-5CAE-45EC-8047-408D35D4FC50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F40690E-5CAE-45EC-8047-408D35D4FC50}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F40690E-5CAE-45EC-8047-408D35D4FC50}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F40690E-5CAE-45EC-8047-408D35D4FC50}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

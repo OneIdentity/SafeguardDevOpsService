@@ -10,29 +10,30 @@ namespace OneIdentity.SafeguardDevOpsPlugin.TerraForm
 
         public PluginDescriptor()
         {
+            _plugin = new TerraFormDevOpsPlugin();                
         }
 
         public string Name { get; } = "TerraForm";
         public string Description { get; } = "This is the TerraForm plugin for updating the passwords";
 
-        public Dictionary<string,string> GetPluginConfiguration()
+        public Dictionary<string,string> GetPluginInitialConfiguration()
         {
             //TODO: Make a call here to get the current configuration of the plugin
-            return new Dictionary<string, string>();
+            return _plugin.InitializeConfiguration();
         }
 
-        public Dictionary<string,string> SetPluginConfiguration(Dictionary<string,string> configuration)
+        public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
-            _plugin = new TerraFormDevOpsPlugin(configuration);
-
             //TODO: Make a call here to configure the plugin with the new configuration.
-            return _plugin.InitializeConfiguration();
+            _plugin.Configuration = configuration;
         }
 
         public bool SetPassword(string account, string password)
         {
             if (_plugin == null)
                 return false;
+
+            //TODO: Check if it is configured.
 
             //TODO: Make a call here to set the new password for the account.
             _plugin.ProcessPassword(account, password);

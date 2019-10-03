@@ -6,13 +6,9 @@ namespace OneIdentity.SafeguardDevOpsPlugin.TerraForm
 {
     public class TerraFormDevOpsPlugin : SafeguardDevOpsPluginBase
     {
-        public TerraFormDevOpsPlugin(Dictionary<string, string> configuration):base(configuration)
+        public TerraFormDevOpsPlugin():base()
         {
-            if(configuration == null || configuration.Count == 0)
-            {
-                base.BaseLog.Error("Configuration is empty");
-                throw new Exception("Need to provide configuration");
-            }
+            
         }
 
         public override void ProcessPassword(string accountName, string password)
