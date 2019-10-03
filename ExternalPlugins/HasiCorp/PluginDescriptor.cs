@@ -13,7 +13,6 @@ namespace OneIdentity.HashiCorp
         private static Dictionary<string,string> _configuration = null;
 
         //TODO: The following constants need to come from the configuration
-        private string _authToken = "s.MwPuFsJTtyoX8K4sb85AcjrF";
         private string _address = "http://127.0.0.1:8200";
         private string _mountPoint = "secret";
         private string _secretsPath = "oneidentity";
@@ -30,7 +29,7 @@ namespace OneIdentity.HashiCorp
         public string Name { get; } = "HashiCorpVault";
         public string Description { get; } = "This is the HashiCorp Vault plugin for updating the passwords";
 
-        public Dictionary<string,string> GetPluginConfiguration()
+        public Dictionary<string,string> GetPluginInitialConfiguration()
         {
             if (_configuration == null)
             {
@@ -44,7 +43,7 @@ namespace OneIdentity.HashiCorp
             return _configuration;
         }
 
-        public Dictionary<string,string> SetPluginConfiguration(Dictionary<string,string> configuration)
+        public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
             if (configuration != null && configuration.ContainsKey(_authTokenName) &&
                 configuration.ContainsKey(_addressName) && configuration.ContainsKey(_mountPointName) &&
@@ -55,8 +54,6 @@ namespace OneIdentity.HashiCorp
                 _vaultClient = new VaultClient(vaultClientSettings);
                 _configuration = configuration;
             }
-
-            return _configuration;
         }
 
         public bool SetPassword(string account, string password)

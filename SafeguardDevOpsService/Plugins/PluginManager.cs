@@ -98,14 +98,11 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
                 Type[] types = assembly.GetTypes();
                 foreach (var type in types)
                 {
-                    
-
                     // dbConfig = get configuration from database
                     // if(dbConfig == null)
                     //      //This plugin was never configured.
                     //      1. Retrieve initial configuration from plugin.
                     //      2. Save configuration in DB so someone can go to the application and fill outvalues for this plugin.
-                    //      3. Do not save into _loadedPlugins.
                     // else
                     //      //This plugin was configured - maybe do some test or check a field set to true in DB
                     //      1. Pass configuration to the plugin
@@ -125,10 +122,20 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
 
                         var pluginInfo = _configurationRepository.GetPluginByName(name);
 
+                        if (!_loadedPlugins.ContainsKey(name))
+                        {
+                            _loadedPlugins.Add(name, pluginInstance);
+                        }
+                        else
+                        {
+                            //If an instance of the plugin was already found, then use the existing instance.
+                            pluginInstance = _loadedPlugins[name];
+                        }
+
                         if (pluginInfo == null)
                         {
                             pluginInfo = new Plugin() { Name = name, Description = description };
-                            pluginInfo.Configuration = plugin.GetPluginInitialConfiguration();
+                            pluginInfo.Configuration = pluginInstance.GetPluginInitialConfiguration();
 
                             _configurationRepository.SavePluginConfiguration(pluginInfo);
 
@@ -137,20 +144,10 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
                         } else
                         {
                             configuration = pluginInfo.Configuration;
-                        }
-
-                        if (!_loadedPlugins.ContainsKey(name))
-                        {
-                            _loadedPlugins.Add(name, pluginInstance);
-                        }
-                        else
-                        {
-                            pluginInstance = _loadedPlugins[name];
-                        }
-
-                        if (configuration != null)
-                        {
-                            pluginInstance.SetPluginConfiguration(configuration);                            
+                            if (configuration != null)
+                            {
+                                pluginInstance.SetPluginConfiguration(configuration);                            
+                            }
                         }
                     }
                 }
