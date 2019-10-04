@@ -1,4 +1,5 @@
-﻿using Topshelf;
+﻿using Serilog;
+using Topshelf;
 
 namespace OneIdentity.SafeguardDevOpsService
 {
@@ -6,6 +7,10 @@ namespace OneIdentity.SafeguardDevOpsService
     {
         static void Main()
         {
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.File("devopslog.txt", outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                .CreateLogger();
+
             HostFactory.Run(hostConfig =>
             {
                 hostConfig.Service<SafeguardDevOpsService>(service =>
