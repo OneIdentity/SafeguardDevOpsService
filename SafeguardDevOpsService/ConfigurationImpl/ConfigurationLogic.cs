@@ -75,7 +75,16 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                     _configurationRepository.SaveConfiguration(configuration);
                     return configuration;
                 }
+                else
+                {
+                    _logger.Error("No A2A registrations were found for the configured certificate user");
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to initialize the DevOps Serivce: {ex.Message}");
+            }
+
             finally
             {
                 connection?.Dispose();
@@ -104,7 +113,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 throw new Exception("The SPS network address cannot be null.");
 
             var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null) return null;
+            if (configuration == null)
+            {
+                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                return null;
+            }
 
             configuration.CertificateUserThumbPrint = connectionConfig.CertificateUserThumbprint;
             configuration.SppAddress = connectionConfig.SppAddress;
@@ -112,6 +125,9 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             //Validate the connection information
             var connection = Safeguard.Connect(connectionConfig.SppAddress,
                 connectionConfig.CertificateUserThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
+            if(connection == null)
+                _logger.Error("SPP connection configuration failed.");
+
             connection?.LogOut();
 
             _configurationRepository.SaveConfiguration(configuration);
@@ -122,8 +138,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         public IEnumerable<AccountMapping> GetAccountMappings(string accountName = "", string vaultName = "")
         {
             var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null) return null;
-
+            if (configuration == null)
+            {
+                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                return null;
+            }
 
             if (String.IsNullOrEmpty(accountName) && String.IsNullOrEmpty(vaultName))
                 return configuration.AccountMapping.ToArray();
@@ -136,7 +155,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         public IEnumerable<AccountMapping> SaveAccountMappings(IEnumerable<AccountMapping> newAccountMappings)
         {
             var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null) return null;
+            if (configuration == null)
+            {
+                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                return null;
+            }
 
             var accountMappingList = configuration.AccountMapping.ToList();
             var newAccountMappingsList = newAccountMappings.ToList();
@@ -151,7 +174,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         public IEnumerable<AccountMapping> RemoveAccountMappings(bool removeAll, string accountName, string vaultName)
         {
             var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null) return null;
+            if (configuration == null)
+            {
+                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                return null;
+            }
 
             if (removeAll && accountName == null && vaultName == null)
             {
@@ -175,7 +202,6 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 configuration.AccountMapping = accountMappingList;
             }
 
-            var configJson = JsonHelper.SerializeObject<Configuration>(configuration);
             _configurationRepository.SaveConfiguration(configuration);
 
             return configuration.AccountMapping;
@@ -184,7 +210,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         public IEnumerable<RetrievableAccount> GetRetrievableAccounts()
         {
             var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null) return null;
+            if (configuration == null)
+            {
+                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                return null;
+            }
 
             ISafeguardConnection connection = null;
             try
@@ -197,10 +227,16 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
 
                 return retrievableAccounts.ToList();
             }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to get the retrievable accounts from SPP: {ex.Message}.");
+            }
             finally
             {
                 connection?.Dispose();
             }
+
+            return null;
         }
 
         public void EnableMonitoring(bool enable)
@@ -232,7 +268,10 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             var plugin = _configurationRepository.GetPluginByName(name);
 
             if (plugin == null)
+            {
+                _logger.Error($"Failed to save the configuration. No plugin {name} was found.");
                 return null;
+            }
 
             plugin.Configuration = pluginConfiguration.Configuration;
             plugin = _configurationRepository.SavePluginConfiguration(plugin);
@@ -321,7 +360,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 throw new Exception("Listener is already running.");
 
             var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null) return;
+            if (configuration == null)
+            {
+                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                return;
+            }
 
             // connect to Safeguard
             _a2aContext = Safeguard.A2A.GetContext(configuration.SppAddress, configuration.CertificateUserThumbPrint,
@@ -330,7 +373,10 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             // figure out what API keys to monitor
             _retrievableAccounts = GetRetrievableAccounts().ToList();
             if (_retrievableAccounts.Count == 0)
+            {
+                _logger.Error("No API keys found in A2A registrations.  Nothing to do.");
                 throw new Exception("No API keys found in A2A registrations.  Nothing to do.");
+            }
 
             var apiKeys = new List<SecureString>();
             foreach (var account in _retrievableAccounts)
@@ -340,6 +386,8 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
 
             _eventListener = _a2aContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);
             _eventListener.Start();
+
+            _logger.Information("Password change monitoring has been started.");
         }
 
         private void StopMonitoring()
@@ -348,6 +396,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             {
                 _eventListener?.Stop();
                 _a2aContext?.Dispose();
+                _logger.Information("Password change monitoring has been stopped.");
             }
             finally
             {
@@ -360,7 +409,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         private void PasswordChangeHandler(string eventName, string eventBody)
         {
             var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null || _retrievableAccounts == null) return;
+            if (configuration == null || _retrievableAccounts == null)
+            {
+                _logger.Error("No configuration was found.  DevOps service must be configured first or no retrievable accounts found.");
+                return;
+            }
 
             var eventInfo = JsonHelper.DeserializeObject<EventInfo>(eventBody);
 
@@ -373,10 +426,9 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                     var selectedAccounts = accounts.Where(a => a.ApiKey.Equals(apiKey));
                     foreach (var account in selectedAccounts)
                     {
-                        var plugin = _configurationRepository.GetPluginByName(account.VaultName);
-
                         try
                         {
+                            _logger.Information($"Sending password for account {account.AccountName} to {account.VaultName}.");
                             if (!_pluginManager.SendPassword(account.VaultName, account.AccountName, password))
                                 _logger.Error(
                                     $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
@@ -387,12 +439,6 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                                 $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
                         }
                     }
-                    // TODO: Add useful code here to do something with the fetched password
-
-                    // Also, note that the password you get back is a SecureString.  In order to turn it back into a regular string
-                    // you can use the provided convenience function:
-
-                    var justBecause = password.ToInsecureString();
                 }
             }
             catch (Exception ex)
@@ -400,7 +446,5 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 _logger.Error($"Password change handler failed: {ex.Message}.");
             }
         }
-
-
     }
 }

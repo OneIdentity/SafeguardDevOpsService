@@ -62,6 +62,11 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
                 {
                     pluginInstance.SetPluginConfiguration(configuration);
                 }
+                _logger.Error($"Plugin {name} configured successfully.");
+            }
+            else
+            {
+                _logger.Error($"Plugin configuration failed.  No plugin {name} found.");
             }
         }
 
@@ -73,6 +78,11 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
                 if (pluginInstance != null)
                     return pluginInstance.SetPassword(accountName, password.ToInsecureString());
             }
+            else
+            {
+                _logger.Error($"Send password to plugin failed.  No plugin {name} found.");
+            }
+
             return false;
         }
 
@@ -113,10 +123,15 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
 
                     if (type.Name.Equals(WellKnownData.PluginInfoClassName) && type.IsClass)
                     {
+                        _logger.Information($"Loading plugin from path {pluginPath}.");
                         var plugin = (ILoadablePlugin)Activator.CreateInstance(type);
 
                         var name = plugin.Name;
                         var description = plugin.Description;
+                        plugin.SetLogger(_logger);
+
+                        _logger.Information($"Successfully loaded plugin {name} : {description}.");
+
                         Dictionary<string,string> configuration = null;
                         ILoadablePlugin pluginInstance = plugin;
 

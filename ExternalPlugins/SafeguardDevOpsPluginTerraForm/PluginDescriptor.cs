@@ -1,12 +1,14 @@
 ﻿
 using System.Collections.Generic;
 using OneIdentity.Common;
+using Serilog;
 
 namespace OneIdentity.SafeguardDevOpsPlugin.TerraForm
 {
     public class PluginDescriptor : ILoadablePlugin
     {
         private static TerraFormDevOpsPlugin _plugin = null;
+        private static ILogger _logger = null;
 
         public PluginDescriptor()
         {
@@ -38,6 +40,11 @@ namespace OneIdentity.SafeguardDevOpsPlugin.TerraForm
             //TODO: Make a call here to set the new password for the account.
             _plugin.ProcessPassword(account, password);
             return true;
+        }
+
+        public void SetLogger(ILogger logger)
+        {
+            _logger = logger;
         }
     }
 }

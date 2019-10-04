@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using OneIdentity.Common;
+using Serilog;
 using VaultSharp;
-using VaultSharp.V1.AuthMethods;
 using VaultSharp.V1.AuthMethods.Token;
 
 namespace OneIdentity.HashiCorp
@@ -12,6 +11,7 @@ namespace OneIdentity.HashiCorp
     {
         private static IVaultClient _vaultClient = null;
         private static Dictionary<string,string> _configuration = null;
+        private static ILogger _logger = null;
 
         //TODO: The following constants need to come from the configuration
         private string _address = "http://127.0.0.1:8200";
@@ -54,13 +54,21 @@ namespace OneIdentity.HashiCorp
                 var vaultClientSettings = new VaultClientSettings(configuration[_addressName], authMethod);
                 _vaultClient = new VaultClient(vaultClientSettings);
                 _configuration = configuration;
+                _logger.Information($"Plugin {Name} has been successfully configured.");
+            }
+            else
+            {
+                _logger.Error("Some parameters are missing from the configuration.");
             }
         }
 
         public bool SetPassword(string account, string password)
         {
             if (_vaultClient == null)
+            {
+                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
                 return false;
+            }
 
             var passwordData = new Dictionary<string, object>();
             passwordData.Add(account, password);
@@ -69,12 +77,19 @@ namespace OneIdentity.HashiCorp
             {
                 _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(_secretsPath, passwordData, null, _mountPoint)
                     .Wait();
+                _logger.Information($"Password for account {account} has been successfully stored in the vault.");
                 return true;
             }
             catch (Exception ex)
             {
+                _logger.Error($"Failed to set the secret for {account}: {ex.Message}.");
                 return false;
             }
+        }
+
+        public void SetLogger(ILogger logger)
+        {
+            _logger = logger;
         }
     }
 }
