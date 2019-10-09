@@ -10,4 +10,8 @@
     <ProjectReference Include="..\..\Common\Common.csproj" />
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /y $(ProjectDir)$(OutDir)*.dll $(ProjectDir)..\Libs" />
+  </Target>
+
 </Project>
