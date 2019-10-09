@@ -26,4 +26,8 @@
     <ProjectReference Include="..\Common\Common.csproj" />
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy /y $(SolutionDir)\ExternalPlugins\Libs\*.dll $(ProjectDir)$(OutDir)&#xD;&#xA;" />
+  </Target>
+
 </Project>
