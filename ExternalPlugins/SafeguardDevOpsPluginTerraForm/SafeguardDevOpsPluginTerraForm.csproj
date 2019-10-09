@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>OneIdentity.SafeguardDevOpsPlugin.TerraForm</RootNamespace>
     <AssemblyName>OneIdentity.SafeguardDevOpsPlugin.TerraForm</AssemblyName>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
