@@ -5,6 +5,7 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
     <RootNamespace>OneIdentity.SafeguardDevOpsService</RootNamespace>
     <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
 
   <ItemGroup>
