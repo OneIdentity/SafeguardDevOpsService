@@ -6,14 +6,13 @@
 
 # Safeguard DevOps Service
 
-This project is currently in technology preview. It should not be used for any
+This project is currently in *technology preview*. It should not be used for any
 production environment.
 
-It is still in the proof of concept stages. The plugin interface is still being
-developed and may be changed.
+It is still in the *proof of concept* stages. The plugin interface is still being
+developed and *may be changed*.
 
-There are many security security considerations that have not yet been
-addressed.
+There are many security considerations that have not yet been addressed.
 
 More documentation will be provided in the near future.
 
