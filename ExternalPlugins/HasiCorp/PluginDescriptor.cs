@@ -13,15 +13,12 @@ namespace OneIdentity.HashiCorp
         private static Dictionary<string,string> _configuration = null;
         private static ILogger _logger = null;
 
-        //TODO: The following constants need to come from the configuration
         private string _address = "http://127.0.0.1:8200";
-        private string _mountPoint = "secret";
-        private string _secretsPath = "oneidentity";
+        private string _mountPoint = "oneidentity";
 
         private readonly string _authTokenName = "authToken";
         private readonly string _addressName = "address";
         private readonly string _mountPointName = "mountPoint";
-        private readonly string _secretsPathName = "secretsPath";
 
         public PluginDescriptor()
         {
@@ -34,11 +31,12 @@ namespace OneIdentity.HashiCorp
         {
             if (_configuration == null)
             {
-                _configuration = new Dictionary<string, string>();
-                _configuration.Add(_authTokenName, "");
-                _configuration.Add(_addressName, _address);
-                _configuration.Add(_mountPointName, _mountPoint);
-                _configuration.Add(_secretsPathName, _secretsPath);
+                _configuration = new Dictionary<string, string>
+                {
+                    { _authTokenName, "" },
+                    { _addressName, _address },
+                    { _mountPointName, _mountPoint }
+                };
             }
 
             return _configuration;
@@ -47,8 +45,7 @@ namespace OneIdentity.HashiCorp
         public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
             if (configuration != null && configuration.ContainsKey(_authTokenName) &&
-                configuration.ContainsKey(_addressName) && configuration.ContainsKey(_mountPointName) &&
-                configuration.ContainsKey(_secretsPathName))
+                configuration.ContainsKey(_addressName) && configuration.ContainsKey(_mountPointName))
             {
                 var authMethod = new TokenAuthMethodInfo(configuration[_authTokenName]);
                 var vaultClientSettings = new VaultClientSettings(configuration[_addressName], authMethod);
@@ -71,11 +68,11 @@ namespace OneIdentity.HashiCorp
             }
 
             var passwordData = new Dictionary<string, object>();
-            passwordData.Add(account, password);
+            passwordData.Add("value", password);
 
             try
             {
-                _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(_secretsPath, passwordData, null, _mountPoint)
+                _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(account, passwordData, null, _configuration[_mountPointName])
                     .Wait();
                 _logger.Information($"Password for account {account} has been successfully stored in the vault.");
                 return true;

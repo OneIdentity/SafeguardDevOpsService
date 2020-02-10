@@ -62,7 +62,7 @@ namespace OneIdentity.SafeguardDevOpsService.Plugins
                 {
                     pluginInstance.SetPluginConfiguration(configuration);
                 }
-                _logger.Error($"Plugin {name} configured successfully.");
+                _logger.Information($"Plugin {name} configured successfully.");
             }
             else
             {

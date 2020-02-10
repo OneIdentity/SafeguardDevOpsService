@@ -6,6 +6,9 @@
     <RootNamespace>OneIdentity.SafeguardDevOpsService</RootNamespace>
     <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
     <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <PreserveCompilationContext>false</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>
