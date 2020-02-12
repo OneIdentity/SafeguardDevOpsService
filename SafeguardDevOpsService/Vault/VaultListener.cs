@@ -1,4 +1,4 @@
-﻿namespace OneIdentity.SafeguardDevOpsService.Vault
+﻿namespace OneIdentity.DevOps.Vault
 {
     internal class VaultListener
     {

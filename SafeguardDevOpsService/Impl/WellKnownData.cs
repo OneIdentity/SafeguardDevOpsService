@@ -1,4 +1,4 @@
-﻿namespace OneIdentity.SafeguardDevOpsService.Impl
+﻿namespace OneIdentity.DevOps.Impl
 {
     public class WellKnownData
     {

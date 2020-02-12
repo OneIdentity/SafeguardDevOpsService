@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Serilog;
 
-namespace OneIdentity.Common
+namespace OneIdentity.DevOps.Common
 {
     public interface ILoadablePlugin
     {

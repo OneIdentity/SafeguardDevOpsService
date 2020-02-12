@@ -3,7 +3,7 @@ using System.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace OneIdentity.SafeguardDevOpsService.Impl
+namespace OneIdentity.DevOps.Impl
 {
     public class JsonHelper
     {

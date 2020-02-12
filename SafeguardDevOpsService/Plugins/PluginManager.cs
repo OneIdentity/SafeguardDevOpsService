@@ -3,13 +3,13 @@ using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Security;
-using OneIdentity.Common;
-using OneIdentity.SafeguardDevOpsService.ConfigDb;
-using OneIdentity.SafeguardDevOpsService.Data;
-using OneIdentity.SafeguardDevOpsService.Impl;
+using OneIdentity.DevOps.Common;
+using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Impl;
 using OneIdentity.SafeguardDotNet;
 
-namespace OneIdentity.SafeguardDevOpsService.Plugins
+namespace OneIdentity.DevOps.Plugins
 {
     public class PluginManager : IDisposable, IPluginManager
     {

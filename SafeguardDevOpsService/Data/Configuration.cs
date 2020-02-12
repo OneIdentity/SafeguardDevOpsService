@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace OneIdentity.SafeguardDevOpsService.Data
+namespace OneIdentity.DevOps.Data
 {
     public class Configuration : Registration
     {

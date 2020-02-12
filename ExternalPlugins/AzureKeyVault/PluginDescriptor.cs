@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using OneIdentity.Common;
+using OneIdentity.DevOps.Common;
 using Serilog;
 
 namespace OneIdentity.AzureKeyVault

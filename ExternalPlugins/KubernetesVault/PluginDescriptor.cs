@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using k8s;
 using k8s.Models;
-using OneIdentity.Common;
+using OneIdentity.DevOps.Common;
 using Serilog;
 
 namespace OneIdentity.KubernetesVault

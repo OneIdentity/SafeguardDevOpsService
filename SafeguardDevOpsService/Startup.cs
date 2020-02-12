@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OneIdentity.SafeguardDevOpsService.ConfigDb;
-using OneIdentity.SafeguardDevOpsService.ConfigurationImpl;
+using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.ConfigurationImpl;
 using Microsoft.OpenApi.Models;
-using OneIdentity.SafeguardDevOpsService.Data;
-using OneIdentity.SafeguardDevOpsService.Plugins;
+using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Plugins;
 
-namespace OneIdentity.SafeguardDevOpsService
+namespace OneIdentity.DevOps
 {
     internal class Startup
     {

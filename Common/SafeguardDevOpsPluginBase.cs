@@ -7,7 +7,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 using Serilog;
 
-namespace OneIdentity.Common
+namespace OneIdentity.DevOps.Common
 {
     public class SafeguardDevOpsPluginBase
     {
@@ -76,7 +76,7 @@ namespace OneIdentity.Common
                 {
                     baseConfig = JsonConvert.DeserializeObject<Dictionary<string, string>>(strData);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //throw;
                 }

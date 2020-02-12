@@ -1,5 +1,5 @@
 ﻿
-namespace OneIdentity.SafeguardDevOpsService.Data
+namespace OneIdentity.DevOps.Data
 {
     public class RetrievableAccount
     {

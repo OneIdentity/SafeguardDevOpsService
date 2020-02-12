@@ -12,13 +12,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevOpsService", "S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HashiCorp", "ExternalPlugins\HashiCorp\HashiCorp.csproj", "{C208CAA2-B312-4CBB-864D-7DFF4673140F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HashiCorpVault", "ExternalPlugins\HashiCorp\HashiCorpVault.csproj", "{C208CAA2-B312-4CBB-864D-7DFF4673140F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureKeyVault", "ExternalPlugins\AzureKeyVault\AzureKeyVault.csproj", "{28C04737-8B6D-4F2C-8251-918AA2347309}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KubernetesVault", "ExternalPlugins\KubernetesVault\KubernetesVault.csproj", "{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KubernetesSecrets", "ExternalPlugins\KubernetesVault\KubernetesSecrets.csproj", "{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{0A551322-33E5-4401-BB8A-5A54BC87EB87}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ExternalPlugins", "ExternalPlugins", "{0A551322-33E5-4401-BB8A-5A54BC87EB87}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

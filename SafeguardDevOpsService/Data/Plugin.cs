@@ -1,7 +1,7 @@
 ﻿
 using LiteDB;
 
-namespace OneIdentity.SafeguardDevOpsService.Data
+namespace OneIdentity.DevOps.Data
 {
     public class Plugin : PluginConfiguration
     {

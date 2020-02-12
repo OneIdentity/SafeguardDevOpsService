@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using OneIdentity.Common;
+using OneIdentity.DevOps.Common;
 using Serilog;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;

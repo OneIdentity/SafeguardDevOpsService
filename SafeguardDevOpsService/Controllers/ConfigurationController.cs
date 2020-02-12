@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using OneIdentity.SafeguardDevOpsService.ConfigDb;
-using OneIdentity.SafeguardDevOpsService.ConfigurationImpl;
-using OneIdentity.SafeguardDevOpsService.Data;
-using OneIdentity.SafeguardDevOpsService.Impl;
+using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.ConfigurationImpl;
+using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Impl;
 
-namespace OneIdentity.SafeguardDevOpsService.Controllers
+namespace OneIdentity.DevOps.Controllers
 {
 
     [Controller]

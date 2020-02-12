@@ -1,6 +1,6 @@
 ﻿using LiteDB;
 
-namespace OneIdentity.SafeguardDevOpsService.ConfigDb
+namespace OneIdentity.DevOps.ConfigDb
 {
     public class Setting
     {

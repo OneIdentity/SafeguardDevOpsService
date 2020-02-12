@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace OneIdentity.SafeguardDevOpsService.Data
+namespace OneIdentity.DevOps.Data
 {
     /// <summary>
     /// Implement this interface to add an internal mini-service to

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using OneIdentity.SafeguardDevOpsService.Data;
+using OneIdentity.DevOps.Data;
 
-namespace OneIdentity.SafeguardDevOpsService.ConfigDb
+namespace OneIdentity.DevOps.ConfigDb
 {
     public interface IConfigurationRepository
     {

@@ -3,16 +3,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
-using OneIdentity.SafeguardDevOpsService.ConfigDb;
-using OneIdentity.SafeguardDevOpsService.Data;
-using OneIdentity.SafeguardDevOpsService.Impl;
-using OneIdentity.SafeguardDevOpsService.Plugins;
+using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Impl;
+using OneIdentity.DevOps.Plugins;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Event;
 
 
-namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
+namespace OneIdentity.DevOps.ConfigurationImpl
 {
     internal class ConfigurationLogic : IConfigurationLogic
     {

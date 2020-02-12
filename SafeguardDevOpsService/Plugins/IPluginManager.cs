@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Security;
-using System.Text;
+﻿using System.Security;
 
-namespace OneIdentity.SafeguardDevOpsService.Plugins
+namespace OneIdentity.DevOps.Plugins
 {
     public interface IPluginManager
     {

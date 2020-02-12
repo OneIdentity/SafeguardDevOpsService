@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using LiteDB;
-using OneIdentity.SafeguardDevOpsService.Data;
+using OneIdentity.DevOps.Data;
 
-namespace OneIdentity.SafeguardDevOpsService.ConfigDb
+namespace OneIdentity.DevOps.ConfigDb
 {
     internal class LiteDbConfigurationRepository : IConfigurationRepository, IDisposable
     {
         private bool _disposed;
         private LiteDatabase _configurationDb;
-        private readonly LiteCollection<Setting> _settings;
-        private readonly LiteCollection<Configuration> _configuration;
-        private readonly LiteCollection<Plugin> _plugins;
+        private readonly ILiteCollection<Setting> _settings;
+        private readonly ILiteCollection<Configuration> _configuration;
+        private readonly ILiteCollection<Plugin> _plugins;
 
         public LiteDbConfigurationRepository()
         {
@@ -62,7 +62,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
 
         public void RemoveSetting(string name)
         {
-            _settings.Delete(s => s.Name.Equals(name));
+            _settings.Delete(name);
         }
 
         public Configuration GetConfiguration()
@@ -98,7 +98,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
 
         public void DeletePluginByName(string name)
         {
-            _plugins.Delete(s => s.Name.Equals(name));
+            _plugins.Delete(name);
         }
 
         public string SafeguardAddress

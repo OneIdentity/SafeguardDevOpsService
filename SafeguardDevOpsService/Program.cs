@@ -1,7 +1,7 @@
 ﻿using Serilog;
 using Topshelf;
 
-namespace OneIdentity.SafeguardDevOpsService
+namespace OneIdentity.DevOps
 {
     class Program
     {
