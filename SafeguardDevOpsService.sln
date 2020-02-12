@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.757
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevOpsService", "SafeguardDevOpsService\SafeguardDevOpsService.csproj", "{60B8D62D-E862-46C3-AB7A-94C746F6F65B}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -17,6 +17,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureKeyVault", "ExternalPlugins\AzureKeyVault\AzureKeyVault.csproj", "{28C04737-8B6D-4F2C-8251-918AA2347309}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KubernetesVault", "ExternalPlugins\KubernetesVault\KubernetesVault.csproj", "{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{0A551322-33E5-4401-BB8A-5A54BC87EB87}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C208CAA2-B312-4CBB-864D-7DFF4673140F} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
+		{28C04737-8B6D-4F2C-8251-918AA2347309} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
+		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {80DE22D2-799B-4F47-9FE5-2ACC4B0E94D8}

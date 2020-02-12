@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
@@ -14,9 +14,5 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Common.csproj" />
   </ItemGroup>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /y $(ProjectDir)$(OutDir)*.dll $(ProjectDir)..\Libs" />
-  </Target>
 
 </Project>
