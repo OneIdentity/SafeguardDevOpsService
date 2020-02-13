@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>OneIdentity.DevOps.HashiCorpVault</RootNamespace>
-    <AssemblyName>HashiCorp</AssemblyName>
+    <AssemblyName>HashiCorpVault</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
