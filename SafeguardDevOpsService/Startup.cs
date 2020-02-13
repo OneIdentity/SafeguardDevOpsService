@@ -1,21 +1,19 @@
 ﻿using Autofac;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.ConfigurationImpl;
 using Microsoft.OpenApi.Models;
-using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Plugins;
 
 namespace OneIdentity.DevOps
 {
     internal class Startup
     {
-        public Startup(IHostingEnvironment env)
+        public Startup(IWebHostEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
@@ -34,8 +32,8 @@ namespace OneIdentity.DevOps
             // Add services to the collection. Don't build or return
             // any IServiceProvider or the ConfigureContainer method
             // won't get called.
-            services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvc();
+                //.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo {Title = "DevOps Service API", Version = "v1"}); });
         }

@@ -5,7 +5,7 @@ using k8s.Models;
 using OneIdentity.DevOps.Common;
 using Serilog;
 
-namespace OneIdentity.KubernetesVault
+namespace OneIdentity.DevOps.KubernetesSecrets
 {
     public class PluginDescriptor : ILoadablePlugin
     {

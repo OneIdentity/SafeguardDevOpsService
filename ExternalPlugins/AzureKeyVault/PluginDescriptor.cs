@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using OneIdentity.DevOps.Common;
 using Serilog;
 
-namespace OneIdentity.AzureKeyVault
+namespace OneIdentity.DevOps.AzureKeyVault
 {
     public class PluginDescriptor : ILoadablePlugin
     {

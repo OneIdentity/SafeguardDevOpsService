@@ -5,7 +5,7 @@ using Serilog;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 
-namespace OneIdentity.HashiCorp
+namespace OneIdentity.DevOps.HashiCorpVault
 {
     public class PluginDescriptor : ILoadablePlugin
     {
