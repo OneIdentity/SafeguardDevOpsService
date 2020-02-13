@@ -9,18 +9,14 @@ namespace OneIdentity.DevOps.KubernetesSecrets
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static Kubernetes _client = null;
-        private static Dictionary<string,string> _configuration = null;
-        private static ILogger _logger = null;
+        private static Kubernetes _client;
+        private static Dictionary<string,string> _configuration;
+        private static ILogger _logger;
 
         private readonly string _configFilePathName = "configFilePath";
         private readonly string _vaultNamespaceName = "vaultNamespace";
 
         private static string _defaultNamespace = "default";
-
-        public PluginDescriptor()
-        {
-        }
 
         public string Name { get; } = "KubernetesVault";
         public string Description { get; } = "This is the Kubenetes Vault plugin for updating passwords";
@@ -37,7 +33,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
 
         public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
-            KubernetesClientConfiguration config = null;
+            KubernetesClientConfiguration config;
             if (configuration != null)
             {
                 _configuration = configuration;
@@ -82,7 +78,11 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             try
             {
                 secret = _client.ReadNamespacedSecret(account, vaultNamespace);
-            } catch {}
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
 
             try
             {

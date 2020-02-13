@@ -94,9 +94,7 @@ namespace OneIdentity.DevOps.Common
 
         private void SetLog()
         {
-            LoggerConfiguration lc = null;
-
-            string logLevel = "Error"; //ConfigurationManager.AppSettings["LogLevel"];
+            var logLevel = "Error"; //ConfigurationManager.AppSettings["LogLevel"];
 
             if (_configuration != null && _configuration.ContainsKey("LogLevel"))
             {
@@ -106,21 +104,20 @@ namespace OneIdentity.DevOps.Common
             var loggingDirectory = "Logs";
 
             if (!Path.IsPathRooted(loggingDirectory))
-                loggingDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), loggingDirectory);
+                loggingDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location) ?? throw new InvalidOperationException(), loggingDirectory);
 
             if (!Directory.Exists(loggingDirectory))
             {
                 Directory.CreateDirectory(loggingDirectory);
             }
 
-            string assemblyName = GetAssemblyName();
+            var assemblyName = GetAssemblyName();
 
             assemblyName = Path.GetFileNameWithoutExtension(assemblyName);
 
-            lc = new LoggerConfiguration()
+            var lc = new LoggerConfiguration()
                 .WriteTo.File(Path.Combine(loggingDirectory,
-                        $"{assemblyName}-{DateTime.Now.ToString("yyyy-MM-dd--HH-mm-ss")}.log").ToString(),
-                        fileSizeLimitBytes: 100_000_000);
+                    $"{assemblyName}-{DateTime.Now:yyyy-MM-dd--HH-mm-ss}.log"), fileSizeLimitBytes: 100_000_000);
 
             //.WriteTo.File($".\\Logs\\SafePassageMigration-{DateTime.Now.ToString("yyyy-MM-dd--HH-mm-ss")}.log",
             //                          fileSizeLimitBytes: 100_000_000,
@@ -151,8 +148,8 @@ namespace OneIdentity.DevOps.Common
         {
             var currentAssembly = Assembly.GetExecutingAssembly();
 
-            var callerAssemblies = new StackTrace().GetFrames()
-                        .Select(x => x.GetMethod().ReflectedType.Assembly).Distinct()
+            var callerAssemblies = (new StackTrace().GetFrames() ?? throw new InvalidOperationException())
+                        .Select(x => x.GetMethod().ReflectedType?.Assembly).Distinct()
                         .Where(x => x.GetReferencedAssemblies().Any(y => y.FullName == currentAssembly.FullName));
 
             var initialAssembly = callerAssemblies.First();

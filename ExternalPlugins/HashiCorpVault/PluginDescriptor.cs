@@ -9,9 +9,9 @@ namespace OneIdentity.DevOps.HashiCorpVault
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static IVaultClient _vaultClient = null;
-        private static Dictionary<string,string> _configuration = null;
-        private static ILogger _logger = null;
+        private static IVaultClient _vaultClient;
+        private static Dictionary<string,string> _configuration;
+        private static ILogger _logger;
 
         private string _address = "http://127.0.0.1:8200";
         private string _mountPoint = "oneidentity";
@@ -19,10 +19,6 @@ namespace OneIdentity.DevOps.HashiCorpVault
         private readonly string _authTokenName = "authToken";
         private readonly string _addressName = "address";
         private readonly string _mountPointName = "mountPoint";
-
-        public PluginDescriptor()
-        {
-        }
 
         public string Name { get; } = "HashiCorpVault";
         public string Description { get; } = "This is the HashiCorp Vault plugin for updating the passwords";

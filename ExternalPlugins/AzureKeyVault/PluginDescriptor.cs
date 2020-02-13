@@ -10,17 +10,13 @@ namespace OneIdentity.DevOps.AzureKeyVault
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static IKeyVaultClient _keyVaultClient = null;
-        private static Dictionary<string,string> _configuration = null;
-        private static ILogger _logger = null;
+        private static IKeyVaultClient _keyVaultClient;
+        private static Dictionary<string,string> _configuration;
+        private static ILogger _logger;
 
         private readonly string _applicationIdName = "applicationId";
         private readonly string _clientSecretName = "clientSecret";
         private readonly string _vaultUriName = "vaultUri";
-
-        public PluginDescriptor()
-        {
-        }
 
         public string Name { get; } = "AzureKeyVault";
         public string Description { get; } = "This is the Azure Key Vault plugin for updating passwords";
@@ -38,8 +34,8 @@ namespace OneIdentity.DevOps.AzureKeyVault
             return _configuration;
         }
 
-        private const string _applicationId = "fc02cf07-7011-47db-a6cb-0794f9b22bdf";
-        private const string _clientSecret = "9jxay4HZ.MY_Hl[RBwny3u=KkderucK1";
+        private const string ApplicationId = "fc02cf07-7011-47db-a6cb-0794f9b22bdf";
+        private const string ClientSecret = "9jxay4HZ.MY_Hl[RBwny3u=KkderucK1";
 
         public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
@@ -48,7 +44,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
             {
                 _keyVaultClient = new KeyVaultClient(async (authority, resource, scope) =>
                 {
-                    var adCredential = new ClientCredential(_applicationId, _clientSecret);
+                    var adCredential = new ClientCredential(ApplicationId, ClientSecret);
                     var authenticationContext = new AuthenticationContext(authority, null);
                     return (await authenticationContext.AcquireTokenAsync(resource, adCredential)).AccessToken;
                 });
