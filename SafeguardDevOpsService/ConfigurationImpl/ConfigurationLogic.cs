@@ -100,7 +100,7 @@ namespace OneIdentity.DevOps.ConfigurationImpl
 
         public Registration GetRegistration()
         {
-            return JsonHelper.DeserializeObject<Registration>(JsonHelper.SerializeObject<Configuration>(_configurationRepository.GetConfiguration()));
+            return JsonHelper.DeserializeObject<Registration>(JsonHelper.SerializeObject(_configurationRepository.GetConfiguration()));
         }
 
         public Configuration UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig)
@@ -148,7 +148,7 @@ namespace OneIdentity.DevOps.ConfigurationImpl
                 return configuration.AccountMapping.ToArray();
 
             var accountMappings = configuration.AccountMapping.Where(x =>
-                x.AccountName.StartsWith(accountName) || x.VaultName.StartsWith(vaultName));
+                x.AccountName.StartsWith(accountName ?? throw new ArgumentNullException(nameof(accountName))) || x.VaultName.StartsWith(vaultName));
             return accountMappings;
         }
 
