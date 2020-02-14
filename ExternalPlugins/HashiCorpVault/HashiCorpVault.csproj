@@ -9,11 +9,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>$(SolutionDir)\bin\$(Configuration)\ExternalPlugins</OutputPath>
+    <OutputPath>$(SolutionDir)bin\$(Configuration)\ExternalPlugins</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>$(SolutionDir)\bin\$(Configuration)\ExternalPlugins</OutputPath>
+    <OutputPath>$(SolutionDir)bin\$(Configuration)\ExternalPlugins</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

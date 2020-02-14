@@ -29,10 +29,12 @@ namespace OneIdentity.DevOps
         // called by the runtime before the ConfigureContainer method, below.
         public void ConfigureServices(IServiceCollection services)
         {
+
             // Add services to the collection. Don't build or return
             // any IServiceProvider or the ConfigureContainer method
             // won't get called.
-            services.AddMvc();
+            services.AddMvc()
+                .AddMvcOptions(opts => { opts.EnableEndpointRouting = false; });
                 //.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo {Title = "DevOps Service API", Version = "v1"}); });
