@@ -4,6 +4,15 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>OneIdentity.DevOps.AzureKeyVault</RootNamespace>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath>$(SolutionDir)\bin\$(Configuration)\ExternalPlugins</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>$(SolutionDir)\bin\$(Configuration)\ExternalPlugins</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>

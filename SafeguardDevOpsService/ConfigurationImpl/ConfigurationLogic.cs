@@ -275,7 +275,7 @@ namespace OneIdentity.DevOps.ConfigurationImpl
 
             plugin.Configuration = pluginConfiguration.Configuration;
             plugin = _configurationRepository.SavePluginConfiguration(plugin);
-            _pluginManager.SetConfigurationforPlugin(name);
+            _pluginManager.SetConfigurationForPlugin(name);
 
             return plugin;
         }

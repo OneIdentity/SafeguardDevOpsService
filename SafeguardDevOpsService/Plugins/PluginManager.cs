@@ -13,12 +13,12 @@ namespace OneIdentity.DevOps.Plugins
 {
     public class PluginManager : IDisposable, IPluginManager
     {
-        private static Dictionary<string,ILoadablePlugin> _loadedPlugins = new Dictionary<string, ILoadablePlugin>();
-        private FileSystemWatcher _watcher = null;
-        private Serilog.ILogger _logger;
+        private const string PluginDirName = "ExternalPlugins";
+        private static readonly Dictionary<string,ILoadablePlugin> LoadedPlugins = new Dictionary<string, ILoadablePlugin>();
+        private readonly Serilog.ILogger _logger;
+        private FileSystemWatcher _watcher;
 
         public string ServiceName => GetType().Name;
-
 
         private readonly IConfigurationRepository _configurationRepository;
 
@@ -37,6 +37,7 @@ namespace OneIdentity.DevOps.Plugins
         public void Run()
         {
             var exePath = Assembly.GetExecutingAssembly().Location;
+            var pluginDirPath = Path.Combine(exePath, PluginDirName);
 
             _watcher = new FileSystemWatcher()
             {
@@ -47,15 +48,15 @@ namespace OneIdentity.DevOps.Plugins
             };
             _watcher.Changed += OnChanged;
 
-            DetectPlugins(exePath);
+            DetectPlugins(pluginDirPath);
 
         }
 
-        public void SetConfigurationforPlugin(string name)
+        public void SetConfigurationForPlugin(string name)
         {
-            if (_loadedPlugins.ContainsKey(name))
+            if (LoadedPlugins.ContainsKey(name))
             {
-                var pluginInstance = _loadedPlugins[name];
+                var pluginInstance = LoadedPlugins[name];
                 var pluginInfo = _configurationRepository.GetPluginByName(name);
                 var configuration = pluginInfo?.Configuration;
                 if (configuration != null)
@@ -72,9 +73,9 @@ namespace OneIdentity.DevOps.Plugins
 
         public bool SendPassword(string name, string accountName, SecureString password)
         {
-            if (_loadedPlugins.ContainsKey(name))
+            if (LoadedPlugins.ContainsKey(name))
             {
-                var pluginInstance = _loadedPlugins[name];
+                var pluginInstance = LoadedPlugins[name];
                 if (pluginInstance != null)
                     return pluginInstance.SetPassword(accountName, password.ToInsecureString());
             }
@@ -86,9 +87,9 @@ namespace OneIdentity.DevOps.Plugins
             return false;
         }
 
-        private void DetectPlugins(string exePath)
+        private void DetectPlugins(string pluginDirPath)
         {
-            var dirPath = Path.GetDirectoryName(exePath);
+            var dirPath = Path.GetDirectoryName(pluginDirPath);
             if (Directory.Exists(dirPath))
             {
                 var pluginFiles = Directory.GetFiles(dirPath, WellKnownData.dllPattern);
@@ -132,25 +133,28 @@ namespace OneIdentity.DevOps.Plugins
 
                         _logger.Information($"Successfully loaded plugin {name} : {description}.");
 
-                        Dictionary<string,string> configuration = null;
                         ILoadablePlugin pluginInstance = plugin;
 
                         var pluginInfo = _configurationRepository.GetPluginByName(name);
 
-                        if (!_loadedPlugins.ContainsKey(name))
+                        if (!LoadedPlugins.ContainsKey(name))
                         {
-                            _loadedPlugins.Add(name, pluginInstance);
+                            LoadedPlugins.Add(name, pluginInstance);
                         }
                         else
                         {
                             //If an instance of the plugin was already found, then use the existing instance.
-                            pluginInstance = _loadedPlugins[name];
+                            pluginInstance = LoadedPlugins[name];
                         }
 
                         if (pluginInfo == null)
                         {
-                            pluginInfo = new Plugin() { Name = name, Description = description };
-                            pluginInfo.Configuration = pluginInstance.GetPluginInitialConfiguration();
+                            pluginInfo = new Plugin
+                            {
+                                Name = name,
+                                Description = description,
+                                Configuration = pluginInstance.GetPluginInitialConfiguration()
+                            };
 
                             _configurationRepository.SavePluginConfiguration(pluginInfo);
 
@@ -158,7 +162,7 @@ namespace OneIdentity.DevOps.Plugins
                             
                         } else
                         {
-                            configuration = pluginInfo.Configuration;
+                            var configuration = pluginInfo.Configuration;
                             if (configuration != null)
                             {
                                 pluginInstance.SetPluginConfiguration(configuration);                            
