@@ -92,7 +92,7 @@ namespace OneIdentity.DevOps.Plugins
             var dirPath = Path.GetDirectoryName(pluginDirPath);
             if (Directory.Exists(dirPath))
             {
-                var pluginFiles = Directory.GetFiles(dirPath, WellKnownData.dllPattern);
+                var pluginFiles = Directory.GetFiles(dirPath, WellKnownData.DllPattern);
                 foreach (var file in pluginFiles)
                 {
                     LoadRegisterPlugin(file);
@@ -179,7 +179,7 @@ namespace OneIdentity.DevOps.Plugins
 
         private void OnChanged(object source, FileSystemEventArgs e)
         {
-            if (Path.GetExtension(e.FullPath).ToLower().Equals(WellKnownData.dllExtension))
+            if (Path.GetExtension(e.FullPath).ToLower().Equals(WellKnownData.DllExtension))
                 LoadRegisterPlugin(e.FullPath);
         }
     }

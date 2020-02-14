@@ -21,17 +21,11 @@ namespace OneIdentity.DevOps.Common
 
         public Dictionary<string, string> Configuration
         {
-            get { return _configuration; }
-            set { _configuration = value; }
+            get => _configuration;
+            set => _configuration = value;
         }
 
-        public Serilog.Core.Logger BaseLog
-        {
-            get
-            {
-                return _baseLog;
-            }
-        }
+        public Serilog.Core.Logger BaseLog => _baseLog;
 
         public virtual void ProcessPassword(string accountName, string password)
         {
@@ -44,16 +38,16 @@ namespace OneIdentity.DevOps.Common
         /// <returns></returns>
         public Dictionary<string, string> InitializeConfiguration()
         {
-            Dictionary<string, string> baseConfig = new Dictionary<string, string>();
-
-            baseConfig.Add("Name", "");
-            baseConfig.Add("Url", "");
-            baseConfig.Add("Description", "");
-
-            baseConfig.Add("Username", "");
-            baseConfig.Add("Password", "");
-            baseConfig.Add("LogLevel", "Possible values: 'Debug', 'Warning', 'Error'");
-            baseConfig.Add("IsConfigured", "false");
+            var baseConfig = new Dictionary<string, string>
+            {
+                {"Name", ""},
+                {"Url", ""},
+                {"Description", ""},
+                {"Username", ""},
+                {"Password", ""},
+                {"LogLevel", "Possible values: 'Debug', 'Warning', 'Error'"},
+                {"IsConfigured", "false"}
+            };
 
             return baseConfig;
         }
@@ -82,12 +76,7 @@ namespace OneIdentity.DevOps.Common
                 }
             }
 
-            if (baseConfig == null)
-            {
-                baseConfig = InitializeConfiguration();
-            }
-
-            return baseConfig;
+            return baseConfig ?? InitializeConfiguration();
         }
 
 

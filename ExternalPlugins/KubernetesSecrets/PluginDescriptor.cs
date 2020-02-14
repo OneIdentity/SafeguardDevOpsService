@@ -19,16 +19,15 @@ namespace OneIdentity.DevOps.KubernetesSecrets
         private static string _defaultNamespace = "default";
 
         public string Name { get; } = "KubernetesVault";
-        public string Description { get; } = "This is the Kubenetes Vault plugin for updating passwords";
+        public string Description { get; } = "This is the Kubenetes Secrets plugin for updating passwords";
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
-            if (_configuration == null)
+            return _configuration ?? (_configuration = new Dictionary<string, string>
             {
-                _configuration = new Dictionary<string, string> {{_configFilePathName, ""}, {_configFilePathName, _defaultNamespace}};
-            }
-
-            return _configuration;
+                {_configFilePathName, ""},
+                {_configFilePathName, _defaultNamespace}
+            });
         }
 
         public void SetPluginConfiguration(Dictionary<string,string> configuration)

@@ -13,38 +13,33 @@ namespace OneIdentity.DevOps.HashiCorpVault
         private static Dictionary<string,string> _configuration;
         private static ILogger _logger;
 
-        private string _address = "http://127.0.0.1:8200";
-        private string _mountPoint = "oneidentity";
+        private const string Address = "http://127.0.0.1:8200";
+        private const string MountPoint = "oneidentity";
 
-        private readonly string _authTokenName = "authToken";
-        private readonly string _addressName = "address";
-        private readonly string _mountPointName = "mountPoint";
+        private const string AuthTokenName = "authToken";
+        private const string AddressName = "address";
+        private const string MountPointName = "mountPoint";
 
         public string Name { get; } = "HashiCorpVault";
         public string Description { get; } = "This is the HashiCorp Vault plugin for updating the passwords";
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
-            if (_configuration == null)
+            return _configuration ?? (_configuration = new Dictionary<string, string>
             {
-                _configuration = new Dictionary<string, string>
-                {
-                    { _authTokenName, "" },
-                    { _addressName, _address },
-                    { _mountPointName, _mountPoint }
-                };
-            }
-
-            return _configuration;
+                {AuthTokenName, ""},
+                {AddressName, Address},
+                {MountPointName, MountPoint}
+            });
         }
 
         public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
-            if (configuration != null && configuration.ContainsKey(_authTokenName) &&
-                configuration.ContainsKey(_addressName) && configuration.ContainsKey(_mountPointName))
+            if (configuration != null && configuration.ContainsKey(AuthTokenName) &&
+                configuration.ContainsKey(AddressName) && configuration.ContainsKey(MountPointName))
             {
-                var authMethod = new TokenAuthMethodInfo(configuration[_authTokenName]);
-                var vaultClientSettings = new VaultClientSettings(configuration[_addressName], authMethod);
+                var authMethod = new TokenAuthMethodInfo(configuration[AuthTokenName]);
+                var vaultClientSettings = new VaultClientSettings(configuration[AddressName], authMethod);
                 _vaultClient = new VaultClient(vaultClientSettings);
                 _configuration = configuration;
                 _logger.Information($"Plugin {Name} has been successfully configured.");
@@ -63,12 +58,14 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 return false;
             }
 
-            var passwordData = new Dictionary<string, object>();
-            passwordData.Add("value", password);
+            var passwordData = new Dictionary<string, object>
+            {
+                {"value", password}
+            };
 
             try
             {
-                _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(account, passwordData, null, _configuration[_mountPointName])
+                _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(account, passwordData, null, _configuration[MountPointName])
                     .Wait();
                 _logger.Information($"Password for account {account} has been successfully stored in the vault.");
                 return true;

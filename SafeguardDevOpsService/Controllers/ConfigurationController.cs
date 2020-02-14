@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.ConfigurationImpl;
 using OneIdentity.DevOps.Data;
-using OneIdentity.DevOps.Impl;
 
 namespace OneIdentity.DevOps.Controllers
 {

@@ -16,9 +16,9 @@ namespace OneIdentity.DevOps.ConfigurationImpl
 {
     internal class ConfigurationLogic : IConfigurationLogic
     {
-        private int _safeguardApiVersion = 3;
-        private bool _safeguardIgnoreSsl = true;
-        private Serilog.ILogger _logger;
+        private readonly int _safeguardApiVersion = 3;
+        private readonly bool _safeguardIgnoreSsl = true;
+        private readonly Serilog.ILogger _logger;
 
 
         private readonly IConfigurationRepository _configurationRepository;
