@@ -10,7 +10,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevOpsService", "S
 		{C208CAA2-B312-4CBB-864D-7DFF4673140F} = {C208CAA2-B312-4CBB-864D-7DFF4673140F}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Common\Common.csproj", "{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsPluginCommon", "DevOpsPluginCommon\DevOpsPluginCommon.csproj", "{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HashiCorpVault", "ExternalPlugins\HashiCorpVault\HashiCorpVault.csproj", "{C208CAA2-B312-4CBB-864D-7DFF4673140F}"
 EndProject
