@@ -6,6 +6,8 @@
 # VS Code
 .vscode
 
+# Application-specific files
+Configuration.db
 
 # User-specific files
 *.suo
