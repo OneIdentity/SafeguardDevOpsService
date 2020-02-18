@@ -12,8 +12,8 @@ namespace OneIdentity.DevOps.Data
 
         public bool Equals(AccountMapping other)
         {
-            return (String.Compare(AccountName, other.AccountName, StringComparison.OrdinalIgnoreCase) == 0) &&
-                   (String.Compare(VaultName, other.VaultName, StringComparison.OrdinalIgnoreCase) == 0);
+            return (string.Compare(AccountName, other.AccountName, StringComparison.OrdinalIgnoreCase) == 0) &&
+                   (string.Compare(VaultName, other.VaultName, StringComparison.OrdinalIgnoreCase) == 0);
         }
     }
 }

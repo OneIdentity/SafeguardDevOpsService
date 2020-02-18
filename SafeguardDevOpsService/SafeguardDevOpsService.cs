@@ -15,8 +15,6 @@ namespace OneIdentity.DevOps
 
         public SafeguardDevOpsService()
         {
-            
-
             _host = new WebHostBuilder()
                 .UseKestrel()
                 .ConfigureServices(services => services.AddAutofac())

@@ -26,7 +26,7 @@ namespace OneIdentity.DevOps.Impl
         public static string SerializeObject<T>(T scbObject, bool ignoreNull = false) where T : class
         {
             // ReSharper disable once UseObjectOrCollectionInitializer
-            JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+            var jsonSettings = new JsonSerializerSettings
             {
                 Error = HandleDeserializationError
             };

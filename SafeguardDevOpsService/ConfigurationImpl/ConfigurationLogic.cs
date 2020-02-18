@@ -350,9 +350,9 @@ namespace OneIdentity.DevOps.ConfigurationImpl
             _configurationRepository.RemoveSetting(apiKey);
         }
 
-        private static ISafeguardEventListener _eventListener = null;
-        private static ISafeguardA2AContext _a2aContext = null;
-        private static List<RetrievableAccount> _retrievableAccounts = null;
+        private static ISafeguardEventListener _eventListener;
+        private static ISafeguardA2AContext _a2AContext;
+        private static List<RetrievableAccount> _retrievableAccounts;
 
         private void StartMonitoring()
         {
@@ -367,7 +367,7 @@ namespace OneIdentity.DevOps.ConfigurationImpl
             }
 
             // connect to Safeguard
-            _a2aContext = Safeguard.A2A.GetContext(configuration.SppAddress, configuration.CertificateUserThumbPrint,
+            _a2AContext = Safeguard.A2A.GetContext(configuration.SppAddress, configuration.CertificateUserThumbPrint,
                 _safeguardApiVersion, _safeguardIgnoreSsl);
 
             // figure out what API keys to monitor
@@ -384,7 +384,7 @@ namespace OneIdentity.DevOps.ConfigurationImpl
                 apiKeys.Add(account.ApiKey.ToSecureString());
             }
 
-            _eventListener = _a2aContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);
+            _eventListener = _a2AContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);
             _eventListener.Start();
 
             _logger.Information("Password change monitoring has been started.");
@@ -395,13 +395,13 @@ namespace OneIdentity.DevOps.ConfigurationImpl
             try
             {
                 _eventListener?.Stop();
-                _a2aContext?.Dispose();
+                _a2AContext?.Dispose();
                 _logger.Information("Password change monitoring has been stopped.");
             }
             finally
             {
                 _eventListener = null;
-                _a2aContext = null;
+                _a2AContext = null;
                 _retrievableAccounts = null;
             }
         }
@@ -420,7 +420,7 @@ namespace OneIdentity.DevOps.ConfigurationImpl
             try
             {
                 var apiKey = _retrievableAccounts.Single(mp => mp.SystemName == eventInfo.AssetName && mp.AccountName == eventInfo.AccountName).ApiKey;
-                using (var password = _a2aContext.RetrievePassword(apiKey.ToSecureString()))
+                using (var password = _a2AContext.RetrievePassword(apiKey.ToSecureString()))
                 {
                     var accounts = configuration.AccountMapping.ToList();
                     var selectedAccounts = accounts.Where(a => a.ApiKey.Equals(apiKey));

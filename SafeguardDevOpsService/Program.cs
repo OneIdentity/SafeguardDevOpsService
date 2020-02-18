@@ -3,9 +3,9 @@ using Topshelf;
 
 namespace OneIdentity.DevOps
 {
-    class Program
+    internal class Program
     {
-        static void Main()
+        private static void Main()
         {
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.File("SafeguardDevOpsService.log", outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")

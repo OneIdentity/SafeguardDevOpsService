@@ -75,7 +75,7 @@ namespace OneIdentity.DevOps
             // specifying the Swagger JSON endpoint.
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "DevOps Service API V1");
+                c.SwaggerEndpoint("/swagger/v1/devops.json", "DevOps Service API V1");
             });
 
             app.UseMvc();
