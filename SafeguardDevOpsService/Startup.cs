@@ -13,12 +13,24 @@ namespace OneIdentity.DevOps
 {
     internal class Startup
     {
+        private const string AppSettings = "appsettings";
+
+        private static readonly string ServiceName = "Safeguard DevOps Service";
+        private static readonly string ApiName = $"{ServiceName} API";
+        private static readonly string ApiVersion = "v1";
+        private static readonly string VersionApiName = $"{ApiName} {ApiVersion}";
+
+        private static readonly string SwaggerRoutePrefix = "devops/docs";
+        private static readonly string SwaggerRouteTemplate = $"/{SwaggerRoutePrefix}/{{documentName}}/swagger.json";
+        private static readonly string OpenApiRelativeUrl = $"/{SwaggerRoutePrefix}/{ApiVersion}/swagger.json";
+
+
         public Startup(IWebHostEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional:true, reloadOnChange:true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
+                .AddJsonFile($"{AppSettings}.json", optional:true, reloadOnChange:true)
+                .AddJsonFile($"{AppSettings}.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
         }
@@ -37,7 +49,14 @@ namespace OneIdentity.DevOps
                 .AddMvcOptions(opts => { opts.EnableEndpointRouting = false; });
                 //.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo {Title = "DevOps Service API", Version = "v1"}); });
+            services.AddSwaggerGen(c => { 
+                c.SwaggerDoc(ApiVersion, new OpenApiInfo
+                {
+                    Title = ApiName,
+                    Version = ApiVersion,
+
+                });
+            });
         }
 
         // This only gets called if your environment is Development. The
@@ -69,13 +88,14 @@ namespace OneIdentity.DevOps
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
         {
             // Enable middleware to serve generated Swagger as a JSON endpoint.
-            app.UseSwagger();
+            app.UseSwagger(c => { c.RouteTemplate = SwaggerRouteTemplate; });
 
             // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
             // specifying the Swagger JSON endpoint.
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/devops.json", "DevOps Service API V1");
+                c.SwaggerEndpoint(OpenApiRelativeUrl, VersionApiName);
+                c.RoutePrefix = SwaggerRoutePrefix;
             });
 
             app.UseMvc();
