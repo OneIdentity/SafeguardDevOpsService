@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using OneIdentity.SafeguardDevOpsService.ConfigDb;
 using OneIdentity.SafeguardDevOpsService.ConfigurationImpl;
 using Microsoft.OpenApi.Models;
+using OneIdentity.SafeguardDevOpsService.Attributes;
 using OneIdentity.SafeguardDevOpsService.Data;
 using OneIdentity.SafeguardDevOpsService.Plugins;
 
@@ -34,8 +35,11 @@ namespace OneIdentity.SafeguardDevOpsService
             // Add services to the collection. Don't build or return
             // any IServiceProvider or the ConfigureContainer method
             // won't get called.
-            services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            // services.AddMvc(options =>
+            // {
+            //     options.Filters.Add(new UnhandledExceptionErrorAttribute());
+            // }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo {Title = "DevOps Service API", Version = "v1"}); });
         }

@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using OneIdentity.SafeguardDevOpsService.Exceptions;
 
 namespace OneIdentity.SafeguardDevOpsService.Impl
 {
@@ -18,7 +19,7 @@ namespace OneIdentity.SafeguardDevOpsService.Impl
 
             if (deserializedObject == null)
             {
-                throw new Exception("Deserialization failed");
+                throw new DevOpsException("Deserialization failed");
             }
             return deserializedObject;
         }
@@ -36,7 +37,7 @@ namespace OneIdentity.SafeguardDevOpsService.Impl
 
             if (rawJson == null)
             {
-                throw new Exception("Serialization failed");
+                throw new DevOpsException("Serialization failed");
             }
 
             return rawJson;

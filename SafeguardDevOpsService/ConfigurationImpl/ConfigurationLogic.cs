@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security;
 using OneIdentity.SafeguardDevOpsService.ConfigDb;
 using OneIdentity.SafeguardDevOpsService.Data;
+using OneIdentity.SafeguardDevOpsService.Exceptions;
 using OneIdentity.SafeguardDevOpsService.Impl;
 using OneIdentity.SafeguardDevOpsService.Plugins;
 using OneIdentity.SafeguardDotNet;
@@ -38,11 +39,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             //TODO: Get the registration and store the configuration in the database
 
             if (initialConfig == null)
-                throw new Exception("The initial configuration cannot be null.");
+                throw new DevOpsException("The initial configuration cannot be null.");
             if (initialConfig.CertificateUserThumbprint == null)
-                throw new Exception("The user certificate thumbprint cannot be null.");
+                throw new DevOpsException("The user certificate thumbprint cannot be null.");
             if (initialConfig.SppAddress == null)
-                throw new Exception("The SPP network address cannot be null.");
+                throw new DevOpsException("The SPP network address cannot be null.");
 
             ISafeguardConnection connection = null;
             try
@@ -90,7 +91,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
                 connection?.Dispose();
             }
 
-            throw new Exception("Failed to configure devops.");
+            throw new DevOpsException("Failed to configure devops.");
         }
 
         public void DeleteConfiguration()
@@ -106,11 +107,11 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         public Configuration UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig)
         {
             if (connectionConfig == null)
-                throw new Exception("The initial configuration cannot be null.");
+                throw new DevOpsException("The initial configuration cannot be null.");
             if (connectionConfig.CertificateUserThumbprint == null)
-                throw new Exception("The user certificate thumbprint cannot be null.");
+                throw new DevOpsException("The user certificate thumbprint cannot be null.");
             if (connectionConfig.SppAddress == null)
-                throw new Exception("The SPS network address cannot be null.");
+                throw new DevOpsException("The SPS network address cannot be null.");
 
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null)
@@ -357,7 +358,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
         private void StartMonitoring()
         {
             if (_eventListener != null)
-                throw new Exception("Listener is already running.");
+                throw new DevOpsException("Listener is already running.");
 
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null)
@@ -375,7 +376,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigurationImpl
             if (_retrievableAccounts.Count == 0)
             {
                 _logger.Error("No API keys found in A2A registrations.  Nothing to do.");
-                throw new Exception("No API keys found in A2A registrations.  Nothing to do.");
+                throw new DevOpsException("No API keys found in A2A registrations.  Nothing to do.");
             }
 
             var apiKeys = new List<SecureString>();
