@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.ConfigurationImpl;
 using Microsoft.OpenApi.Models;
+using OneIdentity.DevOps.Impl;
 using OneIdentity.DevOps.Plugins;
 
 namespace OneIdentity.DevOps
@@ -20,7 +21,7 @@ namespace OneIdentity.DevOps
         private static readonly string ApiVersion = "v1";
         private static readonly string VersionApiName = $"{ApiName} {ApiVersion}";
 
-        private static readonly string SwaggerRoutePrefix = "devops/docs";
+        private static readonly string SwaggerRoutePrefix = $"{WellKnownData.RoutePrefix}/swagger";
         private static readonly string SwaggerRouteTemplate = $"/{SwaggerRoutePrefix}/{{documentName}}/swagger.json";
         private static readonly string OpenApiRelativeUrl = $"/{SwaggerRoutePrefix}/{ApiVersion}/swagger.json";
 
@@ -53,8 +54,7 @@ namespace OneIdentity.DevOps
                 c.SwaggerDoc(ApiVersion, new OpenApiInfo
                 {
                     Title = ApiName,
-                    Version = ApiVersion,
-
+                    Version = ApiVersion
                 });
             });
         }
