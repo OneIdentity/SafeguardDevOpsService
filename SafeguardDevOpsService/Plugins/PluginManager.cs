@@ -6,7 +6,7 @@ using System.Security;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
-using OneIdentity.DevOps.Impl;
+using OneIdentity.DevOps.Logic;
 using OneIdentity.SafeguardDotNet;
 
 namespace OneIdentity.DevOps.Plugins

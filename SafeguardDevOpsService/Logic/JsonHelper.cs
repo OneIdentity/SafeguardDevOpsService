@@ -3,27 +3,27 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using OneIdentity.DevOps.Exceptions;
 
-namespace OneIdentity.DevOps.Impl
+namespace OneIdentity.DevOps.Logic
 {
     public class JsonHelper
     {
         public static T DeserializeObject<T>(string rawJson) where T : class
         {
-            T deserializedObject = JsonConvert.DeserializeObject<T>(rawJson,
+            T dataTransferObject = JsonConvert.DeserializeObject<T>(rawJson,
                 new JsonSerializerSettings
                 {
                     Error = HandleDeserializationError,
                     DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate
                 });
 
-            if (deserializedObject == null)
+            if (dataTransferObject == null)
             {
                 throw new DevOpsException("Deserialization failed");
             }
-            return deserializedObject;
+            return dataTransferObject;
         }
 
-        public static string SerializeObject<T>(T scbObject, bool ignoreNull = false) where T : class
+        public static string SerializeObject<T>(T dataTransferObject, bool ignoreNull = false) where T : class
         {
             // ReSharper disable once UseObjectOrCollectionInitializer
             var jsonSettings = new JsonSerializerSettings
@@ -32,7 +32,7 @@ namespace OneIdentity.DevOps.Impl
             };
             jsonSettings.NullValueHandling = ignoreNull ? NullValueHandling.Ignore : NullValueHandling.Include;
 
-            var rawJson = JsonConvert.SerializeObject(scbObject, jsonSettings);
+            var rawJson = JsonConvert.SerializeObject(dataTransferObject, jsonSettings);
 
             if (rawJson == null)
             {

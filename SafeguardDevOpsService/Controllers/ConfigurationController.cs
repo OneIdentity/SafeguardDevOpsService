@@ -2,7 +2,7 @@
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.ConfigDb;
-using OneIdentity.DevOps.ConfigurationImpl;
+using OneIdentity.DevOps.Logic;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Exceptions;
@@ -12,7 +12,7 @@ namespace OneIdentity.DevOps.Controllers
 
 //    [UnhandledExceptionError]
     [Controller]
-    [Route("devops/[controller]")]
+    [Route("service/devops/[controller]")]
     public class ConfigurationController : Controller
     {
         private readonly IConfigurationRepository _configurationRepository;

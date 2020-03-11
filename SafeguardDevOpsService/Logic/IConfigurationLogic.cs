@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using OneIdentity.DevOps.Data;
 
-namespace OneIdentity.DevOps.ConfigurationImpl
+namespace OneIdentity.DevOps.Logic
 {
     public interface IConfigurationLogic
     {

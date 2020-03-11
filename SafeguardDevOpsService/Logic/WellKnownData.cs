@@ -1,4 +1,4 @@
-﻿namespace OneIdentity.DevOps.Impl
+﻿namespace OneIdentity.DevOps.Logic
 {
     public static class WellKnownData
     {

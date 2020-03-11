@@ -5,10 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
-using OneIdentity.DevOps.ConfigurationImpl;
+using OneIdentity.DevOps.Logic;
 using Microsoft.OpenApi.Models;
 using OneIdentity.DevOps.Attributes;
-using OneIdentity.DevOps.Impl;
 using OneIdentity.DevOps.Plugins;
 
 namespace OneIdentity.DevOps

@@ -6,14 +6,14 @@ using System.Security;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;
-using OneIdentity.DevOps.Impl;
+using OneIdentity.DevOps.Logic;
 using OneIdentity.DevOps.Plugins;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Event;
 
 
-namespace OneIdentity.DevOps.ConfigurationImpl
+namespace OneIdentity.DevOps.Logic
 {
     internal class ConfigurationLogic : IConfigurationLogic
     {
