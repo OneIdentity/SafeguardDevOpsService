@@ -1,7 +1,7 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using OneIdentity.DevOps.Exceptions;
 
 namespace OneIdentity.DevOps.Impl
 {
@@ -18,7 +18,7 @@ namespace OneIdentity.DevOps.Impl
 
             if (deserializedObject == null)
             {
-                throw new Exception("Deserialization failed");
+                throw new DevOpsException("Deserialization failed");
             }
             return deserializedObject;
         }
@@ -36,7 +36,7 @@ namespace OneIdentity.DevOps.Impl
 
             if (rawJson == null)
             {
-                throw new Exception("Serialization failed");
+                throw new DevOpsException("Serialization failed");
             }
 
             return rawJson;

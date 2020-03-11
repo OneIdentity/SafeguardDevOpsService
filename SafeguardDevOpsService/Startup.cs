@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.ConfigurationImpl;
 using Microsoft.OpenApi.Models;
+using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Impl;
 using OneIdentity.DevOps.Plugins;
 
@@ -49,6 +50,7 @@ namespace OneIdentity.DevOps
             services.AddMvc()
                 .AddMvcOptions(opts => { opts.EnableEndpointRouting = false; });
                 //.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+
 
             services.AddSwaggerGen(c => { 
                 c.SwaggerDoc(ApiVersion, new OpenApiInfo

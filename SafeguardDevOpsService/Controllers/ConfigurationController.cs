@@ -4,10 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.ConfigurationImpl;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Attributes;
+using OneIdentity.DevOps.Exceptions;
 
 namespace OneIdentity.DevOps.Controllers
 {
 
+//    [UnhandledExceptionError]
     [Controller]
     [Route("devops/[controller]")]
     public class ConfigurationController : Controller
@@ -167,6 +170,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [HttpPost("Monitoring")]
+        [UnhandledExceptionError]
         public ActionResult<bool> PostMonitoring([FromQuery]bool enable = true)
         {
             _configurationLogic.EnableMonitoring(enable);
