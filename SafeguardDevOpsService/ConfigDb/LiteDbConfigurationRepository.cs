@@ -11,14 +11,14 @@ namespace OneIdentity.DevOps.ConfigDb
         private bool _disposed;
         private LiteDatabase _configurationDb;
         private readonly ILiteCollection<Setting> _settings;
-        private readonly ILiteCollection<Configuration> _configuration;
+        private readonly ILiteCollection<SafeguardConnectionRequest> _configuration;
         private readonly ILiteCollection<Plugin> _plugins;
 
         public LiteDbConfigurationRepository()
         {
-            _configurationDb = new LiteDatabase(@"Configuration.db");
+            _configurationDb = new LiteDatabase(@"SafeguardConnection.db");
             _settings = _configurationDb.GetCollection<Setting>("settings");
-            _configuration = _configurationDb.GetCollection<Configuration>("configuration");
+            _configuration = _configurationDb.GetCollection<SafeguardConnectionRequest>("safeguardConnection");
             _plugins = _configurationDb.GetCollection<Plugin>("plugins");
         }
 
@@ -65,14 +65,14 @@ namespace OneIdentity.DevOps.ConfigDb
             _settings.Delete(name);
         }
 
-        public Configuration GetConfiguration()
+        public SafeguardConnectionRequest GetConfiguration()
         {
             return _configuration.FindById(1);
         }
 
-        public void SaveConfiguration(Configuration configuration)
+        public void SaveConfiguration(SafeguardConnectionRequest safeguardConnectionRequest)
         {
-            _configuration.Upsert(configuration);
+            _configuration.Upsert(safeguardConnectionRequest);
         }
 
         public void DeleteConfiguration()

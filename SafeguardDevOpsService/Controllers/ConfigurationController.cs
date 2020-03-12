@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Logic;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Exceptions;
 
@@ -30,7 +31,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [HttpGet]
-        public ActionResult<Configuration> GetConfiguration()
+        public ActionResult<SafeguardConnectionController> GetConfiguration()
         {
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null)
@@ -47,7 +48,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [HttpPost]
-        public ActionResult<Configuration> PostConfiguration([FromBody]InitialConfiguration initialConfig)
+        public ActionResult<SafeguardConnectionController> PostConfiguration([FromBody]InitialConfiguration initialConfig)
         {
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration != null)
@@ -90,7 +91,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="400">Bad request</response>
         /// <response code="404">Not found</response>
         [HttpPut("Connection")]
-        public ActionResult<Configuration> PutConnectionConfiguration([FromBody]ConnectionConfiguration connectionConfig)
+        public ActionResult<SafeguardConnectionController> PutConnectionConfiguration([FromBody]ConnectionConfiguration connectionConfig)
         {
             var configuration = _configurationLogic.UpdateConnectionConfiguration(connectionConfig);
             if (configuration == null)
@@ -229,7 +230,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <param name="name">Name of plugin to update</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
-        [HttpPut("Plugins/{name}/Configuration")]
+        [HttpPut("Plugins/{name}/SafeguardConnectionController")]
         public ActionResult<Plugin> GetPlugins([FromBody] PluginConfiguration pluginConfiguration, [FromRoute] string name)
         {
             var plugin = _configurationLogic.SavePluginConfigurationByName(pluginConfiguration, name);

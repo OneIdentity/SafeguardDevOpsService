@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Resources;
 using System.Security;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
 using OneIdentity.DevOps.Plugins;
@@ -32,14 +34,14 @@ namespace OneIdentity.DevOps.Logic
             _logger = Serilog.Log.Logger;
         }
 
-        public Configuration InitialConfiguration(InitialConfiguration initialConfig)
+        public SafeguardConnectionRequest InitialConfiguration(InitialConfiguration initialConfig)
         {
-            //TODO: Create a new configuration element here
-            //TODO: Check to see if there is already a configuration.  If so, throw.
-            //TODO: Get the registration and store the configuration in the database
+            //TODO: Create a new safeguardConnection element here
+            //TODO: Check to see if there is already a safeguardConnection.  If so, throw.
+            //TODO: Get the registration and store the safeguardConnection in the database
 
             if (initialConfig == null)
-                throw new DevOpsException("The initial configuration cannot be null.");
+                throw new DevOpsException("The initial safeguardConnection cannot be null.");
             if (initialConfig.CertificateUserThumbprint == null)
                 throw new DevOpsException("The user certificate thumbprint cannot be null.");
             if (initialConfig.SppAddress == null)
@@ -54,27 +56,27 @@ namespace OneIdentity.DevOps.Logic
 
                 var rawJson = connection.InvokeMethod(Service.Core, Method.Get, "A2ARegistrations");
 
-                var registrations = JsonHelper.DeserializeObject<IEnumerable<SppRegistration>>(rawJson);
+                var registrations = JsonHelper.DeserializeObject<IEnumerable<A2ARegistration>>(rawJson);
 
                 // TODO: Assume that we only have one registration that belongs to the cert user
                 var registration = registrations?.FirstOrDefault();
                 if (registration != null)
                 {
-                    var configuration = new Configuration
-                    {
-                        SppAddress = initialConfig.SppAddress,
-                        A2ARegistrationId = registration.Id,
-                        A2ARegistrationName = registration.AppName,
-                        CertificateUser = registration.CertificateUser,
-                        CertificateUserThumbPrint = registration.CertificateUserThumbPrint,
-                        CreatedByUserId = registration.CreatedByUserId,
-                        CreatedByUserDisplayName = registration.CreatedByUserDisplayName,
-                        CreatedDate = registration.CreatedDate,
-                        AccountMapping = new List<AccountMapping>()
-                    };
+                    //var configuration = new SafeguardConnection
+                    //{
+                    //    SppAddress = initialConfig.SppAddress,
+                    //    A2ARegistrationId = registration.Id,
+                    //    A2ARegistrationName = registration.AppName,
+                    //    CertificateUser = registration.CertificateUser,
+                    //    CertificateUserThumbPrint = registration.CertificateUserThumbPrint,
+                    //    CreatedByUserId = registration.CreatedByUserId,
+                    //    CreatedByUserDisplayName = registration.CreatedByUserDisplayName,
+                    //    CreatedDate = registration.CreatedDate,
+                    //    AccountMapping = new List<AccountMapping>()
+                    //};
 
-                    _configurationRepository.SaveConfiguration(configuration);
-                    return configuration;
+                    //_configurationRepository.SaveConfiguration(configuration);
+                    //return configuration;
                 }
                 else
                 {
@@ -104,10 +106,10 @@ namespace OneIdentity.DevOps.Logic
             return JsonHelper.DeserializeObject<Registration>(JsonHelper.SerializeObject(_configurationRepository.GetConfiguration()));
         }
 
-        public Configuration UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig)
+        public SafeguardConnectionRequest UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig)
         {
             if (connectionConfig == null)
-                throw new DevOpsException("The initial configuration cannot be null.");
+                throw new DevOpsException("The initial safeguardConnection cannot be null.");
             if (connectionConfig.CertificateUserThumbprint == null)
                 throw new DevOpsException("The user certificate thumbprint cannot be null.");
             if (connectionConfig.SppAddress == null)
@@ -116,18 +118,18 @@ namespace OneIdentity.DevOps.Logic
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null)
             {
-                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
                 return null;
             }
 
-            configuration.CertificateUserThumbPrint = connectionConfig.CertificateUserThumbprint;
-            configuration.SppAddress = connectionConfig.SppAddress;
+            //configuration.CertificateUserThumbPrint = connectionConfig.CertificateUserThumbprint;
+            //configuration.SppAddress = connectionConfig.SppAddress;
 
             //Validate the connection information
             var connection = Safeguard.Connect(connectionConfig.SppAddress,
                 connectionConfig.CertificateUserThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
             if(connection == null)
-                _logger.Error("SPP connection configuration failed.");
+                _logger.Error("SPP connection safeguardConnection failed.");
 
             connection?.LogOut();
 
@@ -141,16 +143,17 @@ namespace OneIdentity.DevOps.Logic
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null)
             {
-                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
                 return null;
             }
 
-            if (String.IsNullOrEmpty(accountName) && String.IsNullOrEmpty(vaultName))
-                return configuration.AccountMapping.ToArray();
+           // if (String.IsNullOrEmpty(accountName) && String.IsNullOrEmpty(vaultName))
+           //     return configuration.AccountMapping.ToArray();
 
-            var accountMappings = configuration.AccountMapping.Where(x =>
-                x.AccountName.StartsWith(accountName ?? throw new ArgumentNullException(nameof(accountName))) || x.VaultName.StartsWith(vaultName));
-            return accountMappings;
+           // var accountMappings = configuration.AccountMapping.Where(x =>
+           //     x.AccountName.StartsWith(accountName ?? throw new ArgumentNullException(nameof(accountName))) || x.VaultName.StartsWith(vaultName));
+           // return accountMappings;
+           return null;
         }
 
         public IEnumerable<AccountMapping> SaveAccountMappings(IEnumerable<AccountMapping> newAccountMappings)
@@ -158,18 +161,19 @@ namespace OneIdentity.DevOps.Logic
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null)
             {
-                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
                 return null;
             }
 
-            var accountMappingList = configuration.AccountMapping.ToList();
-            var newAccountMappingsList = newAccountMappings.ToList();
+            //var accountMappingList = configuration.AccountMapping.ToList();
+            //var newAccountMappingsList = newAccountMappings.ToList();
 
-            accountMappingList.AddRange(newAccountMappingsList.Where(p2 => accountMappingList.All(p1 => !p1.Equals(p2))));
-            configuration.AccountMapping = accountMappingList;
+            //accountMappingList.AddRange(newAccountMappingsList.Where(p2 => accountMappingList.All(p1 => !p1.Equals(p2))));
+            //configuration.AccountMapping = accountMappingList;
 
             _configurationRepository.SaveConfiguration(configuration);
-            return accountMappingList;
+           // return accountMappingList;
+           return null;
         }
 
         public IEnumerable<AccountMapping> RemoveAccountMappings(bool removeAll, string accountName, string vaultName)
@@ -177,35 +181,36 @@ namespace OneIdentity.DevOps.Logic
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null)
             {
-                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
                 return null;
             }
 
-            if (removeAll && accountName == null && vaultName == null)
-            {
-                configuration.AccountMapping = new List<AccountMapping>();
-            }
-            else
-            {
-                var accountMappingList = configuration.AccountMapping.ToList();
-                if (accountName != null && vaultName != null)
-                {
-                    accountMappingList.RemoveAll(x => x.AccountName == accountName && x.VaultName == vaultName);
-                } else if (accountName != null)
-                {
-                    accountMappingList.RemoveAll(x => x.AccountName == accountName);
-                }
-                else
-                {
-                    accountMappingList.RemoveAll(x => x.VaultName == vaultName);
-                }
+            //if (removeAll && accountName == null && vaultName == null)
+            //{
+            //    configuration.AccountMapping = new List<AccountMapping>();
+            //}
+            //else
+            //{
+            //    var accountMappingList = configuration.AccountMapping.ToList();
+            //    if (accountName != null && vaultName != null)
+            //    {
+            //        accountMappingList.RemoveAll(x => x.AccountName == accountName && x.VaultName == vaultName);
+            //    } else if (accountName != null)
+            //    {
+            //        accountMappingList.RemoveAll(x => x.AccountName == accountName);
+            //    }
+            //    else
+            //    {
+            //        accountMappingList.RemoveAll(x => x.VaultName == vaultName);
+            //    }
 
-                configuration.AccountMapping = accountMappingList;
-            }
+            //    configuration.AccountMapping = accountMappingList;
+            //}
 
-            _configurationRepository.SaveConfiguration(configuration);
+            //_configurationRepository.SaveConfiguration(configuration);
 
-            return configuration.AccountMapping;
+            //return configuration.AccountMapping;
+            return null;
         }
 
         public IEnumerable<RetrievableAccount> GetRetrievableAccounts()
@@ -213,29 +218,29 @@ namespace OneIdentity.DevOps.Logic
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null)
             {
-                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
                 return null;
             }
 
-            ISafeguardConnection connection = null;
-            try
-            {
-                connection = Safeguard.Connect(configuration.SppAddress, configuration.CertificateUserThumbPrint,
-                    _safeguardApiVersion, _safeguardIgnoreSsl);
-                var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
-                    $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts");
-                var retrievableAccounts = JsonHelper.DeserializeObject<IEnumerable<RetrievableAccount>>(rawJson);
+            //ISafeguardConnection connection = null;
+            //try
+            //{
+            //    connection = Safeguard.Connect(configuration.SppAddress, configuration.CertificateUserThumbPrint,
+            //        _safeguardApiVersion, _safeguardIgnoreSsl);
+            //    var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
+            //        $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts");
+            //    var retrievableAccounts = JsonHelper.DeserializeObject<IEnumerable<RetrievableAccount>>(rawJson);
 
-                return retrievableAccounts.ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Failed to get the retrievable accounts from SPP: {ex.Message}.");
-            }
-            finally
-            {
-                connection?.Dispose();
-            }
+            //    return retrievableAccounts.ToList();
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.Error($"Failed to get the retrievable accounts from SPP: {ex.Message}.");
+            //}
+            //finally
+            //{
+            //    connection?.Dispose();
+            //}
 
             return null;
         }
@@ -270,7 +275,7 @@ namespace OneIdentity.DevOps.Logic
 
             if (plugin == null)
             {
-                _logger.Error($"Failed to save the configuration. No plugin {name} was found.");
+                _logger.Error($"Failed to save the safeguardConnection. No plugin {name} was found.");
                 return null;
             }
 
@@ -281,28 +286,28 @@ namespace OneIdentity.DevOps.Logic
             return plugin;
         }
 
-        private IEnumerable<AccountMapping> GetAccountMappings(Configuration configuration)
+        private IEnumerable<AccountMapping> GetAccountMappings(SafeguardConnectionRequest safeguardConnectionRequest)
         {
             ISafeguardConnection connection = null;
             try
             {
-                connection = Safeguard.Connect(configuration.SppAddress, configuration.CertificateUserThumbPrint,
-                    _safeguardApiVersion, _safeguardIgnoreSsl);
-                var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
-                    $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts");
+                //connection = Safeguard.Connect(safeguardConnection.SppAddress, safeguardConnection.CertificateUserThumbPrint,
+                //    _safeguardApiVersion, _safeguardIgnoreSsl);
+                //var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
+                //    $"A2ARegistrations/{safeguardConnection.A2ARegistrationId}/RetrievableAccounts");
 
-                var retrievableAccounts = JsonHelper.DeserializeObject<IEnumerable<RetrievableAccount>>(rawJson);
+               // var retrievableAccounts = JsonHelper.DeserializeObject<IEnumerable<RetrievableAccount>>(rawJson);
 
                 var accountMappings = new List<AccountMapping>();
-                foreach (var account in retrievableAccounts)
-                {
-                    accountMappings.Add(new AccountMapping()
-                    {
-                        AccountName = account.AccountName,
-                        ApiKey = account.ApiKey,
-                        VaultName = ""
-                    });
-                }
+                //foreach (var account in retrievableAccounts)
+                //{
+                //    accountMappings.Add(new AccountMapping()
+                //    {
+                //        AccountName = account.AccountName,
+                //        ApiKey = account.ApiKey,
+                //        VaultName = ""
+                //    });
+                //}
 
                 return accountMappings;
             }
@@ -312,7 +317,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private RetrievableAccount GetRetrievableAccount(Configuration configuration, string apiKey)
+        private RetrievableAccount GetRetrievableAccount(SafeguardConnectionRequest safeguardConnectionRequest, string apiKey)
         {
             var apiKeyInfo = _configurationRepository.GetSetting(apiKey);
 
@@ -320,14 +325,15 @@ namespace OneIdentity.DevOps.Logic
             try
             {
 
-                connection = Safeguard.Connect(configuration.SppAddress, configuration.CertificateUserThumbPrint,
-                    _safeguardApiVersion, _safeguardIgnoreSsl);
-                var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
-                    $"A2ARegistrations/{configuration.A2ARegistrationId}/RetrievableAccounts/{apiKeyInfo.Value}");
+                //connection = Safeguard.Connect(safeguardConnection.SppAddress, safeguardConnection.CertificateUserThumbPrint,
+                //    _safeguardApiVersion, _safeguardIgnoreSsl);
+                //var rawJson = connection.InvokeMethod(Service.Core, Method.Get,
+                //    $"A2ARegistrations/{safeguardConnection.A2ARegistrationId}/RetrievableAccounts/{apiKeyInfo.Value}");
 
-                var retrievableAccount = JsonHelper.DeserializeObject<IEnumerable<RetrievableAccount>>(rawJson);
+                //var retrievableAccount = JsonHelper.DeserializeObject<IEnumerable<RetrievableAccount>>(rawJson);
 
-                return retrievableAccount?.FirstOrDefault();
+                //return retrievableAccount?.FirstOrDefault();
+                return null;
             }
             finally
             {
@@ -335,7 +341,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void SaveRetrievableAccount(Configuration configuration, RetrievableAccount retrievableAccount)
+        private void SaveRetrievableAccount(SafeguardConnectionRequest safeguardConnectionRequest, RetrievableAccount retrievableAccount)
         {
             var apiKeyInfo = new Setting()
             {
@@ -346,7 +352,7 @@ namespace OneIdentity.DevOps.Logic
             _configurationRepository.SetSetting(apiKeyInfo);
         }
 
-        private void DeleteRetrievableAccount(Configuration configuration, string apiKey)
+        private void DeleteRetrievableAccount(SafeguardConnectionRequest safeguardConnectionRequest, string apiKey)
         {
             _configurationRepository.RemoveSetting(apiKey);
         }
@@ -363,13 +369,13 @@ namespace OneIdentity.DevOps.Logic
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null)
             {
-                _logger.Error("No configuration was found.  DevOps service must be configured first");
+                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
                 return;
             }
 
             // connect to Safeguard
-            _a2AContext = Safeguard.A2A.GetContext(configuration.SppAddress, configuration.CertificateUserThumbPrint,
-                _safeguardApiVersion, _safeguardIgnoreSsl);
+            //_a2AContext = Safeguard.A2A.GetContext(configuration.SppAddress, configuration.CertificateUserThumbPrint,
+            //    _safeguardApiVersion, _safeguardIgnoreSsl);
 
             // figure out what API keys to monitor
             _retrievableAccounts = GetRetrievableAccounts().ToList();
@@ -412,7 +418,7 @@ namespace OneIdentity.DevOps.Logic
             var configuration = _configurationRepository.GetConfiguration();
             if (configuration == null || _retrievableAccounts == null)
             {
-                _logger.Error("No configuration was found.  DevOps service must be configured first or no retrievable accounts found.");
+                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first or no retrievable accounts found.");
                 return;
             }
 
@@ -423,23 +429,23 @@ namespace OneIdentity.DevOps.Logic
                 var apiKey = _retrievableAccounts.Single(mp => mp.SystemName == eventInfo.AssetName && mp.AccountName == eventInfo.AccountName).ApiKey;
                 using (var password = _a2AContext.RetrievePassword(apiKey.ToSecureString()))
                 {
-                    var accounts = configuration.AccountMapping.ToList();
-                    var selectedAccounts = accounts.Where(a => a.ApiKey.Equals(apiKey));
-                    foreach (var account in selectedAccounts)
-                    {
-                        try
-                        {
-                            _logger.Information($"Sending password for account {account.AccountName} to {account.VaultName}.");
-                            if (!_pluginManager.SendPassword(account.VaultName, account.AccountName, password))
-                                _logger.Error(
-                                    $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Error(
-                                $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
-                        }
-                    }
+                    //var accounts = configuration.AccountMapping.ToList();
+                    //var selectedAccounts = accounts.Where(a => a.ApiKey.Equals(apiKey));
+                    //foreach (var account in selectedAccounts)
+                    //{
+                    //    try
+                    //    {
+                    //        _logger.Information($"Sending password for account {account.AccountName} to {account.VaultName}.");
+                    //        if (!_pluginManager.SendPassword(account.VaultName, account.AccountName, password))
+                    //            _logger.Error(
+                    //                $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
+                    //    }
+                    //    catch (Exception ex)
+                    //    {
+                    //        _logger.Error(
+                    //            $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
+                    //    }
+                    //}
                 }
             }
             catch (Exception ex)

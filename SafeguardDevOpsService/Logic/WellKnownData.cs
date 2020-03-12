@@ -2,7 +2,7 @@
 {
     public static class WellKnownData
     {
-        public const string ConfigurationName = "Configuration";
+        public const string ConfigurationName = "SafeguardConnection";
         public const string PluginsName = "Plugins";
         public const string PluginInfoClassName = "PluginDescriptor";
 

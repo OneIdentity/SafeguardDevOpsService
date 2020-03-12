@@ -10,8 +10,8 @@ namespace OneIdentity.DevOps.ConfigDb
         void SetSetting(Setting value);
         void RemoveSetting(string name);
 
-        Configuration GetConfiguration();
-        void SaveConfiguration(Configuration configuration);
+        SafeguardConnectionRequest GetConfiguration();
+        void SaveConfiguration(SafeguardConnectionRequest safeguardConnectionRequest);
         void DeleteConfiguration();
 
         IEnumerable<Plugin> GetAllPlugins();

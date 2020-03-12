@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Logic;
 using Microsoft.OpenApi.Models;
-using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Plugins;
 
 namespace OneIdentity.DevOps
@@ -47,6 +46,7 @@ namespace OneIdentity.DevOps
             // any IServiceProvider or the ConfigureContainer method
             // won't get called.
             services.AddMvc()
+                //.AddNewtonsoftJson(opts => opts.UseMemberCasing())
                 .AddMvcOptions(opts => { opts.EnableEndpointRouting = false; });
                 //.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
