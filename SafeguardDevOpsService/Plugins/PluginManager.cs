@@ -11,7 +11,7 @@ using OneIdentity.SafeguardDotNet;
 
 namespace OneIdentity.DevOps.Plugins
 {
-    public class PluginManager : IDisposable, IPluginManager
+    internal class PluginManager : IDisposable, IPluginManager
     {
         private const string PluginDirName = "ExternalPlugins";
         private static readonly Dictionary<string,ILoadablePlugin> LoadedPlugins = new Dictionary<string, ILoadablePlugin>();
@@ -22,7 +22,7 @@ namespace OneIdentity.DevOps.Plugins
 
         private readonly IConfigurationRepository _configurationRepository;
 
-        public PluginManager(IConfigurationRepository configurationRepository)
+        internal PluginManager(IConfigurationRepository configurationRepository)
         {
             _configurationRepository = configurationRepository;
             _logger = Serilog.Log.Logger;

@@ -19,7 +19,7 @@ namespace OneIdentity.DevOps.Controllers
         private readonly IConfigurationRepository _configurationRepository;
         private readonly IConfigurationLogic _configurationLogic;
 
-        public ConfigurationController(IConfigurationRepository configurationRepository, IConfigurationLogic configurationLogic)
+        internal ConfigurationController(IConfigurationRepository configurationRepository, IConfigurationLogic configurationLogic)
         {
             _configurationRepository = configurationRepository;
             _configurationLogic = configurationLogic;

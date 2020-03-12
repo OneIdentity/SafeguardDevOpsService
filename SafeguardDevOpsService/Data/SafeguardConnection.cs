@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Security;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace OneIdentity.DevOps.Data
 {

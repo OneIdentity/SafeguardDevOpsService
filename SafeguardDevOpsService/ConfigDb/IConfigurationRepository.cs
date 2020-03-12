@@ -3,7 +3,7 @@ using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.ConfigDb
 {
-    public interface IConfigurationRepository
+    internal interface IConfigurationRepository
     {
         IEnumerable<Setting> GetAllSettings();
         Setting GetSetting(string name);

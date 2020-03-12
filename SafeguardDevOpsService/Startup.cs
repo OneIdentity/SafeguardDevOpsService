@@ -46,10 +46,9 @@ namespace OneIdentity.DevOps
             // any IServiceProvider or the ConfigureContainer method
             // won't get called.
             services.AddMvc()
-                //.AddNewtonsoftJson(opts => opts.UseMemberCasing())
+                .AddNewtonsoftJson(opts => opts.UseMemberCasing())
                 .AddMvcOptions(opts => { opts.EnableEndpointRouting = false; });
                 //.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
 
             services.AddSwaggerGen(c => { 
                 c.SwaggerDoc(ApiVersion, new OpenApiInfo
@@ -58,6 +57,7 @@ namespace OneIdentity.DevOps
                     Version = ApiVersion
                 });
             });
+            services.AddSwaggerGenNewtonsoftSupport();
         }
 
         // This only gets called if your environment is Development. The
