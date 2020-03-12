@@ -56,7 +56,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 **PARCache** -- This is a new PARCache service written for Safeguard customers transitioning from TPAM.
 
-![SafeguardDevOpsServiceDemo](Images/SafeguardDevOpsDemo.mp4)
+[![Safeguad DevOps Demo Video](Images/SafeguardDevOpsServiceDemo-1.png)](http://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_HERE)
 
 ## DevOps Technologies Plugins
 
