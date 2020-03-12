@@ -40,7 +40,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
   - The secret is only updated when it actually changes.  
   - There is no need to continuously poll for a secret.
 
-![SafeguardDevOpsService](images/SafeguardDevOpsService-1.png)
+![SafeguardDevOpsService](Images/SafeguardDevOpsService-1.png)
 
 ## Component Description
 
