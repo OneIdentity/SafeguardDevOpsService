@@ -11,14 +11,15 @@ The term DevOps can mean different things to different people.  It is important 
 DevOps is any sort of automation that occurs between software development teams and IT teams to enable them to build, test, and release software faster.  Most often, people think of DevOps in the context of automating the deployment of a SaaS solution to a cloud environment. But DevOps can also be as simple as a source code repository hook that triggers a build server to check out and build a .NET library and push it to a NuGet server.
 
 ## Challenges
+
 The following are security challenges of DevOps technologies:
 
-    Source code security -- secrets used to pull code from a source code repository
-    Build system security -- secrets used to access storage and other resources for sensitive components, code-signing operations, etc.
-    Package/image repository security -- secrets used to push build artifacts (packages and images) to repositories as well as pulling artifacts from those repositories
-    Securely deploying to infrastructure -- virtual machine root passwords, cloud privileged accounts, privileged accounts in orchestration frameworks, etc.
-    Secure microservice communication -- inter-process or service to service communications--these can be passwords, API keys, PKI, etc.
-    Secure persistence -- secrets used for persistence technologoes: database passwords, s3 buckets, etc.
+- Source code security -- secrets used to pull code from a source code repository
+- Build system security -- secrets used to access storage and other resources for sensitive components, code-signing operations, etc.
+- Package/image repository security -- secrets used to push build artifacts (packages and images) to repositories as well as pulling artifacts from those repositories
+- Securely deploying to infrastructure -- virtual machine root passwords, cloud privileged accounts, privileged accounts in orchestration frameworks, etc.
+- Secure microservice communication -- inter-process or service to service communications--these can be passwords, API keys, PKI, etc.
+- Secure persistence -- secrets used for persistence technologoes: database passwords, s3 buckets, etc.
 
 All of the security problems listed above involve restricting access to resources.  Access control requires authentication.  It is impossible to make an access control decision unless the system granting access to the resource can identify the requester, or at least know whether the requester can be trusted.  This process of authentication / access control is accomplished through secrets.  Possession of a secret authenticates the requester as trusted.  A secret could be a password, a private key, an API key, etc.
 
@@ -44,6 +45,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 ## Component Description
 
 **Safeguard API** -- Safeguard has the A2A (Application to Application) REST API and the Core REST API (labeled Config in the diagram) that is used to configure the A2A service as well as other Safeguard services.  There are aksi open source SDKs for accessing these APIs from a .NET Standard 2.0 library.  
+
 - Discover -- A2A registrations are visible to certificate users via the core API.
 - Monitor -- The A2A API includes a SignalR web socket connection that will give real-time updates for when passwords change (no polling).
 - Retrieve -- Pull the secret password from the A2A API in a single HTTPS round trip. 
@@ -55,6 +57,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 **PARCache** -- This is a new PARCache service written for Safeguard customers transitioning from TPAM.
 
 ## DevOps Technologies Plugins
+
 - HashiCorp Vault
 - Azure Key Vault
 - Kubernetes Secrets Storage
@@ -77,76 +80,115 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 ### Safeguard DevOps Service Setup
 
-- Checkout and rebuild all (Rebuild Solution) the SafeguardDevOpsService (https://github.com/OneIdentity/SafeguardDevOpsService)
+- Checkout and rebuild all (Rebuild Solution) the SafeguardDevOpsService (<https://github.com/OneIdentity/SafeguardDevOpsService>)
 - Start the SafeguardDevOpsService
-- In a browser navigate to http://localhost:5000/swagger/index.html
-- Run endpoint: POST /devops/Configuration  
-`{
-  "SppAddress": "<spp-address>", "CertificateUserThumbprint": "<your-certificate-thumbprint>"
-}`
-- Run endpoint: GET /devops/Configuration -- Returns the new configuraiton
-- Run endpoint: GET /devops/Configuration/RetrievableAccounts -- Returns a list of all of the retrievable accounts
-- Run endpoint: GET /devops/Configuration/Plugins -- Return a list of all of the registered plugins.
-- Set the HashiCorpVault plugin configuration using endpoint: PUT /devops/Configuration/Plugins/{name}/Configuration
+- In a browser navigate to <http://localhost:5000/swagger/index.html>
+- Run endpoint: `POST /devops/Configuration`  
+
+```json
+    {
+        "SppAddress": "<spp-address>", 
+        "CertificateUserThumbprint": "<your-certificate-thumbprint>"
+    }
+```
+
+- Run endpoint: `GET /devops/Configuration` -- Returns the new configuraiton
+- Run endpoint: `GET /devops/Configuration/RetrievableAccounts` -- Returns a list of all of the retrievable accounts
+- Run endpoint: `GET /devops/Configuration/Plugins` -- Return a list of all of the registered plugins.
+- Set the HashiCorpVault plugin configuration using endpoint: `PUT /devops/Configuration/Plugins/{name}/Configuration`
 - Enter HashiCorpVault as the name in the URL  
-`{
-  "Configuration": {"authToken":"<hashicorp-root-token>","address":"<hasicorp-url>", "mountPoint":"secret", "secretsPath":"oneidentity"}
-}`
+
+```json
+    {
+        "Configuration":
+        {
+            "authToken":"<hashicorp-root-token>",
+            "address":"<hasicorp-url>",
+            "mountPoint":"secret",
+            "secretsPath":"oneidentity"
+        }
+    }
+```
+
 - Replace the authToken with the vault root token that you saved in the HashiCorp Vault setup.  Everything else can be left at the default.
-- Set up the Account Mapping using endpoint: PUT /devops/configuration/AccountMapping  
-`[
-  {
-    "accountName": "<account-name>",
-    "apiKey": "<a2a-apikey>",
-    "VaultName":"HashiCorpVault"
-  }
-]`
+- Set up the Account Mapping using endpoint: `PUT /devops/configuration/AccountMapping`
+
+```json
+    [
+        {
+            "accountName": "<account-name>",
+            "apiKey": "<a2a-apikey>",
+            "VaultName":"HashiCorpVault"
+        }
+    ]
+```
+
 - Replace the accountName with the account name from the RetrievableAccounts output above
 - Replace the apiKey with the api key from the RetrievableAccounts output above
 - VaultName should be HashiCorpVault
-- Set the AzureKeyVault plugin configuration using endpoint: PUT /devops/Configuration/Plugins/{name}/Configuration
+- Set the AzureKeyVault plugin configuration using endpoint: `PUT /devops/Configuration/Plugins/{name}/Configuration`
 - Enter AzureKeyVault as the name in the URL  
-`{
-  "Configuration": {"applicationId":"<azure-application-id>","clientSecret":"<azure-client-secret>", "vaultUri":"<azure-vault-url>"}
-}`
-- Set up the Account Mapping using endpoint: PUT /devops/configuration/AccountMapping
 
-[
-  {
-    "accountName": "bnichuser1",
-    "apiKey": "OHFG69KGsF3aIuHzvfZIqSKlGDL0zPgW2VQFJdoDDF4=",
-    "VaultName":"AzureKeyVault"
-  }
-]
+```json
+    {
+        "Configuration":
+        {
+            "applicationId":"<azure-application-id>",
+            "clientSecret":"<azure-client-secret>",
+            "vaultUri":"<azure-vault-url>"
+        }
+    }
+```
 
-    Replace the accountName with the account name from the RetrievableAccounts output above
-    Replace the apiKey with the api key from the RetrievableAccounts output above
-    Set the KubernetesVault plugin configuration using endpoint: PUT /devops/Configuration/Plugins/{name}/Configuration
-        Enter KubernetesVault as the name in the URL
+- Set up the Account Mapping using endpoint: `PUT /devops/configuration/AccountMapping`
 
-{
-  "Configuration": {"configFilePath": null, "vaultNamespace": "default"}
-}
+```json
+    [
+        {
+            "accountName": "<account-name>",
+            "apiKey": "<a2a-apikey>",
+            "VaultName":"AzureKeyVault"
+        }
+    ]
+```
 
-    Set up the Account Mapping using endpoint: PUT /devops/configuration/AccountMapping
+- Replace the accountName with the account name from the RetrievableAccounts output above
+- Replace the apiKey with the api key from the RetrievableAccounts output above
+- Set the KubernetesVault plugin configuration using endpoint: `PUT /devops/Configuration/Plugins/{name}/Configuration`
+- Enter KubernetesVault as the name in the URL  
 
-[
-  {
-    "accountName": "bnichuser1",
-    "apiKey": "OHFG69KGsF3aIuHzvfZIqSKlGDL0zPgW2VQFJdoDDF4=",
-    "VaultName":"KubernetesVault"
-  }
-]
+```json
+    {
+        "Configuration":
+        {
+            "configFilePath": null,
+            "vaultNamespace": "default"
+        }
+    }
+```
 
-    Replace the accountName with the account name from the RetrievableAccounts output above
-    Replace the apiKey with the api key from the RetrievableAccounts output above
-    Enable password monitoring using the endpoint: POST /devops/Configuration/Monitoring?enable=true
+- Set up the Account Mapping using endpoint: `PUT /devops/configuration/AccountMapping`
 
+```json
+    [
+        {
+            "accountName": "<account-name>",
+            "apiKey": "<a2a-apikey>",
+            "VaultName":"KubernetesVault"
+        }
+    ]
+```
+
+- Replace the accountName with the account name from the RetrievableAccounts output above
+- Replace the apiKey with the api key from the RetrievableAccounts output above
+- Enable password monitoring using the endpoint: `POST /devops/Configuration/Monitoring?enable=true`
+
+## Notice
 
 This project is currently in **technology preview**. It should not be used for any
 production environment.
 
-It is still in the **proof of concept** stages. The plugin interface is still being
+It is still in the **Alpha** stages. The plugin interface is still being
 developed and **may be changed**.
 
 There are many security considerations that have not yet been addressed.
