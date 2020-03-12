@@ -31,14 +31,14 @@ In addition to these problems there is just a certain amount of fear that develo
 
 # Solution
 
-The Safeguard recommended practice is to keep the less secure DevOps environment completely separate from the PAM environment with ZERO ACCESS to the PAM environment.  Instead, we will develop a solution for Safeguard "to push the secret to DevOps": 
+The Safeguard recommended practice is to keep the less secure DevOps environment completely separate from the PAM environment with ZERO ACCESS to the PAM environment.  Instead, we will develop a solution for Safeguard "to push the secret to DevOps":
 
-    Push means there is no access from DevOps to PAM:
-        No need for a bootstrap secret with access to PAM.
-        No need even for firewall access to PAM.
-    Push is more efficient
-        The secret is only updated when it actually changes.  
-        There is no need to continuously poll for a secret.
+- Push means there is no access from DevOps to PAM:
+  - No need for a bootstrap secret with access to PAM.
+  - No need even for firewall access to PAM.
+- Push is more efficient
+  - The secret is only updated when it actually changes.  
+  - There is no need to continuously poll for a secret.
 
 ![SafeguardDevOpsService](images/SafeguardDevOpsService-1.png)
 
@@ -48,7 +48,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 - Discover -- A2A registrations are visible to certificate users via the core API.
 - Monitor -- The A2A API includes a SignalR web socket connection that will give real-time updates for when passwords change (no polling).
-- Retrieve -- Pull the secret password from the A2A API in a single HTTPS round trip. 
+- Retrieve -- Pull the secret password from the A2A API in a single HTTPS round trip.
 
 **Safeguard DevOps Service** -- An open source component that can be deployed as a service or as a container in a customer environment and includes plugins that can be added to communicate with various DevOps technologies.  This service discovers A2A secrets that are configured to be pushed to different DevOps secrets solutions.
 
