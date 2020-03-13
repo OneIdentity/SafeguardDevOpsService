@@ -98,12 +98,13 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeleteConfiguration()
         {
-            _configurationRepository.DeleteConfiguration();
+            //_configurationRepository.DeleteConfiguration();
         }
 
         public Registration GetRegistration()
         {
-            return JsonHelper.DeserializeObject<Registration>(JsonHelper.SerializeObject(_configurationRepository.GetConfiguration()));
+            //return JsonHelper.DeserializeObject<Registration>(JsonHelper.SerializeObject(_configurationRepository.GetConfiguration()));
+            return null;
         }
 
         public SafeguardConnectionRequest UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig)
@@ -115,37 +116,38 @@ namespace OneIdentity.DevOps.Logic
             if (connectionConfig.SppAddress == null)
                 throw new DevOpsException("The SPS network address cannot be null.");
 
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null)
-            {
-                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
-                return null;
-            }
+            //var configuration = null;_configurationRepository.GetConfiguration();
+            //if (configuration == null)
+            //{
+            //    _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
+            //    return null;
+            //}
 
-            //configuration.CertificateUserThumbPrint = connectionConfig.CertificateUserThumbprint;
-            //configuration.SppAddress = connectionConfig.SppAddress;
+            ////configuration.CertificateUserThumbPrint = connectionConfig.CertificateUserThumbprint;
+            ////configuration.SppAddress = connectionConfig.SppAddress;
 
-            //Validate the connection information
-            var connection = Safeguard.Connect(connectionConfig.SppAddress,
-                connectionConfig.CertificateUserThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
-            if(connection == null)
-                _logger.Error("SPP connection safeguardConnection failed.");
+            ////Validate the connection information
+            //var connection = Safeguard.Connect(connectionConfig.SppAddress,
+            //    connectionConfig.CertificateUserThumbprint, _safeguardApiVersion, _safeguardIgnoreSsl);
+            //if(connection == null)
+            //    _logger.Error("SPP connection safeguardConnection failed.");
 
-            connection?.LogOut();
+            //connection?.LogOut();
 
-            _configurationRepository.SaveConfiguration(configuration);
+            //_configurationRepository.SaveConfiguration(configuration);
 
-            return configuration;
+            //return configuration;
+            return null;
         }
 
         public IEnumerable<AccountMapping> GetAccountMappings(string accountName = "", string vaultName = "")
         {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null)
-            {
-                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
-                return null;
-            }
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration == null)
+            //{
+            //    _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
+            //    return null;
+            //}
 
            // if (String.IsNullOrEmpty(accountName) && String.IsNullOrEmpty(vaultName))
            //     return configuration.AccountMapping.ToArray();
@@ -158,12 +160,12 @@ namespace OneIdentity.DevOps.Logic
 
         public IEnumerable<AccountMapping> SaveAccountMappings(IEnumerable<AccountMapping> newAccountMappings)
         {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null)
-            {
-                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
-                return null;
-            }
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration == null)
+            //{
+            //    _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
+            //    return null;
+            //}
 
             //var accountMappingList = configuration.AccountMapping.ToList();
             //var newAccountMappingsList = newAccountMappings.ToList();
@@ -171,19 +173,19 @@ namespace OneIdentity.DevOps.Logic
             //accountMappingList.AddRange(newAccountMappingsList.Where(p2 => accountMappingList.All(p1 => !p1.Equals(p2))));
             //configuration.AccountMapping = accountMappingList;
 
-            _configurationRepository.SaveConfiguration(configuration);
+           // _configurationRepository.SaveConfiguration(configuration);
            // return accountMappingList;
            return null;
         }
 
         public IEnumerable<AccountMapping> RemoveAccountMappings(bool removeAll, string accountName, string vaultName)
         {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null)
-            {
-                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
-                return null;
-            }
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration == null)
+            //{
+            //    _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
+            //    return null;
+            //}
 
             //if (removeAll && accountName == null && vaultName == null)
             //{
@@ -215,12 +217,12 @@ namespace OneIdentity.DevOps.Logic
 
         public IEnumerable<RetrievableAccount> GetRetrievableAccounts()
         {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null)
-            {
-                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
-                return null;
-            }
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration == null)
+            //{
+            //    _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
+            //    return null;
+            //}
 
             //ISafeguardConnection connection = null;
             //try
@@ -366,12 +368,12 @@ namespace OneIdentity.DevOps.Logic
             if (_eventListener != null)
                 throw new DevOpsException("Listener is already running.");
 
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null)
-            {
-                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
-                return;
-            }
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration == null)
+            //{
+            //    _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
+            //    return;
+            //}
 
             // connect to Safeguard
             //_a2AContext = Safeguard.A2A.GetContext(configuration.SppAddress, configuration.CertificateUserThumbPrint,
@@ -415,12 +417,12 @@ namespace OneIdentity.DevOps.Logic
 
         private void PasswordChangeHandler(string eventName, string eventBody)
         {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null || _retrievableAccounts == null)
-            {
-                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first or no retrievable accounts found.");
-                return;
-            }
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration == null || _retrievableAccounts == null)
+            //{
+            //    _logger.Error("No safeguardConnection was found.  DevOps service must be configured first or no retrievable accounts found.");
+            //    return;
+            //}
 
             var eventInfo = JsonHelper.DeserializeObject<EventInfo>(eventBody);
 

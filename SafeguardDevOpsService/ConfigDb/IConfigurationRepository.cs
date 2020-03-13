@@ -3,16 +3,11 @@ using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.ConfigDb
 {
-    internal interface IConfigurationRepository
+    public interface IConfigurationRepository
     {
-        IEnumerable<Setting> GetAllSettings();
-        Setting GetSetting(string name);
-        void SetSetting(Setting value);
+        ISetting GetSetting(string name);
+        void SetSetting(ISetting value);
         void RemoveSetting(string name);
-
-        SafeguardConnectionRequest GetConfiguration();
-        void SaveConfiguration(SafeguardConnectionRequest safeguardConnectionRequest);
-        void DeleteConfiguration();
 
         IEnumerable<Plugin> GetAllPlugins();
         Plugin GetPluginByName(string name);
@@ -21,7 +16,6 @@ namespace OneIdentity.DevOps.ConfigDb
 
 
         string SafeguardAddress { get; set; }
-        string ClientCertificateThumbprint { get; set; }
         int? ApiVersion { get; set; }
         bool? IgnoreSsl { get; set; }
     }

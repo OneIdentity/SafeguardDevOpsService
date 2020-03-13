@@ -12,10 +12,11 @@ namespace OneIdentity.DevOps.Controllers
 {
 
 //    [UnhandledExceptionError]
-    [Controller]
+    [ApiController]
     [Route("service/devops/[controller]")]
     public class ConfigurationController : Controller
     {
+        /*
         private readonly IConfigurationRepository _configurationRepository;
         private readonly IConfigurationLogic _configurationLogic;
 
@@ -31,13 +32,14 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [HttpGet]
-        public ActionResult<SafeguardConnectionController> GetConfiguration()
+        public ActionResult<SafeguardController> GetConfiguration()
         {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null)
-                return NotFound();
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration == null)
+            //    return NotFound();
 
-            return Ok(configuration);
+            //return Ok(configuration);
+            return null;
         }
 
         /// <summary>
@@ -48,14 +50,15 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [HttpPost]
-        public ActionResult<SafeguardConnectionController> PostConfiguration([FromBody]InitialConfiguration initialConfig)
+        public ActionResult<SafeguardController> PostConfiguration([FromBody]InitialConfiguration initialConfig)
         {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration != null)
-                return BadRequest("DevOps service has already been configured.");
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration != null)
+            //    return BadRequest("DevOps service has already been configured.");
 
-            configuration = _configurationLogic.InitialConfiguration(initialConfig);
-            return Ok(configuration);
+            //configuration = _configurationLogic.InitialConfiguration(initialConfig);
+            //return Ok(configuration);
+            return null;
         }
 
         /// <summary>
@@ -65,7 +68,7 @@ namespace OneIdentity.DevOps.Controllers
         [HttpDelete]
         public ActionResult DeleteConfiguration()
         {
-            _configurationLogic.DeleteConfiguration();
+            //_configurationLogic.DeleteConfiguration();
             return Ok();
         }
 
@@ -77,11 +80,12 @@ namespace OneIdentity.DevOps.Controllers
         [HttpGet("Registration")]
         public ActionResult<Registration> GetRegistration()
         {
-            var registration = _configurationLogic.GetRegistration();
-            if (registration == null)
-                return NotFound();
+            //var registration = _configurationLogic.GetRegistration();
+            //if (registration == null)
+            //    return NotFound();
 
-            return Ok(registration);
+            //return Ok(registration);
+            return null;
         }
 
         /// <summary>
@@ -91,13 +95,14 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="400">Bad request</response>
         /// <response code="404">Not found</response>
         [HttpPut("Connection")]
-        public ActionResult<SafeguardConnectionController> PutConnectionConfiguration([FromBody]ConnectionConfiguration connectionConfig)
+        public ActionResult<SafeguardController> PutConnectionConfiguration([FromBody]ConnectionConfiguration connectionConfig)
         {
-            var configuration = _configurationLogic.UpdateConnectionConfiguration(connectionConfig);
-            if (configuration == null)
-                return NotFound();
+            //var configuration = _configurationLogic.UpdateConnectionConfiguration(connectionConfig);
+            //if (configuration == null)
+            //    return NotFound();
 
-            return Ok(configuration);
+            //return Ok(configuration);
+            return null;
         }
 
         /// <summary>
@@ -110,11 +115,12 @@ namespace OneIdentity.DevOps.Controllers
         [HttpGet("AccountMapping")]
         public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromQuery] string accountName, [FromQuery] string vaultName)
         {
-            var accountMappings = _configurationLogic.GetAccountMappings(accountName, vaultName);
-            if (accountMappings == null)
-                return NotFound();
+            //var accountMappings = _configurationLogic.GetAccountMappings(accountName, vaultName);
+            //if (accountMappings == null)
+            //    return NotFound();
 
-            return Ok(accountMappings.ToArray());
+            //return Ok(accountMappings.ToArray());
+            return null;
         }
 
         /// <summary>
@@ -230,7 +236,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <param name="name">Name of plugin to update</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
-        [HttpPut("Plugins/{name}/SafeguardConnectionController")]
+        [HttpPut("Plugins/{name}/SafeguardController")]
         public ActionResult<Plugin> GetPlugins([FromBody] PluginConfiguration pluginConfiguration, [FromRoute] string name)
         {
             var plugin = _configurationLogic.SavePluginConfigurationByName(pluginConfiguration, name);
@@ -239,6 +245,6 @@ namespace OneIdentity.DevOps.Controllers
 
             return Ok(plugin);
         }
-
+        */
     }
 }

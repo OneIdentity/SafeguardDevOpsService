@@ -8,7 +8,5 @@
 
         public const string DllExtension = ".dll";
         public const string DllPattern = "*.dll";
-
-        public const string RoutePrefix = "service/devops";
     }
 }

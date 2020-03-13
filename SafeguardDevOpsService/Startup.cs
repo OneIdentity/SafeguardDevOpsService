@@ -20,7 +20,8 @@ namespace OneIdentity.DevOps
         private static readonly string ApiVersion = "v1";
         private static readonly string VersionApiName = $"{ApiName} {ApiVersion}";
 
-        private static readonly string SwaggerRoutePrefix = $"{WellKnownData.RoutePrefix}/swagger";
+        private static readonly string RoutePrefix = "service/devops";
+        private static readonly string SwaggerRoutePrefix = $"{RoutePrefix}/swagger";
         private static readonly string SwaggerRouteTemplate = $"/{SwaggerRoutePrefix}/{{documentName}}/swagger.json";
         private static readonly string OpenApiRelativeUrl = $"/{SwaggerRoutePrefix}/{ApiVersion}/swagger.json";
 
@@ -78,9 +79,8 @@ namespace OneIdentity.DevOps
         public void ConfigureContainer(ContainerBuilder builder)
         {
             builder.Register(c => new LiteDbConfigurationRepository()).As<IConfigurationRepository>().SingleInstance();
-            builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>())).As<IPluginManager>().SingleInstance();
-
-            builder.RegisterType<ConfigurationLogic>().As<IConfigurationLogic>();
+            builder.Register(c => new SafeguardLogic(c.Resolve<IConfigurationRepository>())).As<ISafeguardLogic>().SingleInstance();
+            //builder.RegisterType<ConfigurationLogic>().As<IConfigurationLogic>();
         }
 
         // Configure is where you add middleware. This is called after

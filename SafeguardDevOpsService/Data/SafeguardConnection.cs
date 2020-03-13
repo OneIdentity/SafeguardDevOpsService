@@ -9,9 +9,7 @@ namespace OneIdentity.DevOps.Data
         private SecureString _accessToken;
 
         public bool IsAuthenticated => _accessToken != null;
-        public string ApplianceId { get; set; }
-        public string ApplianceName { get; set; }
-        public string ApplianceVersion { get; set; }
+        public SafeguardAvailability Appliance { get; set; }
 
         [JsonIgnore]
         public SecureString AccessToken

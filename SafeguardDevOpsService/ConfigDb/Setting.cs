@@ -2,7 +2,7 @@
 
 namespace OneIdentity.DevOps.ConfigDb
 {
-    public class Setting
+    internal class Setting : ISetting
     {
         [BsonId]
         public string Name { get; set; }
