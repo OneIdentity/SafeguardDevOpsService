@@ -4,12 +4,12 @@ namespace OneIdentity.DevOps.Logic
 {
     public interface ISafeguardLogic
     {
-        SafeguardAvailability GetSafeguardData();
-        SafeguardAvailability SetSafeguardData(SafeguardData safeguardData);
+        Safeguard GetSafeguardData();
+        Safeguard SetSafeguardData(SafeguardData safeguardData);
         void DeleteSafeguardData();
 
-        SafeguardConnection GetConnection();
-        SafeguardConnection Connect(SafeguardConnectionRequest connectionData);
+        ManagementConnection GetConnection();
+        ManagementConnection Connect(ManagementConnectionData connectionData);
         void Disconnect();
     }
 }

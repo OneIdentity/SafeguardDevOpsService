@@ -3,6 +3,7 @@ using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
+using Safeguard = OneIdentity.DevOps.Data.Safeguard;
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -13,7 +14,7 @@ namespace OneIdentity.DevOps.Logic
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
 
-        private SafeguardConnection _connectionContext;
+        private ManagementConnection _connectionContext;
 
         public SafeguardLogic(IConfigurationRepository configDb)
         {
@@ -21,7 +22,7 @@ namespace OneIdentity.DevOps.Logic
             _logger = Serilog.Log.Logger;
         }
 
-        private SafeguardAvailability GetSafeguardAvailability(ISafeguardConnection sg, ref SafeguardAvailability availability)
+        private Safeguard GetSafeguardAvailability(ISafeguardConnection sg, ref Safeguard availability)
         {
             var availabilityJson = sg.InvokeMethod(Service.Notification, Method.Get, "Status/Availability");
             var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
@@ -32,17 +33,17 @@ namespace OneIdentity.DevOps.Logic
             return availability;
         }
 
-        private SafeguardAvailability ConnectAnonymous(string safeguardAddress, int apiVersion, bool ignoreSsl)
+        private Safeguard ConnectAnonymous(string safeguardAddress, int apiVersion, bool ignoreSsl)
         {
             ISafeguardConnection sg = null;
             try
             {
-                var availability = new SafeguardAvailability
+                var availability = new Safeguard
                 {
                     ApplianceAddress = safeguardAddress,
                     IgnoreSsl = ignoreSsl
                 };
-                sg = Safeguard.Connect(safeguardAddress, apiVersion, ignoreSsl);
+                sg = SafeguardDotNet.Safeguard.Connect(safeguardAddress, apiVersion, ignoreSsl);
                 return GetSafeguardAvailability(sg, ref availability);
             }
             catch (SafeguardDotNetException ex)
@@ -56,7 +57,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void ConnectWithAccessToken(SafeguardConnectionRequest connectionData)
+        private void ConnectWithAccessToken(ManagementConnectionData connectionData)
         {
             if (_connectionContext != null)
             {
@@ -71,16 +72,16 @@ namespace OneIdentity.DevOps.Logic
                 if (string.IsNullOrEmpty(connectionData.AccessToken))
                     return; // TODO: errors?
 
-                _connectionContext = new SafeguardConnection
+                _connectionContext = new ManagementConnection
                 {
                     AccessToken = connectionData.AccessToken.ToSecureString()
                 };
-                var availability = new SafeguardAvailability
+                var availability = new Safeguard
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
                     IgnoreSsl = connectionData.IgnoreSsl || (_configDb.IgnoreSsl ?? false)
                 };
-                sg = Safeguard.Connect(availability.ApplianceAddress, _connectionContext.AccessToken,
+                sg = SafeguardDotNet.Safeguard.Connect(availability.ApplianceAddress, _connectionContext.AccessToken,
                     _configDb.ApiVersion ?? DefaultApiVersion, availability.IgnoreSsl);
                 _connectionContext.Appliance = GetSafeguardAvailability(sg, ref availability);
                 var meJson = sg.InvokeMethod(Service.Core, Method.Get, "Me");
@@ -108,14 +109,14 @@ namespace OneIdentity.DevOps.Logic
         }
     
 
-        public SafeguardAvailability GetSafeguardData()
+        public Safeguard GetSafeguardData()
         {
             if (string.IsNullOrEmpty(_configDb.SafeguardAddress))
                 return null;
             return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? DefaultApiVersion, _configDb.IgnoreSsl ?? false);
         }
 
-        public SafeguardAvailability SetSafeguardData(SafeguardData safeguardData)
+        public Safeguard SetSafeguardData(SafeguardData safeguardData)
         {
             var availability = ConnectAnonymous(safeguardData.NetworkAddress,
                 safeguardData.ApiVersion ?? DefaultApiVersion, safeguardData.IgnoreSsl ?? false);
@@ -137,12 +138,12 @@ namespace OneIdentity.DevOps.Logic
             _configDb.IgnoreSsl = null;
         }
 
-        public SafeguardConnection GetConnection()
+        public ManagementConnection GetConnection()
         {
             return _connectionContext;
         }
 
-        public SafeguardConnection Connect(SafeguardConnectionRequest connectionData)
+        public ManagementConnection Connect(ManagementConnectionData connectionData)
         {
             ConnectWithAccessToken(connectionData);
             return _connectionContext;

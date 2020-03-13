@@ -13,6 +13,7 @@ using OneIdentity.DevOps.Plugins;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Event;
+using Safeguard = OneIdentity.SafeguardDotNet.Safeguard;
 
 
 namespace OneIdentity.DevOps.Logic
@@ -34,7 +35,7 @@ namespace OneIdentity.DevOps.Logic
             _logger = Serilog.Log.Logger;
         }
 
-        public SafeguardConnectionRequest InitialConfiguration(InitialConfiguration initialConfig)
+        public ManagementConnectionData InitialConfiguration(InitialConfiguration initialConfig)
         {
             //TODO: Create a new safeguardConnection element here
             //TODO: Check to see if there is already a safeguardConnection.  If so, throw.
@@ -62,7 +63,7 @@ namespace OneIdentity.DevOps.Logic
                 var registration = registrations?.FirstOrDefault();
                 if (registration != null)
                 {
-                    //var configuration = new SafeguardConnection
+                    //var configuration = new ManagementConnection
                     //{
                     //    SppAddress = initialConfig.SppAddress,
                     //    A2ARegistrationId = registration.Id,
@@ -107,7 +108,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        public SafeguardConnectionRequest UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig)
+        public ManagementConnectionData UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig)
         {
             if (connectionConfig == null)
                 throw new DevOpsException("The initial safeguardConnection cannot be null.");
@@ -288,7 +289,7 @@ namespace OneIdentity.DevOps.Logic
             return plugin;
         }
 
-        private IEnumerable<AccountMapping> GetAccountMappings(SafeguardConnectionRequest safeguardConnectionRequest)
+        private IEnumerable<AccountMapping> GetAccountMappings(ManagementConnectionData managementConnectionData)
         {
             ISafeguardConnection connection = null;
             try
@@ -319,7 +320,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private RetrievableAccount GetRetrievableAccount(SafeguardConnectionRequest safeguardConnectionRequest, string apiKey)
+        private RetrievableAccount GetRetrievableAccount(ManagementConnectionData managementConnectionData, string apiKey)
         {
             var apiKeyInfo = _configurationRepository.GetSetting(apiKey);
 
@@ -343,7 +344,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void SaveRetrievableAccount(SafeguardConnectionRequest safeguardConnectionRequest, RetrievableAccount retrievableAccount)
+        private void SaveRetrievableAccount(ManagementConnectionData managementConnectionData, RetrievableAccount retrievableAccount)
         {
             var apiKeyInfo = new Setting()
             {
@@ -354,7 +355,7 @@ namespace OneIdentity.DevOps.Logic
             _configurationRepository.SetSetting(apiKeyInfo);
         }
 
-        private void DeleteRetrievableAccount(SafeguardConnectionRequest safeguardConnectionRequest, string apiKey)
+        private void DeleteRetrievableAccount(ManagementConnectionData managementConnectionData, string apiKey)
         {
             _configurationRepository.RemoveSetting(apiKey);
         }

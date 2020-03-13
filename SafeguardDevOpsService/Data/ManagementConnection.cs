@@ -4,12 +4,12 @@ using Newtonsoft.Json;
 
 namespace OneIdentity.DevOps.Data
 {
-    public class SafeguardConnection : IDisposable
+    public class ManagementConnection : IDisposable
     {
         private SecureString _accessToken;
 
         public bool IsAuthenticated => _accessToken != null;
-        public SafeguardAvailability Appliance { get; set; }
+        public Safeguard Appliance { get; set; }
 
         [JsonIgnore]
         public SecureString AccessToken

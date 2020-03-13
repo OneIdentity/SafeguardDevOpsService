@@ -6,10 +6,10 @@ namespace OneIdentity.DevOps.Logic
 {
     public interface IConfigurationLogic
     {
-        SafeguardConnectionRequest InitialConfiguration(InitialConfiguration initialConfig);
+        ManagementConnectionData InitialConfiguration(InitialConfiguration initialConfig);
         void DeleteConfiguration();
         Registration GetRegistration();
-        SafeguardConnectionRequest UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig);
+        ManagementConnectionData UpdateConnectionConfiguration(ConnectionConfiguration connectionConfig);
         IEnumerable<AccountMapping> GetAccountMappings(string accountName, string vaultName);
         IEnumerable<AccountMapping> SaveAccountMappings(IEnumerable<AccountMapping> newAccountMappings);
         IEnumerable<AccountMapping> RemoveAccountMappings(bool removeAll, string accountName, string vaultName);

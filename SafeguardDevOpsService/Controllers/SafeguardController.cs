@@ -22,7 +22,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [HttpGet]
-        public ActionResult<SafeguardAvailability> GetSafeguard([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<Safeguard> GetSafeguard([FromServices] ISafeguardLogic safeguard)
         {
             var availability = safeguard.GetSafeguardData();
             if (availability == null)
@@ -37,7 +37,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [HttpPut]
-        public ActionResult<SafeguardAvailability> SetSafeguard([FromServices] ISafeguardLogic safeguard,
+        public ActionResult<Safeguard> SetSafeguard([FromServices] ISafeguardLogic safeguard,
             [FromBody] SafeguardData safeguardData)
         {
             var availability = safeguard.SetSafeguardData(safeguardData);
@@ -63,7 +63,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [HttpGet("ManagementConnection")]
-        public ActionResult<SafeguardConnection> ConnectSafeguard([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<ManagementConnection> ConnectSafeguard([FromServices] ISafeguardLogic safeguard)
         {
             var connection = safeguard.GetConnection();
             if (connection == null)
@@ -78,8 +78,8 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [HttpPut("ManagementConnection")]
-        public ActionResult<SafeguardConnection> ConnectSafeguard([FromServices] ISafeguardLogic safeguard,
-            [FromBody] SafeguardConnectionRequest connectionData)
+        public ActionResult<ManagementConnection> ConnectSafeguard([FromServices] ISafeguardLogic safeguard,
+            [FromBody] ManagementConnectionData connectionData)
         {
             var connection = safeguard.Connect(connectionData);
             return Ok(connection);
