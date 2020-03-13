@@ -6,10 +6,9 @@ using System.Security;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
-using OneIdentity.DevOps.Logic;
 using OneIdentity.SafeguardDotNet;
 
-namespace OneIdentity.DevOps.Plugins
+namespace OneIdentity.DevOps.Logic
 {
     internal class PluginManager : IDisposable, IPluginManager
     {
@@ -20,11 +19,11 @@ namespace OneIdentity.DevOps.Plugins
 
         public string ServiceName => GetType().Name;
 
-        private readonly IConfigurationRepository _configurationRepository;
+        private readonly IConfigurationRepository _configDb;
 
-        internal PluginManager(IConfigurationRepository configurationRepository)
+        internal PluginManager(IConfigurationRepository configDb)
         {
-            _configurationRepository = configurationRepository;
+            _configDb = configDb;
             _logger = Serilog.Log.Logger;
         }
 
@@ -57,7 +56,7 @@ namespace OneIdentity.DevOps.Plugins
             if (LoadedPlugins.ContainsKey(name))
             {
                 var pluginInstance = LoadedPlugins[name];
-                var pluginInfo = _configurationRepository.GetPluginByName(name);
+                var pluginInfo = _configDb.GetPluginByName(name);
                 var configuration = pluginInfo?.Configuration;
                 if (configuration != null)
                 {
@@ -135,7 +134,7 @@ namespace OneIdentity.DevOps.Plugins
 
                         ILoadablePlugin pluginInstance = plugin;
 
-                        var pluginInfo = _configurationRepository.GetPluginByName(name);
+                        var pluginInfo = _configDb.GetPluginByName(name);
 
                         if (!LoadedPlugins.ContainsKey(name))
                         {
@@ -156,7 +155,7 @@ namespace OneIdentity.DevOps.Plugins
                                 Configuration = pluginInstance.GetPluginInitialConfiguration()
                             };
 
-                            _configurationRepository.SavePluginConfiguration(pluginInfo);
+                            _configDb.SavePluginConfiguration(pluginInfo);
 
                             _logger.Information($"Discovered new unconfigured plugin {Path.GetFileName(pluginPath)}.");
                             

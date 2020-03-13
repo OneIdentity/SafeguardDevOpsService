@@ -14,7 +14,7 @@ namespace OneIdentity.DevOps.Controllers
 //    [UnhandledExceptionError]
     [ApiController]
     [Route("service/devops/[controller]")]
-    public class ConfigurationController : Controller
+    public class ConfigurationController : ControllerBase
     {
         /*
         private readonly IConfigurationRepository _configurationRepository;
@@ -184,67 +184,7 @@ namespace OneIdentity.DevOps.Controllers
             return Ok();
         }
 
-        /// <summary>
-        /// Get a list of all registered plugins.
-        /// </summary>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpGet("Plugins")]
-        public ActionResult<IEnumerable<Plugin>> GetPlugins()
-        {
-            var plugins = _configurationLogic.GetAllPlugins();
-            if (plugins == null)
-                return NotFound();
-
-            return Ok(plugins.ToArray());
-        }
-
-        /// <summary>
-        /// Get the information for a specific plugin.
-        /// </summary>
-        /// <param name="name">Name of the plugin.</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpGet("Plugins/{name}")]
-        public ActionResult<Plugin> GetPlugin([FromRoute] string name)
-        {
-            var plugin = _configurationLogic.GetPluginByName(name);
-            if (plugin == null)
-                return NotFound();
-
-            return Ok(plugin);
-        }
-
-        /// <summary>
-        /// Delete the information for a specific plugin.
-        /// </summary>
-        /// <param name="name">Name of the plugin.</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpDelete("Plugins/{name}")]
-        public ActionResult<Plugin> DeletePlugin([FromRoute] string name)
-        {
-            _configurationLogic.DeletePluginByName(name);
-
-            return Ok();
-        }
-
-        /// <summary>
-        /// Update the configuration for a plugin.
-        /// </summary>
-        /// <param name="pluginConfiguration">Object containing a JSON configuration string.</param>
-        /// <param name="name">Name of plugin to update</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpPut("Plugins/{name}/SafeguardController")]
-        public ActionResult<Plugin> GetPlugins([FromBody] PluginConfiguration pluginConfiguration, [FromRoute] string name)
-        {
-            var plugin = _configurationLogic.SavePluginConfigurationByName(pluginConfiguration, name);
-            if (plugin == null)
-                return NotFound();
-
-            return Ok(plugin);
-        }
+        
         */
     }
 }

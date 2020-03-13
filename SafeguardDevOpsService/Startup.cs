@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Logic;
 using Microsoft.OpenApi.Models;
-using OneIdentity.DevOps.Plugins;
 
 namespace OneIdentity.DevOps
 {
@@ -38,18 +37,11 @@ namespace OneIdentity.DevOps
 
         public IConfigurationRoot Configuration { get; }
 
-        // ConfigureServices is where you register dependencies. This gets
-        // called by the runtime before the ConfigureContainer method, below.
         public void ConfigureServices(IServiceCollection services)
         {
-
-            // Add services to the collection. Don't build or return
-            // any IServiceProvider or the ConfigureContainer method
-            // won't get called.
             services.AddMvc()
                 .AddNewtonsoftJson(opts => opts.UseMemberCasing())
                 .AddMvcOptions(opts => { opts.EnableEndpointRouting = false; });
-                //.SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
             services.AddSwaggerGen(c => { 
                 c.SwaggerDoc(ApiVersion, new OpenApiInfo
@@ -70,22 +62,15 @@ namespace OneIdentity.DevOps
             // development environment.
         }
 
-        // ConfigureContainer is where you can register things directly
-        // with Autofac. This runs after ConfigureServices so the things
-        // here will override registrations made in ConfigureServices.
-        // Don't build the container; that gets done for you. If you
-        // need a reference to the container, you need to use the
-        // "Without ConfigureContainer" mechanism shown later.
         public void ConfigureContainer(ContainerBuilder builder)
         {
             builder.Register(c => new LiteDbConfigurationRepository()).As<IConfigurationRepository>().SingleInstance();
+            builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>())).As<IPluginManager>().SingleInstance();
             builder.Register(c => new SafeguardLogic(c.Resolve<IConfigurationRepository>())).As<ISafeguardLogic>().SingleInstance();
+            builder.Register(c => new PluginsLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>())).As<IPluginsLogic>().SingleInstance();
             //builder.RegisterType<ConfigurationLogic>().As<IConfigurationLogic>();
         }
 
-        // Configure is where you add middleware. This is called after
-        // ConfigureContainer. You can use IApplicationBuilder.ApplicationServices
-        // here if you need to resolve things from the container.
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
         {
             // Enable middleware to serve generated Swagger as a JSON endpoint.

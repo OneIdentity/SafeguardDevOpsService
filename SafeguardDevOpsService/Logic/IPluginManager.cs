@@ -1,6 +1,6 @@
 ﻿using System.Security;
 
-namespace OneIdentity.DevOps.Plugins
+namespace OneIdentity.DevOps.Logic
 {
     public interface IPluginManager
     {

@@ -2,7 +2,7 @@
 using System.IO;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
-using OneIdentity.DevOps.Plugins;
+using OneIdentity.DevOps.Logic;
 using System.Linq;
 
 
@@ -23,6 +23,7 @@ namespace OneIdentity.DevOps
                 .UseUrls("http://*:5000")
                 .Build();
 
+            // TODO: better way to start this service??
             _services = (IEnumerable<IPluginManager>)_host.Services.GetService(typeof(IEnumerable<IPluginManager>));
         }
 

@@ -6,9 +6,8 @@ namespace OneIdentity.DevOps.Controllers
 {
     [ApiController]
     [Route("service/devops/[controller]")]
-    public class SafeguardController : Controller
+    public class SafeguardController : ControllerBase
     {
-        
         private readonly Serilog.ILogger _logger;
 
         public SafeguardController()

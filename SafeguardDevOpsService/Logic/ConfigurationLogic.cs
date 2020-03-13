@@ -8,8 +8,6 @@ using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
-using OneIdentity.DevOps.Logic;
-using OneIdentity.DevOps.Plugins;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Event;
@@ -26,12 +24,12 @@ namespace OneIdentity.DevOps.Logic
 
 
         private readonly IConfigurationRepository _configurationRepository;
-        private readonly IPluginManager _pluginManager;
+        
 
-        public ConfigurationLogic(IConfigurationRepository configurationRepository, IPluginManager pluginManager)
+        public ConfigurationLogic(IConfigurationRepository configurationRepository)
         {
             _configurationRepository = configurationRepository;
-            _pluginManager = pluginManager;
+            
             _logger = Serilog.Log.Logger;
         }
 
@@ -254,39 +252,6 @@ namespace OneIdentity.DevOps.Logic
                 StartMonitoring();
             else
                 StopMonitoring();
-        }
-
-        public IEnumerable<Plugin> GetAllPlugins()
-        {
-            return _configurationRepository.GetAllPlugins();
-        }
-
-        public Plugin GetPluginByName(string name)
-        {
-            return _configurationRepository.GetPluginByName(name);
-        }
-
-        public void DeletePluginByName(string name)
-        {
-            _configurationRepository.DeletePluginByName(name);
-        }
-
-
-        public Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name)
-        {
-            var plugin = _configurationRepository.GetPluginByName(name);
-
-            if (plugin == null)
-            {
-                _logger.Error($"Failed to save the safeguardConnection. No plugin {name} was found.");
-                return null;
-            }
-
-            plugin.Configuration = pluginConfiguration.Configuration;
-            plugin = _configurationRepository.SavePluginConfiguration(plugin);
-            _pluginManager.SetConfigurationForPlugin(name);
-
-            return plugin;
         }
 
         private IEnumerable<AccountMapping> GetAccountMappings(ManagementConnectionData managementConnectionData)

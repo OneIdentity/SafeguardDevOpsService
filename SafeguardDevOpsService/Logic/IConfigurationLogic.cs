@@ -15,9 +15,5 @@ namespace OneIdentity.DevOps.Logic
         IEnumerable<AccountMapping> RemoveAccountMappings(bool removeAll, string accountName, string vaultName);
         IEnumerable<RetrievableAccount> GetRetrievableAccounts();
         void EnableMonitoring(bool enable);
-        IEnumerable<Plugin> GetAllPlugins();
-        Plugin GetPluginByName(string name);
-        Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name);
-        void DeletePluginByName(string name);
     }
 }
