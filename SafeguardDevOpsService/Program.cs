@@ -8,7 +8,8 @@ namespace OneIdentity.DevOps
         private static void Main()
         {
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.File("SafeguardDevOpsService.log", outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                .WriteTo.File("SafeguardDevOpsService.log", 
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 
             HostFactory.Run(hostConfig =>

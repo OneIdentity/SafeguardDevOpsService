@@ -2,6 +2,7 @@
 using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
@@ -36,11 +37,12 @@ namespace OneIdentity.DevOps.Logic
         public void Run()
         {
             var exePath = Assembly.GetExecutingAssembly().Location;
-            var pluginDirPath = Path.Combine(exePath, PluginDirName);
+            var dirPath = Path.GetDirectoryName(exePath);
+            var pluginDirPath = Path.Combine(dirPath, PluginDirName);
 
             _watcher = new FileSystemWatcher()
             {
-                Path = Path.GetDirectoryName(exePath),
+                Path = pluginDirPath,
                 NotifyFilter = NotifyFilters.LastWrite,
                 Filter = "*.*",
                 EnableRaisingEvents = true
@@ -48,7 +50,6 @@ namespace OneIdentity.DevOps.Logic
             _watcher.Changed += OnChanged;
 
             DetectPlugins(pluginDirPath);
-
         }
 
         public void SetConfigurationForPlugin(string name)
@@ -88,10 +89,9 @@ namespace OneIdentity.DevOps.Logic
 
         private void DetectPlugins(string pluginDirPath)
         {
-            var dirPath = Path.GetDirectoryName(pluginDirPath);
-            if (Directory.Exists(dirPath))
+            if (Directory.Exists(pluginDirPath))
             {
-                var pluginFiles = Directory.GetFiles(dirPath, WellKnownData.DllPattern);
+                var pluginFiles = Directory.GetFiles(pluginDirPath, WellKnownData.DllPattern);
                 foreach (var file in pluginFiles)
                 {
                     LoadRegisterPlugin(file);
@@ -104,68 +104,54 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 var assembly = Assembly.LoadFrom(pluginPath);
-
-                Type[] types = assembly.GetTypes();
-                foreach (var type in types)
+                foreach (var type in assembly.GetTypes()
+                    .Where(t => t.IsClass &&
+                                t.Name.Equals(WellKnownData.PluginInfoClassName) &&
+                                typeof(ILoadablePlugin).IsAssignableFrom(t)))
                 {
-                    // dbConfig = get configuration from database
-                    // if(dbConfig == null)
-                    //      //This plugin was never configured.
-                    //      1. Retrieve initial configuration from plugin.
-                    //      2. Save configuration in DB so someone can go to the application and fill outvalues for this plugin.
-                    // else
-                    //      //This plugin was configured - maybe do some test or check a field set to true in DB
-                    //      1. Pass configuration to the plugin
-                    //      2. Save plugin to _loadedPlugins.
-                    //
-                    //      DONE
+                    _logger.Information($"Loading plugin from path {pluginPath}.");
+                    var plugin = (ILoadablePlugin) Activator.CreateInstance(type);
 
+                    var name = plugin.Name;
+                    var description = plugin.Description;
+                    plugin.SetLogger(_logger);
 
-                    if (type.Name.Equals(WellKnownData.PluginInfoClassName) && type.IsClass)
+                    _logger.Information($"Successfully loaded plugin {name} : {description}.");
+
+                    var pluginInstance = plugin;
+
+                    var pluginInfo = _configDb.GetPluginByName(name);
+
+                    if (!LoadedPlugins.ContainsKey(name))
                     {
-                        _logger.Information($"Loading plugin from path {pluginPath}.");
-                        var plugin = (ILoadablePlugin)Activator.CreateInstance(type);
+                        LoadedPlugins.Add(name, pluginInstance);
+                    }
+                    else
+                    {
+                        //If an instance of the plugin was already found, then use the existing instance.
+                        pluginInstance = LoadedPlugins[name];
+                    }
 
-                        var name = plugin.Name;
-                        var description = plugin.Description;
-                        plugin.SetLogger(_logger);
-
-                        _logger.Information($"Successfully loaded plugin {name} : {description}.");
-
-                        ILoadablePlugin pluginInstance = plugin;
-
-                        var pluginInfo = _configDb.GetPluginByName(name);
-
-                        if (!LoadedPlugins.ContainsKey(name))
+                    if (pluginInfo == null)
+                    {
+                        pluginInfo = new Plugin
                         {
-                            LoadedPlugins.Add(name, pluginInstance);
-                        }
-                        else
-                        {
-                            //If an instance of the plugin was already found, then use the existing instance.
-                            pluginInstance = LoadedPlugins[name];
-                        }
+                            Name = name,
+                            Description = description,
+                            Configuration = pluginInstance.GetPluginInitialConfiguration()
+                        };
 
-                        if (pluginInfo == null)
-                        {
-                            pluginInfo = new Plugin
-                            {
-                                Name = name,
-                                Description = description,
-                                Configuration = pluginInstance.GetPluginInitialConfiguration()
-                            };
+                        _configDb.SavePluginConfiguration(pluginInfo);
 
-                            _configDb.SavePluginConfiguration(pluginInfo);
+                        _logger.Information($"Discovered new unconfigured plugin {Path.GetFileName(pluginPath)}.");
 
-                            _logger.Information($"Discovered new unconfigured plugin {Path.GetFileName(pluginPath)}.");
-                            
-                        } else
+                    }
+                    else
+                    {
+                        var configuration = pluginInfo.Configuration;
+                        if (configuration != null)
                         {
-                            var configuration = pluginInfo.Configuration;
-                            if (configuration != null)
-                            {
-                                pluginInstance.SetPluginConfiguration(configuration);                            
-                            }
+                            pluginInstance.SetPluginConfiguration(configuration);
                         }
                     }
                 }

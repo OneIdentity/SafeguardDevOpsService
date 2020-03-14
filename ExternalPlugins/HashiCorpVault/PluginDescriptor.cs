@@ -20,16 +20,16 @@ namespace OneIdentity.DevOps.HashiCorpVault
         private const string AddressName = "address";
         private const string MountPointName = "mountPoint";
 
-        public string Name { get; } = "HashiCorpVault";
-        public string Description { get; } = "This is the HashiCorp Vault plugin for updating the passwords";
+        public string Name => "HashiCorpVault";
+        public string Description => "This is the HashiCorp Vault plugin for updating passwords";
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
             return _configuration ?? (_configuration = new Dictionary<string, string>
             {
-                {AuthTokenName, ""},
-                {AddressName, Address},
-                {MountPointName, MountPoint}
+                { AuthTokenName, "" },
+                { AddressName, Address },
+                { MountPointName, MountPoint }
             });
         }
 
@@ -60,7 +60,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             var passwordData = new Dictionary<string, object>
             {
-                {"value", password}
+                { "value", password }
             };
 
             try

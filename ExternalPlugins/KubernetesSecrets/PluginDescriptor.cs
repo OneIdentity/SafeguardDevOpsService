@@ -13,20 +13,20 @@ namespace OneIdentity.DevOps.KubernetesSecrets
         private static Dictionary<string,string> _configuration;
         private static ILogger _logger;
 
-        private readonly string _configFilePathName = "configFilePath";
-        private readonly string _vaultNamespaceName = "vaultNamespace";
+        private const string ConfigFilePathName = "configFilePath";
+        private const string VaultNamespaceName = "vaultNamespace";
 
         private static string _defaultNamespace = "default";
 
-        public string Name { get; } = "KubernetesVault";
-        public string Description { get; } = "This is the Kubenetes Secrets plugin for updating passwords";
+        public string Name => "KubernetesSecrets";
+        public string Description => "This is the Kubernetes Secrets plugin for updating passwords";
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
             return _configuration ?? (_configuration = new Dictionary<string, string>
             {
-                {_configFilePathName, ""},
-                {_configFilePathName, _defaultNamespace}
+                { ConfigFilePathName, "" },
+                { VaultNamespaceName, _defaultNamespace }
             });
         }
 
@@ -36,8 +36,8 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             if (configuration != null)
             {
                 _configuration = configuration;
-                config = configuration.ContainsKey(_configFilePathName) 
-                    ? KubernetesClientConfiguration.BuildConfigFromConfigFile(configuration[_configFilePathName]) 
+                config = configuration.ContainsKey(ConfigFilePathName) 
+                    ? KubernetesClientConfiguration.BuildConfigFromConfigFile(configuration[ConfigFilePathName]) 
                     : KubernetesClientConfiguration.BuildDefaultConfig();
             }
             else
@@ -65,9 +65,9 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             }
 
             var vaultNamespace = _defaultNamespace;
-            if (_configuration != null && _configuration.ContainsKey(_vaultNamespaceName))
+            if (_configuration != null && _configuration.ContainsKey(VaultNamespaceName))
             {
-                vaultNamespace = _configuration[_vaultNamespaceName];
+                vaultNamespace = _configuration[VaultNamespaceName];
             }
 
             var passwordData = new Dictionary<string, string> {{"password", password}};
