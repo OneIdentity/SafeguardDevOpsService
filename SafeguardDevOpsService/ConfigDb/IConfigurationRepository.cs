@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.ConfigDb
@@ -14,9 +15,12 @@ namespace OneIdentity.DevOps.ConfigDb
         Plugin SavePluginConfiguration(Plugin plugin);
         void DeletePluginByName(string name);
 
-
         string SafeguardAddress { get; set; }
         int? ApiVersion { get; set; }
         bool? IgnoreSsl { get; set; }
+
+        string UserCertificateThumbprint { get; set; }
+        string UserCertificateBase64Data { get; set; }
+        X509Certificate2 UserCertificate { get; }
     }
 }

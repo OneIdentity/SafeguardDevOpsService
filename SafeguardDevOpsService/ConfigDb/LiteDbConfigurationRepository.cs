@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using LiteDB;
 using OneIdentity.DevOps.Data;
 
@@ -24,6 +25,9 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string SafeguardAddressKey = "SafeguardAddress";
         private const string ApiVersionKey = "ApiVersion";
         private const string IgnoreSslKey = "IgnoreSsl";
+
+        private const string UserCertificateThumbprintKey = "UserCertThumbprint";
+        private const string UserCertificateDataKey = "UserCertData";
 
         public LiteDbConfigurationRepository()
         {
@@ -131,6 +135,64 @@ namespace OneIdentity.DevOps.ConfigDb
                 }
             }
             set => SetSimpleSetting(IgnoreSslKey, value.ToString());
+        }
+
+        public string UserCertificateThumbprint
+        {
+            get => GetSimpleSetting(UserCertificateThumbprintKey);
+            set => SetSimpleSetting(UserCertificateThumbprintKey, value);
+        }
+
+        public string UserCertificateBase64Data
+        {
+            get => GetSimpleSetting(UserCertificateDataKey);
+            set => SetSimpleSetting(UserCertificateDataKey, value);
+        }
+
+        public X509Certificate2 UserCertificate
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(UserCertificateBase64Data))
+                {
+                    try
+                    {
+                        var bytes = Convert.FromBase64String(UserCertificateBase64Data);
+                        var cert = new X509Certificate2();
+                        cert.Import(bytes);
+                    }
+                    catch (Exception)
+                    {
+                        // TODO: log?
+                        // throw appropriate error?
+                    }
+                }
+                else if (!string.IsNullOrEmpty(UserCertificateThumbprint))
+                {
+                    var store = new X509Store("My", StoreLocation.CurrentUser);
+                    try
+                    {
+                        store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+                        var certs = store.Certificates
+                            .Find(X509FindType.FindByThumbprint, UserCertificateThumbprint, false);
+                        if (certs.Count == 1)
+                        {
+                            return certs[0];
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // TODO: log?
+                        // throw appropriate error?
+                    }
+                    finally
+                    {
+                        store.Close();
+                    }
+                }
+
+                return null;
+            }
         }
 
         public void Dispose()

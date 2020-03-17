@@ -28,10 +28,10 @@ namespace OneIdentity.DevOps.Logic
             _logger = Serilog.Log.Logger;
         }
 
-        public void Dispose()
+        private void OnChanged(object source, FileSystemEventArgs e)
         {
-            _watcher.Changed -= OnChanged;
-            _watcher.Dispose();
+            if (Path.GetExtension(e.FullPath).ToLower().Equals(WellKnownData.DllExtension))
+                LoadRegisterPlugin(e.FullPath);
         }
 
         public void Run()
@@ -67,7 +67,7 @@ namespace OneIdentity.DevOps.Logic
             }
             else
             {
-                _logger.Error($"Plugin configuration failed.  No plugin {name} found.");
+                _logger.Error($"Plugin configuration failed. No plugin {name} found.");
             }
         }
 
@@ -128,7 +128,6 @@ namespace OneIdentity.DevOps.Logic
                     }
                     else
                     {
-                        //If an instance of the plugin was already found, then use the existing instance.
                         pluginInstance = LoadedPlugins[name];
                     }
 
@@ -162,10 +161,10 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void OnChanged(object source, FileSystemEventArgs e)
+        public void Dispose()
         {
-            if (Path.GetExtension(e.FullPath).ToLower().Equals(WellKnownData.DllExtension))
-                LoadRegisterPlugin(e.FullPath);
+            _watcher.Changed -= OnChanged;
+            _watcher.Dispose();
         }
     }
 }
