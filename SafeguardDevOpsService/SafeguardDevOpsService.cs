@@ -2,13 +2,11 @@
 using System.IO;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using OneIdentity.SafeguardDevOpsService.Data;
-using OneIdentity.SafeguardDevOpsService.Plugins;
+using OneIdentity.DevOps.Logic;
 using System.Linq;
 
 
-namespace OneIdentity.SafeguardDevOpsService
+namespace OneIdentity.DevOps
 {
     internal class SafeguardDevOpsService
     {
@@ -17,8 +15,6 @@ namespace OneIdentity.SafeguardDevOpsService
 
         public SafeguardDevOpsService()
         {
-            
-
             _host = new WebHostBuilder()
                 .UseKestrel()
                 .ConfigureServices(services => services.AddAutofac())
@@ -27,6 +23,7 @@ namespace OneIdentity.SafeguardDevOpsService
                 .UseUrls("http://*:5000")
                 .Build();
 
+            // TODO: better way to start this service??
             _services = (IEnumerable<IPluginManager>)_host.Services.GetService(typeof(IEnumerable<IPluginManager>));
         }
 

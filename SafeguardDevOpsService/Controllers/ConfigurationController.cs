@@ -1,22 +1,26 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using OneIdentity.SafeguardDevOpsService.ConfigDb;
-using OneIdentity.SafeguardDevOpsService.ConfigurationImpl;
-using OneIdentity.SafeguardDevOpsService.Data;
-using OneIdentity.SafeguardDevOpsService.Impl;
+using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.Logic;
+using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
+using OneIdentity.DevOps.Attributes;
+using OneIdentity.DevOps.Exceptions;
 
-namespace OneIdentity.SafeguardDevOpsService.Controllers
+namespace OneIdentity.DevOps.Controllers
 {
 
-    [Controller]
-    [Route("devops/[controller]")]
-    public class ConfigurationController : Controller
+//    [UnhandledExceptionError]
+    [ApiController]
+    [Route("service/devops/[controller]")]
+    public class ConfigurationController : ControllerBase
     {
+        /*
         private readonly IConfigurationRepository _configurationRepository;
         private readonly IConfigurationLogic _configurationLogic;
 
-        public ConfigurationController(IConfigurationRepository configurationRepository, IConfigurationLogic configurationLogic)
+        internal ConfigurationController(IConfigurationRepository configurationRepository, IConfigurationLogic configurationLogic)
         {
             _configurationRepository = configurationRepository;
             _configurationLogic = configurationLogic;
@@ -28,13 +32,14 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [HttpGet]
-        public ActionResult<Configuration> GetConfiguration()
+        public ActionResult<SafeguardController> GetConfiguration()
         {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration == null)
-                return NotFound();
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration == null)
+            //    return NotFound();
 
-            return Ok(configuration);
+            //return Ok(configuration);
+            return null;
         }
 
         /// <summary>
@@ -45,14 +50,15 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [HttpPost]
-        public ActionResult<Configuration> PostConfiguration([FromBody]InitialConfiguration initialConfig)
+        public ActionResult<SafeguardController> PostConfiguration([FromBody]InitialConfiguration initialConfig)
         {
-            var configuration = _configurationRepository.GetConfiguration();
-            if (configuration != null)
-                return BadRequest("DevOps service has already been configured.");
+            //var configuration = _configurationRepository.GetConfiguration();
+            //if (configuration != null)
+            //    return BadRequest("DevOps service has already been configured.");
 
-            configuration = _configurationLogic.InitialConfiguration(initialConfig);
-            return Ok(configuration);
+            //configuration = _configurationLogic.InitialConfiguration(initialConfig);
+            //return Ok(configuration);
+            return null;
         }
 
         /// <summary>
@@ -62,7 +68,7 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         [HttpDelete]
         public ActionResult DeleteConfiguration()
         {
-            _configurationLogic.DeleteConfiguration();
+            //_configurationLogic.DeleteConfiguration();
             return Ok();
         }
 
@@ -74,11 +80,12 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         [HttpGet("Registration")]
         public ActionResult<Registration> GetRegistration()
         {
-            var registration = _configurationLogic.GetRegistration();
-            if (registration == null)
-                return NotFound();
+            //var registration = _configurationLogic.GetRegistration();
+            //if (registration == null)
+            //    return NotFound();
 
-            return Ok(registration);
+            //return Ok(registration);
+            return null;
         }
 
         /// <summary>
@@ -88,13 +95,14 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         /// <response code="400">Bad request</response>
         /// <response code="404">Not found</response>
         [HttpPut("Connection")]
-        public ActionResult<Configuration> PutConnectionConfiguration([FromBody]ConnectionConfiguration connectionConfig)
+        public ActionResult<SafeguardController> PutConnectionConfiguration([FromBody]ConnectionConfiguration connectionConfig)
         {
-            var configuration = _configurationLogic.UpdateConnectionConfiguration(connectionConfig);
-            if (configuration == null)
-                return NotFound();
+            //var configuration = _configurationLogic.UpdateConnectionConfiguration(connectionConfig);
+            //if (configuration == null)
+            //    return NotFound();
 
-            return Ok(configuration);
+            //return Ok(configuration);
+            return null;
         }
 
         /// <summary>
@@ -107,11 +115,12 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         [HttpGet("AccountMapping")]
         public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromQuery] string accountName, [FromQuery] string vaultName)
         {
-            var accountMappings = _configurationLogic.GetAccountMappings(accountName, vaultName);
-            if (accountMappings == null)
-                return NotFound();
+            //var accountMappings = _configurationLogic.GetAccountMappings(accountName, vaultName);
+            //if (accountMappings == null)
+            //    return NotFound();
 
-            return Ok(accountMappings.ToArray());
+            //return Ok(accountMappings.ToArray());
+            return null;
         }
 
         /// <summary>
@@ -168,73 +177,14 @@ namespace OneIdentity.SafeguardDevOpsService.Controllers
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [HttpPost("Monitoring")]
+        [UnhandledExceptionError]
         public ActionResult<bool> PostMonitoring([FromQuery]bool enable = true)
         {
             _configurationLogic.EnableMonitoring(enable);
             return Ok();
         }
 
-        /// <summary>
-        /// Get a list of all registered plugins.
-        /// </summary>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpGet("Plugins")]
-        public ActionResult<IEnumerable<Plugin>> GetPlugins()
-        {
-            var plugins = _configurationLogic.GetAllPlugins();
-            if (plugins == null)
-                return NotFound();
-
-            return Ok(plugins.ToArray());
-        }
-
-        /// <summary>
-        /// Get the information for a specific plugin.
-        /// </summary>
-        /// <param name="name">Name of the plugin.</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpGet("Plugins/{name}")]
-        public ActionResult<Plugin> GetPlugin([FromRoute] string name)
-        {
-            var plugin = _configurationLogic.GetPluginByName(name);
-            if (plugin == null)
-                return NotFound();
-
-            return Ok(plugin);
-        }
-
-        /// <summary>
-        /// Delete the information for a specific plugin.
-        /// </summary>
-        /// <param name="name">Name of the plugin.</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpDelete("Plugins/{name}")]
-        public ActionResult<Plugin> DeletePlugin([FromRoute] string name)
-        {
-            _configurationLogic.DeletePluginByName(name);
-
-            return Ok();
-        }
-
-        /// <summary>
-        /// Update the configuration for a plugin.
-        /// </summary>
-        /// <param name="pluginConfiguration">Object containing a JSON configuration string.</param>
-        /// <param name="name">Name of plugin to update</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpPut("Plugins/{name}/Configuration")]
-        public ActionResult<Plugin> GetPlugins([FromBody] PluginConfiguration pluginConfiguration, [FromRoute] string name)
-        {
-            var plugin = _configurationLogic.SavePluginConfigurationByName(pluginConfiguration, name);
-            if (plugin == null)
-                return NotFound();
-
-            return Ok(plugin);
-        }
-
+        
+        */
     }
 }

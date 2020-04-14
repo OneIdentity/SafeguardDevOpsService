@@ -3,52 +3,45 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using OneIdentity.Common;
+using OneIdentity.DevOps.Common;
 using Serilog;
 
-namespace OneIdentity.AzureKeyVault
+namespace OneIdentity.DevOps.AzureKeyVault
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static IKeyVaultClient _keyVaultClient = null;
-        private static Dictionary<string,string> _configuration = null;
-        private static ILogger _logger = null;
+        private static IKeyVaultClient _keyVaultClient;
+        private static Dictionary<string,string> _configuration;
+        private static ILogger _logger;
 
-        private readonly string _applicationIdName = "applicationId";
-        private readonly string _clientSecretName = "clientSecret";
-        private readonly string _vaultUriName = "vaultUri";
+        private const string ApplicationIdName = "applicationId";
+        private const string ClientSecretName = "clientSecret";
+        private const string VaultUriName = "vaultUri";
 
-        public PluginDescriptor()
-        {
-        }
-
-        public string Name { get; } = "AzureKeyVault";
-        public string Description { get; } = "This is the Azure Key Vault plugin for updating passwords";
+        public string Name => "AzureKeyVault";
+        public string Description => "This is the Azure Key Vault plugin for updating passwords";
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
-            if (_configuration == null)
+            return _configuration ?? (_configuration = new Dictionary<string, string>
             {
-                _configuration = new Dictionary<string, string>();
-                _configuration.Add(_applicationIdName, "");
-                _configuration.Add(_clientSecretName, "");
-                _configuration.Add(_vaultUriName, "");
-            }
-
-            return _configuration;
+                { ApplicationIdName, "" },
+                { ClientSecretName, "" },
+                { VaultUriName, "" }
+            });
         }
 
-        private const string _applicationId = "fc02cf07-7011-47db-a6cb-0794f9b22bdf";
-        private const string _clientSecret = "9jxay4HZ.MY_Hl[RBwny3u=KkderucK1";
+        private const string ApplicationId = "fc02cf07-7011-47db-a6cb-0794f9b22bdf";
+        private const string ClientSecret = "9jxay4HZ.MY_Hl[RBwny3u=KkderucK1";
 
         public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
-            if (configuration != null && configuration.ContainsKey(_applicationIdName) &&
-                configuration.ContainsKey(_clientSecretName) && configuration.ContainsKey(_vaultUriName))
+            if (configuration != null && configuration.ContainsKey(ApplicationIdName) &&
+                configuration.ContainsKey(ClientSecretName) && configuration.ContainsKey(VaultUriName))
             {
                 _keyVaultClient = new KeyVaultClient(async (authority, resource, scope) =>
                 {
-                    var adCredential = new ClientCredential(_applicationId, _clientSecret);
+                    var adCredential = new ClientCredential(ApplicationId, ClientSecret);
                     var authenticationContext = new AuthenticationContext(authority, null);
                     return (await authenticationContext.AcquireTokenAsync(resource, adCredential)).AccessToken;
                 });
@@ -63,7 +56,7 @@ namespace OneIdentity.AzureKeyVault
 
         public bool SetPassword(string account, string password)
         {
-            if (_keyVaultClient == null || _configuration == null || !_configuration.ContainsKey(_vaultUriName))
+            if (_keyVaultClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
             {
                 _logger.Error("No vault connection. Make sure that the plugin has been configured.");
                 return false;
@@ -71,7 +64,7 @@ namespace OneIdentity.AzureKeyVault
 
             try
             {
-                Task.Run(async () => await _keyVaultClient.SetSecretAsync(_configuration[_vaultUriName], account, password));
+                Task.Run(async () => await _keyVaultClient.SetSecretAsync(_configuration[VaultUriName], account, password));
                 return true;
             }
             catch (Exception ex)

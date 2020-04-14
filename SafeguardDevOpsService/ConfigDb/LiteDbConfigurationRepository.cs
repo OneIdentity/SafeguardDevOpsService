@@ -1,85 +1,83 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using LiteDB;
-using OneIdentity.SafeguardDevOpsService.Data;
+using OneIdentity.DevOps.Data;
 
-namespace OneIdentity.SafeguardDevOpsService.ConfigDb
+namespace OneIdentity.DevOps.ConfigDb
 {
     internal class LiteDbConfigurationRepository : IConfigurationRepository, IDisposable
     {
         private bool _disposed;
         private LiteDatabase _configurationDb;
-        private readonly LiteCollection<Setting> _settings;
-        private readonly LiteCollection<Configuration> _configuration;
-        private readonly LiteCollection<Plugin> _plugins;
+        private readonly ILiteCollection<Setting> _settings;
+        private readonly ILiteCollection<Registration> _registrations;
+        private readonly ILiteCollection<AccountMapping> _accountMappings;
+        private readonly ILiteCollection<Plugin> _plugins;
+
+        private const string DbFileName = "Configuration.db";
+
+        private const string SettingsTableName = "settings";
+        private const string RegistrationsTableName = "registrations";
+        private const string AccountMappingsTableName = "accountmappings";
+        private const string PluginsTableName = "plugins";
+
+        private const string SafeguardAddressKey = "SafeguardAddress";
+        private const string ApiVersionKey = "ApiVersion";
+        private const string IgnoreSslKey = "IgnoreSsl";
+
+        private const string UserCertificateThumbprintKey = "UserCertThumbprint";
+        private const string UserCertificateDataKey = "UserCertData";
 
         public LiteDbConfigurationRepository()
         {
-            _configurationDb = new LiteDatabase(@"Configuration.db");
-            _settings = _configurationDb.GetCollection<Setting>("settings");
-            _configuration = _configurationDb.GetCollection<Configuration>("configuration");
-            _plugins = _configurationDb.GetCollection<Plugin>("plugins");
+            _configurationDb = new LiteDatabase(DbFileName);
+            _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
+            _registrations = _configurationDb.GetCollection<Registration>(RegistrationsTableName);
+            _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
+            _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
         }
 
         private string GetSimpleSetting(string name)
         {
-            if (_disposed)
-                throw new ObjectDisposedException("LiteDbConfigurationRepository");
-            var obj = _settings.Find(s => s.Name.Equals(name)).FirstOrDefault();
+            var obj = GetSetting(name);
             return obj?.Value;
         }
 
         private void SetSimpleSetting(string name, string value)
         {
             if (_disposed)
-                throw new ObjectDisposedException("LiteDbConfigurationRepository");
+                throw new ObjectDisposedException(GetType().Name);
             var obj = new Setting()
             {
                 Name = name,
                 Value = value ?? ""
             };
-            if (!_settings.Update(obj))
-            {
-                _settings.Insert(obj);
-            }
+            SetSetting(obj);
         }
 
-        public IEnumerable<Setting> GetAllSettings()
+        public ISetting GetSetting(string name)
         {
-            return _settings.FindAll();
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().Name);
+            return _settings.FindById(name);
         }
 
-        public Setting GetSetting(string name)
+        public void SetSetting(ISetting value)
         {
-            return _settings.FindOne(s => s.Name.Equals(name));
-        }
-
-        public void SetSetting(Setting value)
-        {
-            _settings.Upsert(value);
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().Name);
+            _settings.Upsert((Setting)value);
         }
 
         public void RemoveSetting(string name)
         {
-            _settings.Delete(s => s.Name.Equals(name));
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().Name);
+            _settings.Delete(name);
         }
 
-        public Configuration GetConfiguration()
-        {
-            return _configuration.FindById(1);
-        }
-
-        public void SaveConfiguration(Configuration configuration)
-        {
-            _configuration.Upsert(configuration);
-        }
-
-        public void DeleteConfiguration()
-        {
-            _configuration.Delete(1);
-        }
-
+        // TODO: fix
         public IEnumerable<Plugin> GetAllPlugins()
         {
             return _plugins.FindAll();
@@ -87,7 +85,7 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
 
         public Plugin GetPluginByName(string name)
         {
-            return _plugins.FindOne(s => s.Name.Equals(name));
+            return _plugins.FindById(name);
         }
 
         public Plugin SavePluginConfiguration(Plugin plugin)
@@ -98,19 +96,13 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
 
         public void DeletePluginByName(string name)
         {
-            _plugins.Delete(s => s.Name.Equals(name));
+            _plugins.Delete(name);
         }
 
         public string SafeguardAddress
         {
-            get => GetSimpleSetting("SafeguardAddress");
-            set => SetSimpleSetting("SafeguardAddress", value);
-        }
-
-        public string ClientCertificateThumbprint
-        {
-            get => GetSimpleSetting("ClientCertificateThumbprint");
-            set => SetSimpleSetting("ClientCertificateThumbprint", value);
+            get => GetSimpleSetting(SafeguardAddressKey);
+            set => SetSimpleSetting(SafeguardAddressKey, value);
         }
 
         public int? ApiVersion
@@ -119,14 +111,14 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
             {
                 try
                 {
-                    return int.Parse(GetSimpleSetting("ApiVersion"));
+                    return int.Parse(GetSimpleSetting(ApiVersionKey));
                 }
                 catch
                 {
                     return null;
                 }
             }
-            set => SetSimpleSetting("ApiVersion", value.ToString());
+            set => SetSimpleSetting(ApiVersionKey, value.ToString());
         }
 
         public bool? IgnoreSsl
@@ -135,14 +127,72 @@ namespace OneIdentity.SafeguardDevOpsService.ConfigDb
             {
                 try
                 {
-                    return bool.Parse(GetSimpleSetting("IgnoreSsl"));
+                    return bool.Parse(GetSimpleSetting(IgnoreSslKey));
                 }
                 catch
                 {
                     return null;
                 }
             }
-            set => SetSimpleSetting("IgnoreSsl", value.ToString());
+            set => SetSimpleSetting(IgnoreSslKey, value.ToString());
+        }
+
+        public string UserCertificateThumbprint
+        {
+            get => GetSimpleSetting(UserCertificateThumbprintKey);
+            set => SetSimpleSetting(UserCertificateThumbprintKey, value);
+        }
+
+        public string UserCertificateBase64Data
+        {
+            get => GetSimpleSetting(UserCertificateDataKey);
+            set => SetSimpleSetting(UserCertificateDataKey, value);
+        }
+
+        public X509Certificate2 UserCertificate
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(UserCertificateBase64Data))
+                {
+                    try
+                    {
+                        var bytes = Convert.FromBase64String(UserCertificateBase64Data);
+                        var cert = new X509Certificate2();
+                        cert.Import(bytes);
+                    }
+                    catch (Exception)
+                    {
+                        // TODO: log?
+                        // throw appropriate error?
+                    }
+                }
+                else if (!string.IsNullOrEmpty(UserCertificateThumbprint))
+                {
+                    var store = new X509Store("My", StoreLocation.CurrentUser);
+                    try
+                    {
+                        store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+                        var certs = store.Certificates
+                            .Find(X509FindType.FindByThumbprint, UserCertificateThumbprint, false);
+                        if (certs.Count == 1)
+                        {
+                            return certs[0];
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // TODO: log?
+                        // throw appropriate error?
+                    }
+                    finally
+                    {
+                        store.Close();
+                    }
+                }
+
+                return null;
+            }
         }
 
         public void Dispose()

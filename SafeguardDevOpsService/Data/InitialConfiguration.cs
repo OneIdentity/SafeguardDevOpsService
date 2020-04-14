@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace OneIdentity.SafeguardDevOpsService.Data
+namespace OneIdentity.DevOps.Data
 {
     public class InitialConfiguration : ConnectionConfiguration
     {

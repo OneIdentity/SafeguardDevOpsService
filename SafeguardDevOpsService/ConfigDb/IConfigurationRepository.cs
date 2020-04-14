@@ -1,28 +1,26 @@
 ﻿using System.Collections.Generic;
-using OneIdentity.SafeguardDevOpsService.Data;
+using System.Security.Cryptography.X509Certificates;
+using OneIdentity.DevOps.Data;
 
-namespace OneIdentity.SafeguardDevOpsService.ConfigDb
+namespace OneIdentity.DevOps.ConfigDb
 {
     public interface IConfigurationRepository
     {
-        IEnumerable<Setting> GetAllSettings();
-        Setting GetSetting(string name);
-        void SetSetting(Setting value);
+        ISetting GetSetting(string name);
+        void SetSetting(ISetting value);
         void RemoveSetting(string name);
-
-        Configuration GetConfiguration();
-        void SaveConfiguration(Configuration configuration);
-        void DeleteConfiguration();
 
         IEnumerable<Plugin> GetAllPlugins();
         Plugin GetPluginByName(string name);
         Plugin SavePluginConfiguration(Plugin plugin);
         void DeletePluginByName(string name);
 
-
         string SafeguardAddress { get; set; }
-        string ClientCertificateThumbprint { get; set; }
         int? ApiVersion { get; set; }
         bool? IgnoreSsl { get; set; }
+
+        string UserCertificateThumbprint { get; set; }
+        string UserCertificateBase64Data { get; set; }
+        X509Certificate2 UserCertificate { get; }
     }
 }
