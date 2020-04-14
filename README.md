@@ -6,9 +6,13 @@
 
 # Safeguard DevOps Service
 
-The term DevOps can mean different things to different people.  It is important to make sure that we understand what a customer means when they say they need help securing DevOps.
+The term DevOps can mean different things to different people.  It is important to make sure that we understand what we mean when we say we need help securing DevOps.
 
-DevOps is any sort of automation that occurs between software development teams and IT teams to enable them to build, test, and release software faster.  Most often, people think of DevOps in the context of automating the deployment of a SaaS solution to a cloud environment. But DevOps can also be as simple as a source code repository hook that triggers a build server to check out and build a .NET library and push it to a NuGet server.
+DevOps is any form of automation used between software development teams and operations teams to to build, test, and release software with speed and resilience.  Most often, people think of DevOps in the context of automating the deployment of a SaaS solution to a cloud environment. However, DevOps can also be as simple as a source code repository hook that triggers a build server to check out and build a .NET library and push it to a NuGet server.
+
+## Support
+
+One Identity open source projects are supported through [One Identity GitHub issues](https://github.com/OneIdentity/SafeguardDevOpsService/issues) and the [One Identity Community](https://www.oneidentity.com/community/). This includes all scripts, plugins, SDKs, modules, code snippets or other solutions. For assistance with any One Identity GitHub project, please raise a new Issue on the [One Identity GitHub project](https://github.com/OneIdentity/SafeguardDevOpsService/issues) page. You may also visit the [One Identity Community](https://www.oneidentity.com/community/) to ask questions.  Requests for assistance made through official One Identity Support will be referred back to GitHub and the One Identity Community forums where those requests can benefit all users.
 
 ## Challenges
 
@@ -37,14 +41,14 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
   - No need for a bootstrap secret with access to PAM.
   - No need even for firewall access to PAM.
 - Push is more efficient
-  - The secret is only updated when it actually changes.  
+  - The secret is only updated when it actually changes.
   - There is no need to continuously poll for a secret.
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsService-1.png)
 
 ## Component Description
 
-**Safeguard API** -- Safeguard has the A2A (Application to Application) REST API and the Core REST API (labeled Config in the diagram) that is used to configure the A2A service as well as other Safeguard services.  There are aksi open source SDKs for accessing these APIs from a .NET Standard 2.0 library.  
+**Safeguard API** -- Safeguard has the A2A (Application to Application) REST API and the Core REST API (labeled Config in the diagram) that is used to configure the A2A service as well as other Safeguard services.  There are aksi open source SDKs for accessing these APIs from a .NET Standard 2.0 library.
 
 - Discover -- A2A registrations are visible to certificate users via the core API.
 - Monitor -- The A2A API includes a SignalR web socket connection that will give real-time updates for when passwords change (no polling).
@@ -85,11 +89,11 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 - Checkout and rebuild all (Rebuild Solution) the SafeguardDevOpsService (<https://github.com/OneIdentity/SafeguardDevOpsService>)
 - Start the SafeguardDevOpsService
 - In a browser navigate to <http://localhost:5000/swagger/index.html>
-- Run endpoint: `POST /devops/Configuration`  
+- Run endpoint: `POST /devops/Configuration`
 
 ```json
     {
-        "SppAddress": "<spp-address>", 
+        "SppAddress": "<spp-address>",
         "CertificateUserThumbprint": "<your-certificate-thumbprint>"
     }
 ```
@@ -98,7 +102,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 - Run endpoint: `GET /devops/Configuration/RetrievableAccounts` -- Returns a list of all of the retrievable accounts
 - Run endpoint: `GET /devops/Configuration/Plugins` -- Return a list of all of the registered plugins.
 - Set the HashiCorpVault plugin configuration using endpoint: `PUT /devops/Configuration/Plugins/{name}/Configuration`
-- Enter HashiCorpVault as the name in the URL  
+- Enter HashiCorpVault as the name in the URL
 
 ```json
     {
@@ -129,7 +133,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 - Replace the apiKey with the api key from the RetrievableAccounts output above
 - VaultName should be HashiCorpVault
 - Set the AzureKeyVault plugin configuration using endpoint: `PUT /devops/Configuration/Plugins/{name}/Configuration`
-- Enter AzureKeyVault as the name in the URL  
+- Enter AzureKeyVault as the name in the URL
 
 ```json
     {
@@ -157,7 +161,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 - Replace the accountName with the account name from the RetrievableAccounts output above
 - Replace the apiKey with the api key from the RetrievableAccounts output above
 - Set the KubernetesVault plugin configuration using endpoint: `PUT /devops/Configuration/Plugins/{name}/Configuration`
-- Enter KubernetesVault as the name in the URL  
+- Enter KubernetesVault as the name in the URL
 
 ```json
     {
@@ -198,4 +202,3 @@ There are many security considerations that have not yet been addressed.
 More documentation will be provided in the near future.
 
 Feedback welcome.
-
