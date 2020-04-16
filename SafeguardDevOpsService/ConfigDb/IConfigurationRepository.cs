@@ -18,6 +18,7 @@ namespace OneIdentity.DevOps.ConfigDb
         string SafeguardAddress { get; set; }
         int? ApiVersion { get; set; }
         bool? IgnoreSsl { get; set; }
+        string SigningCertificate { get; set; }
 
         string UserCertificateThumbprint { get; set; }
         string UserCertificateBase64Data { get; set; }

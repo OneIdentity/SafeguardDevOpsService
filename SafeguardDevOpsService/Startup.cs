@@ -69,6 +69,9 @@ namespace OneIdentity.DevOps
             builder.Register(c => new SafeguardLogic(c.Resolve<IConfigurationRepository>())).As<ISafeguardLogic>().SingleInstance();
             builder.Register(c => new PluginsLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>())).As<IPluginsLogic>().SingleInstance();
             //builder.RegisterType<ConfigurationLogic>().As<IConfigurationLogic>();
+
+            //builder.RegisterType<SafeguardTokenAuthenticationProvider>().AsImplementedInterfaces().SingleInstance();
+
         }
 
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)

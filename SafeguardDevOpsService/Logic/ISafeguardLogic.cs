@@ -8,6 +8,8 @@ namespace OneIdentity.DevOps.Logic
         Safeguard SetSafeguardData(SafeguardData safeguardData);
         void DeleteSafeguardData();
 
+        bool ValidateToken(string token);
+
         ManagementConnection GetConnection();
         ManagementConnection Connect(ManagementConnectionData connectionData);
         void Disconnect();
