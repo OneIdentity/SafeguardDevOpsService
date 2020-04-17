@@ -25,6 +25,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string SafeguardAddressKey = "SafeguardAddress";
         private const string ApiVersionKey = "ApiVersion";
         private const string IgnoreSslKey = "IgnoreSsl";
+        private const string SigningCertifcateKey = "SigningCertificate";
 
         private const string UserCertificateThumbprintKey = "UserCertThumbprint";
         private const string UserCertificateDataKey = "UserCertData";
@@ -135,6 +136,12 @@ namespace OneIdentity.DevOps.ConfigDb
                 }
             }
             set => SetSimpleSetting(IgnoreSslKey, value.ToString());
+        }
+
+        public string SigningCertificate
+        {
+            get => GetSimpleSetting(SigningCertifcateKey);
+            set => SetSimpleSetting(SigningCertifcateKey, value);
         }
 
         public string UserCertificateThumbprint

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using OneIdentity.DevOps.Authorization;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Logic;
 
@@ -22,6 +23,22 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="404">Not found</response>
         [HttpGet]
         public ActionResult<Safeguard> GetSafeguard([FromServices] ISafeguardLogic safeguard)
+        {
+            var availability = safeguard.GetSafeguardData();
+            if (availability == null)
+                return NotFound("No Safeguard has not been configured");
+            return Ok(availability);
+            // TODO: error handling?
+        }
+
+        /// <summary>
+        /// Get the current Safeguard configuration to use with the DevOps service.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardTokenAuthorization]
+        [HttpGet("Login")]
+        public ActionResult<Safeguard> GetSafeguardLogin([FromServices] ISafeguardLogic safeguard)
         {
             var availability = safeguard.GetSafeguardData();
             if (availability == null)

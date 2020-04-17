@@ -1,9 +1,15 @@
 ﻿using System;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Xml;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
 using Safeguard = OneIdentity.DevOps.Data.Safeguard;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -30,6 +36,44 @@ namespace OneIdentity.DevOps.Logic
             availability.ApplianceName = applianceAvailability.ApplianceName;
             availability.ApplianceVersion = applianceAvailability.ApplianceVersion;
             availability.ApplianceState = applianceAvailability.ApplianceCurrentState;
+            return availability;
+        }
+
+        private Safeguard FetchAndStoreSignatureCertificate(Safeguard availability)
+        {
+            HttpClientHandler handler = null;
+            if (availability.IgnoreSsl)
+            {
+                handler = new HttpClientHandler();
+                handler.ClientCertificateOptions = ClientCertificateOption.Manual;
+                handler.ServerCertificateCustomValidationCallback =
+                    (httpRequestMessage, cert, cetChain, policyErrors) =>
+                    {
+                        return true;
+                    };
+            }
+
+            string result = null;
+            using (var client = new HttpClient(handler))
+            {
+                client.BaseAddress = new Uri($"https://{availability.ApplianceAddress}");
+                var response = client.GetAsync("RSTS/Saml2FedMetadata").Result;
+                response.EnsureSuccessStatusCode();
+
+                result = response.Content.ReadAsStringAsync().Result;
+            }
+
+            if (result != null)
+            {
+                var xml = new XmlDocument();
+                xml.LoadXml(result);
+                var certificates = xml.DocumentElement.GetElementsByTagName("X509Certificate");
+                if (certificates != null && certificates.Count > 0)
+                {
+                    _configDb.SigningCertificate = certificates.Item(0).InnerText;
+                }
+            }
+
             return availability;
         }
 
@@ -107,7 +151,31 @@ namespace OneIdentity.DevOps.Logic
             _connectionContext?.AccessToken?.Dispose();
             _connectionContext = null;
         }
-    
+
+        public bool ValidateToken(string token)
+        {
+            try
+            {
+                var key = _configDb.SigningCertificate;
+                var bytes = Convert.FromBase64String(key);
+                var cert = new X509Certificate2(bytes);
+
+                var parts = token.Split('.');
+                var header = parts[0];
+                var payload = parts[1];
+                var signature = Base64UrlTextEncoder.Decode(parts[2]);
+
+                var data = Encoding.UTF8.GetBytes(header + '.' + payload);
+
+                if (cert.GetRSAPublicKey()
+                    .VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
+                {
+                    return true;
+                }
+            } catch { }
+
+            return false;
+        }
 
         public Safeguard GetSafeguardData()
         {
@@ -127,6 +195,8 @@ namespace OneIdentity.DevOps.Logic
                 _configDb.ApiVersion = safeguardData.ApiVersion ?? DefaultApiVersion;
                 _configDb.IgnoreSsl = safeguardData.IgnoreSsl ?? false;
             }
+
+            FetchAndStoreSignatureCertificate(availability);
 
             return availability;
         }
