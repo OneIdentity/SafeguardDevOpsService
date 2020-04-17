@@ -1,6 +1,6 @@
 ﻿namespace OneIdentity.DevOps.Data.Spp
 {
-    internal class LoggedInUser
+    public class LoggedInUser
     {
         public int Id { get; set; }
         public string IdentityProviderName { get; set; }
