@@ -57,8 +57,8 @@ namespace OneIdentity.DevOps.Controllers
         [HttpGet("Logoff")]
         public ActionResult<Safeguard> GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
         {
-            var sppToken = HttpContext.Items["spp-token"].ToString();
-            AuthorizedCache.Instance.Remove(sppToken);
+            var sessionKey = HttpContext.Items["session-key"].ToString();
+            AuthorizedCache.Instance.Remove(sessionKey);
 
             return Ok();
         }
