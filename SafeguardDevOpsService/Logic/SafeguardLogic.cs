@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -10,6 +11,7 @@ using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
 using Safeguard = OneIdentity.DevOps.Data.Safeguard;
 using Microsoft.AspNetCore.WebUtilities;
+using OneIdentity.DevOps.Exceptions;
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -28,14 +30,34 @@ namespace OneIdentity.DevOps.Logic
             _logger = Serilog.Log.Logger;
         }
 
+        private Safeguard GetSafeguardAppliance(ISafeguardConnection sg)
+        {
+            try
+            {
+                var availabilityJson = sg.InvokeMethod(Service.Notification, Method.Get, "Status/Availability");
+                var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
+                return new Safeguard()
+                {
+                    ApplianceAddress = _configDb.SafeguardAddress,
+                    ApplianceId = applianceAvailability.ApplianceId,
+                    ApplianceName = applianceAvailability.ApplianceName,
+                    ApplianceVersion = applianceAvailability.ApplianceVersion,
+                    ApplianceState = applianceAvailability.ApplianceCurrentState
+                };
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                throw new DevOpsException($"Failed to get the appliance information: {ex.Message}");
+            }
+        }
+
         private Safeguard GetSafeguardAvailability(ISafeguardConnection sg, ref Safeguard availability)
         {
-            var availabilityJson = sg.InvokeMethod(Service.Notification, Method.Get, "Status/Availability");
-            var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
-            availability.ApplianceId = applianceAvailability.ApplianceId;
-            availability.ApplianceName = applianceAvailability.ApplianceName;
-            availability.ApplianceVersion = applianceAvailability.ApplianceVersion;
-            availability.ApplianceState = applianceAvailability.ApplianceCurrentState;
+            var safeguard = GetSafeguardAppliance(sg);
+            availability.ApplianceId = safeguard.ApplianceId;
+            availability.ApplianceName = safeguard.ApplianceName;
+            availability.ApplianceVersion = safeguard.ApplianceVersion;
+            availability.ApplianceState = safeguard.ApplianceState;
             return availability;
         }
 
@@ -101,6 +123,36 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        private ISafeguardConnection ConnectWithAccessToken(string token)
+        {
+            if (_connectionContext != null)
+            {
+                DisconnectWithAccessToken();
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(_configDb.SafeguardAddress))
+                    throw new DevOpsException("Missing safeguard appliance configuration.");
+                if (string.IsNullOrEmpty(token))
+                    throw new DevOpsException("Missing safeguard access token.");
+
+                _connectionContext = new ManagementConnection
+                {
+                    AccessToken = token.ToSecureString()
+                };
+
+                return SafeguardDotNet.Safeguard.Connect(_configDb.SafeguardAddress, _connectionContext.AccessToken,
+                    _configDb.ApiVersion ?? DefaultApiVersion, _configDb.IgnoreSsl ?? false);
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                var msg = $"Failed to connect to Safeguard at '{_configDb.SafeguardAddress}': {ex.Message}";
+                _logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+        }
+
         private void ConnectWithAccessToken(ManagementConnectionData connectionData)
         {
             if (_connectionContext != null)
@@ -152,7 +204,35 @@ namespace OneIdentity.DevOps.Logic
             _connectionContext = null;
         }
 
-        public bool ValidateToken(string token)
+        private bool GetAndValidateUserPermissions(string token)
+        {
+            ISafeguardConnection sg = null;
+            try
+            {
+                sg = ConnectWithAccessToken(token);
+
+                var meJson = sg.InvokeMethod(Service.Core, Method.Get, "Me");
+                var loggedInUser = JsonHelper.DeserializeObject<LoggedInUser>(meJson);
+
+                var valid = loggedInUser.AdminRoles.Any(x => x.Equals("ApplianceAdmin") || x.Equals("OperationsAdmin"));
+                if (valid)
+                {
+                    AuthorizedCache.Instance.Add(new ManagementConnection(loggedInUser)
+                    {
+                        AccessToken = token.ToSecureString(),
+                        Appliance = GetSafeguardAppliance(sg)
+                    });
+                }
+
+                return valid;
+            }
+            finally
+            {
+                sg?.Dispose();
+            }
+        }
+
+        public bool ValidateLogin(string token, bool tokenOnly = false)
         {
             try
             {
@@ -167,11 +247,15 @@ namespace OneIdentity.DevOps.Logic
 
                 var data = Encoding.UTF8.GetBytes(header + '.' + payload);
 
-                if (cert.GetRSAPublicKey()
-                    .VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
+                bool validToken = cert.GetRSAPublicKey()
+                    .VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+
+                if (validToken && !tokenOnly)
                 {
-                    return true;
+                    return GetAndValidateUserPermissions(token);
                 }
+
+                return validToken;
             } catch { }
 
             return false;

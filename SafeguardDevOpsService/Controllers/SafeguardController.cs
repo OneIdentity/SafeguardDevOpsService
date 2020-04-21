@@ -21,6 +21,7 @@ namespace OneIdentity.DevOps.Controllers
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
         [HttpGet]
         public ActionResult<Safeguard> GetSafeguard([FromServices] ISafeguardLogic safeguard)
         {
@@ -37,14 +38,29 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardTokenAuthorization]
-        [HttpGet("Login")]
-        public ActionResult<Safeguard> GetSafeguardLogin([FromServices] ISafeguardLogic safeguard)
+        [HttpGet("Logon")]
+        public ActionResult<Safeguard> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
         {
             var availability = safeguard.GetSafeguardData();
             if (availability == null)
                 return NotFound("No Safeguard has not been configured");
             return Ok(availability);
             // TODO: error handling?
+        }
+
+        /// <summary>
+        /// Get the current Safeguard configuration to use with the DevOps service.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [HttpGet("Logoff")]
+        public ActionResult<Safeguard> GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
+        {
+            var sessionKey = HttpContext.Items["session-key"].ToString();
+            AuthorizedCache.Instance.Remove(sessionKey);
+
+            return Ok();
         }
 
         /// <summary>
