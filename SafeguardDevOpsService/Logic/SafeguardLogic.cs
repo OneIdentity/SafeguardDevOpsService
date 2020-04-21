@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -259,6 +260,102 @@ namespace OneIdentity.DevOps.Logic
             } catch { }
 
             return false;
+        }
+
+        public X509Certificate2 GetX509Certificate(string thumbPrint)
+        {
+            X509Store store = new X509Store("My", StoreLocation.CurrentUser);
+
+            try
+            {
+                store.Open((OpenFlags.ReadOnly));
+
+                var spsCerts = store.Certificates.OfType<X509Certificate2>().ToArray();
+                var cert = spsCerts.FirstOrDefault(x => x.Thumbprint != null && x.Thumbprint.Equals(thumbPrint, StringComparison.InvariantCultureIgnoreCase));
+                return cert;
+            }
+            catch (Exception ex)
+            {
+                var msg = $"Unknown error reading the cert store. {ex.Message}";
+                _logger.Error(ex, msg);
+                throw new DevOpsException(msg);
+            }
+            finally
+            {
+                store.Close();
+            }
+        }
+
+        public ClientCertificate GetClientCertificate(string thumbPrint)
+        {
+            var cert = GetX509Certificate(thumbPrint);
+
+            if (cert != null)
+            {
+                var result = new ClientCertificate()
+                {
+                    Thumbprint = cert.Thumbprint,
+                    IssuedBy = cert.Issuer,
+                    Subject = cert.Subject,
+                    NotAfter = cert.NotBefore,
+                    NotBefore = cert.NotAfter
+                };
+                return result;
+            }
+
+            return null;
+        }
+
+        public void InstallClientCertificate(ClientCertificatePfx certificatePfx)
+        {
+            X509Store store = new X509Store("My", StoreLocation.CurrentUser);
+
+            try { 
+                using (var memoryStream = new MemoryStream())
+                {
+                    certificatePfx.file.OpenReadStream().CopyTo(memoryStream);
+                    var cert = new X509Certificate2(memoryStream.ToArray(), certificatePfx.passphrase);
+
+                    store.Open((OpenFlags.ReadWrite));
+                    store.Add(cert);
+                }
+            }
+            catch (Exception ex)
+            {
+                var msg = $"Unknown error installing the client certificate. {ex.Message}";
+                _logger.Error(ex, msg);
+                throw new DevOpsException(msg);
+            }
+            finally
+            {
+                store.Close();
+            }
+        }
+
+        public void RemoveClientCertificate(string thumbPrint)
+        {
+            var cert = GetX509Certificate(thumbPrint);
+
+            if (cert != null)
+            {
+                X509Store store = new X509Store("My", StoreLocation.CurrentUser);
+
+                try
+                {
+                    store.Open((OpenFlags.ReadWrite));
+                    store.Remove(cert);
+                }
+                catch (Exception ex)
+                {
+                    var msg = $"Unknown error removing the client certificate. {ex.Message}";
+                    _logger.Error(ex, msg);
+                    throw new DevOpsException(msg);
+                }
+                finally
+                {
+                    store.Close();
+                }
+            }
         }
 
         public Safeguard GetSafeguardData()

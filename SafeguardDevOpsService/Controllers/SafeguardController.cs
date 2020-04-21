@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Authorization;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Logic;
@@ -87,6 +89,47 @@ namespace OneIdentity.DevOps.Controllers
             safeguard.DeleteSafeguardData();
             return NoContent();
             // TODO: error handling?
+        }
+
+        /// <summary>
+        /// Get an installed client certificate by thumbprint.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [HttpGet("ClientCertificate/{thumbPrint}")]
+        public ActionResult<ClientCertificate> GetClientCertificate([FromServices] ISafeguardLogic safeguard, string thumbPrint)
+        {
+            var certificate = safeguard.GetClientCertificate(thumbPrint);
+            if (certificate == null)
+                return NotFound();
+
+            return Ok(certificate);
+        }
+
+        /// <summary>
+        /// Install a trusted certificate.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [HttpPost("ClientCertificate")]
+        public ActionResult InstallClientCertificate([FromServices] ISafeguardLogic safeguard, [FromForm]ClientCertificatePfx certFile)
+        {
+            var size = certFile.file.Length;
+            safeguard.InstallClientCertificate(certFile);
+            return Ok();
+        }
+
+        /// <summary>
+        /// Remove an installed client certificate by thumbprint.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [HttpDelete("ClientCertificate/{thumbPrint}")]
+        public ActionResult RemoveClientCertificate([FromServices] ISafeguardLogic safeguard, string thumbPrint)
+        {
+            safeguard.RemoveClientCertificate(thumbPrint);
+
+            return NoContent();
         }
 
         /// <summary>

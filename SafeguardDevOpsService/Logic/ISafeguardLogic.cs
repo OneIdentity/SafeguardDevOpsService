@@ -9,6 +9,9 @@ namespace OneIdentity.DevOps.Logic
         void DeleteSafeguardData();
 
         bool ValidateLogin(string token, bool tokenOnly = false);
+        void InstallClientCertificate(ClientCertificatePfx certificatePfx);
+        ClientCertificate GetClientCertificate(string thumbPrint);
+        void RemoveClientCertificate(string thumbPrint);
 
         ManagementConnection GetConnection();
         ManagementConnection Connect(ManagementConnectionData connectionData);
