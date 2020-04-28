@@ -22,6 +22,9 @@ namespace OneIdentity.DevOps.ConfigDb
 
         string UserCertificateThumbprint { get; set; }
         string UserCertificateBase64Data { get; set; }
-        X509Certificate2 UserCertificate { get; }
+        string CsrBase64Data { get; set; }
+        string CsrPrivateKeyBase64Data { get; set; }
+
+        X509Certificate2 UserCertificate { get; set; }
     }
 }

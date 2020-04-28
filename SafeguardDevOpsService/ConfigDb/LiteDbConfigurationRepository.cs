@@ -29,6 +29,8 @@ namespace OneIdentity.DevOps.ConfigDb
 
         private const string UserCertificateThumbprintKey = "UserCertThumbprint";
         private const string UserCertificateDataKey = "UserCertData";
+        private const string CsrDataKey = "CertificateSigningRequestData";
+        private const string CsrPrivateKeyDataKey = "CertificateSigningRequestPrivateKeyData";
 
         public LiteDbConfigurationRepository()
         {
@@ -156,6 +158,18 @@ namespace OneIdentity.DevOps.ConfigDb
             set => SetSimpleSetting(UserCertificateDataKey, value);
         }
 
+        public string CsrBase64Data
+        {
+            get => GetSimpleSetting(CsrDataKey);
+            set => SetSimpleSetting(CsrDataKey, value);
+        }
+
+        public string CsrPrivateKeyBase64Data
+        {
+            get => GetSimpleSetting(CsrPrivateKeyDataKey);
+            set => SetSimpleSetting(CsrPrivateKeyDataKey, value);
+        }
+
         public X509Certificate2 UserCertificate
         {
             get
@@ -165,8 +179,8 @@ namespace OneIdentity.DevOps.ConfigDb
                     try
                     {
                         var bytes = Convert.FromBase64String(UserCertificateBase64Data);
-                        var cert = new X509Certificate2();
-                        cert.Import(bytes);
+                        var cert = new X509Certificate2(bytes);
+                        return cert;
                     }
                     catch (Exception)
                     {
@@ -199,6 +213,19 @@ namespace OneIdentity.DevOps.ConfigDb
                 }
 
                 return null;
+            }
+
+            set
+            {
+                if (value != null)
+                {
+                    UserCertificateBase64Data = Convert.ToBase64String(value.Export(X509ContentType.Pfx));
+                }
+                else
+                {
+                    UserCertificateBase64Data = null;
+                    UserCertificateThumbprint = null;
+                }
             }
         }
 

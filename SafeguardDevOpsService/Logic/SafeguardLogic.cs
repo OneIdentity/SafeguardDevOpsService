@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -12,6 +13,7 @@ using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
 using Safeguard = OneIdentity.DevOps.Data.Safeguard;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.OpenApi.Models;
 using OneIdentity.DevOps.Exceptions;
 
 namespace OneIdentity.DevOps.Logic
@@ -190,8 +192,36 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (SafeguardDotNetException ex)
             {
-                _logger.Error($"Failed to connect to Safeguard at '{_configDb.SafeguardAddress}': {ex.Message}");
-                // TODO: return error?
+                var msg = $"Failed to connect to Safeguard at '{_configDb.SafeguardAddress}': {ex.Message}";
+                _logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+            finally
+            {
+                sg?.Dispose();
+            }
+        }
+
+        private string ExecuteCommand(Method method, string path, string body = null, Dictionary<string,string> parameters = null)
+        {
+            if (_connectionContext == null)
+            {
+                throw new DevOpsException("Not logged in");
+            }
+
+            ISafeguardConnection sg = null;
+            try
+            {
+                sg = SafeguardDotNet.Safeguard.Connect(_configDb.SafeguardAddress, _connectionContext.AccessToken,
+                    _configDb.ApiVersion ?? DefaultApiVersion, _configDb.IgnoreSsl ?? false);
+
+                return sg.InvokeMethod(Service.Core, method, path, body, parameters);
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                var msg = $"Failed to execute command '{path}': {ex.Message}";
+                _logger.Error(msg);
+                throw new DevOpsException(msg, ex);
             }
             finally
             {
@@ -233,6 +263,57 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        private void CreateA2ACertificateUser()
+        {
+            string thumbprint = _configDb.UserCertificate?.Thumbprint;
+
+            if (thumbprint != null)
+            {
+                var p = new Dictionary<string, string>();
+                p.Add("filter", $"UserName eq '{A2AUser.DevOpsUserName}'");
+
+                var result = ExecuteCommand(Method.Get, "Users", null, p);
+                var foundUsers = JsonHelper.DeserializeObject<List<A2AUser>>(result);
+
+                var a2aUser = foundUsers.Count > 0 ? foundUsers.FirstOrDefault() : new A2AUser();
+                a2aUser.PrimaryAuthenticationIdentity = thumbprint;
+                var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
+                var path = foundUsers.Count > 0 ? $"Users/{a2aUser.Id}" : "Users";
+
+                ExecuteCommand(foundUsers.Count > 0 ? Method.Put : Method.Post, path, a2aUserStr);
+            }
+        }
+
+        private void AddTrustedCertificate()
+        {
+            string thumbprint = _configDb.UserCertificate?.Thumbprint;
+
+            if (thumbprint != null)
+            {
+                string result = null;
+                try
+                {
+                    result = ExecuteCommand(Method.Get, $"TrustedCertificates/{thumbprint}");
+                }
+                catch (Exception ex)
+                {
+                    var z = ex;
+                }
+
+                if (result == null)
+                {
+                    var certData = _configDb.UserCertificate.Export(X509ContentType.Cert);
+                    var trustedCert = new TrustedCertificate()
+                    {
+                        Base64CertificateData = Convert.ToBase64String(certData)
+                    };
+                    var trustedCertStr = JsonHelper.SerializeObject(trustedCert);
+
+                    ExecuteCommand(Method.Post, "TrustedCertificates", trustedCertStr);
+                }
+            }
+        }
+
         public bool ValidateLogin(string token, bool tokenOnly = false)
         {
             try
@@ -262,33 +343,9 @@ namespace OneIdentity.DevOps.Logic
             return false;
         }
 
-        public X509Certificate2 GetX509Certificate(string thumbPrint)
+        public ClientCertificate GetClientCertificate()
         {
-            X509Store store = new X509Store("My", StoreLocation.CurrentUser);
-
-            try
-            {
-                store.Open((OpenFlags.ReadOnly));
-
-                var spsCerts = store.Certificates.OfType<X509Certificate2>().ToArray();
-                var cert = spsCerts.FirstOrDefault(x => x.Thumbprint != null && x.Thumbprint.Equals(thumbPrint, StringComparison.InvariantCultureIgnoreCase));
-                return cert;
-            }
-            catch (Exception ex)
-            {
-                var msg = $"Unknown error reading the cert store. {ex.Message}";
-                _logger.Error(ex, msg);
-                throw new DevOpsException(msg);
-            }
-            finally
-            {
-                store.Close();
-            }
-        }
-
-        public ClientCertificate GetClientCertificate(string thumbPrint)
-        {
-            var cert = GetX509Certificate(thumbPrint);
+            var cert = _configDb.UserCertificate;
 
             if (cert != null)
             {
@@ -306,56 +363,104 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        public void InstallClientCertificate(ClientCertificatePfx certificatePfx)
+        public void InstallClientCertificate(ClientCertificatePfx certificate)
         {
-            X509Store store = new X509Store("My", StoreLocation.CurrentUser);
+            using (var memoryStream = new MemoryStream())
+            {
+                certificate.file.OpenReadStream().CopyTo(memoryStream);
+                var cert = certificate.passphrase == null ? new X509Certificate2(memoryStream.ToArray()) : new X509Certificate2(memoryStream.ToArray(), certificate.passphrase);
 
-            try { 
-                using (var memoryStream = new MemoryStream())
+                if (cert.HasPrivateKey)
                 {
-                    certificatePfx.file.OpenReadStream().CopyTo(memoryStream);
-                    var cert = new X509Certificate2(memoryStream.ToArray(), certificatePfx.passphrase);
-
-                    store.Open((OpenFlags.ReadWrite));
-                    store.Add(cert);
+                    _configDb.UserCertificate = cert;
                 }
-            }
-            catch (Exception ex)
-            {
-                var msg = $"Unknown error installing the client certificate. {ex.Message}";
-                _logger.Error(ex, msg);
-                throw new DevOpsException(msg);
-            }
-            finally
-            {
-                store.Close();
+                else
+                {
+                    try
+                    {
+                        using var rsa = RSA.Create();
+                        var privateKeyBytes = Convert.FromBase64String(_configDb.CsrPrivateKeyBase64Data);
+                        rsa.ImportRSAPrivateKey(privateKeyBytes, out _);
+
+                        using (X509Certificate2 pubOnly = cert)
+                        using (X509Certificate2 pubPrivEphemeral = pubOnly.CopyWithPrivateKey(rsa))
+                        {
+                            _configDb.UserCertificateBase64Data = Convert.ToBase64String(pubPrivEphemeral.Export(X509ContentType.Pfx));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        var msg = $"Failed to import the certificate: {ex.Message}";
+                        _logger.Error(msg);
+                        throw new DevOpsException(msg);
+                    }
+                }
             }
         }
 
-        public void RemoveClientCertificate(string thumbPrint)
+        public void RemoveClientCertificate()
         {
-            var cert = GetX509Certificate(thumbPrint);
+            _configDb.UserCertificate = null;
+        }
 
-            if (cert != null)
+        public string GetClientCSR(int? size, string subjectName)
+        {
+            int certSize = 2048;
+            string certSubjectName = "CN=DevOpsServiceClientCertificate";
+
+            if (size != null)
+                certSize = size.Value;
+            if (subjectName != null)
             {
-                X509Store store = new X509Store("My", StoreLocation.CurrentUser);
-
-                try
-                {
-                    store.Open((OpenFlags.ReadWrite));
-                    store.Remove(cert);
-                }
-                catch (Exception ex)
-                {
-                    var msg = $"Unknown error removing the client certificate. {ex.Message}";
-                    _logger.Error(ex, msg);
-                    throw new DevOpsException(msg);
-                }
-                finally
-                {
-                    store.Close();
-                }
+                if (!subjectName.StartsWith("CN=", StringComparison.InvariantCultureIgnoreCase))
+                    subjectName = "CN={subjectName}";
+                certSubjectName = subjectName;
             }
+
+            using (RSA rsa = RSA.Create(certSize))
+            {
+                var certificateRequest = new CertificateRequest(certSubjectName, rsa,
+                    HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+
+                certificateRequest.CertificateExtensions.Add(
+                    new X509BasicConstraintsExtension(false, false, 0, false));
+
+                certificateRequest.CertificateExtensions.Add(
+                    new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement,
+                        true));
+
+                certificateRequest.CertificateExtensions.Add(
+                    new X509EnhancedKeyUsageExtension(
+                        new OidCollection
+                        {
+                            new Oid("1.3.6.1.5.5.7.3.2")
+                        },
+                        true));
+
+                certificateRequest.CertificateExtensions.Add(
+                    new X509SubjectKeyIdentifierExtension(certificateRequest.PublicKey, false));
+
+                var csr = certificateRequest.CreateSigningRequest();
+                _configDb.CsrBase64Data = Convert.ToBase64String(csr);
+                _configDb.CsrPrivateKeyBase64Data = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+
+                StringBuilder builder = new StringBuilder();
+                builder.AppendLine("-----BEGIN CERTIFICATE REQUEST-----");
+                builder.AppendLine(Convert.ToBase64String(csr, Base64FormattingOptions.InsertLineBreaks));
+                builder.AppendLine("-----END CERTIFICATE REQUEST-----");
+
+                return builder.ToString();
+            }
+        }
+
+        //DELETE ME.  Just for Development
+        public void CreateA2AUser()
+        {
+            if (_connectionContext == null)
+                throw new DevOpsException("Not logged in");
+
+            CreateA2ACertificateUser();
+            AddTrustedCertificate();
         }
 
         public Safeguard GetSafeguardData()

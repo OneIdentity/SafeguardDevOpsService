@@ -66,6 +66,20 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
+        /// DELETE ME.  This endpoint is just for development.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [HttpGet("CreateA2AUser")]
+        public ActionResult<Safeguard> CreateA2AUser([FromServices] ISafeguardLogic safeguard)
+        {
+            safeguard.CreateA2AUser();
+
+            return Ok();
+        }
+
+        /// <summary>
         /// Configure a Safeguard configuration for the DevOps service to use.
         /// </summary>
         /// <response code="200">Success</response>
@@ -96,10 +110,10 @@ namespace OneIdentity.DevOps.Controllers
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
-        [HttpGet("ClientCertificate/{thumbPrint}")]
-        public ActionResult<ClientCertificate> GetClientCertificate([FromServices] ISafeguardLogic safeguard, string thumbPrint)
+        [HttpGet("ClientCertificate")]
+        public ActionResult<ClientCertificate> GetClientCertificate([FromServices] ISafeguardLogic safeguard)
         {
-            var certificate = safeguard.GetClientCertificate(thumbPrint);
+            var certificate = safeguard.GetClientCertificate();
             if (certificate == null)
                 return NotFound();
 
@@ -124,12 +138,24 @@ namespace OneIdentity.DevOps.Controllers
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
-        [HttpDelete("ClientCertificate/{thumbPrint}")]
-        public ActionResult RemoveClientCertificate([FromServices] ISafeguardLogic safeguard, string thumbPrint)
+        [HttpDelete("ClientCertificate")]
+        public ActionResult RemoveClientCertificate([FromServices] ISafeguardLogic safeguard)
         {
-            safeguard.RemoveClientCertificate(thumbPrint);
+            safeguard.RemoveClientCertificate();
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Get a CSR can be signed and uploaded back to the DevOps service.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [HttpGet("CSR")]
+        public ActionResult<string> GetClientCSR([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size, [FromQuery] string subjectName)
+        {
+            var csr = safeguard.GetClientCSR(size, subjectName);
+            return Ok(csr);
         }
 
         /// <summary>

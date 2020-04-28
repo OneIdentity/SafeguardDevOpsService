@@ -1,4 +1,6 @@
-﻿using OneIdentity.DevOps.Data;
+﻿using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
+using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -10,11 +12,17 @@ namespace OneIdentity.DevOps.Logic
 
         bool ValidateLogin(string token, bool tokenOnly = false);
         void InstallClientCertificate(ClientCertificatePfx certificatePfx);
-        ClientCertificate GetClientCertificate(string thumbPrint);
-        void RemoveClientCertificate(string thumbPrint);
+        ClientCertificate GetClientCertificate();
+        void RemoveClientCertificate();
+        string GetClientCSR(int? size, string subjectName);
 
         ManagementConnection GetConnection();
         ManagementConnection Connect(ManagementConnectionData connectionData);
         void Disconnect();
+
+
+        // Delete ME - only used for developement
+        void CreateA2AUser();
+
     }
 }

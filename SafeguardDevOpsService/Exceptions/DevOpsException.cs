@@ -121,6 +121,10 @@ namespace OneIdentity.DevOps.Exceptions
         {
         }
 
+        public DevOpsException(string message, Exception ex) : base(message, ex)
+        {
+        }
+
         protected DevOpsException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             var responseMessage = new HttpResponseMessage();
