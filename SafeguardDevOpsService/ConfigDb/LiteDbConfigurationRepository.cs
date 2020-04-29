@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using LiteDB;
 using OneIdentity.DevOps.Data;
@@ -25,10 +26,13 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string SafeguardAddressKey = "SafeguardAddress";
         private const string ApiVersionKey = "ApiVersion";
         private const string IgnoreSslKey = "IgnoreSsl";
+        private const string A2aUserIdKey = "A2aUserId";
+        private const string A2aRegistrationIdKey = "A2aRegistrationId";
         private const string SigningCertifcateKey = "SigningCertificate";
 
         private const string UserCertificateThumbprintKey = "UserCertThumbprint";
         private const string UserCertificateDataKey = "UserCertData";
+        private const string UserCertificatePassphraseKey = "UserCertPassphrase";
         private const string CsrDataKey = "CertificateSigningRequestData";
         private const string CsrPrivateKeyDataKey = "CertificateSigningRequestPrivateKeyData";
 
@@ -140,6 +144,38 @@ namespace OneIdentity.DevOps.ConfigDb
             set => SetSimpleSetting(IgnoreSslKey, value.ToString());
         }
 
+        public int? A2aUserId
+        {
+            get
+            {
+                try
+                {
+                    return Int32.Parse(GetSimpleSetting(A2aUserIdKey));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            set => SetSimpleSetting(A2aUserIdKey, value.ToString());
+        }
+
+        public int? A2aRegistrationId
+        {
+            get
+            {
+                try
+                {
+                    return Int32.Parse(GetSimpleSetting(A2aRegistrationIdKey));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            set => SetSimpleSetting(A2aRegistrationIdKey, value.ToString());
+        }
+
         public string SigningCertificate
         {
             get => GetSimpleSetting(SigningCertifcateKey);
@@ -156,6 +192,12 @@ namespace OneIdentity.DevOps.ConfigDb
         {
             get => GetSimpleSetting(UserCertificateDataKey);
             set => SetSimpleSetting(UserCertificateDataKey, value);
+        }
+
+        public string UserCertificatePassphrase
+        {
+            get => GetSimpleSetting(UserCertificatePassphraseKey);
+            set => SetSimpleSetting(UserCertificatePassphraseKey, value);
         }
 
         public string CsrBase64Data
@@ -179,7 +221,9 @@ namespace OneIdentity.DevOps.ConfigDb
                     try
                     {
                         var bytes = Convert.FromBase64String(UserCertificateBase64Data);
-                        var cert = new X509Certificate2(bytes);
+                        var cert = string.IsNullOrEmpty(UserCertificatePassphrase) 
+                            ? new X509Certificate2(bytes)
+                            : new X509Certificate2(bytes, UserCertificatePassphrase);
                         return cert;
                     }
                     catch (Exception)
@@ -219,7 +263,9 @@ namespace OneIdentity.DevOps.ConfigDb
             {
                 if (value != null)
                 {
-                    UserCertificateBase64Data = Convert.ToBase64String(value.Export(X509ContentType.Pfx));
+                    UserCertificateBase64Data = string.IsNullOrEmpty(UserCertificatePassphrase) 
+                        ? Convert.ToBase64String(value.Export(X509ContentType.Pfx)) 
+                        : Convert.ToBase64String(value.Export(X509ContentType.Pfx, UserCertificatePassphrase));
                 }
                 else
                 {

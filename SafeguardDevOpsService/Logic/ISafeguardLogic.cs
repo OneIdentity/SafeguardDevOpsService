@@ -11,7 +11,7 @@ namespace OneIdentity.DevOps.Logic
         void DeleteSafeguardData();
 
         bool ValidateLogin(string token, bool tokenOnly = false);
-        void InstallClientCertificate(ClientCertificatePfx certificatePfx);
+        void InstallClientCertificate(ClientCertificate certificatePfx);
         ClientCertificate GetClientCertificate();
         void RemoveClientCertificate();
         string GetClientCSR(int? size, string subjectName);
@@ -20,9 +20,7 @@ namespace OneIdentity.DevOps.Logic
         ManagementConnection Connect(ManagementConnectionData connectionData);
         void Disconnect();
 
-
-        // Delete ME - only used for developement
-        void CreateA2AUser();
+        void ConfigureDevOpsService();
 
     }
 }

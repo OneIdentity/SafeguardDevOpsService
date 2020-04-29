@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using OneIdentity.DevOps.Data;
 
@@ -18,10 +19,13 @@ namespace OneIdentity.DevOps.ConfigDb
         string SafeguardAddress { get; set; }
         int? ApiVersion { get; set; }
         bool? IgnoreSsl { get; set; }
+        int? A2aUserId { get; set; }
+        int? A2aRegistrationId { get; set; }
         string SigningCertificate { get; set; }
 
         string UserCertificateThumbprint { get; set; }
         string UserCertificateBase64Data { get; set; }
+        string UserCertificatePassphrase { get; set; }
         string CsrBase64Data { get; set; }
         string CsrPrivateKeyBase64Data { get; set; }
 

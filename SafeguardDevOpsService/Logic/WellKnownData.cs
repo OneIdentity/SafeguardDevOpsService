@@ -6,6 +6,9 @@
         public const string PluginsName = "Plugins";
         public const string PluginInfoClassName = "PluginDescriptor";
 
+        public const string DevOpsServiceName = "SafeguardDevOpsService";
+        public const string DevOpsUserName = "SafeguardDevOpsUser";
+
         public const string DllExtension = ".dll";
         public const string DllPattern = "*.dll";
     }

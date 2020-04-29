@@ -38,7 +38,7 @@ namespace OneIdentity.DevOps.Logic
 
         public ManagementConnection Find(string sessionKey)
         {
-            if (_cache.ContainsKey(sessionKey))
+            if (sessionKey != null && _cache.ContainsKey(sessionKey))
             {
                 return _cache[sessionKey];
             }

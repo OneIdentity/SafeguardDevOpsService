@@ -23,6 +23,7 @@ namespace OneIdentity.DevOps.Data
         public string IdentityProviderName { get; set; }
         public string UserName { get; set; }
         public string[] AdminRoles { get; set; }
+        public string A2ARegistrationName { get; set; }
 
         public string SessionKey
         {
