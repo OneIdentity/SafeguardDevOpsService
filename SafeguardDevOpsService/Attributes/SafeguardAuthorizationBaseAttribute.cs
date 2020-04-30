@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using OneIdentity.DevOps.Logic;
-using RestSharp;
+using OneIdentity.DevOps.Authorization;
 using RestSharp.Extensions;
 
-namespace OneIdentity.DevOps.Authorization
+namespace OneIdentity.DevOps.Attributes
 {
     [AttributeUsage(AttributeTargets.Method, Inherited = true, AllowMultiple = false)]
     public class SafeguardAuthorizationBaseAttribute : Attribute

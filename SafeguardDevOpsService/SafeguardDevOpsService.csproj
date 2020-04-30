@@ -39,8 +39,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Attributes\" />
-    <Folder Include="Extensions\" />
     <Folder Include="Authentication\" />
   </ItemGroup>
 

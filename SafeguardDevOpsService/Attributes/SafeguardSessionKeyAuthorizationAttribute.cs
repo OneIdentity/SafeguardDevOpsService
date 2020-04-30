@@ -1,11 +1,9 @@
-﻿using System;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc.Filters;
+using OneIdentity.DevOps.Authorization;
 using OneIdentity.DevOps.Logic;
 using OneIdentity.SafeguardDotNet;
 
-namespace OneIdentity.DevOps.Authorization
+namespace OneIdentity.DevOps.Attributes
 {
     public class SafeguardSessionKeyAuthorizationAttribute : SafeguardAuthorizationBaseAttribute, IAuthorizationFilter
     {
