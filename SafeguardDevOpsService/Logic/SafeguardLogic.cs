@@ -6,12 +6,12 @@ using System.Net.Http;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
-using Safeguard = OneIdentity.DevOps.Data.Safeguard;
 using Microsoft.AspNetCore.WebUtilities;
 using OneIdentity.DevOps.Exceptions;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
@@ -25,7 +25,7 @@ namespace OneIdentity.DevOps.Logic
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
 
-        private ManagementConnection _connectionContext;
+        private ServiceConfiguration _serviceConfiguration;
 
         public SafeguardLogic(IConfigurationRepository configDb)
         {
@@ -33,13 +33,19 @@ namespace OneIdentity.DevOps.Logic
             _logger = Serilog.Log.Logger;
         }
 
-        private Safeguard GetSafeguardAppliance(ISafeguardConnection sg)
+        private DevOpsException LogAndThrow(string msg, Exception ex = null)
+        {
+            _logger.Error(msg);
+            return new DevOpsException(msg, ex);
+        }
+
+        private SafeguardConnection GetSafeguardAppliance(ISafeguardConnection sg)
         {
             try
             {
                 var availabilityJson = sg.InvokeMethod(Service.Notification, Method.Get, "Status/Availability");
                 var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
-                return new Safeguard()
+                return new SafeguardConnection()
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
                     ApplianceId = applianceAvailability.ApplianceId,
@@ -54,7 +60,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private Safeguard GetSafeguardAvailability(ISafeguardConnection sg, ref Safeguard availability)
+        private SafeguardConnection GetSafeguardAvailability(ISafeguardConnection sg, ref SafeguardConnection availability)
         {
             var safeguard = GetSafeguardAppliance(sg);
             availability.ApplianceId = safeguard.ApplianceId;
@@ -64,7 +70,7 @@ namespace OneIdentity.DevOps.Logic
             return availability;
         }
 
-        private Safeguard FetchAndStoreSignatureCertificate(Safeguard availability)
+        private SafeguardConnection FetchAndStoreSignatureCertificate(SafeguardConnection availability)
         {
             HttpClientHandler handler = null;
             if (availability.IgnoreSsl)
@@ -102,12 +108,12 @@ namespace OneIdentity.DevOps.Logic
             return availability;
         }
 
-        private Safeguard ConnectAnonymous(string safeguardAddress, int apiVersion, bool ignoreSsl)
+        private SafeguardConnection ConnectAnonymous(string safeguardAddress, int apiVersion, bool ignoreSsl)
         {
             ISafeguardConnection sg = null;
             try
             {
-                var availability = new Safeguard
+                var availability = new SafeguardConnection
                 {
                     ApplianceAddress = safeguardAddress,
                     IgnoreSsl = ignoreSsl
@@ -117,8 +123,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (SafeguardDotNetException ex)
             {
-                _logger.Error($"Failed to contact Safeguard at '{safeguardAddress}': {ex.Message}");
-                return null; // TODO: return error?
+                throw LogAndThrow($"Failed to contact Safeguard at '{safeguardAddress}': {ex.Message}", ex);
             }
             finally
             {
@@ -128,7 +133,7 @@ namespace OneIdentity.DevOps.Logic
 
         private ISafeguardConnection ConnectWithAccessToken(string token)
         {
-            if (_connectionContext != null)
+            if (_serviceConfiguration != null)
             {
                 DisconnectWithAccessToken();
             }
@@ -138,7 +143,7 @@ namespace OneIdentity.DevOps.Logic
             if (string.IsNullOrEmpty(token))
                 throw new DevOpsException("Missing safeguard access token.");
 
-            _connectionContext = new ManagementConnection
+            _serviceConfiguration = new ServiceConfiguration
             {
                 AccessToken = token.ToSecureString()
             };
@@ -146,56 +151,10 @@ namespace OneIdentity.DevOps.Logic
             return Connect();
         }
 
-        private void ConnectWithAccessToken(ManagementConnectionData connectionData)
-        {
-            if (_connectionContext != null)
-            {
-                DisconnectWithAccessToken();
-            }
-
-            ISafeguardConnection sg = null;
-            try
-            {
-                if (string.IsNullOrEmpty(_configDb.SafeguardAddress))
-                    return; // TODO: errors?
-                if (string.IsNullOrEmpty(connectionData.AccessToken))
-                    return; // TODO: errors?
-
-                _connectionContext = new ManagementConnection
-                {
-                    AccessToken = connectionData.AccessToken.ToSecureString()
-                };
-                var availability = new Safeguard
-                {
-                    ApplianceAddress = _configDb.SafeguardAddress,
-                    IgnoreSsl = connectionData.IgnoreSsl || (_configDb.IgnoreSsl ?? false)
-                };
-
-                sg = Connect();
-                _connectionContext.Appliance = GetSafeguardAvailability(sg, ref availability);
-                var meJson = sg.InvokeMethod(Service.Core, Method.Get, "Me");
-                var loggedInUser = JsonHelper.DeserializeObject<LoggedInUser>(meJson);
-
-                _connectionContext.IdentityProviderName = loggedInUser.IdentityProviderName;
-                _connectionContext.UserName = loggedInUser.UserName;
-                _connectionContext.AdminRoles = loggedInUser.AdminRoles;
-            }
-            catch (SafeguardDotNetException ex)
-            {
-                var msg = $"Failed to connect to Safeguard at '{_configDb.SafeguardAddress}': {ex.Message}";
-                _logger.Error(msg);
-                throw new DevOpsException(msg);
-            }
-            finally
-            {
-                sg?.Dispose();
-            }
-        }
-
         private void DisconnectWithAccessToken()
         {
-            _connectionContext?.AccessToken?.Dispose();
-            _connectionContext = null;
+            _serviceConfiguration?.AccessToken?.Dispose();
+            _serviceConfiguration = null;
         }
 
         private bool GetAndValidateUserPermissions(string token)
@@ -211,7 +170,7 @@ namespace OneIdentity.DevOps.Logic
                 var valid = loggedInUser.AdminRoles.Any(x => x.Equals("ApplianceAdmin") || x.Equals("OperationsAdmin"));
                 if (valid)
                 {
-                    AuthorizedCache.Instance.Add(new ManagementConnection(loggedInUser)
+                    AuthorizedCache.Instance.Add(new ServiceConfiguration(loggedInUser)
                     {
                         AccessToken = token.ToSecureString(),
                         Appliance = GetSafeguardAppliance(sg)
@@ -242,21 +201,33 @@ namespace OneIdentity.DevOps.Logic
                 };
 
                 var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
-                var result = sg.InvokeMethodFull(Service.Core, Method.Post, "Users", a2aUserStr);
-                if (result.StatusCode == HttpStatusCode.Created)
+                try
                 {
-                    a2aUser = JsonHelper.DeserializeObject<A2AUser>(result.Body);
-                    _configDb.A2aUserId = a2aUser.Id;
+                    var result = sg.InvokeMethodFull(Service.Core, Method.Post, "Users", a2aUserStr);
+                    if (result.StatusCode == HttpStatusCode.Created)
+                    {
+                        a2aUser = JsonHelper.DeserializeObject<A2AUser>(result.Body);
+                        _configDb.A2aUserId = a2aUser.Id;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndThrow($"Failed to create the A2A user: {ex.Message}", ex);
                 }
             }
             else
             {
-                if (!a2aUser.PrimaryAuthenticationIdentity.Equals(thumbprint,
-                    StringComparison.InvariantCultureIgnoreCase))
+                if (!a2aUser.PrimaryAuthenticationIdentity.Equals(thumbprint, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    a2aUser.PrimaryAuthenticationIdentity = thumbprint;
-                    var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
-                    sg.InvokeMethodFull(Service.Core, Method.Put, $"Users/{a2aUser.Id}", a2aUserStr);
+                    try { 
+                        a2aUser.PrimaryAuthenticationIdentity = thumbprint;
+                        var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
+                        sg.InvokeMethodFull(Service.Core, Method.Put, $"Users/{a2aUser.Id}", a2aUserStr);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw LogAndThrow($"Failed to update the A2A user: {ex.Message}", ex);
+                    }
                 }
             }
         }
@@ -270,17 +241,24 @@ namespace OneIdentity.DevOps.Logic
             {
                 var p = new Dictionary<string, string> {{"filter", $"UserName eq '{WellKnownData.DevOpsUserName}'"}};
 
-                result = sg.InvokeMethodFull(Service.Core, Method.Get, "Users", null, p);
-                if (result.StatusCode == HttpStatusCode.OK)
+                try
                 {
-                    var foundUsers = JsonHelper.DeserializeObject<List<A2AUser>>(result.Body);
-
-                    if (foundUsers.Count > 0)
+                    result = sg.InvokeMethodFull(Service.Core, Method.Get, "Users", null, p);
+                    if (result.StatusCode == HttpStatusCode.OK)
                     {
-                        var a2aUser = foundUsers.FirstOrDefault();
-                        _configDb.A2aUserId = a2aUser.Id;
-                        return a2aUser;
+                        var foundUsers = JsonHelper.DeserializeObject<List<A2AUser>>(result.Body);
+
+                        if (foundUsers.Count > 0)
+                        {
+                            var a2aUser = foundUsers.FirstOrDefault();
+                            _configDb.A2aUserId = a2aUser.Id;
+                            return a2aUser;
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to get the A2A user by name: {ex.Message}");
                 }
             }
             else // Otherwise just get the user by id
@@ -293,7 +271,10 @@ namespace OneIdentity.DevOps.Logic
                         return JsonHelper.DeserializeObject<A2AUser>(result.Body);
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to get the A2A user by id {_configDb.A2aUserId}: {ex.Message}");
+                }
 
                 // Apparently the user id we have is wrong so get rid of it.
                 _configDb.A2aUserId = null;
@@ -317,9 +298,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     if (ex is SafeguardDotNetException && ((SafeguardDotNetException)ex).HttpStatusCode != HttpStatusCode.NotFound)
                     {
-                        var msg = $"Failed to add the trusted certificate '{_configDb.SafeguardAddress}': {ex.Message}";
-                        _logger.Error(msg);
-                        throw new DevOpsException(msg);
+                        throw LogAndThrow($"Failed to add the trusted certificate '{_configDb.SafeguardAddress}': {ex.Message}", ex);
                     }
                 }
 
@@ -332,7 +311,14 @@ namespace OneIdentity.DevOps.Logic
                     };
 
                     var trustedCertStr = JsonHelper.SerializeObject(trustedCert);
-                    sg.InvokeMethodFull(Service.Core, Method.Post, "TrustedCertificates", trustedCertStr);
+                    try
+                    {
+                        sg.InvokeMethodFull(Service.Core, Method.Post, "TrustedCertificates", trustedCertStr);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw LogAndThrow($"Failed to add the trusted certificate '{_configDb.SafeguardAddress}': {ex.Message}", ex);
+                    }
                 }
             }
         }
@@ -353,11 +339,19 @@ namespace OneIdentity.DevOps.Logic
                 };
 
                 var registrationStr = JsonHelper.SerializeObject(registration);
-                var result = sg.InvokeMethodFull(Service.Core, Method.Post, "A2ARegistrations", registrationStr);
-                if (result.StatusCode == HttpStatusCode.Created)
+
+                try
                 {
-                    registration = JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
-                    _configDb.A2aRegistrationId = registration.Id;
+                    var result = sg.InvokeMethodFull(Service.Core, Method.Post, "A2ARegistrations", registrationStr);
+                    if (result.StatusCode == HttpStatusCode.Created)
+                    {
+                        registration = JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
+                        _configDb.A2aRegistrationId = registration.Id;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndThrow($"Failed to create the A2A registration: {ex.Message}", ex);
                 }
             }
         }
@@ -369,19 +363,27 @@ namespace OneIdentity.DevOps.Logic
             // If we don't have a registration Id then try to find the registration by name
             if (_configDb.A2aRegistrationId == null)
             {
-                var p = new Dictionary<string, string> {{"filter", $"AppName eq '{WellKnownData.DevOpsServiceName}'"}};
-
-                result = sg.InvokeMethodFull(Service.Core, Method.Get, "A2ARegistrations", null, p);
-                if (result.StatusCode == HttpStatusCode.OK)
+                try
                 {
-                    var foundRegistrations = JsonHelper.DeserializeObject<List<A2ARegistration>>(result.Body);
+                    var p = new Dictionary<string, string>
+                        {{"filter", $"AppName eq '{WellKnownData.DevOpsServiceName}'"}};
 
-                    if (foundRegistrations.Count > 0)
+                    result = sg.InvokeMethodFull(Service.Core, Method.Get, "A2ARegistrations", null, p);
+                    if (result.StatusCode == HttpStatusCode.OK)
                     {
-                        var registration = foundRegistrations.FirstOrDefault();
-                        _configDb.A2aRegistrationId = registration.Id;
-                        return registration;
+                        var foundRegistrations = JsonHelper.DeserializeObject<List<A2ARegistration>>(result.Body);
+
+                        if (foundRegistrations.Count > 0)
+                        {
+                            var registration = foundRegistrations.FirstOrDefault();
+                            _configDb.A2aRegistrationId = registration.Id;
+                            return registration;
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to get the A2A user by name {WellKnownData.DevOpsServiceName}: {ex.Message}");
                 }
             }
             else // Otherwise just get the registration by id
@@ -399,14 +401,11 @@ namespace OneIdentity.DevOps.Logic
                 {
                     if (ex is SafeguardDotNetException && ((SafeguardDotNetException)ex).HttpStatusCode == HttpStatusCode.NotFound)
                     {
-                        var msg = $"Registration not found for id '{_configDb.A2aRegistrationId}': {ex.Message}";
-                        _logger.Error(msg);
+                        _logger.Error($"Registration not found for id '{_configDb.A2aRegistrationId}': {ex.Message}");
                     }
                     else
                     {
-                        var msg = $"Failed to get the registration for id '{_configDb.A2aRegistrationId}': {ex.Message}";
-                        _logger.Error(msg);
-                        throw new DevOpsException(msg);
+                        throw LogAndThrow($"Failed to get the registration for id '{_configDb.A2aRegistrationId}': {ex.Message}", ex);
                     }
                 }
             }
@@ -417,24 +416,30 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
+        public void RemoveClientCertificate()
+        {
+            _configDb.UserCertificateBase64Data = null;
+            _configDb.UserCertificatePassphrase = null;
+            _configDb.UserCertificateThumbprint = null;
+        }
+
+
         public ISafeguardConnection Connect()
         {
-            if (_connectionContext == null)
+            if (_serviceConfiguration == null)
             {
                 throw new DevOpsException("Not logged in");
             }
 
             try
             {
-                return SafeguardDotNet.Safeguard.Connect(_configDb.SafeguardAddress, _connectionContext.AccessToken,
+                return SafeguardDotNet.Safeguard.Connect(_configDb.SafeguardAddress, _serviceConfiguration.AccessToken,
                     _configDb.ApiVersion ?? DefaultApiVersion, _configDb.IgnoreSsl ?? false);
 
             }
             catch (SafeguardDotNetException ex)
             {
-                var msg = $"Failed to connect to Safeguard at '{_configDb.SafeguardAddress}': {ex.Message}";
-                _logger.Error(msg);
-                throw new DevOpsException(msg, ex);
+                throw LogAndThrow($"Failed to connect to Safeguard at '{_configDb.SafeguardAddress}': {ex.Message}", ex);
             }
         }
 
@@ -489,8 +494,22 @@ namespace OneIdentity.DevOps.Logic
 
         public void InstallClientCertificate(ClientCertificate certificate)
         {
-            var certificateBytes = Convert.FromBase64String(certificate.Base64CertificateData);
-            var cert = certificate.Passphrase == null ? new X509Certificate2(certificateBytes) : new X509Certificate2(certificateBytes, certificate.Passphrase);
+            var certData = Regex.Replace(certificate.Base64CertificateData, "-----BEGIN .*-----", "");
+            certData = Regex.Replace(certData, "-----END .*", "");
+            certData = certData.Replace("\r\n", "").Replace("\n", "");
+
+            X509Certificate2 cert;
+            try
+            {
+                var certificateBytes = Convert.FromBase64String(certData);
+                cert = certificate.Passphrase == null
+                    ? new X509Certificate2(certificateBytes)
+                    : new X509Certificate2(certificateBytes, certificate.Passphrase);
+            }
+            catch (Exception ex)
+            {
+                throw LogAndThrow($"Failed to convert the provided certificate: {ex.Message}", ex);
+            }
 
             if (cert.HasPrivateKey)
             {
@@ -514,16 +533,9 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    var msg = $"Failed to import the certificate: {ex.Message}";
-                    _logger.Error(msg);
-                    throw new DevOpsException(msg);
+                    throw LogAndThrow($"Failed to import the certificate: {ex.Message}", ex);
                 }
             }
-        }
-
-        public void RemoveClientCertificate()
-        {
-            _configDb.UserCertificate = null;
         }
 
         public string GetClientCSR(int? size, string subjectName)
@@ -576,9 +588,9 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public ManagementConnection ConfigureDevOpsService()
+        public ServiceConfiguration ConfigureDevOpsService()
         {
-            if (_connectionContext == null)
+            if (_serviceConfiguration == null)
                 throw new DevOpsException("Not logged in");
 
             using var sg = Connect();
@@ -589,14 +601,14 @@ namespace OneIdentity.DevOps.Logic
             return GetDevOpsConfiguration();
         }
 
-        public Safeguard GetSafeguardConnection()
+        public SafeguardConnection GetSafeguardConnection()
         {
             if (string.IsNullOrEmpty(_configDb.SafeguardAddress))
                 return null;
             return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? DefaultApiVersion, _configDb.IgnoreSsl ?? false);
         }
 
-        public Safeguard SetSafeguardData(SafeguardData safeguardData)
+        public SafeguardConnection SetSafeguardData(SafeguardData safeguardData)
         {
             var availability = ConnectAnonymous(safeguardData.NetworkAddress,
                 safeguardData.ApiVersion ?? DefaultApiVersion, safeguardData.IgnoreSsl ?? false);
@@ -613,22 +625,21 @@ namespace OneIdentity.DevOps.Logic
             return availability;
         }
 
-        public void DeleteDevOpsConfiguration()
-        {
-            _configDb.SafeguardAddress = null;
-            _configDb.ApiVersion = null;
-            _configDb.IgnoreSsl = null;
-            _configDb.A2aRegistrationId = null;
-            _configDb.A2aUserId = null;
-            _configDb.CsrPrivateKeyBase64Data = null;
-            _configDb.CsrBase64Data = null;
-            _configDb.UserCertificate = null;
-            _configDb.UserCertificateBase64Data = null;
-            _configDb.UserCertificatePassphrase = null;
-            _configDb.UserCertificateThumbprint = null;
-
-            //TODO: Need to remove the A2AUser, A2ARegistration and ClientCertificate from the Safeguard appliance.
-        }
+        // public void DeleteDevOpsConfiguration()
+        // {
+        //     _configDb.SafeguardAddress = null;
+        //     _configDb.ApiVersion = null;
+        //     _configDb.IgnoreSsl = null;
+        //     _configDb.A2aRegistrationId = null;
+        //     _configDb.A2aUserId = null;
+        //     _configDb.CsrPrivateKeyBase64Data = null;
+        //     _configDb.CsrBase64Data = null;
+        //     _configDb.UserCertificateBase64Data = null;
+        //     _configDb.UserCertificatePassphrase = null;
+        //     _configDb.UserCertificateThumbprint = null;
+        //
+        //     //TODO: Need to remove the A2AUser, A2ARegistration and ClientCertificate from the Safeguard appliance.
+        // }
 
         public IEnumerable<SppAccount> GetAvailableAccounts()
         {
@@ -650,8 +661,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                var msg = $"Get available accounts failed: {ex.Message}";
-                _logger.Error(msg);
+                _logger.Error($"Get available accounts failed: {ex.Message}");
             }
 
             return new List<SppAccount>();
@@ -684,13 +694,12 @@ namespace OneIdentity.DevOps.Logic
                     var result = sg.InvokeMethodFull(Service.Core, Method.Delete,
                         $"A2ARegistrations/{registration.Id}");
                     _configDb.DeleteAccountMappings();
-                    _connectionContext.A2ARegistrationName = null;
+                    _serviceConfiguration.A2ARegistrationName = null;
                 }
             }
             catch (Exception ex)
             {
-                var msg = $"Failed to delete the registration {_configDb.A2aRegistrationId} - {registration?.AppName}: {ex.Message}";
-                _logger.Error(msg);
+                _logger.Error($"Failed to delete the registration {_configDb.A2aRegistrationId} - {registration?.AppName}: {ex.Message}");
             }
 
             A2AUser user = null;
@@ -701,15 +710,14 @@ namespace OneIdentity.DevOps.Logic
                 {
                     var result = sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
                     _configDb.DeleteAccountMappings();
-                    _connectionContext.UserName = null;
-                    _connectionContext.IdentityProviderName = null;
-                    _connectionContext.AdminRoles = null;
+                    _serviceConfiguration.UserName = null;
+                    _serviceConfiguration.IdentityProviderName = null;
+                    _serviceConfiguration.AdminRoles = null;
                 }
             }
             catch (Exception ex)
             {
-                var msg = $"Failed to delete the A2A certificate user {_configDb.A2aUserId} - {user?.UserName}: {ex.Message}";
-                _logger.Error(msg);
+                _logger.Error($"Failed to delete the A2A certificate user {_configDb.A2aUserId} - {user?.UserName}: {ex.Message}");
             }
 
             try
@@ -718,13 +726,12 @@ namespace OneIdentity.DevOps.Logic
                 if (thumbprint != null)
                 {
                     sg.InvokeMethodFull(Service.Core, Method.Delete, $"TrustedCertificates/{thumbprint}");
-                    _configDb.UserCertificate = null;
+                    RemoveClientCertificate();
                 }
             }
             catch (Exception ex)
             {
-                var msg = $"Failed to remove the A2A trusted certificate {_configDb.UserCertificate?.Thumbprint} - {user?.UserName}: {ex.Message}";
-                _logger.Error(msg);
+                _logger.Error($"Failed to remove the A2A trusted certificate {_configDb.UserCertificate?.Thumbprint} - {user?.UserName}: {ex.Message}");
             }
 
         }
@@ -733,9 +740,7 @@ namespace OneIdentity.DevOps.Logic
         {
             if (_configDb.A2aRegistrationId == null)
             {
-                var msg = "A2A registration not configured";
-                _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw LogAndThrow("A2A registration not configured");
             }
 
             using var sg = Connect();
@@ -750,8 +755,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                var msg = $"Get retrievable accounts failed: {ex.Message}";
-                _logger.Error(msg);
+                _logger.Error($"Get retrievable accounts failed: {ex.Message}");
             }
 
             return new List<A2ARetrievableAccount>();
@@ -761,9 +765,7 @@ namespace OneIdentity.DevOps.Logic
         {
             if (_configDb.A2aRegistrationId == null)
             {
-                var msg = "A2A registration not configured";
-                _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw LogAndThrow("A2A registration not configured");
             }
 
             using var sg = Connect();
@@ -777,8 +779,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    var msg = $"Failed to add account {account.Id} - {account.Name}: {ex.Message}";
-                    _logger.Error(msg);
+                    _logger.Error($"Failed to add account {account.Id} - {account.Name}: {ex.Message}");
                 }
             }
 
@@ -786,43 +787,34 @@ namespace OneIdentity.DevOps.Logic
         }
 
 
-        public ManagementConnection GetDevOpsConfiguration()
+        public ServiceConfiguration GetDevOpsConfiguration()
         {
-            _connectionContext.IdentityProviderName = null;
-            _connectionContext.UserName = null;
-            _connectionContext.AdminRoles = null;
-            _connectionContext.A2ARegistrationName = null;
+            _serviceConfiguration.IdentityProviderName = null;
+            _serviceConfiguration.UserName = null;
+            _serviceConfiguration.AdminRoles = null;
+            _serviceConfiguration.A2ARegistrationName = null;
+            _serviceConfiguration.Thumbprint = null;
 
             using var sg = Connect();
             var a2aUser = GetA2AUser(sg);
             if (a2aUser != null)
             {
-                _connectionContext.IdentityProviderName = a2aUser.IdentityProviderName;
-                _connectionContext.UserName = a2aUser.UserName;
-                _connectionContext.AdminRoles = a2aUser.AdminRoles;
+                _serviceConfiguration.IdentityProviderName = a2aUser.IdentityProviderName;
+                _serviceConfiguration.UserName = a2aUser.UserName;
+                _serviceConfiguration.AdminRoles = a2aUser.AdminRoles;
             }
 
-            _connectionContext.Appliance = GetSafeguardAppliance(sg);
+            _serviceConfiguration.Appliance = GetSafeguardAppliance(sg);
 
             var a2aRegistration = GetA2ARegistration(sg);
             if (a2aRegistration != null)
             {
-                _connectionContext.A2ARegistrationName = a2aRegistration.AppName;
+                _serviceConfiguration.A2ARegistrationName = a2aRegistration.AppName;
             }
 
-            return _connectionContext;
-        }
+            _serviceConfiguration.Thumbprint = _configDb.UserCertificate?.Thumbprint;
 
-        public ManagementConnection Connect(ManagementConnectionData connectionData)
-        {
-            ConnectWithAccessToken(connectionData);
-            return _connectionContext;
-            // TODO: errors?
-        }
-
-        public void Disconnect()
-        {
-            DisconnectWithAccessToken();
+            return _serviceConfiguration;
         }
 
         public void Dispose()

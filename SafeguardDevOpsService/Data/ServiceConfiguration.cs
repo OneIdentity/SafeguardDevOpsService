@@ -6,13 +6,13 @@ using OneIdentity.SafeguardDotNet;
 
 namespace OneIdentity.DevOps.Data
 {
-    public class ManagementConnection : IDisposable
+    public class ServiceConfiguration : IDisposable
     {
         private SecureString _accessToken;
         private string _sessionKey = Guid.NewGuid().ToString();
 
         public bool IsAuthenticated => _accessToken != null;
-        public Safeguard Appliance { get; set; }
+        public SafeguardConnection Appliance { get; set; }
 
         [JsonIgnore]
         public SecureString AccessToken
@@ -24,17 +24,18 @@ namespace OneIdentity.DevOps.Data
         public string UserName { get; set; }
         public string[] AdminRoles { get; set; }
         public string A2ARegistrationName { get; set; }
+        public string Thumbprint { get; set; }
 
         public string SessionKey
         {
             get => _sessionKey;
         }
 
-        public ManagementConnection()
+        public ServiceConfiguration()
         {
         }
 
-        public ManagementConnection(LoggedInUser loggedInUser)
+        public ServiceConfiguration(LoggedInUser loggedInUser)
         {
             AdminRoles = loggedInUser.AdminRoles;
             UserName = loggedInUser.UserName;

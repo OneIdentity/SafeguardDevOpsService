@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
-using OneIdentity.SafeguardDotNet;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
-using Safeguard = OneIdentity.DevOps.Data.Safeguard;
 
 namespace OneIdentity.DevOps.Controllers
 {
@@ -24,32 +21,27 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the current Safeguard configuration to use with the DevOps service.
+        /// Get the state of the Safeguard appliance that the DevOps service is currently using.
         /// </summary>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet]
-        public ActionResult<Safeguard> GetSafeguard([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardConnection> GetSafeguard([FromServices] ISafeguardLogic safeguard)
         {
             var safeguardConnection = safeguard.GetSafeguardConnection();
 
-            // var availability = safeguard.GetSafeguardData();
-            // if (availability == null)
-            //     return NotFound("No Safeguard has not been configured");
             return Ok(safeguardConnection);
-            // TODO: error handling?
         }
 
         /// <summary>
-        /// Configure a Safeguard configuration for the DevOps service to use.
+        /// Set the connection information for the Safeguard appliance that the DevOps service should use.
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [UnhandledExceptionError]
         [HttpPut]
-        public ActionResult<Safeguard> SetSafeguard([FromServices] ISafeguardLogic safeguard,
+        public ActionResult<SafeguardConnection> SetSafeguard([FromServices] ISafeguardLogic safeguard,
             [FromBody] SafeguardData safeguardData)
         {
             var appliance = safeguard.SetSafeguardData(safeguardData);
@@ -71,31 +63,34 @@ namespace OneIdentity.DevOps.Controllers
         // }
 
         /// <summary>
-        /// Configure a Safeguard configuration for the DevOps service to use.
+        /// Get the current DevOps service configuration.
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Configuration")]
-        public ActionResult<ManagementConnection> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<ServiceConfiguration> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
         {
-            var managementConnection = safeguard.GetDevOpsConfiguration();
+            var serviceConfiguration = safeguard.GetDevOpsConfiguration();
 
-            return Ok(managementConnection);
+            return Ok(serviceConfiguration);
         }
 
         /// <summary>
-        /// Configure a Safeguard configuration for the DevOps service to use.
+        /// Invoke the Safeguard configuration of the A2A registration and A2A certificate user given a client certificate.
+        /// The client certificate that will be used to create the A2A user in Safeguard and referenced by the A2A registration, can be
+        /// uploaded as part of the this /Configuration endpoint or can be uploaded separately in the POST /ClientCertificate endpoint.
+        /// If the client certificate was already uploaded using the POST /ClientCertificate endpoint, it does not need to be provided as part of this endpoint.
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost("Configuration")]
-        public ActionResult<ManagementConnection> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, ClientCertificate certFile = null)
+        public ActionResult<ServiceConfiguration> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, ClientCertificate certFile = null)
         {
-            if (certFile != null && certFile.Base64CertificateData != null)
+            if (certFile?.Base64CertificateData != null)
             {
                 safeguard.InstallClientCertificate(certFile);
             }
@@ -106,14 +101,15 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Configure a Safeguard configuration for the DevOps service to use.
+        /// Delete the DevOps service configuration.  This endpoint includes removing all account mappings, removing the A2A registration, A2A user and trusted
+        /// certificate from Safeguard and removing all stored configuration in the DevOps service.
         /// </summary>
-        /// <response code="200">Success</response>
+        /// <response code="204">No Content</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("Configuration")]
-        public ActionResult<ManagementConnection> DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<ServiceConfiguration> DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard)
         {
             safeguard.ConfigureDevOpsService();
 
@@ -121,44 +117,49 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the current Safeguard configuration to use with the DevOps service.
+        /// Logon to the DevOps service.  The Authorization header should contain a valid Safeguard token.  This token can be acquired by
+        /// logging into the Safeguard appliance using the Safeguard-ps command 'Connect-Safeguard -NoSessionVariable' and providing valid
+        /// login credentials. A successful authentication will respond with a sessionKey that should be provided as a cookie for all
+        /// subsequent endpoint calls.
         /// </summary>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
+        /// <response code="400">Bad Request</response>
+        /// <response code="401">Unauthorized</response>
         [SafeguardTokenAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Logon")]
-        public ActionResult<Safeguard> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
         {
             var availability = safeguard.GetSafeguardConnection();
             if (availability == null)
                 return NotFound("No Safeguard has not been configured");
 
             return Ok(availability);
-            // TODO: error handling?
         }
 
         /// <summary>
-        /// Get the current Safeguard configuration to use with the DevOps service.
+        /// Logoff the DevOps service.
         /// </summary>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Logoff")]
-        public ActionResult<Safeguard> GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardConnection> GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
         {
             var sessionKey = HttpContext.Items["session-key"].ToString();
             AuthorizedCache.Instance.Remove(sessionKey);
+//TODO: Remove the connection Context from the authorizedCache
 
             return Ok();
         }
 
         /// <summary>
-        /// Get an installed client certificate by thumbprint.
+        /// Get the information about the currently installed A2A client certificate.
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("ClientCertificate")]
         public ActionResult<ClientCertificate> GetClientCertificate([FromServices] ISafeguardLogic safeguard)
@@ -171,10 +172,12 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Install a trusted certificate.
+        /// Upload an A2A client certificate.  This can be either a PFX format certificate that includes a private key or a signed certificate
+        /// that was issued from a CSR.  (See GET /CSR). A client certificate must be uploaded before calling the POST /Configure endpoint.
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost("ClientCertificate")]
         public ActionResult InstallClientCertificate([FromServices] ISafeguardLogic safeguard, ClientCertificate certFile)
@@ -184,10 +187,11 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Remove an installed client certificate by thumbprint.
+        /// Remove the installed A2A client certificate.
         /// </summary>
-        /// <response code="200">Success</response>
+        /// <response code="204">No Content</response>
         /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("ClientCertificate")]
         public ActionResult RemoveClientCertificate([FromServices] ISafeguardLogic safeguard)
@@ -198,23 +202,27 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get a CSR can be signed and uploaded back to the DevOps service.
+        /// Get a CSR that can be signed and uploaded back to the DevOps service. If the issuer of the signed certificate is part of a certificate chain
+        /// the certificate chain must be manually added as trusted certificates in the Safeguard appliance.
         /// </summary>
+        /// <param name="size">Size of the certificate</param>
+        /// <param name="subjectName">Subject name of the certificate</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("CSR")]
-        public ActionResult<string> GetClientCSR([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size, [FromQuery] string subjectName)
+        public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size, [FromQuery] string subjectName)
         {
             var csr = safeguard.GetClientCSR(size, subjectName);
             return Ok(csr);
         }
 
         /// <summary>
-        /// Get the requestable accounts for the current user.
+        /// Get all of the available Safeguard accounts for the currently logged in user, that can be mapped vault plugins.
         /// </summary>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("AvailableAccounts")]
@@ -226,9 +234,10 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the requestable accounts for the current user.
+        /// Get the A2A registration that was created and used by the DevOps service.
         /// </summary>
         /// <response code="200">Success</response>
+        /// <response code="400">Bad Request</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
@@ -243,8 +252,10 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the requestable accounts for the current user.
+        /// Delete the A2A registration that is being used by the DevOps service. To help prevent unintended removal of the A2A registration,
+        /// A2A user and trusted client certificate as well as removal of the account mappings, the confirm query param is required. 
         /// </summary>
+        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the A2A registration.</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
@@ -261,7 +272,7 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the requestable accounts for the current user.
+        /// Get a list of the retrievable accounts that are associated with the A2A registration that is being used by the DevOps service.
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -276,7 +287,7 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the requestable accounts for the current user.
+        /// Add a set of accounts as retrievable accounts associated with the A2A registration that is being used by the DevOps service.
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>

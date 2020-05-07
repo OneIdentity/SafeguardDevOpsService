@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
-using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.Controllers
@@ -21,10 +17,9 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get a list of all registered plugins.
+        /// Get the current state of the A2A monitor.
         /// </summary>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet]
@@ -36,10 +31,10 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get a list of all registered plugins.
+        /// Set the state of the A2A monitor.
         /// </summary>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost]

@@ -2,16 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Resources;
 using System.Security;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
-using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Event;
-using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 using Safeguard = OneIdentity.SafeguardDotNet.Safeguard;
 
 
@@ -61,7 +58,7 @@ namespace OneIdentity.DevOps.Logic
             var apiVersion = _configDb.ApiVersion;
             var ignoreSsl = _configDb.IgnoreSsl;
 
-            if (sppAddress == null || userCertificate == null || passPhrase == null || !apiVersion.HasValue || !ignoreSsl.HasValue)
+            if (sppAddress == null || userCertificate == null || !apiVersion.HasValue || !ignoreSsl.HasValue)
             {
                 _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
                 return;

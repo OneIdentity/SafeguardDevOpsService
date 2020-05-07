@@ -1,6 +1,6 @@
 ﻿namespace OneIdentity.DevOps.Data.Spp
 {
-    public class SppAccountWrapper
+    internal class SppAccountWrapper
     {
         public SppAccount Account { get; set; }
     }

@@ -35,6 +35,6 @@ namespace OneIdentity.DevOps.ConfigDb
         string CsrBase64Data { get; set; }
         string CsrPrivateKeyBase64Data { get; set; }
 
-        X509Certificate2 UserCertificate { get; set; }
+        X509Certificate2 UserCertificate { get; }
     }
 }

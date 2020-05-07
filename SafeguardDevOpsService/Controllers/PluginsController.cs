@@ -25,6 +25,8 @@ namespace OneIdentity.DevOps.Controllers
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
         [HttpGet]
         public ActionResult<IEnumerable<Plugin>> GetPlugins([FromServices] IPluginsLogic pluginsLogic)
         {
@@ -36,11 +38,13 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the information for a specific plugin.
+        /// Get the configuration for a specific plugin.
         /// </summary>
         /// <param name="name">Name of the plugin.</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
         [HttpGet("{name}")]
         public ActionResult<Plugin> GetPlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
@@ -51,27 +55,29 @@ namespace OneIdentity.DevOps.Controllers
             return Ok(plugin);
         }
 
-        /// <summary>
-        /// Delete the information for a specific plugin.
-        /// </summary>
-        /// <param name="name">Name of the plugin.</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpDelete("{name}")]
-        public ActionResult<Plugin> DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
-        {
-            pluginsLogic.DeletePluginByName(name);
+        // /// <summary>
+        // /// Delete the configuration for a specific plugin.
+        // /// </summary>
+        // /// <param name="name">Name of the plugin.</param>
+        // /// <response code="200">Success</response>
+        // /// <response code="404">Not found</response>
+        // [SafeguardSessionKeyAuthorization]
+        // [UnhandledExceptionError]
+        // [HttpDelete("{name}")]
+        // public ActionResult<Plugin> DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        // {
+        //     pluginsLogic.DeletePluginByName(name);
+        //
+        //     return Ok();
+        // }
 
-            return Ok();
-        }
-
         /// <summary>
-        /// Get the list of accounts and mapped vault names.
+        /// Get the list of accounts that are mapped to a vault plugin.
         /// </summary>
         /// <param name="name">Name of the plugin</param>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
         [HttpGet("{name}/Accounts")]
         public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
@@ -81,12 +87,14 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the list of accounts and mapped vault names.
+        /// Map a set of accounts to a vault plugin.
         /// </summary>
         /// <param name="name">Name of the plugin</param>
+        /// <param name="accounts">List of accounts to be mapped</param>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
         [HttpPost("{name}/Accounts")]
         public ActionResult<IEnumerable<AccountMapping>> AddAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, IEnumerable<A2ARetrievableAccount> accounts)
         {
@@ -96,12 +104,13 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the list of accounts and mapped vault names.
+        /// Delete all of the mapped accounts for a vault plugin.
         /// </summary>
         /// <param name="name">Name of the plugin</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
+        /// <response code="204">No Content</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
         [HttpDelete("{name}/Accounts")]
         public ActionResult<IEnumerable<AccountMapping>> DeleteAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
@@ -111,12 +120,12 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get the list of accounts and mapped vault names.
+        /// Delete all of the mapped accounts.  To help prevent unintended mapped accounts removal, the confirm query param is required.
         /// </summary>
-        /// <param name="name">Name of the plugin</param>
+        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove all of the account mappings.</param>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
         [HttpDelete("Accounts")]
         public ActionResult<IEnumerable<AccountMapping>> DeleteAllAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromQuery] string confirm)
         {
@@ -127,25 +136,5 @@ namespace OneIdentity.DevOps.Controllers
 
             return NoContent();
         }
-
-
-        /*
-        /// <summary>
-        /// Update the configuration for a plugin.
-        /// </summary>
-        /// <param name="pluginConfiguration">Object containing a JSON configuration string.</param>
-        /// <param name="name">Name of plugin to update</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [HttpPut("{name}/SafeguardController")]
-        public ActionResult<Plugin> GetPlugins([FromBody] PluginConfiguration pluginConfiguration, [FromRoute] string name)
-        {
-            var plugin = _configurationLogic.SavePluginConfigurationByName(pluginConfiguration, name);
-            if (plugin == null)
-                return NotFound();
-
-            return Ok(plugin);
-        }
-        */
     }
 }

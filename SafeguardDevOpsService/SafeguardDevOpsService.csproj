@@ -38,8 +38,4 @@
     <ProjectReference Include="..\DevOpsPluginCommon\DevOpsPluginCommon.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Authentication\" />
-  </ItemGroup>
-
 </Project>
