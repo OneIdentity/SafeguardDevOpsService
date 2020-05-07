@@ -11,6 +11,7 @@ using OneIdentity.DevOps.Exceptions;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Event;
+using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 using Safeguard = OneIdentity.SafeguardDotNet.Safeguard;
 
 
@@ -214,7 +215,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        public IEnumerable<RetrievableAccount> GetRetrievableAccounts()
+        public IEnumerable<A2ARetrievableAccount> GetRetrievableAccounts()
         {
             //var configuration = _configurationRepository.GetConfiguration();
             //if (configuration == null)
@@ -285,7 +286,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private RetrievableAccount GetRetrievableAccount(ManagementConnectionData managementConnectionData, string apiKey)
+        private A2ARetrievableAccount GetRetrievableAccount(ManagementConnectionData managementConnectionData, string apiKey)
         {
             var apiKeyInfo = _configurationRepository.GetSetting(apiKey);
 
@@ -309,7 +310,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void SaveRetrievableAccount(ManagementConnectionData managementConnectionData, RetrievableAccount retrievableAccount)
+        private void SaveRetrievableAccount(ManagementConnectionData managementConnectionData, A2ARetrievableAccount retrievableAccount)
         {
             var apiKeyInfo = new Setting()
             {
@@ -327,7 +328,7 @@ namespace OneIdentity.DevOps.Logic
 
         private static ISafeguardEventListener _eventListener;
         private static ISafeguardA2AContext _a2AContext;
-        private static List<RetrievableAccount> _retrievableAccounts;
+        private static List<A2ARetrievableAccount> _retrievableAccounts;
 
         private void StartMonitoring()
         {

@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.Controllers
@@ -61,6 +64,70 @@ namespace OneIdentity.DevOps.Controllers
 
             return Ok();
         }
+
+        /// <summary>
+        /// Get the list of accounts and mapped vault names.
+        /// </summary>
+        /// <param name="name">Name of the plugin</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [HttpGet("{name}/Accounts")]
+        public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        {
+            var accountMappings = pluginsLogic.GetAccountMappings(name);
+
+            return Ok(accountMappings);
+        }
+
+        /// <summary>
+        /// Get the list of accounts and mapped vault names.
+        /// </summary>
+        /// <param name="name">Name of the plugin</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [HttpPost("{name}/Accounts")]
+        public ActionResult<IEnumerable<AccountMapping>> AddAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, IEnumerable<A2ARetrievableAccount> accounts)
+        {
+            var accountMappings = pluginsLogic.SaveAccountMappings(name, accounts);
+
+            return Ok(accountMappings);
+        }
+
+        /// <summary>
+        /// Get the list of accounts and mapped vault names.
+        /// </summary>
+        /// <param name="name">Name of the plugin</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [HttpDelete("{name}/Accounts")]
+        public ActionResult<IEnumerable<AccountMapping>> DeleteAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        {
+            pluginsLogic.DeleteAccountMappings(name);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Get the list of accounts and mapped vault names.
+        /// </summary>
+        /// <param name="name">Name of the plugin</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [HttpDelete("Accounts")]
+        public ActionResult<IEnumerable<AccountMapping>> DeleteAllAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromQuery] string confirm)
+        {
+            if (!confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+                return BadRequest();
+
+            pluginsLogic.DeleteAccountMappings();
+
+            return NoContent();
+        }
+
 
         /*
         /// <summary>

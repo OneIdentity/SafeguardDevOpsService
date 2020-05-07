@@ -1,7 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
+using OneIdentity.SafeguardDotNet;
+using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
+using Safeguard = OneIdentity.DevOps.Data.Safeguard;
 
 namespace OneIdentity.DevOps.Controllers
 {
@@ -24,15 +31,58 @@ namespace OneIdentity.DevOps.Controllers
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet]
-        public ActionResult<ManagementConnection> GetSafeguard([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<Safeguard> GetSafeguard([FromServices] ISafeguardLogic safeguard)
         {
-            var managementConnection = safeguard.GetConnection();
+            var safeguardConnection = safeguard.GetSafeguardConnection();
 
             // var availability = safeguard.GetSafeguardData();
             // if (availability == null)
             //     return NotFound("No Safeguard has not been configured");
-            return Ok(managementConnection);
+            return Ok(safeguardConnection);
             // TODO: error handling?
+        }
+
+        /// <summary>
+        /// Configure a Safeguard configuration for the DevOps service to use.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [UnhandledExceptionError]
+        [HttpPut]
+        public ActionResult<Safeguard> SetSafeguard([FromServices] ISafeguardLogic safeguard,
+            [FromBody] SafeguardData safeguardData)
+        {
+            var appliance = safeguard.SetSafeguardData(safeguardData);
+
+            return Ok(appliance);
+        }
+
+        // /// <summary>
+        // /// Deletes the current Safeguard configuration so that none is in use with the DevOps service.
+        // /// </summary>
+        // /// <response code="204">Success</response>
+        // [UnhandledExceptionError]
+        // [HttpDelete]
+        // public ActionResult DeleteSafeguard([FromServices] ISafeguardLogic safeguard)
+        // {
+        //     safeguard.DeleteSafeguardData();
+        //     return NoContent();
+        //     // TODO: error handling?
+        // }
+
+        /// <summary>
+        /// Configure a Safeguard configuration for the DevOps service to use.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("Configuration")]
+        public ActionResult<ManagementConnection> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
+        {
+            var managementConnection = safeguard.GetDevOpsConfiguration();
+
+            return Ok(managementConnection);
         }
 
         /// <summary>
@@ -42,35 +92,32 @@ namespace OneIdentity.DevOps.Controllers
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
-        [HttpPut]
-        public ActionResult<ManagementConnection> SetSafeguard([FromServices] ISafeguardLogic safeguard,
-            [FromBody] SafeguardData safeguardData, [FromQuery] bool configure = false)
+        [HttpPost("Configuration")]
+        public ActionResult<ManagementConnection> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, ClientCertificate certFile = null)
         {
-            var managementConnection = new ManagementConnection()
+            if (certFile != null && certFile.Base64CertificateData != null)
             {
-                Appliance = safeguard.SetSafeguardData(safeguardData)
-            };
-
-            if (configure)
-            {
-                safeguard.ConfigureDevOpsService();
-                managementConnection = safeguard.GetConnection();
+                safeguard.InstallClientCertificate(certFile);
             }
 
-            return Ok(managementConnection);
+            var devOpsConfiguration = safeguard.ConfigureDevOpsService();
+
+            return Ok(devOpsConfiguration);
         }
 
         /// <summary>
-        /// Deletes the current Safeguard configuration so that none is in use with the DevOps service.
+        /// Configure a Safeguard configuration for the DevOps service to use.
         /// </summary>
-        /// <response code="204">Success</response>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
-        [HttpDelete]
-        public ActionResult DeleteSafeguard([FromServices] ISafeguardLogic safeguard)
+        [HttpDelete("Configuration")]
+        public ActionResult<ManagementConnection> DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard)
         {
-            safeguard.DeleteSafeguardData();
+            safeguard.ConfigureDevOpsService();
+
             return NoContent();
-            // TODO: error handling?
         }
 
         /// <summary>
@@ -83,9 +130,10 @@ namespace OneIdentity.DevOps.Controllers
         [HttpGet("Logon")]
         public ActionResult<Safeguard> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
         {
-            var availability = safeguard.GetSafeguardData();
+            var availability = safeguard.GetSafeguardConnection();
             if (availability == null)
                 return NotFound("No Safeguard has not been configured");
+
             return Ok(availability);
             // TODO: error handling?
         }
@@ -162,49 +210,85 @@ namespace OneIdentity.DevOps.Controllers
             return Ok(csr);
         }
 
-        // /// <summary>
-        // /// Get the current management connection to Safeguard in use by the DevOps service.
-        // /// </summary>
-        // /// <response code="200">Success</response>
-        // /// <response code="404">Not found</response>
-        // [UnhandledExceptionError]
-        // [HttpGet("ManagementConnection")]
-        // public ActionResult<ManagementConnection> ConnectSafeguard([FromServices] ISafeguardLogic safeguard)
-        // {
-        //     var connection = safeguard.GetConnection();
-        //     if (connection == null)
-        //         return NotFound("Safeguard is not connected");
-        //     return Ok(connection);
-        //     // TODO: error handling?
-        // }
-        //
-        // /// <summary>
-        // /// Create the management connection to Safeguard to use with the DevOps service.
-        // /// </summary>
-        // /// <response code="200">Success</response>
-        // /// <response code="404">Not found</response>
-        // [UnhandledExceptionError]
-        // [HttpPut("ManagementConnection")]
-        // public ActionResult<ManagementConnection> ConnectSafeguard([FromServices] ISafeguardLogic safeguard,
-        //     [FromBody] ManagementConnectionData connectionData)
-        // {
-        //     var connection = safeguard.Connect(connectionData);
-        //     return Ok(connection);
-        //     // TODO: error handling?
-        // }
-        //
-        // /// <summary>
-        // /// Remove the management connection to Safeguard so that none is in use with the DevOps service.
-        // /// </summary>
-        // /// <response code="200">Success</response>
-        // /// <response code="404">Not found</response>
-        // [UnhandledExceptionError]
-        // [HttpDelete("ManagementConnection")]
-        // public ActionResult DisconnectSafeguard([FromServices] ISafeguardLogic safeguard)
-        // {
-        //     safeguard.Disconnect();
-        //     return Ok();
-        //     // TODO: error handling?
-        // }
+        /// <summary>
+        /// Get the requestable accounts for the current user.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("AvailableAccounts")]
+        public ActionResult<IEnumerable<SppAccount>> GetAvailableAccounts([FromServices] ISafeguardLogic safeguard)
+        {
+            var availableAccounts = safeguard.GetAvailableAccounts();
+
+            return Ok(availableAccounts);
+        }
+
+        /// <summary>
+        /// Get the requestable accounts for the current user.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("A2ARegistration")]
+        public ActionResult<A2ARegistration> GetA2ARegistration([FromServices] ISafeguardLogic safeguard)
+        {
+            var registration = safeguard.GetA2ARegistration();
+            if (registration == null)
+                return NotFound();
+
+            return Ok(registration);
+        }
+
+        /// <summary>
+        /// Get the requestable accounts for the current user.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpDelete("A2ARegistration")]
+        public ActionResult<A2ARegistration> DeleteA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
+        {
+            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+                return BadRequest();
+
+            safeguard.DeleteA2ARegistration();
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Get the requestable accounts for the current user.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("A2ARegistration/RetrievableAccounts")]
+        public ActionResult<IEnumerable<A2ARetrievableAccount>> GetRetrievableAccounts([FromServices] ISafeguardLogic safeguard)
+        {
+            var retrievableAccounts = safeguard.GetA2ARetrievableAccounts();
+
+            return Ok(retrievableAccounts);
+        }
+
+        /// <summary>
+        /// Get the requestable accounts for the current user.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost("A2ARegistration/RetrievableAccounts")]
+        public ActionResult<IEnumerable<A2ARetrievableAccount>> AddRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<SppAccount> accounts)
+        {
+            var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(accounts);
+
+            return Ok(retrievableAccounts);
+        }
+
     }
 }

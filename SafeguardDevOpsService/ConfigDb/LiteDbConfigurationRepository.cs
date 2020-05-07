@@ -106,6 +106,34 @@ namespace OneIdentity.DevOps.ConfigDb
             _plugins.Delete(name);
         }
 
+        public IEnumerable<AccountMapping> GetAccountMappings()
+        {
+            return _accountMappings.FindAll();
+        }
+
+        public void getAccountMappingsByName(string name)
+        {
+            _accountMappings.FindById(name);
+        }
+
+        public void SaveAccountMappings(IEnumerable<AccountMapping> accounts)
+        {
+            foreach (var accountMapping in accounts)
+            {
+                _accountMappings.Upsert(accountMapping);
+            }
+        }
+
+        public void DeleteAccountMappingsByKey(string key)
+        {
+            _accountMappings.Delete(key);
+        }
+
+        public void DeleteAccountMappings()
+        {
+            _accountMappings.DeleteAll();
+        }
+
         public string SafeguardAddress
         {
             get => GetSimpleSetting(SafeguardAddressKey);

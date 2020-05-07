@@ -2,7 +2,7 @@
 
 namespace OneIdentity.DevOps.Data.Spp
 {
-    internal class A2ARegistration
+    public class A2ARegistration
     {
         public int Id { get; set; }
         public string AppName { get; set; }

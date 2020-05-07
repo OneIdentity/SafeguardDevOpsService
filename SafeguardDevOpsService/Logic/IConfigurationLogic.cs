@@ -13,7 +13,7 @@ namespace OneIdentity.DevOps.Logic
         IEnumerable<AccountMapping> GetAccountMappings(string accountName, string vaultName);
         IEnumerable<AccountMapping> SaveAccountMappings(IEnumerable<AccountMapping> newAccountMappings);
         IEnumerable<AccountMapping> RemoveAccountMappings(bool removeAll, string accountName, string vaultName);
-        IEnumerable<RetrievableAccount> GetRetrievableAccounts();
+        IEnumerable<A2ARetrievableAccount> GetRetrievableAccounts();
         void EnableMonitoring(bool enable);
     }
 }
