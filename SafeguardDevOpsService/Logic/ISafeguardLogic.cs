@@ -1,26 +1,31 @@
-﻿using System.Security.Cryptography.X509Certificates;
-using Microsoft.AspNetCore.Authentication.OAuth.Claims;
+﻿using System.Collections.Generic;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
+using OneIdentity.SafeguardDotNet;
+using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 
 namespace OneIdentity.DevOps.Logic
 {
     public interface ISafeguardLogic
     {
-        Safeguard GetSafeguardData();
-        Safeguard SetSafeguardData(SafeguardData safeguardData);
-        void DeleteSafeguardData();
+        ISafeguardConnection Connect();
+        SafeguardConnection GetSafeguardConnection();
+        SafeguardConnection SetSafeguardData(SafeguardData safeguardData);
 
         bool ValidateLogin(string token, bool tokenOnly = false);
         void InstallClientCertificate(ClientCertificate certificatePfx);
-        ClientCertificate GetClientCertificate();
         void RemoveClientCertificate();
+        ClientCertificate GetClientCertificate();
         string GetClientCSR(int? size, string subjectName);
 
-        ManagementConnection GetConnection();
-        ManagementConnection Connect(ManagementConnectionData connectionData);
-        void Disconnect();
+        IEnumerable<SppAccount> GetAvailableAccounts();
 
-        void ConfigureDevOpsService();
+        A2ARegistration GetA2ARegistration();
+        void DeleteA2ARegistration();
+        IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts();
+        IEnumerable<A2ARetrievableAccount> AddA2ARetrievableAccounts(IEnumerable<SppAccount> accounts);
 
+        ServiceConfiguration GetDevOpsConfiguration();
+        ServiceConfiguration ConfigureDevOpsService();
     }
 }

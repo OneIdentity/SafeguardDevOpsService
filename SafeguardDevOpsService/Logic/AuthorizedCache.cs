@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Security;
-using System.Text;
 using OneIdentity.DevOps.Data;
 using OneIdentity.SafeguardDotNet;
 
@@ -12,7 +9,7 @@ namespace OneIdentity.DevOps.Logic
     {
         private static AuthorizedCache _instance = null;
         private static readonly object InstanceLock = new object();
-        private static readonly Dictionary<string,ManagementConnection> _cache = new Dictionary<string,ManagementConnection>();
+        private static readonly Dictionary<string,ServiceConfiguration> _cache = new Dictionary<string,ServiceConfiguration>();
 
         public static AuthorizedCache Instance
         {
@@ -25,7 +22,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public void Add(ManagementConnection managementConnection)
+        public void Add(ServiceConfiguration managementConnection)
         {
             lock (InstanceLock)
             {
@@ -36,7 +33,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public ManagementConnection Find(string sessionKey)
+        public ServiceConfiguration Find(string sessionKey)
         {
             if (sessionKey != null && _cache.ContainsKey(sessionKey))
             {
@@ -46,12 +43,12 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        public ManagementConnection FindByToken(string token)
+        public ServiceConfiguration FindByToken(string token)
         {
             return _cache.Values.FirstOrDefault(x => x.AccessToken.ToInsecureString().Equals(token));
         }
 
-        public ManagementConnection Find(ManagementConnection managementConnection)
+        public ServiceConfiguration Find(ServiceConfiguration managementConnection)
         {
             return _cache.Values.FirstOrDefault(x =>
                 x.Appliance.ApplianceAddress.Equals(managementConnection.Appliance.ApplianceAddress)
@@ -69,15 +66,5 @@ namespace OneIdentity.DevOps.Logic
                 }
             }
         }
-
-        // public void Remove(ManagementConnection managementConnection)
-        // {
-        //     lock (InstanceLock)
-        //     {
-        //         var currentConnection = Find(managementConnection);
-        //         if (currentConnection != null)
-        //             _cache.Remove(currentConnection);
-        //     }
-        // }
     }
 }

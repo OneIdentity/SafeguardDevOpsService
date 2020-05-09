@@ -16,6 +16,12 @@ namespace OneIdentity.DevOps.ConfigDb
         Plugin SavePluginConfiguration(Plugin plugin);
         void DeletePluginByName(string name);
 
+        IEnumerable<AccountMapping> GetAccountMappings();
+        void SaveAccountMappings(IEnumerable<AccountMapping> accounts);
+        void DeleteAccountMappingsByKey(string key);
+        void DeleteAccountMappings();
+
+
         string SafeguardAddress { get; set; }
         int? ApiVersion { get; set; }
         bool? IgnoreSsl { get; set; }
@@ -29,6 +35,6 @@ namespace OneIdentity.DevOps.ConfigDb
         string CsrBase64Data { get; set; }
         string CsrPrivateKeyBase64Data { get; set; }
 
-        X509Certificate2 UserCertificate { get; set; }
+        X509Certificate2 UserCertificate { get; }
     }
 }

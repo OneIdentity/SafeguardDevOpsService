@@ -1,4 +1,8 @@
-﻿using Autofac;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using Autofac;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Logic;
 using Microsoft.OpenApi.Models;
+using OneIdentity.DevOps.Data.Spp;
 
 namespace OneIdentity.DevOps
 {
@@ -49,7 +54,37 @@ namespace OneIdentity.DevOps
                     Title = ApiName,
                     Version = ApiVersion
                 });
+                c.AddSecurityDefinition("spp-token", new OpenApiSecurityScheme()
+                {
+                    Description = "Authorization header using the spp-token scheme",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "spp-token"
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "spp-token"
+                            },
+                            Scheme = "spp-token",
+                            Name = "spp-token",
+                            In = ParameterLocation.Header,
+                        },
+                        new List<string>()
+                    }
+                });
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
+
             services.AddSwaggerGenNewtonsoftSupport();
         }
 
@@ -67,7 +102,8 @@ namespace OneIdentity.DevOps
             builder.Register(c => new LiteDbConfigurationRepository()).As<IConfigurationRepository>().SingleInstance();
             builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>())).As<IPluginManager>().SingleInstance();
             builder.Register(c => new SafeguardLogic(c.Resolve<IConfigurationRepository>())).As<ISafeguardLogic>().SingleInstance();
-            builder.Register(c => new PluginsLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>())).As<IPluginsLogic>().SingleInstance();
+            builder.Register(c => new PluginsLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>(), c.Resolve<ISafeguardLogic>())).As<IPluginsLogic>().SingleInstance();
+            builder.Register(c => new MonitoringLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>())).As<IMonitoringLogic >().SingleInstance();
             //builder.RegisterType<ConfigurationLogic>().As<IConfigurationLogic>();
 
             //builder.RegisterType<SafeguardTokenAuthenticationProvider>().AsImplementedInterfaces().SingleInstance();

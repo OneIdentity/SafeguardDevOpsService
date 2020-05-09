@@ -12,14 +12,12 @@ namespace OneIdentity.DevOps.ConfigDb
         private bool _disposed;
         private LiteDatabase _configurationDb;
         private readonly ILiteCollection<Setting> _settings;
-        private readonly ILiteCollection<Registration> _registrations;
         private readonly ILiteCollection<AccountMapping> _accountMappings;
         private readonly ILiteCollection<Plugin> _plugins;
 
         private const string DbFileName = "Configuration.db";
 
         private const string SettingsTableName = "settings";
-        private const string RegistrationsTableName = "registrations";
         private const string AccountMappingsTableName = "accountmappings";
         private const string PluginsTableName = "plugins";
 
@@ -28,7 +26,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string IgnoreSslKey = "IgnoreSsl";
         private const string A2aUserIdKey = "A2aUserId";
         private const string A2aRegistrationIdKey = "A2aRegistrationId";
-        private const string SigningCertifcateKey = "SigningCertificate";
+        private const string SigningCertificateKey = "SigningCertificate";
 
         private const string UserCertificateThumbprintKey = "UserCertThumbprint";
         private const string UserCertificateDataKey = "UserCertData";
@@ -40,7 +38,6 @@ namespace OneIdentity.DevOps.ConfigDb
         {
             _configurationDb = new LiteDatabase(DbFileName);
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
-            _registrations = _configurationDb.GetCollection<Registration>(RegistrationsTableName);
             _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
             _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
         }
@@ -84,7 +81,6 @@ namespace OneIdentity.DevOps.ConfigDb
             _settings.Delete(name);
         }
 
-        // TODO: fix
         public IEnumerable<Plugin> GetAllPlugins()
         {
             return _plugins.FindAll();
@@ -104,6 +100,34 @@ namespace OneIdentity.DevOps.ConfigDb
         public void DeletePluginByName(string name)
         {
             _plugins.Delete(name);
+        }
+
+        public IEnumerable<AccountMapping> GetAccountMappings()
+        {
+            return _accountMappings.FindAll();
+        }
+
+        public void GetAccountMappingsByKey(string key)
+        {
+            _accountMappings.FindById(key);
+        }
+
+        public void SaveAccountMappings(IEnumerable<AccountMapping> accounts)
+        {
+            foreach (var accountMapping in accounts)
+            {
+                _accountMappings.Upsert(accountMapping);
+            }
+        }
+
+        public void DeleteAccountMappingsByKey(string key)
+        {
+            _accountMappings.Delete(key);
+        }
+
+        public void DeleteAccountMappings()
+        {
+            _accountMappings.DeleteAll();
         }
 
         public string SafeguardAddress
@@ -178,8 +202,8 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public string SigningCertificate
         {
-            get => GetSimpleSetting(SigningCertifcateKey);
-            set => SetSimpleSetting(SigningCertifcateKey, value);
+            get => GetSimpleSetting(SigningCertificateKey);
+            set => SetSimpleSetting(SigningCertificateKey, value);
         }
 
         public string UserCertificateThumbprint
@@ -259,20 +283,20 @@ namespace OneIdentity.DevOps.ConfigDb
                 return null;
             }
 
-            set
-            {
-                if (value != null)
-                {
-                    UserCertificateBase64Data = string.IsNullOrEmpty(UserCertificatePassphrase) 
-                        ? Convert.ToBase64String(value.Export(X509ContentType.Pfx)) 
-                        : Convert.ToBase64String(value.Export(X509ContentType.Pfx, UserCertificatePassphrase));
-                }
-                else
-                {
-                    UserCertificateBase64Data = null;
-                    UserCertificateThumbprint = null;
-                }
-            }
+            // set
+            // {
+            //     if (value != null)
+            //     {
+            //         UserCertificateBase64Data = string.IsNullOrEmpty(UserCertificatePassphrase) 
+            //             ? Convert.ToBase64String(value.Export(X509ContentType.Pfx)) 
+            //             : Convert.ToBase64String(value.Export(X509ContentType.Pfx, UserCertificatePassphrase));
+            //     }
+            //     else
+            //     {
+            //         UserCertificateBase64Data = null;
+            //         UserCertificateThumbprint = null;
+            //     }
+            // }
         }
 
         public void Dispose()

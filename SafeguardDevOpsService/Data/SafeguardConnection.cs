@@ -1,6 +1,6 @@
 ﻿namespace OneIdentity.DevOps.Data
 {
-    public class Safeguard
+    public class SafeguardConnection
     {
         public string ApplianceAddress { get; set; }
         public bool IgnoreSsl { get; set; }
