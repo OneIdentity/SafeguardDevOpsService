@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Logic;
@@ -110,7 +111,7 @@ namespace OneIdentity.DevOps
 
         }
 
-        public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger(c => { c.RouteTemplate = SwaggerRouteTemplate; });
@@ -122,6 +123,18 @@ namespace OneIdentity.DevOps
                 c.SwaggerEndpoint(OpenApiRelativeUrl, VersionApiName);
                 c.RoutePrefix = SwaggerRoutePrefix;
             });
+
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                app.UseHsts();
+            }
+
+            app.UseHttpsRedirection();
 
             app.UseMvc();
         }

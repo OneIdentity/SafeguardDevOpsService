@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -75,13 +76,12 @@ namespace OneIdentity.DevOps.Logic
             HttpClientHandler handler = null;
             if (availability.IgnoreSsl)
             {
-                handler = new HttpClientHandler();
-                handler.ClientCertificateOptions = ClientCertificateOption.Manual;
-                handler.ServerCertificateCustomValidationCallback =
-                    (httpRequestMessage, cert, cetChain, policyErrors) =>
-                    {
-                        return true;
-                    };
+                handler = new HttpClientHandler
+                {
+                    ClientCertificateOptions = ClientCertificateOption.Manual,
+                    ServerCertificateCustomValidationCallback =
+                        (httpRequestMessage, cert, cetChain, policyErrors) => true
+                };
             }
 
             string result = null;
@@ -283,45 +283,45 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        private void AddTrustedCertificate(ISafeguardConnection sg)
-        {
-            var thumbprint = _configDb.UserCertificate?.Thumbprint;
-
-            if (thumbprint != null)
-            {
-                FullResponse result = null;
-                try
-                {
-                    result = sg.InvokeMethodFull(Service.Core, Method.Get, $"TrustedCertificates/{thumbprint}");
-                }
-                catch (Exception ex)
-                {
-                    if (ex is SafeguardDotNetException && ((SafeguardDotNetException)ex).HttpStatusCode != HttpStatusCode.NotFound)
-                    {
-                        throw LogAndThrow($"Failed to add the trusted certificate '{_configDb.SafeguardAddress}': {ex.Message}", ex);
-                    }
-                }
-
-                if (result == null || result.StatusCode == HttpStatusCode.NotFound)
-                {
-                    var certData = _configDb.UserCertificate.Export(X509ContentType.Cert);
-                    var trustedCert = new TrustedCertificate()
-                    {
-                        Base64CertificateData = Convert.ToBase64String(certData)
-                    };
-
-                    var trustedCertStr = JsonHelper.SerializeObject(trustedCert);
-                    try
-                    {
-                        sg.InvokeMethodFull(Service.Core, Method.Post, "TrustedCertificates", trustedCertStr);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw LogAndThrow($"Failed to add the trusted certificate '{_configDb.SafeguardAddress}': {ex.Message}", ex);
-                    }
-                }
-            }
-        }
+        // private void AddTrustedCertificate(ISafeguardConnection sg)
+        // {
+        //     var thumbprint = _configDb.UserCertificate?.Thumbprint;
+        //
+        //     if (thumbprint != null)
+        //     {
+        //         FullResponse result = null;
+        //         try
+        //         {
+        //             result = sg.InvokeMethodFull(Service.Core, Method.Get, $"TrustedCertificates/{thumbprint}");
+        //         }
+        //         catch (Exception ex)
+        //         {
+        //             if (ex is SafeguardDotNetException && ((SafeguardDotNetException)ex).HttpStatusCode != HttpStatusCode.NotFound)
+        //             {
+        //                 throw LogAndThrow($"Failed to add the trusted certificate '{_configDb.SafeguardAddress}': {ex.Message}", ex);
+        //             }
+        //         }
+        //
+        //         if (result == null || result.StatusCode == HttpStatusCode.NotFound)
+        //         {
+        //             var certData = _configDb.UserCertificate.Export(X509ContentType.Cert);
+        //             var trustedCert = new TrustedCertificate()
+        //             {
+        //                 Base64CertificateData = Convert.ToBase64String(certData)
+        //             };
+        //
+        //             var trustedCertStr = JsonHelper.SerializeObject(trustedCert);
+        //             try
+        //             {
+        //                 sg.InvokeMethodFull(Service.Core, Method.Post, "TrustedCertificates", trustedCertStr);
+        //             }
+        //             catch (Exception ex)
+        //             {
+        //                 throw LogAndThrow($"Failed to add the trusted certificate '{_configDb.SafeguardAddress}': {ex.Message}", ex);
+        //             }
+        //         }
+        //     }
+        // }
 
         private void CreateA2ARegistration(ISafeguardConnection sg)
         {
@@ -416,11 +416,33 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
+        private string LocalIPAddress()
+        {
+            if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable())
+            {
+                return null;
+            }
+
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+
+            var addresses = host.AddressList.Where(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+
+            var a = addresses.Select(x => $"\"{x}\"");
+            return string.Join(",", addresses.Select(x => $"\"{x}\""));
+        }
+
         public void RemoveClientCertificate()
         {
             _configDb.UserCertificateBase64Data = null;
             _configDb.UserCertificatePassphrase = null;
             _configDb.UserCertificateThumbprint = null;
+        }
+
+        public void RemoveWebServerCertificate()
+        {
+            _configDb.WebSslCertificateBase64Data = null;
+            _configDb.WebSslCertificatePassphrase = null;
+            _configDb.WebSslCertificate = CertificateHelper.CreateDefaultSSLCertificate();
         }
 
 
@@ -445,6 +467,9 @@ namespace OneIdentity.DevOps.Logic
 
         public bool ValidateLogin(string token, bool tokenOnly = false)
         {
+            if (token == null)
+                return false;
+
             try
             {
                 var key = _configDb.SigningCertificate;
@@ -472,13 +497,13 @@ namespace OneIdentity.DevOps.Logic
             return false;
         }
 
-        public ClientCertificate GetClientCertificate()
+        public CertificateInfo GetCertificateInfo(CertificateType certificateType)
         {
-            var cert = _configDb.UserCertificate;
+            var cert = certificateType == CertificateType.A2AClient ? _configDb.UserCertificate : _configDb.WebSslCertificate;
 
             if (cert != null)
             {
-                var result = new ClientCertificate()
+                var result = new CertificateInfo()
                 {
                     Thumbprint = cert.Thumbprint,
                     IssuedBy = cert.Issuer,
@@ -492,7 +517,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        public void InstallClientCertificate(ClientCertificate certificate)
+        public void InstallCertificate(CertificateInfo certificate, CertificateType certificateType)
         {
             var certData = Regex.Replace(certificate.Base64CertificateData, "-----BEGIN .*-----", "");
             certData = Regex.Replace(certData, "-----END .*", "");
@@ -513,22 +538,63 @@ namespace OneIdentity.DevOps.Logic
 
             if (cert.HasPrivateKey)
             {
-                _configDb.UserCertificatePassphrase = certificate.Passphrase;
-                _configDb.UserCertificateBase64Data = certificate.Base64CertificateData;
+                if (!CertificateHelper.ValidateCertificate(cert, certificateType))
+                    throw new DevOpsException("Invalid certificate");
+
+                switch (certificateType)
+                {
+                    case CertificateType.A2AClient:
+                    {
+                        _configDb.UserCertificatePassphrase = certificate.Passphrase;
+                        _configDb.UserCertificateBase64Data = certificate.Base64CertificateData;
+                        break;
+                    }
+                    case CertificateType.WebSsh:
+                    {
+                        _configDb.WebSslCertificatePassphrase = certificate.Passphrase;
+                        _configDb.WebSslCertificateBase64Data = certificate.Base64CertificateData;
+                        break;
+                    }
+                    default:
+                    {
+                        throw new DevOpsException("Invalid certificate type");
+                    }
+                }
             }
             else
             {
                 try
                 {
                     using var rsa = RSA.Create();
-                    var privateKeyBytes = Convert.FromBase64String(_configDb.CsrPrivateKeyBase64Data);
+                    var privateKeyBytes = certificateType == CertificateType.A2AClient ? 
+                        Convert.FromBase64String(_configDb.UserCsrPrivateKeyBase64Data) : Convert.FromBase64String(_configDb.WebSslCsrPrivateKeyBase64Data);
                     rsa.ImportRSAPrivateKey(privateKeyBytes, out _);
 
                     using (X509Certificate2 pubOnly = cert)
                     using (X509Certificate2 pubPrivEphemeral = pubOnly.CopyWithPrivateKey(rsa))
                     {
-                        _configDb.UserCertificatePassphrase = null;
-                        _configDb.UserCertificateBase64Data = Convert.ToBase64String(pubPrivEphemeral.Export(X509ContentType.Pfx));
+                        if (!CertificateHelper.ValidateCertificate(pubPrivEphemeral, certificateType))
+                            throw new DevOpsException("Invalid certificate");
+
+                        switch (certificateType)
+                        {
+                            case CertificateType.A2AClient:
+                            {
+                                _configDb.UserCertificatePassphrase = null;
+                                _configDb.UserCertificateBase64Data = Convert.ToBase64String(pubPrivEphemeral.Export(X509ContentType.Pfx));
+                                break;
+                            }
+                            case CertificateType.WebSsh:
+                            {
+                                _configDb.WebSslCertificatePassphrase = null;
+                                _configDb.WebSslCertificateBase64Data = Convert.ToBase64String(pubPrivEphemeral.Export(X509ContentType.Pfx));
+                                break;
+                            }
+                            default:
+                            {
+                                throw new DevOpsException("Invalid certificate type");
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -538,10 +604,11 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public string GetClientCSR(int? size, string subjectName)
+        public string GetCSR(int? size, string subjectName, CertificateType certificateType)
         {
             int certSize = 2048;
-            string certSubjectName = "CN=DevOpsServiceClientCertificate";
+            string certSubjectName = certificateType == CertificateType.A2AClient ? 
+                WellKnownData.DevOpsServiceClientCertificate : WellKnownData.DevOpsServiceWebSslCertificate;
 
             if (size != null)
                 certSize = size.Value;
@@ -560,24 +627,67 @@ namespace OneIdentity.DevOps.Logic
                 certificateRequest.CertificateExtensions.Add(
                     new X509BasicConstraintsExtension(false, false, 0, false));
 
-                certificateRequest.CertificateExtensions.Add(
-                    new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement,
-                        true));
-
-                certificateRequest.CertificateExtensions.Add(
-                    new X509EnhancedKeyUsageExtension(
-                        new OidCollection
-                        {
-                            new Oid("1.3.6.1.5.5.7.3.2")
-                        },
-                        true));
+                switch (certificateType)
+                {
+                    case CertificateType.A2AClient:
+                    {
+                        certificateRequest.CertificateExtensions.Add(
+                            new X509KeyUsageExtension(
+                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement,
+                                true));
+                        certificateRequest.CertificateExtensions.Add(
+                            new X509EnhancedKeyUsageExtension(
+                                new OidCollection
+                                {
+                                    new Oid("1.3.6.1.5.5.7.3.2")
+                                },
+                                true));
+                        break;
+                    }
+                    case CertificateType.WebSsh:
+                    {
+                        certificateRequest.CertificateExtensions.Add(
+                            new X509KeyUsageExtension(
+                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment,
+                                true));
+                        certificateRequest.CertificateExtensions.Add(
+                            new X509EnhancedKeyUsageExtension(
+                                new OidCollection
+                                {
+                                    new Oid("1.3.6.1.5.5.7.3.1")
+                                },
+                                true));
+                        break;
+                    }
+                    default:
+                    {
+                        throw new DevOpsException("Invalid certificate type");
+                    }
+                }
 
                 certificateRequest.CertificateExtensions.Add(
                     new X509SubjectKeyIdentifierExtension(certificateRequest.PublicKey, false));
 
                 var csr = certificateRequest.CreateSigningRequest();
-                _configDb.CsrBase64Data = Convert.ToBase64String(csr);
-                _configDb.CsrPrivateKeyBase64Data = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+                switch (certificateType)
+                {
+                    case CertificateType.A2AClient:
+                    {
+                        _configDb.UserCsrBase64Data = Convert.ToBase64String(csr);
+                        _configDb.UserCsrPrivateKeyBase64Data = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+                        break;
+                    }
+                    case CertificateType.WebSsh:
+                    {
+                        _configDb.WebSslCsrBase64Data = Convert.ToBase64String(csr);
+                        _configDb.WebSslCsrPrivateKeyBase64Data = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
+                        break;
+                    }
+                    default:
+                    {
+                        throw new DevOpsException("Invalid certificate type");
+                    }
+                }
 
                 StringBuilder builder = new StringBuilder();
                 builder.AppendLine("-----BEGIN CERTIFICATE REQUEST-----");
@@ -595,7 +705,7 @@ namespace OneIdentity.DevOps.Logic
 
             using var sg = Connect();
             CreateA2AUser(sg);
-            AddTrustedCertificate(sg);
+            //AddTrustedCertificate(sg);
             CreateA2ARegistration(sg);
 
             return GetDevOpsConfiguration();
@@ -625,21 +735,22 @@ namespace OneIdentity.DevOps.Logic
             return availability;
         }
 
-        // public void DeleteDevOpsConfiguration()
-        // {
-        //     _configDb.SafeguardAddress = null;
-        //     _configDb.ApiVersion = null;
-        //     _configDb.IgnoreSsl = null;
-        //     _configDb.A2aRegistrationId = null;
-        //     _configDb.A2aUserId = null;
-        //     _configDb.CsrPrivateKeyBase64Data = null;
-        //     _configDb.CsrBase64Data = null;
-        //     _configDb.UserCertificateBase64Data = null;
-        //     _configDb.UserCertificatePassphrase = null;
-        //     _configDb.UserCertificateThumbprint = null;
-        //
-        //     //TODO: Need to remove the A2AUser, A2ARegistration and ClientCertificate from the Safeguard appliance.
-        // }
+        public void DeleteDevOpsConfiguration()
+        {
+            DeleteA2ARegistration();
+            RemoveClientCertificate();
+
+            _configDb.SafeguardAddress = null;
+            _configDb.ApiVersion = null;
+            _configDb.IgnoreSsl = null;
+            _configDb.A2aRegistrationId = null;
+            _configDb.A2aUserId = null;
+            _configDb.UserCsrPrivateKeyBase64Data = null;
+            _configDb.UserCsrBase64Data = null;
+            _configDb.UserCertificateBase64Data = null;
+            _configDb.UserCertificatePassphrase = null;
+            _configDb.UserCertificateThumbprint = null;
+        }
 
         public IEnumerable<SppAccount> GetAvailableAccounts()
         {
@@ -647,15 +758,13 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var p = new Dictionary<string, string> {{"fields", "Account"}};
-
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "Me/RequestEntitlements", null, p);
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "PolicyAccounts");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
-                    var accounts = JsonHelper.DeserializeObject<IEnumerable<SppAccountWrapper>>(result.Body);
+                    var accounts = JsonHelper.DeserializeObject<IEnumerable<SppAccount>>(result.Body);
                     if (accounts != null)
                     {
-                        return accounts.Select(x => x.Account);
+                        return accounts;
                     }
                 }
             }
@@ -720,19 +829,19 @@ namespace OneIdentity.DevOps.Logic
                 _logger.Error($"Failed to delete the A2A certificate user {_configDb.A2aUserId} - {user?.UserName}: {ex.Message}");
             }
 
-            try
-            {
-                var thumbprint = _configDb.UserCertificate?.Thumbprint;
-                if (thumbprint != null)
-                {
-                    sg.InvokeMethodFull(Service.Core, Method.Delete, $"TrustedCertificates/{thumbprint}");
-                    RemoveClientCertificate();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Failed to remove the A2A trusted certificate {_configDb.UserCertificate?.Thumbprint} - {user?.UserName}: {ex.Message}");
-            }
+            // try
+            // {
+            //     var thumbprint = _configDb.UserCertificate?.Thumbprint;
+            //     if (thumbprint != null)
+            //     {
+            //         sg.InvokeMethodFull(Service.Core, Method.Delete, $"TrustedCertificates/{thumbprint}");
+            //         RemoveClientCertificate();
+            //     }
+            // }
+            // catch (Exception ex)
+            // {
+            //     _logger.Error($"Failed to remove the A2A trusted certificate {_configDb.UserCertificate?.Thumbprint} - {user?.UserName}: {ex.Message}");
+            // }
 
         }
 
@@ -769,13 +878,14 @@ namespace OneIdentity.DevOps.Logic
             }
 
             using var sg = Connect();
+            var ipRestrictions = LocalIPAddress();
 
             foreach (var account in accounts)
             {
                 try
                 {
                     sg.InvokeMethodFull(Service.Core, Method.Post, $"A2ARegistrations/{_configDb.A2aRegistrationId}/RetrievableAccounts",
-                        $"{{\"AccountId\":{account.Id}}}");
+                        $"{{\"AccountId\":{account.Id}, \"IpRestrictions\":[{ipRestrictions}]}}");
                 }
                 catch (Exception ex)
                 {

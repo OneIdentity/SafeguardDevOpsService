@@ -13,13 +13,13 @@ namespace OneIdentity.DevOps.Attributes
         {
             var authHeader = context.HttpContext.Request.Headers.FirstOrDefault(c => c.Key == "Authorization");
             var sppToken = authHeader.Value.ToString();
-            if (!sppToken.StartsWith("spp-token:", StringComparison.InvariantCultureIgnoreCase))
+            if (!sppToken.StartsWith("spp-token ", StringComparison.InvariantCultureIgnoreCase))
             {
                 context.Result = new DevOpsUnauthorizedResult("Authorization Failed: Missing token");
                 return null;
             }
 
-            return sppToken.Split(":")[1];
+            return sppToken.Split(" ").LastOrDefault();
         }
 
         public string GetSessonKey(AuthorizationFilterContext context)
