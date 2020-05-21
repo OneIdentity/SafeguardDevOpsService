@@ -283,46 +283,6 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        // private void AddTrustedCertificate(ISafeguardConnection sg)
-        // {
-        //     var thumbprint = _configDb.UserCertificate?.Thumbprint;
-        //
-        //     if (thumbprint != null)
-        //     {
-        //         FullResponse result = null;
-        //         try
-        //         {
-        //             result = sg.InvokeMethodFull(Service.Core, Method.Get, $"TrustedCertificates/{thumbprint}");
-        //         }
-        //         catch (Exception ex)
-        //         {
-        //             if (ex is SafeguardDotNetException && ((SafeguardDotNetException)ex).HttpStatusCode != HttpStatusCode.NotFound)
-        //             {
-        //                 throw LogAndThrow($"Failed to add the trusted certificate '{_configDb.SafeguardAddress}': {ex.Message}", ex);
-        //             }
-        //         }
-        //
-        //         if (result == null || result.StatusCode == HttpStatusCode.NotFound)
-        //         {
-        //             var certData = _configDb.UserCertificate.Export(X509ContentType.Cert);
-        //             var trustedCert = new TrustedCertificate()
-        //             {
-        //                 Base64CertificateData = Convert.ToBase64String(certData)
-        //             };
-        //
-        //             var trustedCertStr = JsonHelper.SerializeObject(trustedCert);
-        //             try
-        //             {
-        //                 sg.InvokeMethodFull(Service.Core, Method.Post, "TrustedCertificates", trustedCertStr);
-        //             }
-        //             catch (Exception ex)
-        //             {
-        //                 throw LogAndThrow($"Failed to add the trusted certificate '{_configDb.SafeguardAddress}': {ex.Message}", ex);
-        //             }
-        //         }
-        //     }
-        // }
-
         private void CreateA2ARegistration(ISafeguardConnection sg)
         {
             if (_configDb.A2aUserId == null)
@@ -705,7 +665,6 @@ namespace OneIdentity.DevOps.Logic
 
             using var sg = Connect();
             CreateA2AUser(sg);
-            //AddTrustedCertificate(sg);
             CreateA2ARegistration(sg);
 
             return GetDevOpsConfiguration();
@@ -828,21 +787,6 @@ namespace OneIdentity.DevOps.Logic
             {
                 _logger.Error($"Failed to delete the A2A certificate user {_configDb.A2aUserId} - {user?.UserName}: {ex.Message}");
             }
-
-            // try
-            // {
-            //     var thumbprint = _configDb.UserCertificate?.Thumbprint;
-            //     if (thumbprint != null)
-            //     {
-            //         sg.InvokeMethodFull(Service.Core, Method.Delete, $"TrustedCertificates/{thumbprint}");
-            //         RemoveClientCertificate();
-            //     }
-            // }
-            // catch (Exception ex)
-            // {
-            //     _logger.Error($"Failed to remove the A2A trusted certificate {_configDb.UserCertificate?.Thumbprint} - {user?.UserName}: {ex.Message}");
-            // }
-
         }
 
         public IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts()
