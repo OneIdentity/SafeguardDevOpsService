@@ -31,7 +31,7 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="SafeguardDevOps Service Installer"
+        DisplayName="SafeguardDevOps Service"
         Description="Safeguard DevOps Service"
         BackgroundColor="transparent"
         Square150x150Logo="Images\Square150x150Logo.png"
