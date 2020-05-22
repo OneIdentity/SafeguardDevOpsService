@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using LiteDB;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.ConfigDb
 {
@@ -40,7 +42,9 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public LiteDbConfigurationRepository()
         {
-            _configurationDb = new LiteDatabase(DbFileName);
+            var dbPath = Path.Combine(WellKnownData.AppDataPath, DbFileName);
+
+            _configurationDb = new LiteDatabase(dbPath);
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
             _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
             _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
