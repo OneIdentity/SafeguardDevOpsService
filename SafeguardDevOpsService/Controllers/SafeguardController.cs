@@ -88,11 +88,11 @@ namespace OneIdentity.DevOps.Controllers
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost("Configuration")]
-        public ActionResult<ServiceConfiguration> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, ClientCertificate certFile = null)
+        public ActionResult<ServiceConfiguration> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, CertificateInfo certFile = null)
         {
             if (certFile?.Base64CertificateData != null)
             {
-                safeguard.InstallClientCertificate(certFile);
+                safeguard.InstallCertificate(certFile, CertificateType.A2AClient);
             }
 
             var devOpsConfiguration = safeguard.ConfigureDevOpsService();
@@ -109,9 +109,12 @@ namespace OneIdentity.DevOps.Controllers
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("Configuration")]
-        public ActionResult<ServiceConfiguration> DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<ServiceConfiguration> DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
         {
-            safeguard.ConfigureDevOpsService();
+            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+                return BadRequest();
+
+            safeguard.DeleteDevOpsConfiguration();
 
             return NoContent();
         }
@@ -149,7 +152,6 @@ namespace OneIdentity.DevOps.Controllers
         {
             var sessionKey = HttpContext.Items["session-key"].ToString();
             AuthorizedCache.Instance.Remove(sessionKey);
-//TODO: Remove the connection Context from the authorizedCache
 
             return Ok();
         }
@@ -162,9 +164,9 @@ namespace OneIdentity.DevOps.Controllers
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("ClientCertificate")]
-        public ActionResult<ClientCertificate> GetClientCertificate([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<CertificateInfo> GetClientCertificate([FromServices] ISafeguardLogic safeguard)
         {
-            var certificate = safeguard.GetClientCertificate();
+            var certificate = safeguard.GetCertificateInfo(CertificateType.A2AClient);
             if (certificate == null)
                 return NotFound();
 
@@ -180,17 +182,18 @@ namespace OneIdentity.DevOps.Controllers
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost("ClientCertificate")]
-        public ActionResult InstallClientCertificate([FromServices] ISafeguardLogic safeguard, ClientCertificate certFile)
+        public ActionResult InstallClientCertificate([FromServices] ISafeguardLogic safeguard, CertificateInfo certInfo)
         {
-            safeguard.InstallClientCertificate(certFile);
-            return Ok();
+            safeguard.InstallCertificate(certInfo, CertificateType.A2AClient);
+            var certificate = safeguard.GetCertificateInfo(CertificateType.A2AClient);
+
+            return Ok(certificate);
         }
 
         /// <summary>
         /// Remove the installed A2A client certificate.
         /// </summary>
         /// <response code="204">No Content</response>
-        /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("ClientCertificate")]
@@ -202,19 +205,72 @@ namespace OneIdentity.DevOps.Controllers
         }
 
         /// <summary>
-        /// Get a CSR that can be signed and uploaded back to the DevOps service. If the issuer of the signed certificate is part of a certificate chain
-        /// the certificate chain must be manually added as trusted certificates in the Safeguard appliance.
+        /// Get the information about the currently installed web server certificate.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("WebServerCertificate")]
+        public ActionResult<CertificateInfo> GetWebServerCertificate([FromServices] ISafeguardLogic safeguard)
+        {
+            var certificate = safeguard.GetCertificateInfo(CertificateType.WebSsh);
+            if (certificate == null)
+                return NotFound();
+
+            return Ok(certificate);
+        }
+
+        /// <summary>
+        /// Upload a web server certificate.  This can be either a PFX format certificate that includes a private key or a signed certificate
+        /// that was issued from a CSR.  (See GET /CSR). The DevOps service must be restarted before the new web server certificate will be applied.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost("WebServerCertificate")]
+        public ActionResult InstallWebServerCertificate([FromServices] ISafeguardLogic safeguard, CertificateInfo certInfo)
+        {
+            safeguard.InstallCertificate(certInfo, CertificateType.WebSsh);
+            var certificate = safeguard.GetCertificateInfo(CertificateType.WebSsh);
+
+            return Ok(certificate);
+        }
+
+        /// <summary>
+        /// Remove the installed web server certificate and reset a new default certificate. The DevOps service must be
+        /// restarted before the new web server certificate will be applied.
+        /// </summary>
+        /// <response code="204">No Content</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpDelete("WebServerCertificate")]
+        public ActionResult RemoveWebServerCertificate([FromServices] ISafeguardLogic safeguard)
+        {
+            safeguard.RemoveWebServerCertificate();
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Get a CSR that can be signed and uploaded back to the DevOps service. 
         /// </summary>
         /// <param name="size">Size of the certificate</param>
         /// <param name="subjectName">Subject name of the certificate</param>
+        /// <param name="certType">Type of CSR to create.  Types: A2AClient (default), WebSsh</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("CSR")]
-        public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size, [FromQuery] string subjectName)
+        public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size, 
+            [FromQuery] string subjectName, [FromQuery] string certType = "A2AClient")
         {
-            var csr = safeguard.GetClientCSR(size, subjectName);
+            if (!Enum.TryParse(certType, true, out CertificateType cType))
+                return BadRequest("Invalid certificate type");
+
+            var csr = safeguard.GetCSR(size, subjectName, cType);
             return Ok(csr);
         }
 

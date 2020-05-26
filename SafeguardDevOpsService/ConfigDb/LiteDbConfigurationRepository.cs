@@ -31,8 +31,12 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string UserCertificateThumbprintKey = "UserCertThumbprint";
         private const string UserCertificateDataKey = "UserCertData";
         private const string UserCertificatePassphraseKey = "UserCertPassphrase";
-        private const string CsrDataKey = "CertificateSigningRequestData";
-        private const string CsrPrivateKeyDataKey = "CertificateSigningRequestPrivateKeyData";
+        private const string UserCsrDataKey = "UserCertificateSigningRequestData";
+        private const string UserCsrPrivateKeyDataKey = "UserCertificateSigningRequestPrivateKeyData";
+        private const string WebSslCertificateDataKey = "WebSslCertData";
+        private const string WebSslCertificatePassphraseKey = "WebSslCertPassphrase";
+        private const string WebSslCsrDataKey = "WebSslCertificateSigningRequestData";
+        private const string WebSslCsrPrivateKeyDataKey = "WebSslCertificateSigningRequestPrivateKeyData";
 
         public LiteDbConfigurationRepository()
         {
@@ -224,16 +228,40 @@ namespace OneIdentity.DevOps.ConfigDb
             set => SetSimpleSetting(UserCertificatePassphraseKey, value);
         }
 
-        public string CsrBase64Data
+        public string WebSslCertificateBase64Data
         {
-            get => GetSimpleSetting(CsrDataKey);
-            set => SetSimpleSetting(CsrDataKey, value);
+            get => GetSimpleSetting(WebSslCertificateDataKey);
+            set => SetSimpleSetting(WebSslCertificateDataKey, value);
         }
 
-        public string CsrPrivateKeyBase64Data
+        public string WebSslCertificatePassphrase
         {
-            get => GetSimpleSetting(CsrPrivateKeyDataKey);
-            set => SetSimpleSetting(CsrPrivateKeyDataKey, value);
+            get => GetSimpleSetting(WebSslCertificatePassphraseKey);
+            set => SetSimpleSetting(WebSslCertificatePassphraseKey, value);
+        }
+
+        public string UserCsrBase64Data
+        {
+            get => GetSimpleSetting(UserCsrDataKey);
+            set => SetSimpleSetting(UserCsrDataKey, value);
+        }
+
+        public string UserCsrPrivateKeyBase64Data
+        {
+            get => GetSimpleSetting(UserCsrPrivateKeyDataKey);
+            set => SetSimpleSetting(UserCsrPrivateKeyDataKey, value);
+        }
+
+        public string WebSslCsrBase64Data
+        {
+            get => GetSimpleSetting(WebSslCsrDataKey);
+            set => SetSimpleSetting(WebSslCsrDataKey, value);
+        }
+
+        public string WebSslCsrPrivateKeyBase64Data
+        {
+            get => GetSimpleSetting(WebSslCsrPrivateKeyDataKey);
+            set => SetSimpleSetting(WebSslCsrPrivateKeyDataKey, value);
         }
 
         public X509Certificate2 UserCertificate
@@ -282,21 +310,43 @@ namespace OneIdentity.DevOps.ConfigDb
 
                 return null;
             }
+        }
 
-            // set
-            // {
-            //     if (value != null)
-            //     {
-            //         UserCertificateBase64Data = string.IsNullOrEmpty(UserCertificatePassphrase) 
-            //             ? Convert.ToBase64String(value.Export(X509ContentType.Pfx)) 
-            //             : Convert.ToBase64String(value.Export(X509ContentType.Pfx, UserCertificatePassphrase));
-            //     }
-            //     else
-            //     {
-            //         UserCertificateBase64Data = null;
-            //         UserCertificateThumbprint = null;
-            //     }
-            // }
+        public X509Certificate2 WebSslCertificate
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(WebSslCertificateBase64Data))
+                {
+                    try
+                    {
+                        var bytes = Convert.FromBase64String(WebSslCertificateBase64Data);
+                        var cert = string.IsNullOrEmpty(WebSslCertificatePassphrase) 
+                            ? new X509Certificate2(bytes)
+                            : new X509Certificate2(bytes, WebSslCertificatePassphrase);
+                        return cert;
+                    }
+                    catch (Exception)
+                    {
+                        // TODO: log?
+                        // throw appropriate error?
+                    }
+                }
+
+                return null;
+            }
+
+            set
+            {
+                if (value != null)
+                {
+                    WebSslCertificateBase64Data = Convert.ToBase64String(value.Export(X509ContentType.Pfx));
+                }
+                else
+                {
+                    WebSslCertificateBase64Data = null;
+                }
+            }
         }
 
         public void Dispose()

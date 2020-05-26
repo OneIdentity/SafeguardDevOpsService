@@ -13,10 +13,12 @@ namespace OneIdentity.DevOps.Logic
         SafeguardConnection SetSafeguardData(SafeguardData safeguardData);
 
         bool ValidateLogin(string token, bool tokenOnly = false);
-        void InstallClientCertificate(ClientCertificate certificatePfx);
+
+        CertificateInfo GetCertificateInfo(CertificateType certificateType);
+        void InstallCertificate(CertificateInfo certificatePfx, CertificateType certificateType);
         void RemoveClientCertificate();
-        ClientCertificate GetClientCertificate();
-        string GetClientCSR(int? size, string subjectName);
+        void RemoveWebServerCertificate();
+        string GetCSR(int? size, string subjectName, CertificateType certificateType);
 
         IEnumerable<SppAccount> GetAvailableAccounts();
 
@@ -27,5 +29,7 @@ namespace OneIdentity.DevOps.Logic
 
         ServiceConfiguration GetDevOpsConfiguration();
         ServiceConfiguration ConfigureDevOpsService();
+        void DeleteDevOpsConfiguration();
+
     }
 }

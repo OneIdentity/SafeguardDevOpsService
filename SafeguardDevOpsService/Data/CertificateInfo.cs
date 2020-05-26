@@ -6,12 +6,12 @@ namespace OneIdentity.DevOps.Data
     /// <summary>
     /// Represents a certificate from a certificate store on the appliance
     /// </summary>
-    public class ClientCertificate
+    public class CertificateInfo
     {
         private DateTime _notBefore;
         private DateTime _notAfter;
 
-        public ClientCertificate()
+        public CertificateInfo()
         {
             Subject = "";
         }
@@ -64,7 +64,7 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public string Passphrase { get; set; }
 
-        protected bool Equals(ClientCertificate other)
+        protected bool Equals(CertificateInfo other)
         {
             return string.Equals(Subject, other.Subject) && string.Equals(IssuedBy, other.IssuedBy) && NotBefore.Equals(other.NotBefore) && NotAfter.Equals(other.NotAfter) && string.Equals(Thumbprint, other.Thumbprint);
         }
@@ -74,7 +74,7 @@ namespace OneIdentity.DevOps.Data
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((ClientCertificate) obj);
+            return Equals((CertificateInfo) obj);
         }
 
         public override int GetHashCode()

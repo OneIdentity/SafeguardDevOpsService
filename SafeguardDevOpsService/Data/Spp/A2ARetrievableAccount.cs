@@ -16,5 +16,6 @@ namespace OneIdentity.DevOps.Data.Spp
         public string SystemDescription { get; set; }
         public string NetworkAddress { get; set; }
         public string DomainName { get; set; }
+        public string[] IpRestrictions { get; set; }
     }
 }
