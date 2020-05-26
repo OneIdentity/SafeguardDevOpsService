@@ -43,6 +43,7 @@ namespace OneIdentity.DevOps.ConfigDb
         public LiteDbConfigurationRepository()
         {
             var dbPath = Path.Combine(WellKnownData.AppDataPath, DbFileName);
+            Serilog.Log.Logger.Error($"Loading configuration database at {dbPath}.");
 
             _configurationDb = new LiteDatabase(dbPath);
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);

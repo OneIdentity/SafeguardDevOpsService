@@ -36,12 +36,9 @@ namespace OneIdentity.DevOps.Logic
 
         public void Run()
         {
-            //var exePath = Assembly.GetExecutingAssembly().Location;
-            //var dirPath = Path.GetDirectoryName(exePath);
-            //var dirPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            //var applicationDirPath = Path.Combine(dirPath, WellKnownData.DevOpsServiceName);
             var pluginDirPath = Path.Combine(WellKnownData.AppDataPath, PluginDirName);
             Directory.CreateDirectory(pluginDirPath);
+            Serilog.Log.Logger.Error($"Watching {pluginDirPath} for plugins that should be loaded.");
 
             _watcher = new FileSystemWatcher()
             {

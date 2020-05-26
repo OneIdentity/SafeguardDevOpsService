@@ -21,7 +21,7 @@ namespace OneIdentity.DevOps.Logic
         {
             get
             {
-                var dirPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var dirPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 return Path.Combine(dirPath, WellKnownData.DevOpsServiceName);
             }
         }

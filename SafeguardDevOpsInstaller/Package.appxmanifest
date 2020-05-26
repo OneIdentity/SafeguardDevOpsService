@@ -7,9 +7,9 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="4f4e5ac6-f482-4b05-ba8d-4f31657de81e"
+    Name="SafeguardDevOpsService"
     Publisher="CN=Brad Nicholes"
-    Version="1.0.2.0" />
+    Version="1.0.13.0" />
 
   <Properties>
     <DisplayName>Safeguard DevOps Service</DisplayName>
@@ -20,6 +20,7 @@
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14393.0" MaxVersionTested="10.0.14393.0" />
+    <TargetDeviceFamily Name="MSIXCore.Server" MinVersion="10.0.14393.0" MaxVersionTested="10.0.14393.0" />
   </Dependencies>
 
   <Resources>
@@ -52,5 +53,6 @@
   <Capabilities>
     <Capability Name="internetClient" />
     <rescap:Capability Name="runFullTrust" />
+    <Capability Name="internetClientServer"/>
   </Capabilities>
 </Package>
