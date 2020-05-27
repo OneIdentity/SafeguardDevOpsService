@@ -52,7 +52,7 @@
   <PropertyGroup>
     <ProjectGuid>381135b5-b8aa-4398-b612-d0e4bc077277</ProjectGuid>
     <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
-    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <TargetPlatformMinVersion>10.0.17134.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <EntryPointProjectUniqueName>..\SafeguardDevOpsService\SafeguardDevOpsService.csproj</EntryPointProjectUniqueName>
