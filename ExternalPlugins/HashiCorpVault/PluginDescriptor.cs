@@ -38,11 +38,18 @@ namespace OneIdentity.DevOps.HashiCorpVault
             if (configuration != null && configuration.ContainsKey(AuthTokenName) &&
                 configuration.ContainsKey(AddressName) && configuration.ContainsKey(MountPointName))
             {
-                var authMethod = new TokenAuthMethodInfo(configuration[AuthTokenName]);
-                var vaultClientSettings = new VaultClientSettings(configuration[AddressName], authMethod);
-                _vaultClient = new VaultClient(vaultClientSettings);
-                _configuration = configuration;
-                _logger.Information($"Plugin {Name} has been successfully configured.");
+                try
+                {
+                    var authMethod = new TokenAuthMethodInfo(configuration[AuthTokenName] ?? "");
+                    var vaultClientSettings = new VaultClientSettings(configuration[AddressName], authMethod);
+                    _vaultClient = new VaultClient(vaultClientSettings);
+                    _configuration = configuration;
+                    _logger.Information($"Plugin {Name} has been successfully configured.");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Information($"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
+                }
             }
             else
             {

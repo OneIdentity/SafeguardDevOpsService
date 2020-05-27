@@ -55,21 +55,39 @@ namespace OneIdentity.DevOps.Controllers
             return Ok(plugin);
         }
 
-        // /// <summary>
-        // /// Delete the configuration for a specific plugin.
-        // /// </summary>
-        // /// <param name="name">Name of the plugin.</param>
-        // /// <response code="200">Success</response>
-        // /// <response code="404">Not found</response>
-        // [SafeguardSessionKeyAuthorization]
-        // [UnhandledExceptionError]
-        // [HttpDelete("{name}")]
-        // public ActionResult<Plugin> DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
-        // {
-        //     pluginsLogic.DeletePluginByName(name);
-        //
-        //     return Ok();
-        // }
+        /// <summary>
+        /// Update the configuration for a plugin.
+        /// </summary>
+        /// <param name="pluginConfiguration">Object containing a JSON configuration string.</param>
+        /// <param name="name">Name of plugin to update</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [HttpPut("Plugins/{name}")]
+        public ActionResult<Plugin> GetPlugins([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginConfiguration pluginConfiguration)
+        {
+            var plugin = pluginsLogic.SavePluginConfigurationByName(pluginConfiguration, name);
+            if (plugin == null)
+                return NotFound();
+
+            return Ok(plugin);
+        }
+
+        /// <summary>
+        /// Delete the configuration for a specific plugin.
+        /// </summary>
+        /// <param name="name">Name of the plugin.</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpDelete("{name}")]
+        public ActionResult<Plugin> DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        {
+            pluginsLogic.DeleteAccountMappings(name);
+            pluginsLogic.DeletePluginByName(name);
+        
+            return Ok();
+        }
 
         /// <summary>
         /// Get the list of accounts that are mapped to a vault plugin.
