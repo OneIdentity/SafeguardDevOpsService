@@ -28,7 +28,6 @@ namespace OneIdentity.DevOps
             _host = new WebHostBuilder()
                 .UseKestrel(options =>
                 {
-                    options.ListenAnyIP(5000);
                     options.ListenAnyIP(443, listenOptions =>
                         {
                             listenOptions.UseHttps(webSslCert);
