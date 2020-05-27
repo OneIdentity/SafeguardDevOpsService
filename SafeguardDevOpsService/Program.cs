@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using OneIdentity.DevOps.Logic;
 using Serilog;
 using Topshelf;

@@ -122,6 +122,7 @@ namespace OneIdentity.DevOps
                 c.RoutePrefix = SwaggerRoutePrefix;
             });
 
+            app.UseExceptionHandler("/Error");
             app.UseHttpsRedirection();
             app.UseMvc();
         }
