@@ -1,4 +1,7 @@
-﻿using Serilog;
+﻿using System;
+using System.IO;
+using OneIdentity.DevOps.Logic;
+using Serilog;
 using Topshelf;
 
 namespace OneIdentity.DevOps
@@ -7,8 +10,11 @@ namespace OneIdentity.DevOps
     {
         private static void Main()
         {
+            Directory.CreateDirectory(WellKnownData.AppDataPath);
+            var logDirPath = Path.Combine(WellKnownData.AppDataPath, "SafeguardDevOpsService.log");
+
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.File("SafeguardDevOpsService.log", 
+                .WriteTo.File(logDirPath, 
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 

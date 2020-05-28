@@ -28,7 +28,7 @@ namespace OneIdentity.DevOps
             _host = new WebHostBuilder()
                 .UseKestrel(options =>
                 {
-                    options.ListenAnyIP(5001, listenOptions =>
+                    options.ListenAnyIP(443, listenOptions =>
                         {
                             listenOptions.UseHttps(webSslCert);
                         });
@@ -62,6 +62,7 @@ namespace OneIdentity.DevOps
             {
                 webSslCert = CertificateHelper.CreateDefaultSSLCertificate();
                 db.WebSslCertificate = webSslCert;
+                Serilog.Log.Logger.Error("Created and installed a default web ssl certificate.");
             }
 
             return webSslCert;

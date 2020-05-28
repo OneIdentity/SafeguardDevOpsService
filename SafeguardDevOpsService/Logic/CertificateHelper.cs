@@ -46,25 +46,46 @@ namespace OneIdentity.DevOps.Logic
 
         public static bool ValidateCertificate(X509Certificate2 sslCertificate, CertificateType certificateType)
         {
+            var logger = Serilog.Log.Logger;
+
             if (sslCertificate == null)
+            {
+                logger.Error("Certificate was null.");
                 return false;
+            }
 
             var curDate = DateTime.UtcNow;
-            if (sslCertificate.HasPrivateKey == false ||
-                curDate < sslCertificate.NotBefore || curDate > sslCertificate.NotAfter || !HasUsage(sslCertificate, X509KeyUsageFlags.DigitalSignature))
+            if (sslCertificate.HasPrivateKey == false)
             {
+                logger.Error("No private key found.");
+                return false;
+            }
+            if (curDate < sslCertificate.NotBefore || curDate > sslCertificate.NotAfter)
+            {
+                logger.Error("Certificate is expired.");
+                return false;
+            }
+            if (!HasUsage(sslCertificate, X509KeyUsageFlags.DigitalSignature))
+            {
+                logger.Error("Missing digital signature usage.");
                 return false;
             }
 
             switch (certificateType)
             {
-                case CertificateType.A2AClient:
-                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
-                        return false;
-                    break;
                 case CertificateType.WebSsh:
-                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
+                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
+                    {
+                        logger.Error("Missing key agreement or enhanced key usage server authentication.");
                         return false;
+                    }
+                    break;
+                case CertificateType.A2AClient:
+                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
+                    {
+                        logger.Error("Missing key encipherment or enhanced key usage client authentication.");
+                        return false;
+                    }
                     break;
                 default:
                     return false;
