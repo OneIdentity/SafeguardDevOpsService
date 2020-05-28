@@ -62,7 +62,7 @@ namespace OneIdentity.DevOps.Controllers
         /// <param name="name">Name of plugin to update</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
-        [HttpPut("Plugins/{name}")]
+        [HttpPut("{name}")]
         public ActionResult<Plugin> GetPlugins([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginConfiguration pluginConfiguration)
         {
             var plugin = pluginsLogic.SavePluginConfigurationByName(pluginConfiguration, name);
