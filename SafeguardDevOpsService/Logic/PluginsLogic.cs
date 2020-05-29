@@ -37,6 +37,7 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeletePluginByName(string name)
         {
+            _pluginManager.UnloadPlugin(name);
             _configDb.DeletePluginByName(name);
         }
 
@@ -60,13 +61,6 @@ namespace OneIdentity.DevOps.Logic
 
         public IEnumerable<AccountMapping> GetAccountMappings(string name)
         {
-            if (_configDb.A2aRegistrationId == null)
-            {
-                var msg = "A2A registration not configured";
-                _logger.Error(msg);
-                throw new DevOpsException(msg);
-            }
-
             if (_configDb.GetPluginByName(name) == null)
             {
                 var msg = $"Plugin {name} not found";
