@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Security;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
@@ -10,7 +11,7 @@ namespace OneIdentity.DevOps.Logic
     {
         ISafeguardConnection Connect();
         SafeguardConnection GetSafeguardConnection();
-        SafeguardConnection SetSafeguardData(SafeguardData safeguardData);
+        SafeguardConnection SetSafeguardData(string token, SafeguardData safeguardData);
 
         bool ValidateLogin(string token, bool tokenOnly = false);
 

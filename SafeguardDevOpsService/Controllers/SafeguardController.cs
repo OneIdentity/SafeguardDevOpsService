@@ -44,7 +44,8 @@ namespace OneIdentity.DevOps.Controllers
         public ActionResult<SafeguardConnection> SetSafeguard([FromServices] ISafeguardLogic safeguard,
             [FromBody] SafeguardData safeguardData)
         {
-            var appliance = safeguard.SetSafeguardData(safeguardData);
+            var token = WellKnownData.GetSppToken(HttpContext);
+            var appliance = safeguard.SetSafeguardData(token, safeguardData);
 
             return Ok(appliance);
         }
@@ -133,11 +134,11 @@ namespace OneIdentity.DevOps.Controllers
         [HttpGet("Logon")]
         public ActionResult<SafeguardConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
         {
-            var availability = safeguard.GetSafeguardConnection();
-            if (availability == null)
+            var safeguardConnection = safeguard.GetSafeguardConnection();
+            if (safeguardConnection == null)
                 return NotFound("No Safeguard has not been configured");
 
-            return Ok(availability);
+            return Ok(safeguardConnection);
         }
 
         /// <summary>

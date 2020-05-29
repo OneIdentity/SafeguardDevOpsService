@@ -6,6 +6,9 @@ using OneIdentity.DevOps.Extensions;
 
 namespace OneIdentity.DevOps.Attributes
 {
+    /// <summary>
+    /// Convert unhandled exceptions to a web response
+    /// </summary>
     public class UnhandledExceptionErrorAttribute : ExceptionFilterAttribute
     {
         private readonly Serilog.ILogger _logger = Serilog.Log.Logger;

@@ -14,7 +14,6 @@ namespace OneIdentity.DevOps.Logic
 {
     internal class PluginManager : IDisposable, IPluginManager
     {
-        private const string PluginDirName = "ExternalPlugins";
         private static readonly Dictionary<string,ILoadablePlugin> LoadedPlugins = new Dictionary<string, ILoadablePlugin>();
         private readonly Serilog.ILogger _logger;
         private FileSystemWatcher _watcher;
@@ -37,7 +36,7 @@ namespace OneIdentity.DevOps.Logic
 
         public void Run()
         {
-            var pluginDirPath = Path.Combine(WellKnownData.AppDataPath, PluginDirName);
+            var pluginDirPath = WellKnownData.PluginDirPath;
             Directory.CreateDirectory(pluginDirPath);
             Serilog.Log.Logger.Information($"Watching {pluginDirPath} for plugins that should be loaded.");
 

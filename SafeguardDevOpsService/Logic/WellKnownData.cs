@@ -1,6 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using OneIdentity.DevOps.Authorization;
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -17,6 +20,8 @@ namespace OneIdentity.DevOps.Logic
         public const string DllExtension = ".dll";
         public const string DllPattern = "*.dll";
 
+        public const string PluginDirName = "ExternalPlugins";
+
         public static string AppDataPath
         {
             get
@@ -25,5 +30,26 @@ namespace OneIdentity.DevOps.Logic
                 return Path.Combine(dirPath, WellKnownData.DevOpsServiceName);
             }
         }
+
+        public static string PluginDirPath
+        {
+            get
+            {
+                return Path.Combine(WellKnownData.AppDataPath, WellKnownData.PluginDirName);
+            }
+        }
+
+        public static string GetSppToken(HttpContext context)
+        {
+            var authHeader = context.Request.Headers.FirstOrDefault(c => c.Key == "Authorization");
+            var sppToken = authHeader.Value.ToString();
+            if (!sppToken.StartsWith("spp-token ", StringComparison.InvariantCultureIgnoreCase))
+            {
+                return null;
+            }
+
+            return sppToken.Split(" ").LastOrDefault();
+        }
+
     }
 }
