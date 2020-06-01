@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
@@ -35,6 +36,39 @@ namespace OneIdentity.DevOps.Controllers
                 return NotFound();
 
             return Ok(plugins.ToArray());
+        }
+
+        /// <summary>
+        /// Upload a new plugin.  The plugin must be a zip compressed file that has been converted to a base64 string.\n
+        /// Powershell example:\n
+        /// $fileContentBytes = get-content 'plugin-zip-file' -Encoding Byte
+        /// [System.Convert]::ToBase64String($fileContentBytes) | Out-File 'plugin-text-file.txt'
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost]
+        public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, Plugin pluginInfo)
+        {
+            pluginsLogic.InstallPlugin(pluginInfo.Base64PluginData);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Upload a new plugin via multipartformdata.
+        /// </summary>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost("File")]
+        public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, IFormFile formFile)
+        {
+            pluginsLogic.InstallPlugin(formFile);
+
+            return NoContent();
         }
 
         /// <summary>

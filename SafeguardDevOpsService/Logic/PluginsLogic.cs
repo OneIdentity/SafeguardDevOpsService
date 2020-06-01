@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;
@@ -25,9 +28,49 @@ namespace OneIdentity.DevOps.Logic
             _logger = Serilog.Log.Logger;
         }
 
+        private DevOpsException LogAndThrow(string msg, Exception ex = null)
+        {
+            _logger.Error(msg);
+            return new DevOpsException(msg, ex);
+        }
+
         public IEnumerable<Plugin> GetAllPlugins()
         {
             return _configDb.GetAllPlugins();
+        }
+
+        public void InstallPlugin(IFormFile formFile)
+        {
+            if (formFile.Length <= 0)
+                throw LogAndThrow("Plugin cannot be null or empty");
+
+            try
+            {
+                using (var inputStream = formFile.OpenReadStream())
+                using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
+                {
+                    //TODO: Figure out how to unload all of the plugins before installing a new one.
+                    zipArchive.ExtractToDirectory(WellKnownData.PluginDirPath, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndThrow($"Failed to install the vault plugin. {ex.Message}");
+            }
+        }
+
+        public void InstallPlugin(string base64Plugin)
+        {
+            if (base64Plugin == null)
+                throw LogAndThrow("Plugin cannot be null");
+
+            var bytes = Convert.FromBase64String(base64Plugin);
+
+            using (var inputStream = new MemoryStream(bytes))
+            using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
+            {
+                zipArchive.ExtractToDirectory(WellKnownData.PluginDirPath);
+            }
         }
 
         public Plugin GetPluginByName(string name)

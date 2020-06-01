@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 
@@ -6,6 +7,9 @@ namespace OneIdentity.DevOps.Logic
 {
     public interface IPluginsLogic
     {
+        void InstallPlugin(string base64Plugin);
+        void InstallPlugin(IFormFile formFile);
+
         IEnumerable<Plugin> GetAllPlugins();
         Plugin GetPluginByName(string name);
         void DeletePluginByName(string name);
