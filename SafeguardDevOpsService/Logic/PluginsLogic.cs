@@ -49,6 +49,22 @@ namespace OneIdentity.DevOps.Logic
                 using (var inputStream = formFile.OpenReadStream())
                 using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
                 {
+                    var manifestEntry = zipArchive.GetEntry("Manifest.json");
+                    if (manifestEntry == null)
+                    {
+                        throw LogAndThrow("Failed to find the manifest for the vault plugin.");
+                    }
+
+                    using (var reader = new StreamReader(manifestEntry.Open()))
+                    {
+                        var manifest = reader.ReadToEnd();
+                        var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
+                        if (pluginManifest != null)
+                        {
+                            _pluginManager.UnloadPlugin(pluginManifest.Name);
+                        }
+                    }
+
                     //TODO: Figure out how to unload all of the plugins before installing a new one.
                     zipArchive.ExtractToDirectory(WellKnownData.PluginDirPath, true);
                 }

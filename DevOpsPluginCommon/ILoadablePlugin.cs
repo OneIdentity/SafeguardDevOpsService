@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Serilog;
 
 namespace OneIdentity.DevOps.Common
@@ -11,5 +12,6 @@ namespace OneIdentity.DevOps.Common
         void SetPluginConfiguration(Dictionary<string, string> configuration);
         bool SetPassword(string account, string password);
         void SetLogger(ILogger logger);
+        void Unload();
     }
 }

@@ -121,5 +121,9 @@ namespace OneIdentity.DevOps.KubernetesSecrets
         {
             _logger = logger;
         }
+
+        public void Unload()
+        {
+        }
     }
 }

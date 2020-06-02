@@ -17,8 +17,8 @@ namespace OneIdentity.DevOps.Logic
         public const string DevOpsServiceClientCertificate = "CN=DevOpsServiceClientCertificate";
         public const string DevOpsServiceWebSslCertificate = "CN=DevOpsServiceWebSslCertificate";
 
-        public const string DllExtension = ".dll";
-        public const string DllPattern = "*.dll";
+        public const string ManifestPattern = "Manifest.json";
+
 
         public const string PluginDirName = "ExternalPlugins";
 

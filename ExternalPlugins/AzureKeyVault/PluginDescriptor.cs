@@ -79,5 +79,8 @@ namespace OneIdentity.DevOps.AzureKeyVault
             _logger = logger;
         }
 
+        public void Unload()
+        {
+        }
     }
 }

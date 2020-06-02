@@ -1,0 +1,5 @@
+{
+  "Name" : "KubernetesSecrets",
+	"Assembly" : "KubernetesSecrets.dll",
+	"Version" : "1.0"
+}
