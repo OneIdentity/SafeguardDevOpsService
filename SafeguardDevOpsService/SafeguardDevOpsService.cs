@@ -58,14 +58,17 @@ namespace OneIdentity.DevOps
             using var db = new LiteDbConfigurationRepository();
 
             X509Certificate2 webSslCert = db.WebSslCertificate;
-            if (webSslCert == null)
-            {
-                webSslCert = CertificateHelper.CreateDefaultSSLCertificate();
-                db.WebSslCertificate = webSslCert;
-                Serilog.Log.Logger.Error("Created and installed a default web ssl certificate.");
-            }
+            if (webSslCert != null)
+                return webSslCert;
 
-            return webSslCert;
+            webSslCert = CertificateHelper.CreateDefaultSSLCertificate();
+            db.WebSslCertificate = webSslCert;
+            Serilog.Log.Logger.Error("Created and installed a default web ssl certificate.");
+
+            // Need to make sure that we return a db instance of the certificate rather than a local instance
+            //  So rather than just returning the webSslCert created above, get a new instance of the certificate
+            //  from the database.
+            return db.WebSslCertificate;
         }
     }
 }
