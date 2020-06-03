@@ -18,26 +18,15 @@ namespace OneIdentity.DevOps.Logic
         public const string DevOpsServiceWebSslCertificate = "CN=DevOpsServiceWebSslCertificate";
 
         public const string ManifestPattern = "Manifest.json";
-
+        public const string DllExtension = ".dll";
+        public const string DllPattern = "*.dll";
 
         public const string PluginDirName = "ExternalPlugins";
+        public const string PluginStageName = "PluginStaging";
 
-        public static string AppDataPath
-        {
-            get
-            {
-                var dirPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                return Path.Combine(dirPath, WellKnownData.DevOpsServiceName);
-            }
-        }
-
-        public static string PluginDirPath
-        {
-            get
-            {
-                return Path.Combine(WellKnownData.AppDataPath, WellKnownData.PluginDirName);
-            }
-        }
+        public static readonly string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), WellKnownData.DevOpsServiceName);
+        public static readonly string PluginDirPath = Path.Combine(WellKnownData.AppDataPath, WellKnownData.PluginDirName);
+        public static readonly string PluginStageDirPath = Path.Combine(WellKnownData.AppDataPath, WellKnownData.PluginDirName, WellKnownData.PluginStageName);
 
         public static string GetSppToken(HttpContext context)
         {
@@ -50,6 +39,5 @@ namespace OneIdentity.DevOps.Logic
 
             return sppToken.Split(" ").LastOrDefault();
         }
-
     }
 }

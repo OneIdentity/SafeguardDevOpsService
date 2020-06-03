@@ -20,5 +20,6 @@ namespace OneIdentity.DevOps.Logic
         void DeleteAccountMappings(string name);
         void DeleteAccountMappings();
 
+        void RestartService();
     }
 }

@@ -32,5 +32,7 @@ namespace OneIdentity.DevOps.Logic
         ServiceConfiguration ConfigureDevOpsService();
         void DeleteDevOpsConfiguration();
 
+        void RestartService();
+
     }
 }

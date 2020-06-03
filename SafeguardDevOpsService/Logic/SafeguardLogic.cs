@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -735,6 +736,18 @@ namespace OneIdentity.DevOps.Logic
             _configDb.UserCertificateBase64Data = null;
             _configDb.UserCertificatePassphrase = null;
             _configDb.UserCertificateThumbprint = null;
+        }
+
+        public void RestartService()
+        {
+            try
+            {
+                //The existence of the file indicates to the launcher that the service should be
+                //  restarted rather than just exited.
+                File.Create(Path.Combine(WellKnownData.AppDataPath, "ShouldRestart.log"));
+            } catch { }
+
+            Environment.Exit(54);
         }
 
         public IEnumerable<SppAccount> GetAvailableAccounts()

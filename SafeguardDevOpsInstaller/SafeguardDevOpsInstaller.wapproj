@@ -31,7 +31,7 @@
     <TargetPlatformMinVersion>10.0.17134.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
-    <EntryPointProjectUniqueName>..\SafeguardDevOpsService\SafeguardDevOpsService.csproj</EntryPointProjectUniqueName>
+    <EntryPointProjectUniqueName>..\SafeguardDevOpsLauncher\SafeguardDevOpsLauncher.csproj</EntryPointProjectUniqueName>
     <PackageCertificateThumbprint>29EEBCC36133B742BFD0940A031D298AF05F0412</PackageCertificateThumbprint>
     <GenerateAppInstallerFile>True</GenerateAppInstallerFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
@@ -118,6 +118,9 @@
     <None Include="SafeguardDevOpsInstaller_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SafeguardDevOpsLauncher\SafeguardDevOpsLauncher.csproj">
+      <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
+    </ProjectReference>
     <ProjectReference Include="..\SafeguardDevOpsService\SafeguardDevOpsService.csproj">
       <SkipGetTargetFrameworkProperties>True</SkipGetTargetFrameworkProperties>
     </ProjectReference>

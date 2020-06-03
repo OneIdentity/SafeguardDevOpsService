@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
+using Topshelf;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 
 namespace OneIdentity.DevOps.Controllers
@@ -318,7 +321,7 @@ namespace OneIdentity.DevOps.Controllers
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("A2ARegistration")]
-        public ActionResult<A2ARegistration> DeleteA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
+        public ActionResult DeleteA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
         {
             if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
@@ -356,6 +359,20 @@ namespace OneIdentity.DevOps.Controllers
             var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(accounts);
 
             return Ok(retrievableAccounts);
+        }
+
+        /// <summary>
+        /// Restarts the DevOps service.
+        /// </summary>
+        /// <response code="204">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost("Restart")]
+        public ActionResult RestartService([FromServices] ISafeguardLogic safeguard)
+        {
+            safeguard.RestartService();
+
+            return NoContent();
         }
 
     }

@@ -49,7 +49,7 @@ namespace OneIdentity.DevOps.Logic
                 using (var inputStream = formFile.OpenReadStream())
                 using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
                 {
-                    var manifestEntry = zipArchive.GetEntry("Manifest.json");
+                    var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
                     if (manifestEntry == null)
                     {
                         throw LogAndThrow("Failed to find the manifest for the vault plugin.");
@@ -61,12 +61,22 @@ namespace OneIdentity.DevOps.Logic
                         var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
                         if (pluginManifest != null)
                         {
-                            _pluginManager.UnloadPlugin(pluginManifest.Name);
+                            var extractLocation = WellKnownData.PluginDirPath;
+                            if (_pluginManager.IsLoadedPlugin(pluginManifest.Name))
+                            {
+                                RestartManager.Instance.ShouldRestart = true;
+
+                                if (!Directory.Exists(WellKnownData.PluginStageDirPath))
+                                    Directory.CreateDirectory(WellKnownData.PluginStageDirPath);
+                                extractLocation = WellKnownData.PluginStageDirPath;
+                            }
+                            zipArchive.ExtractToDirectory(extractLocation, true);
+                        }
+                        else
+                        {
+                            throw LogAndThrow($"Plugin package does not contain a {WellKnownData.ManifestPattern} file.");
                         }
                     }
-
-                    //TODO: Figure out how to unload all of the plugins before installing a new one.
-                    zipArchive.ExtractToDirectory(WellKnownData.PluginDirPath, true);
                 }
             }
             catch (Exception ex)
@@ -96,7 +106,6 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeletePluginByName(string name)
         {
-            _pluginManager.UnloadPlugin(name);
             _configDb.DeletePluginByName(name);
         }
 
@@ -204,5 +213,9 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteAccountMappings();
         }
 
+        public void RestartService()
+        {
+            _safeguardLogic.RestartService();
+        }
     }
 }

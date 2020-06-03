@@ -14,8 +14,7 @@ namespace OneIdentity.DevOps.Logic
 {
     internal class PluginManager : IDisposable, IPluginManager
     {
-        private static readonly Dictionary<string,LoadedPlugin> LoadedPlugins = new Dictionary<string, LoadedPlugin>();
-        private static readonly string stageLoader = "stageloader";
+        private static readonly Dictionary<string,ILoadablePlugin> LoadedPlugins = new Dictionary<string, ILoadablePlugin>();
 
         private readonly Serilog.ILogger _logger;
         private FileSystemWatcher _watcher;
@@ -32,21 +31,40 @@ namespace OneIdentity.DevOps.Logic
 
         private void OnChanged(object source, FileSystemEventArgs e)
         {
-            if (Path.GetExtension(e.FullPath).ToLower().Equals(WellKnownData.ManifestPattern))
+            if (Path.GetExtension(e.FullPath).ToLower().Equals(WellKnownData.DllExtension))
+            {
+                //Give the file copy just a half of a second to settle down.
+                Thread.Sleep(500);
                 LoadRegisterPlugin(e.FullPath);
+            }
         }
 
         public void Run()
         {
             var pluginDirPath = WellKnownData.PluginDirPath;
             Directory.CreateDirectory(pluginDirPath);
+
+            if (Directory.Exists(WellKnownData.PluginStageDirPath))
+            {
+                var files = Directory.GetFiles(WellKnownData.PluginStageDirPath);
+                if (files.Length > 0)
+                {
+                    foreach (var file in files)
+                    {
+                        File.Move(file, Path.Combine(pluginDirPath, Path.GetFileName(file)), true);
+                    }
+                }
+                Directory.Delete(WellKnownData.PluginStageDirPath, true);
+                Serilog.Log.Logger.Information($"Installed staged plugins to {pluginDirPath}.");
+            }
+
             Serilog.Log.Logger.Information($"Watching {pluginDirPath} for plugins that should be loaded.");
 
             _watcher = new FileSystemWatcher()
             {
                 Path = pluginDirPath,
                 NotifyFilter = NotifyFilters.LastWrite,
-                Filter = "Manifest.json",
+                Filter = "*.*",
                 EnableRaisingEvents = true
             };
             _watcher.Changed += OnChanged;
@@ -63,7 +81,7 @@ namespace OneIdentity.DevOps.Logic
                 var configuration = pluginInfo?.Configuration;
                 if (configuration != null)
                 {
-                    pluginInstance.LoadablePlugin.SetPluginConfiguration(configuration);
+                    pluginInstance.SetPluginConfiguration(configuration);
                 }
                 _logger.Information($"Plugin {name} configured successfully.");
             }
@@ -79,7 +97,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var pluginInstance = LoadedPlugins[name];
                 if (pluginInstance != null)
-                    return pluginInstance.LoadablePlugin.SetPassword(accountName, password.ToInsecureString());
+                    return pluginInstance.SetPassword(accountName, password.ToInsecureString());
             }
             else
             {
@@ -93,7 +111,7 @@ namespace OneIdentity.DevOps.Logic
         {
             if (Directory.Exists(pluginDirPath))
             {
-                var pluginFiles = Directory.GetFiles(pluginDirPath, WellKnownData.ManifestPattern);
+                var pluginFiles = Directory.GetFiles(pluginDirPath, WellKnownData.DllPattern);
                 foreach (var file in pluginFiles)
                 {
                     LoadRegisterPlugin(file);
@@ -101,46 +119,11 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private PluginManifest ReadPluginManifest(string pluginPath)
-        {
-            try
-            {
-                string manifest = File.ReadAllText(pluginPath);
-                var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
-                return pluginManifest;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Failed to read the plugin manifest {Path.GetFileName(pluginPath)}: {ex.Message}.");
-                return null;
-            }
-        }
-
         private void LoadRegisterPlugin(string pluginPath)
         {
-            var manifest = ReadPluginManifest(pluginPath);
-            if (manifest == null)
-                return;
-
-            AssemblyLoader stagingDomain = null;
-
             try
             {
-                //Give the file copy just a half of a second to settle down.
-                Thread.Sleep(500);
-
-                var dirInfo = Directory.GetParent(pluginPath);
-
-                var assemblyPath = Path.Join(dirInfo.FullName, manifest.Assembly);
-                stagingDomain = new AssemblyLoader(dirInfo.FullName);
-//                AssemblyName assemblyName = new AssemblyName() {CodeBase = Path.Join(dirInfo.FullName, manifest.Assembly)};
-
-                var assembly = stagingDomain.LoadFromAssemblyPath(assemblyPath);
-//                var assembly = stagingDomain.LoadFromAssemblyName(assemblyName);
-//                var assembly = Assembly.LoadFrom(pluginPath);
-
-//                var t = assembly.GetTypes();
-//                var b = typeof(ILoadablePlugin).IsAssignableFrom(t[0]);
+                var assembly = Assembly.LoadFrom(pluginPath);
 
                 foreach (var type in assembly.GetTypes()
                     .Where(t => t.IsClass &&
@@ -156,7 +139,7 @@ namespace OneIdentity.DevOps.Logic
 
                     _logger.Information($"Successfully loaded plugin {name} : {description}.");
 
-                    var pluginInstance = new LoadedPlugin() {LoadablePlugin = plugin};
+                    var pluginInstance = plugin;
 
                     var pluginInfo = _configDb.GetPluginByName(name);
 
@@ -177,7 +160,7 @@ namespace OneIdentity.DevOps.Logic
                             {
                                 Name = name,
                                 Description = description,
-                                Configuration = pluginInstance.LoadablePlugin.GetPluginInitialConfiguration()
+                                Configuration = pluginInstance.GetPluginInitialConfiguration()
                             };
 
                             _configDb.SavePluginConfiguration(pluginInfo);
@@ -190,12 +173,9 @@ namespace OneIdentity.DevOps.Logic
                             var configuration = pluginInfo.Configuration;
                             if (configuration != null)
                             {
-                                pluginInstance.LoadablePlugin.SetPluginConfiguration(configuration);
+                                pluginInstance.SetPluginConfiguration(configuration);
                             }
                         }
-
-                        pluginInstance.AssemblyLoader = stagingDomain;
-                        stagingDomain = null;
                     }
                     catch (Exception ex)
                     {
@@ -207,33 +187,11 @@ namespace OneIdentity.DevOps.Logic
             {
                 _logger.Error($"Failed to load plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
             }
-            finally
-            {
-                if (stagingDomain != null)
-                {
-//                    AppDomain.Unload(stagingDomain);
-                }
-            }
-
         }
 
-        public void UnloadPlugin(string name)
+        public bool IsLoadedPlugin(string name)
         {
-            if (LoadedPlugins.ContainsKey(name))
-            {
-                var pluginInstance = LoadedPlugins[name];
-                pluginInstance.LoadablePlugin.Unload();
-
-                pluginInstance.AssemblyLoader.Unload();
-                pluginInstance.AssemblyLoader = null;
-                LoadedPlugins.Remove(name);
-
-                _logger.Information($"Plugin {name} configured successfully.");
-            }
-            else
-            {
-                _logger.Error($"Plugin configuration failed. No plugin {name} found.");
-            }
+            return (LoadedPlugins.ContainsKey(name));
         }
 
         public void Dispose()

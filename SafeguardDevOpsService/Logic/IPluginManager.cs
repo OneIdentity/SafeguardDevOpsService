@@ -7,6 +7,6 @@ namespace OneIdentity.DevOps.Logic
         void Run();
         void SetConfigurationForPlugin(string name);
         bool SendPassword(string name, string accountName, SecureString password);
-        void UnloadPlugin(string name);
+        bool IsLoadedPlugin(string name);
     }
 }

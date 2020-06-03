@@ -59,14 +59,21 @@ namespace OneIdentity.DevOps.Controllers
         /// <summary>
         /// Upload a new plugin via multipartformdata.
         /// </summary>
-        /// <response code="200">Success</response>
+        /// <response code="200">Success. Needing restart</response>
+        /// <response code="204">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost("File")]
-        public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, IFormFile formFile)
+        public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, IFormFile formFile, [FromQuery] bool restart = false)
         {
             pluginsLogic.InstallPlugin(formFile);
+
+            if (restart)
+                pluginsLogic.RestartService();
+
+            if (RestartManager.Instance.ShouldRestart)
+                return Ok("The DevOps Service needs to be restarted to finish installing the new plugin.");
 
             return NoContent();
         }
