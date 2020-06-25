@@ -1,4 +1,5 @@
-﻿
+﻿#pragma warning disable 1591
+
 namespace OneIdentity.DevOps.Authorization
 {
     public class DevOpsUnauthorizedMessage

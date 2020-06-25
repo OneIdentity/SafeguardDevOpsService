@@ -1,4 +1,6 @@
-﻿namespace OneIdentity.DevOps.Data
+﻿#pragma warning disable 1591
+
+namespace OneIdentity.DevOps.Data
 {
     public class PluginManifest
     {

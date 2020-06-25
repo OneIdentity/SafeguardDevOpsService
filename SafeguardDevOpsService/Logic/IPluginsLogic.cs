@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
 {

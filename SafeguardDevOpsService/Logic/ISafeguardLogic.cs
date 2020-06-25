@@ -4,6 +4,7 @@ using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
 {

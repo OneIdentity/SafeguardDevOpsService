@@ -1,4 +1,5 @@
 ﻿using System.Security;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
 {

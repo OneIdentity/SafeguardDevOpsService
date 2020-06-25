@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using OneIdentity.DevOps.Authorization;
 using OneIdentity.DevOps.Logic;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Attributes
 {

@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Data
 {

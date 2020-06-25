@@ -20,10 +20,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KubernetesSecrets", "Extern
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ExternalPlugins", "ExternalPlugins", "{0A551322-33E5-4401-BB8A-5A54BC87EB87}"
 EndProject
-Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "SafeguardDevOpsInstaller", "SafeguardDevOpsInstaller\SafeguardDevOpsInstaller.wapproj", "{381135B5-B8AA-4398-B612-D0E4BC077277}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevOpsLauncher", "SafeguardDevOpsLauncher\SafeguardDevOpsLauncher.csproj", "{7B85FB43-D739-4D33-9A15-8B6E63D97E43}"
-EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "SetupSafeguardDevOpsService", "SafeguardDevOpsServiceWix\SetupSafeguardDevOpsService.wixproj", "{79AB1FDC-B831-4A99-992B-26A383C49BDF}"
 EndProject
 Global
@@ -52,14 +48,6 @@ Global
 		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}.Debug|x64.Build.0 = Debug|x64
 		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}.Release|x64.ActiveCfg = Release|x64
 		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}.Release|x64.Build.0 = Release|x64
-		{381135B5-B8AA-4398-B612-D0E4BC077277}.Debug|x64.ActiveCfg = Debug|x64
-		{381135B5-B8AA-4398-B612-D0E4BC077277}.Release|x64.ActiveCfg = Release|x64
-		{381135B5-B8AA-4398-B612-D0E4BC077277}.Release|x64.Build.0 = Release|x64
-		{381135B5-B8AA-4398-B612-D0E4BC077277}.Release|x64.Deploy.0 = Release|x64
-		{7B85FB43-D739-4D33-9A15-8B6E63D97E43}.Debug|x64.ActiveCfg = Debug|x64
-		{7B85FB43-D739-4D33-9A15-8B6E63D97E43}.Debug|x64.Build.0 = Debug|x64
-		{7B85FB43-D739-4D33-9A15-8B6E63D97E43}.Release|x64.ActiveCfg = Release|x64
-		{7B85FB43-D739-4D33-9A15-8B6E63D97E43}.Release|x64.Build.0 = Release|x64
 		{79AB1FDC-B831-4A99-992B-26A383C49BDF}.Debug|x64.ActiveCfg = Debug|x64
 		{79AB1FDC-B831-4A99-992B-26A383C49BDF}.Release|x64.ActiveCfg = Release|x64
 		{79AB1FDC-B831-4A99-992B-26A383C49BDF}.Release|x64.Build.0 = Release|x64

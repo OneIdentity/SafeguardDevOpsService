@@ -1,4 +1,6 @@
-﻿namespace OneIdentity.DevOps.Data.Spp
+﻿#pragma warning disable 1591
+
+namespace OneIdentity.DevOps.Data.Spp
 {
     public class LoggedInUser
     {

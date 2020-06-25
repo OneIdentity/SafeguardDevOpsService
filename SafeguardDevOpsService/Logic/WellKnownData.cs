@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using OneIdentity.DevOps.Authorization;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
 {

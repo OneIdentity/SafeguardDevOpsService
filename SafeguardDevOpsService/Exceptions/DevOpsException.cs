@@ -4,9 +4,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.Serialization;
-using System.Text;
 using Newtonsoft.Json.Linq;
 using OneIdentity.DevOps.Extensions;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Exceptions
 {

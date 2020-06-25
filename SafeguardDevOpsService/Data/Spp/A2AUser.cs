@@ -1,5 +1,6 @@
 ﻿
 using OneIdentity.DevOps.Logic;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Data.Spp
 {

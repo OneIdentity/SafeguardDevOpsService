@@ -7,15 +7,22 @@ using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
+#pragma warning disable 1573
 
 namespace OneIdentity.DevOps.Controllers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [ApiController]
     [Route("service/devops/[controller]")]
     public class PluginsController : ControllerBase
     {
         private readonly Serilog.ILogger _logger;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public PluginsController()
         {
             _logger = Serilog.Log.Logger;
