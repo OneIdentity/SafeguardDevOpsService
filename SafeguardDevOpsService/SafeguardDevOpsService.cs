@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
@@ -7,10 +8,11 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using OneIdentity.DevOps.ConfigDb;
 
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps
 {
-    internal class SafeguardDevOpsService
+    public class SafeguardDevOpsService
     {
         private readonly IWebHost _host;
         private readonly IEnumerable<IPluginManager> _services;
@@ -45,7 +47,7 @@ namespace OneIdentity.DevOps
         public void Start()
         {
             _services.ToList().ForEach(s => s.Run());
-            _host.Run();
+            _host.RunAsync();
         }
 
         public void Stop()
