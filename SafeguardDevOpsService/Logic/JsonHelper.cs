@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using OneIdentity.DevOps.Exceptions;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
 {

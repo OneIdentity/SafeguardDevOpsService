@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc.Filters;
 using OneIdentity.DevOps.Authorization;
 using RestSharp.Extensions;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Attributes
 {

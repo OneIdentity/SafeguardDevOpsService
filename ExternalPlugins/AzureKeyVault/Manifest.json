@@ -1,0 +1,5 @@
+{
+  "Name" : "AzureKeyVault",
+	"Assembly" : "AzureKeyVault.dll",
+	"Version" : "1.0"
+}

@@ -5,12 +5,18 @@ using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.Controllers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [ApiController]
     [Route("service/devops/[controller]")]
     public class MonitorController : ControllerBase
     {
         private readonly Serilog.ILogger _logger;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public MonitorController()
         {
             _logger = Serilog.Log.Logger;

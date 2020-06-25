@@ -7,15 +7,22 @@ using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
+#pragma warning disable 1573
 
 namespace OneIdentity.DevOps.Controllers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [ApiController]
     [Route("service/devops/[controller]")]
     public class PluginsController : ControllerBase
     {
         private readonly Serilog.ILogger _logger;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public PluginsController()
         {
             _logger = Serilog.Log.Logger;
@@ -59,14 +66,21 @@ namespace OneIdentity.DevOps.Controllers
         /// <summary>
         /// Upload a new plugin via multipartformdata.
         /// </summary>
-        /// <response code="200">Success</response>
+        /// <response code="200">Success. Needing restart</response>
+        /// <response code="204">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost("File")]
-        public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, IFormFile formFile)
+        public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, IFormFile formFile, [FromQuery] bool restart = false)
         {
             pluginsLogic.InstallPlugin(formFile);
+
+            if (restart)
+                pluginsLogic.RestartService();
+
+            if (RestartManager.Instance.ShouldRestart)
+                return Ok("The DevOps Service needs to be restarted to finish installing the new plugin.");
 
             return NoContent();
         }

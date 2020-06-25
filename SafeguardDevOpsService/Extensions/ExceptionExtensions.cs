@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Extensions
 {

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -20,5 +21,6 @@ namespace OneIdentity.DevOps.Logic
         void DeleteAccountMappings(string name);
         void DeleteAccountMappings();
 
+        void RestartService();
     }
 }

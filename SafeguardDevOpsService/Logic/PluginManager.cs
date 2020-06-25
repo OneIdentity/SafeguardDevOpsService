@@ -15,6 +15,7 @@ namespace OneIdentity.DevOps.Logic
     internal class PluginManager : IDisposable, IPluginManager
     {
         private static readonly Dictionary<string,ILoadablePlugin> LoadedPlugins = new Dictionary<string, ILoadablePlugin>();
+
         private readonly Serilog.ILogger _logger;
         private FileSystemWatcher _watcher;
 
@@ -31,13 +32,32 @@ namespace OneIdentity.DevOps.Logic
         private void OnChanged(object source, FileSystemEventArgs e)
         {
             if (Path.GetExtension(e.FullPath).ToLower().Equals(WellKnownData.DllExtension))
+            {
+                //Give the file copy just a half of a second to settle down.
+                Thread.Sleep(500);
                 LoadRegisterPlugin(e.FullPath);
+            }
         }
 
         public void Run()
         {
             var pluginDirPath = WellKnownData.PluginDirPath;
             Directory.CreateDirectory(pluginDirPath);
+
+            if (Directory.Exists(WellKnownData.PluginStageDirPath))
+            {
+                var files = Directory.GetFiles(WellKnownData.PluginStageDirPath);
+                if (files.Length > 0)
+                {
+                    foreach (var file in files)
+                    {
+                        File.Move(file, Path.Combine(pluginDirPath, Path.GetFileName(file)), true);
+                    }
+                }
+                Directory.Delete(WellKnownData.PluginStageDirPath, true);
+                Serilog.Log.Logger.Information($"Installed staged plugins to {pluginDirPath}.");
+            }
+
             Serilog.Log.Logger.Information($"Watching {pluginDirPath} for plugins that should be loaded.");
 
             _watcher = new FileSystemWatcher()
@@ -103,8 +123,6 @@ namespace OneIdentity.DevOps.Logic
         {
             try
             {
-                //Give the file copy just a half of a second to settle down.
-                Thread.Sleep(500);
                 var assembly = Assembly.LoadFrom(pluginPath);
 
                 foreach (var type in assembly.GetTypes()
@@ -134,8 +152,8 @@ namespace OneIdentity.DevOps.Logic
                         pluginInstance = LoadedPlugins[name];
                     }
 
-                    try 
-                    { 
+                    try
+                    {
                         if (pluginInfo == null)
                         {
                             pluginInfo = new Plugin
@@ -171,18 +189,9 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public void UnloadPlugin(string name)
+        public bool IsLoadedPlugin(string name)
         {
-            if (LoadedPlugins.ContainsKey(name))
-            {
-                var pluginInstance = LoadedPlugins[name];
-                LoadedPlugins.Remove(name);
-                _logger.Information($"Plugin {name} configured successfully.");
-            }
-            else
-            {
-                _logger.Error($"Plugin configuration failed. No plugin {name} found.");
-            }
+            return (LoadedPlugins.ContainsKey(name));
         }
 
         public void Dispose()

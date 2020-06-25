@@ -88,5 +88,13 @@ namespace OneIdentity.DevOps.HashiCorpVault
         {
             _logger = logger;
         }
+
+        public void Unload()
+        {
+            _logger = null;
+            _vaultClient = null;
+            _configuration.Clear();
+            _configuration = null;
+        }
     }
 }

@@ -1,20 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
+using Topshelf;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
+#pragma warning disable 1573
 
 namespace OneIdentity.DevOps.Controllers
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [ApiController]
     [Route("service/devops/[controller]")]
     public class SafeguardController : ControllerBase
     {
         private readonly Serilog.ILogger _logger;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public SafeguardController()
         {
             _logger = Serilog.Log.Logger;
@@ -318,7 +328,7 @@ namespace OneIdentity.DevOps.Controllers
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("A2ARegistration")]
-        public ActionResult<A2ARegistration> DeleteA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
+        public ActionResult DeleteA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
         {
             if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
@@ -356,6 +366,20 @@ namespace OneIdentity.DevOps.Controllers
             var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(accounts);
 
             return Ok(retrievableAccounts);
+        }
+
+        /// <summary>
+        /// Restarts the DevOps service.
+        /// </summary>
+        /// <response code="204">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost("Restart")]
+        public ActionResult RestartService([FromServices] ISafeguardLogic safeguard)
+        {
+            safeguard.RestartService();
+
+            return NoContent();
         }
 
     }

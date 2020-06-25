@@ -2,6 +2,7 @@
 using OneIdentity.DevOps.Authorization;
 using OneIdentity.DevOps.Logic;
 using OneIdentity.SafeguardDotNet;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Attributes
 {

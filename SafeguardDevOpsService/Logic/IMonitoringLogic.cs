@@ -1,4 +1,5 @@
 ﻿using OneIdentity.DevOps.Data;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
 {

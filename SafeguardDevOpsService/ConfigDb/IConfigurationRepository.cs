@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using OneIdentity.DevOps.Data;
+#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.ConfigDb
 {

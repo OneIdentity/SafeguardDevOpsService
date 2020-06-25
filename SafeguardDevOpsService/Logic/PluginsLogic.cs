@@ -49,8 +49,34 @@ namespace OneIdentity.DevOps.Logic
                 using (var inputStream = formFile.OpenReadStream())
                 using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
                 {
-                    //TODO: Figure out how to unload all of the plugins before installing a new one.
-                    zipArchive.ExtractToDirectory(WellKnownData.PluginDirPath, true);
+                    var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
+                    if (manifestEntry == null)
+                    {
+                        throw LogAndThrow("Failed to find the manifest for the vault plugin.");
+                    }
+
+                    using (var reader = new StreamReader(manifestEntry.Open()))
+                    {
+                        var manifest = reader.ReadToEnd();
+                        var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
+                        if (pluginManifest != null)
+                        {
+                            var extractLocation = WellKnownData.PluginDirPath;
+                            if (_pluginManager.IsLoadedPlugin(pluginManifest.Name))
+                            {
+                                RestartManager.Instance.ShouldRestart = true;
+
+                                if (!Directory.Exists(WellKnownData.PluginStageDirPath))
+                                    Directory.CreateDirectory(WellKnownData.PluginStageDirPath);
+                                extractLocation = WellKnownData.PluginStageDirPath;
+                            }
+                            zipArchive.ExtractToDirectory(extractLocation, true);
+                        }
+                        else
+                        {
+                            throw LogAndThrow($"Plugin package does not contain a {WellKnownData.ManifestPattern} file.");
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -80,7 +106,6 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeletePluginByName(string name)
         {
-            _pluginManager.UnloadPlugin(name);
             _configDb.DeletePluginByName(name);
         }
 
@@ -188,5 +213,9 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteAccountMappings();
         }
 
+        public void RestartService()
+        {
+            _safeguardLogic.RestartService();
+        }
     }
 }
