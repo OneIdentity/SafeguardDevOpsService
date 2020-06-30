@@ -49,6 +49,10 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public string A2ARegistrationName { get; set; }
         /// <summary>
+        /// A2A vault registration name
+        /// </summary>
+        public string A2AVaultRegistrationName { get; set; }
+        /// <summary>
         /// Thumb print
         /// </summary>
         public string Thumbprint { get; set; }

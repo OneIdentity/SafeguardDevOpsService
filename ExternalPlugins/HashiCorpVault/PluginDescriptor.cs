@@ -16,7 +16,6 @@ namespace OneIdentity.DevOps.HashiCorpVault
         private const string Address = "http://127.0.0.1:8200";
         private const string MountPoint = "oneidentity";
 
-        private const string AuthTokenName = "authToken";
         private const string AddressName = "address";
         private const string MountPointName = "mountPoint";
 
@@ -25,26 +24,36 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
-            return _configuration ?? (_configuration = new Dictionary<string, string>
+            return _configuration ??= new Dictionary<string, string>
             {
-                { AuthTokenName, "" },
                 { AddressName, Address },
                 { MountPointName, MountPoint }
-            });
+            };
         }
 
         public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
-            if (configuration != null && configuration.ContainsKey(AuthTokenName) &&
-                configuration.ContainsKey(AddressName) && configuration.ContainsKey(MountPointName))
+            if (configuration != null && configuration.ContainsKey(AddressName) && configuration.ContainsKey(MountPointName))
+            {
+                _configuration = configuration;
+                _logger.Information($"Plugin {Name} has been successfully configured.");
+            }
+            else
+            {
+                _logger.Error("Some parameters are missing from the configuration.");
+            }
+        }
+
+        public void SetVaultCredential(string credential)
+        {
+            if (_configuration != null && credential != null)
             {
                 try
                 {
-                    var authMethod = new TokenAuthMethodInfo(configuration[AuthTokenName] ?? "");
-                    var vaultClientSettings = new VaultClientSettings(configuration[AddressName], authMethod);
+                    var authMethod = new TokenAuthMethodInfo(credential ?? "");
+                    var vaultClientSettings = new VaultClientSettings(_configuration[AddressName], authMethod);
                     _vaultClient = new VaultClient(vaultClientSettings);
-                    _configuration = configuration;
-                    _logger.Information($"Plugin {Name} has been successfully configured.");
+                    _logger.Information($"Plugin {Name} successfully authenticated.");
                 }
                 catch (Exception ex)
                 {
@@ -53,7 +62,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
             }
             else
             {
-                _logger.Error("Some parameters are missing from the configuration.");
+                _logger.Error("The plugin configuration or credential is missing.");
             }
         }
 

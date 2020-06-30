@@ -10,8 +10,8 @@ namespace OneIdentity.DevOps
     {
         private static void Main()
         {
-            Directory.CreateDirectory(WellKnownData.AppDataPath);
-            var logDirPath = Path.Combine(WellKnownData.AppDataPath, "SafeguardDevOpsService.log");
+            Directory.CreateDirectory(WellKnownData.AppDataPathExt);
+            var logDirPath = Path.Combine(WellKnownData.AppDataPathExt, "SafeguardDevOpsService.log");
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.File(logDirPath, 
@@ -34,7 +34,10 @@ namespace OneIdentity.DevOps
                 hostConfig.SetDisplayName("SafeguardDevOpsService");
                 hostConfig.SetServiceName("SafeguardDevOpsService");
                 hostConfig.SetDescription("Safeguard for Privileged Passwords DevOps integration service.");
-                hostConfig.EnableShutdown();
+                hostConfig.EnableServiceRecovery(recoveryOption =>
+                {
+                    recoveryOption.RestartService(0);
+                });
             });
         }
     }

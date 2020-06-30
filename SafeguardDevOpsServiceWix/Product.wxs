@@ -59,11 +59,18 @@
                   Impersonate="yes"
                   Return="ignore"
                   ExeCommand='/c rmdir "[AppDataFolder]!(loc.ProductNameFolder)" /s /q' />
+    <CustomAction Id="CLEANUP_EXT_DATA_ON_UNINSTALL"
+                  Property="ExecuteCommand"
+                  Execute="immediate"
+                  Impersonate="yes"
+                  Return="ignore"
+                  ExeCommand='/c rmdir "\!(loc.ProductNameFolder)" /s /q' />
 
     <InstallExecuteSequence>
       <Custom Action="EXECUTE_STOP" After="CostFinalize">Installed</Custom>
       <Custom Action="EXECUTE_UNINSTALL" After="EXECUTE_STOP">Installed</Custom>
       <Custom Action="CLEANUP_DATA_ON_UNINSTALL" After="RemoveFiles">REMOVE="ALL"</Custom>
+      <Custom Action="CLEANUP_EXT_DATA_ON_UNINSTALL" After="CLEANUP_DATA_ON_UNINSTALL">REMOVE="ALL"</Custom>
       <Custom Action="EXECUTE_INSTALL" After="InstallFinalize">NOT Installed</Custom>
       <Custom Action="EXECUTE_START" After="EXECUTE_INSTALL">NOT Installed</Custom>
     </InstallExecuteSequence>

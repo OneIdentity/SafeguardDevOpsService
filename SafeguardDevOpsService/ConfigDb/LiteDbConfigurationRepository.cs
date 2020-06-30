@@ -28,6 +28,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string IgnoreSslKey = "IgnoreSsl";
         private const string A2aUserIdKey = "A2aUserId";
         private const string A2aRegistrationIdKey = "A2aRegistrationId";
+        private const string A2aVaultRegistrationIdKey = "A2aVaultRegistrationId";
         private const string SigningCertificateKey = "SigningCertificate";
 
         private const string UserCertificateThumbprintKey = "UserCertThumbprint";
@@ -42,6 +43,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public LiteDbConfigurationRepository()
         {
+            Directory.CreateDirectory(WellKnownData.AppDataPath);
             var dbPath = Path.Combine(WellKnownData.AppDataPath, DbFileName);
             Serilog.Log.Logger.Information($"Loading configuration database at {dbPath}.");
 
@@ -207,6 +209,22 @@ namespace OneIdentity.DevOps.ConfigDb
                 }
             }
             set => SetSimpleSetting(A2aRegistrationIdKey, value.ToString());
+        }
+
+        public int? A2aVaultRegistrationId
+        {
+            get
+            {
+                try
+                {
+                    return Int32.Parse(GetSimpleSetting(A2aVaultRegistrationIdKey));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            set => SetSimpleSetting(A2aVaultRegistrationIdKey, value.ToString());
         }
 
         public string SigningCertificate

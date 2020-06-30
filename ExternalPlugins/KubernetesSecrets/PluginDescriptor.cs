@@ -23,28 +23,34 @@ namespace OneIdentity.DevOps.KubernetesSecrets
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
-            return _configuration ?? (_configuration = new Dictionary<string, string>
+            return _configuration ??= new Dictionary<string, string>
             {
                 { ConfigFilePathName, "" },
                 { VaultNamespaceName, _defaultNamespace }
-            });
+            };
         }
 
         public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
-            KubernetesClientConfiguration config;
             if (configuration != null)
             {
                 _configuration = configuration;
-                config = configuration.ContainsKey(ConfigFilePathName) 
-                    ? KubernetesClientConfiguration.BuildConfigFromConfigFile(configuration[ConfigFilePathName]) 
+            }
+        }
+
+        public void SetVaultCredential(string credential)
+        {
+            KubernetesClientConfiguration config;
+            if (_configuration != null)
+            {
+                config = _configuration.ContainsKey(ConfigFilePathName) 
+                    ? KubernetesClientConfiguration.BuildConfigFromConfigFile(_configuration[ConfigFilePathName]) 
                     : KubernetesClientConfiguration.BuildDefaultConfig();
             }
             else
             {
                 config = KubernetesClientConfiguration.BuildDefaultConfig();
             }
-
 
             if (config != null)
             {

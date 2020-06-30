@@ -64,6 +64,8 @@ namespace OneIdentity.DevOps.Logic
                 return;
             }
 
+            _pluginManager.RefreshPluginCredentials();
+
             // connect to Safeguard
             _a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion.Value, ignoreSsl.Value);
 

@@ -15,6 +15,9 @@ namespace OneIdentity.DevOps.Logic
         public const string DevOpsServiceName = "SafeguardDevOpsService";
         public const string DevOpsUserName = "SafeguardDevOpsUser";
 
+        public const string DevOpsRegistrationName = DevOpsServiceName;
+        public const string DevOpsVaultRegistrationName = DevOpsRegistrationName + "VaultCredentials";
+
         public const string DevOpsServiceClientCertificate = "CN=DevOpsServiceClientCertificate";
         public const string DevOpsServiceWebSslCertificate = "CN=DevOpsServiceWebSslCertificate";
 
@@ -24,10 +27,12 @@ namespace OneIdentity.DevOps.Logic
 
         public const string PluginDirName = "ExternalPlugins";
         public const string PluginStageName = "PluginStaging";
+        public const string PluginVaultCredentialName = "VaultCredential";
 
         public static readonly string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), WellKnownData.DevOpsServiceName);
-        public static readonly string PluginDirPath = Path.Combine(WellKnownData.AppDataPath, WellKnownData.PluginDirName);
-        public static readonly string PluginStageDirPath = Path.Combine(WellKnownData.AppDataPath, WellKnownData.PluginDirName, WellKnownData.PluginStageName);
+        public static readonly string AppDataPathExt = Path.Combine(@"\", DevOpsServiceName);
+        public static readonly string PluginDirPath = Path.Combine(AppDataPathExt, PluginDirName);
+        public static readonly string PluginStageDirPath = Path.Combine(AppDataPathExt, PluginDirName, PluginStageName);
 
         public static string GetSppToken(HttpContext context)
         {

@@ -27,6 +27,7 @@ namespace OneIdentity.DevOps.ConfigDb
         bool? IgnoreSsl { get; set; }
         int? A2aUserId { get; set; }
         int? A2aRegistrationId { get; set; }
+        int? A2aVaultRegistrationId { get; set; }
         string SigningCertificate { get; set; }
 
         string UserCertificateThumbprint { get; set; }

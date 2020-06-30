@@ -303,40 +303,44 @@ namespace OneIdentity.DevOps.Controllers
         /// <summary>
         /// Get the A2A registration that was created and used by the DevOps service.
         /// </summary>
+        /// <param name="registrationType">Type of registration.  Types: Account (default), Vault</param>
         /// <response code="200">Success</response>
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("A2ARegistration")]
-        public ActionResult<A2ARegistration> GetA2ARegistration([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<A2ARegistration> GetA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string registrationType = "Account")
         {
-            var registration = safeguard.GetA2ARegistration();
+            if (!Enum.TryParse(registrationType, true, out A2ARegistrationType rType))
+                return BadRequest("Invalid registration type");
+
+            var registration = safeguard.GetA2ARegistration(rType);
             if (registration == null)
                 return NotFound();
 
             return Ok(registration);
         }
 
-        /// <summary>
-        /// Delete the A2A registration that is being used by the DevOps service. To help prevent unintended removal of the A2A registration,
-        /// A2A user and trusted client certificate as well as removal of the account mappings, the confirm query param is required. 
-        /// </summary>
-        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the A2A registration.</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
-        [SafeguardSessionKeyAuthorization]
-        [UnhandledExceptionError]
-        [HttpDelete("A2ARegistration")]
-        public ActionResult DeleteA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
-        {
-            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
-                return BadRequest();
-
-            safeguard.DeleteA2ARegistration();
-
-            return NoContent();
-        }
+        // /// <summary>
+        // /// Delete the A2A registration that is being used by the DevOps service. To help prevent unintended removal of the A2A registration,
+        // /// A2A user and trusted client certificate as well as removal of the account mappings, the confirm query param is required. 
+        // /// </summary>
+        // /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the A2A registration.</param>
+        // /// <response code="200">Success</response>
+        // /// <response code="404">Not found</response>
+        // [SafeguardSessionKeyAuthorization]
+        // [UnhandledExceptionError]
+        // [HttpDelete("A2ARegistration")]
+        // public ActionResult DeleteA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
+        // {
+        //     if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+        //         return BadRequest();
+        //
+        //     safeguard.DeleteA2ARegistration();
+        //
+        //     return NoContent();
+        // }
 
         /// <summary>
         /// Get a list of the retrievable accounts that are associated with the A2A registration that is being used by the DevOps service.
@@ -348,7 +352,7 @@ namespace OneIdentity.DevOps.Controllers
         [HttpGet("A2ARegistration/RetrievableAccounts")]
         public ActionResult<IEnumerable<A2ARetrievableAccount>> GetRetrievableAccounts([FromServices] ISafeguardLogic safeguard)
         {
-            var retrievableAccounts = safeguard.GetA2ARetrievableAccounts();
+            var retrievableAccounts = safeguard.GetA2ARetrievableAccounts(A2ARegistrationType.Account);
 
             return Ok(retrievableAccounts);
         }
@@ -363,7 +367,7 @@ namespace OneIdentity.DevOps.Controllers
         [HttpPost("A2ARegistration/RetrievableAccounts")]
         public ActionResult<IEnumerable<A2ARetrievableAccount>> AddRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<SppAccount> accounts)
         {
-            var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(accounts);
+            var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(accounts, A2ARegistrationType.Account);
 
             return Ok(retrievableAccounts);
         }

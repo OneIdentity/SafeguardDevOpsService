@@ -24,5 +24,9 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public string Base64PluginData { get; set; }
 
+        /// <summary>
+        /// A2A registration vault account id
+        /// </summary>
+        public int? VaultAccountId { get; set; }
     }
 }
