@@ -3,7 +3,7 @@
     /// <summary>
     /// Asset-Account information
     /// </summary>
-    public class SppAccount
+    public class AssetAccount
     {
         /// <summary>
         /// Account Id
@@ -28,22 +28,14 @@
         /// <summary>
         /// Asset Id
         /// </summary>
-        public int SystemId { get; set; }
+        public int AssetId { get; set; }
         /// <summary>
         /// Asset name
         /// </summary>
-        public string SystemName { get; set; }
+        public string AssetName { get; set; }
         /// <summary>
         /// Asset network address
         /// </summary>
-        public string SystemNetworkAddress { get; set; }
-        /// <summary>
-        /// Allow password request
-        /// </summary>
-        public bool AllowPasswordRequest { get; set; }
-        /// <summary>
-        /// Allow session request
-        /// </summary>
-        public bool AllowSessionRequest { get; set; }
+        public string AssetNetworkAddress { get; set; }
     }
 }

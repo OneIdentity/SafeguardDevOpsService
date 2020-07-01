@@ -74,16 +74,16 @@ namespace OneIdentity.DevOps.Logic
             switch (certificateType)
             {
                 case CertificateType.WebSsh:
-                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
+                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
                     {
-                        logger.Error("Missing key agreement or enhanced key usage server authentication.");
+                        logger.Error("Missing key encipherment or enhanced key usage client authentication.");
                         return false;
                     }
                     break;
                 case CertificateType.A2AClient:
-                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
+                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
                     {
-                        logger.Error("Missing key encipherment or enhanced key usage client authentication.");
+                        logger.Error("Missing key agreement or enhanced key usage server authentication.");
                         return false;
                     }
                     break;

@@ -7,6 +7,7 @@ using System.Net;
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.SafeguardDotNet;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
@@ -211,6 +212,61 @@ namespace OneIdentity.DevOps.Logic
         public void DeleteAccountMappings()
         {
             _configDb.DeleteAccountMappings();
+        }
+
+        public A2ARetrievableAccount GetPluginVaultAccount(string name)
+        {
+            var plugin = _configDb.GetPluginByName(name);
+            if (plugin == null)
+            {
+                LogAndThrow($"Plugin {name} not found");
+            }
+            if (!plugin.VaultAccountId.HasValue)
+            {
+                LogAndThrow($"Plugin {name} is not associated with an account");
+            }
+
+            return _safeguardLogic.GetA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+        }
+
+        public A2ARetrievableAccount SavePluginVaultAccount(string name, AssetAccount sppAccount)
+        {
+            var plugin = _configDb.GetPluginByName(name);
+            if (plugin == null)
+            {
+                LogAndThrow($"Plugin {name} not found.");
+            }
+            if (sppAccount == null)
+            {
+                LogAndThrow("Invalid account.");
+            }
+
+            var account = _safeguardLogic.GetAccount(sppAccount.Id);
+            if (account == null)
+            {
+                LogAndThrow($"Account {sppAccount.Id} not found.");
+            }
+
+            if (plugin.VaultAccountId != null)
+            {
+                _safeguardLogic.DeleteA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+            }
+
+            var accounts = _safeguardLogic.AddA2ARetrievableAccounts(new List<SppAccount>() {new SppAccount() {Id = account.Id, Name = account.Name}}, A2ARegistrationType.Vault);
+
+            var a2aAccount = accounts.FirstOrDefault(x => x.AccountId == account.Id);
+            if (a2aAccount != null)
+            {
+                plugin.VaultAccountId = a2aAccount.AccountId;
+                // plugin.ApiKey = a2aAccount.ApiKey;
+                _configDb.SavePluginConfiguration(plugin);
+            }
+            else
+            {
+                LogAndThrow($"Failed to add the account to the A2A vault registration.  {account.Id} - {account.Name}.");
+            }
+
+            return a2aAccount;
         }
 
         public void RestartService()

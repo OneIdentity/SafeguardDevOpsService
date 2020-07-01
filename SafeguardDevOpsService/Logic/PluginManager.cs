@@ -22,10 +22,12 @@ namespace OneIdentity.DevOps.Logic
         public string ServiceName => GetType().Name;
 
         private readonly IConfigurationRepository _configDb;
+        private readonly ISafeguardLogic _safeguardLogic;
 
-        internal PluginManager(IConfigurationRepository configDb)
+        internal PluginManager(IConfigurationRepository configDb, ISafeguardLogic safeguardLogic)
         {
             _configDb = configDb;
+            _safeguardLogic = safeguardLogic;
             _logger = Serilog.Log.Logger;
         }
 
@@ -79,11 +81,11 @@ namespace OneIdentity.DevOps.Logic
                 var pluginInstance = LoadedPlugins[name];
                 var pluginInfo = _configDb.GetPluginByName(name);
                 var configuration = pluginInfo?.Configuration;
+
                 if (configuration != null)
                 {
                     pluginInstance.SetPluginConfiguration(configuration);
                 }
-                _logger.Information($"Plugin {name} configured successfully.");
             }
             else
             {
@@ -117,6 +119,53 @@ namespace OneIdentity.DevOps.Logic
                     LoadRegisterPlugin(file);
                 }
             }
+        }
+
+        public void SendPluginVaultCredentials(string name, string apiKey)
+        {
+            var pluginInstance = LoadedPlugins[name];
+            if (pluginInstance != null)
+            {
+                if (apiKey != null)
+                {
+                    var credential = GetPluginCredential(name, apiKey);
+                    if (credential != null)
+                    {
+                        pluginInstance.SetVaultCredential(credential);
+                        return;
+                    }
+                    _logger.Error(
+                        $"Failed to provide the plugin {name} with the vault credential plugin.");
+                }
+                else
+                {
+                    _logger.Error(
+                        $"Failed to get the vault credential api key for plugin {name}.");
+                }
+            }
+        }
+
+        private string GetPluginCredential(string name, string apiKey)
+        {
+            var sppAddress = _configDb.SafeguardAddress;
+            var userCertificate = _configDb.UserCertificateBase64Data;
+            var passPhrase = _configDb.UserCertificatePassphrase?.ToSecureString();
+            var apiVersion = _configDb.ApiVersion;
+            var ignoreSsl = _configDb.IgnoreSsl;
+
+            if (sppAddress != null && userCertificate != null && apiVersion.HasValue && ignoreSsl.HasValue && apiKey != null)
+            {
+                // connect to Safeguard
+                var a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate),
+                    passPhrase, apiVersion.Value, ignoreSsl.Value);
+                using (var password = a2AContext.RetrievePassword(apiKey.ToSecureString()))
+                {
+                    return password.ToInsecureString();
+                }
+            }
+
+            _logger.Error($"Unable to get the vault credential for {name} plugin.");
+            return null;
         }
 
         private void LoadRegisterPlugin(string pluginPath)
@@ -186,6 +235,40 @@ namespace OneIdentity.DevOps.Logic
             catch (Exception ex)
             {
                 _logger.Error($"Failed to load plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
+            }
+        }
+
+        public void RefreshPluginCredentials()
+        {
+            var plugins = _configDb.GetAllPlugins();
+        
+            foreach (var plugin in plugins)
+            {
+                RefreshPluginCredential(plugin);
+            }
+        }
+        
+        private void RefreshPluginCredential(Plugin plugin)
+        {
+            if (_safeguardLogic.IsLoggedIn() && plugin.VaultAccountId.HasValue)
+            {
+                try
+                {
+                    var a2aAccount = _safeguardLogic.GetA2ARetrievableAccount(plugin.VaultAccountId.Value,
+                        A2ARegistrationType.Vault);
+                    if (a2aAccount != null)
+                    {
+                        SendPluginVaultCredentials(plugin.Name, a2aAccount.ApiKey);
+                        return;
+                    }
+        
+                    _logger.Error($"Failed to refresh the credential for plugin {plugin.Name} account {plugin.VaultAccountId}.");
+                }
+                catch (Exception ex)
+                {
+                    var msg = $"Failed to refresh the api key for {plugin.Name} account {plugin.VaultAccountId}: {ex.Message}";
+                    _logger.Error(msg);
+                }
             }
         }
 

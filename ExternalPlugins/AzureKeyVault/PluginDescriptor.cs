@@ -15,7 +15,6 @@ namespace OneIdentity.DevOps.AzureKeyVault
         private static ILogger _logger;
 
         private const string ApplicationIdName = "applicationId";
-        private const string ClientSecretName = "clientSecret";
         private const string VaultUriName = "vaultUri";
 
         public string Name => "AzureKeyVault";
@@ -23,34 +22,42 @@ namespace OneIdentity.DevOps.AzureKeyVault
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
-            return _configuration ?? (_configuration = new Dictionary<string, string>
+            return _configuration ??= new Dictionary<string, string>
             {
                 { ApplicationIdName, "" },
-                { ClientSecretName, "" },
                 { VaultUriName, "" }
-            });
+            };
         }
-
-        private const string ApplicationId = "fc02cf07-7011-47db-a6cb-0794f9b22bdf";
-        private const string ClientSecret = "9jxay4HZ.MY_Hl[RBwny3u=KkderucK1";
 
         public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
             if (configuration != null && configuration.ContainsKey(ApplicationIdName) &&
-                configuration.ContainsKey(ClientSecretName) && configuration.ContainsKey(VaultUriName))
+                configuration.ContainsKey(VaultUriName))
             {
-                _keyVaultClient = new KeyVaultClient(async (authority, resource, scope) =>
-                {
-                    var adCredential = new ClientCredential(ApplicationId, ClientSecret);
-                    var authenticationContext = new AuthenticationContext(authority, null);
-                    return (await authenticationContext.AcquireTokenAsync(resource, adCredential)).AccessToken;
-                });
                 _configuration = configuration;
                 _logger.Information($"Plugin {Name} has been successfully configured.");
             }
             else
             {
                 _logger.Error("Some parameters are missing from the configuration.");
+            }
+        }
+
+        public void SetVaultCredential(string credential)
+        {
+            if (_configuration != null)
+            {
+                _keyVaultClient = new KeyVaultClient(async (authority, resource, scope) =>
+                {
+                    var adCredential = new ClientCredential(_configuration[ApplicationIdName], credential);
+                    var authenticationContext = new AuthenticationContext(authority, null);
+                    return (await authenticationContext.AcquireTokenAsync(resource, adCredential)).AccessToken;
+                });
+                _logger.Information($"Plugin {Name} has been successfully authenticated to the Azure vault.");
+            }
+            else
+            {
+                _logger.Error("The plugin is missing the configuration.");
             }
         }
 

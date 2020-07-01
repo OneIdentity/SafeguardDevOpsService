@@ -21,6 +21,9 @@ namespace OneIdentity.DevOps.Logic
         void DeleteAccountMappings(string name);
         void DeleteAccountMappings();
 
+        A2ARetrievableAccount GetPluginVaultAccount(string name);
+        A2ARetrievableAccount SavePluginVaultAccount(string name, AssetAccount sppAccount);
+
         void RestartService();
     }
 }

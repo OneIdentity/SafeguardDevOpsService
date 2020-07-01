@@ -202,5 +202,40 @@ namespace OneIdentity.DevOps.Controllers
 
             return NoContent();
         }
+
+        /// <summary>
+        /// Get the vault account that is associated with a specific plugin.
+        /// </summary>
+        /// <param name="name">Name of the plugin.</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("{name}/VaultAccount")]
+        public ActionResult<AssetAccount> GetPluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        {
+            var account = pluginsLogic.GetPluginVaultAccount(name);
+            if (account == null)
+                return NotFound();
+
+            return Ok(account);
+        }
+
+        /// <summary>
+        /// Associate an account with a plugin. The associated account will provide the vault with the authentication credential. (See /service/devops/Safeguard/AvailableAccounts)
+        /// </summary>
+        /// <param name="name">Name of plugin to update</param>
+        /// <param name="assetAccount">Account to associate with the vault.</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [HttpPut("{name}/VaultAccount")]
+        public ActionResult<AssetAccount> PutPluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] AssetAccount assetAccount)
+        {
+            var account = pluginsLogic.SavePluginVaultAccount(name, assetAccount);
+            if (account == null)
+                return NotFound();
+
+            return Ok(account);
+        }
     }
 }
