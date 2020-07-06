@@ -69,135 +69,142 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 - Kubernetes Secrets Storage
 - ...
 
-### Safeguard for Privileged Passwords Setup
+## Safeguard for Privileged Passwords Setup
 
 - Navigate to Settings->Appliance->Enable or Disable Services and enable the A2A service
 - Add an asset and account (including a service account)
 - Set a password on the account
-- Add a certificate user and certificate that can be used with A2A
-- Assign Auditor permission to the certificate user
-- Import the certificate user certificate thumbprint as a trusted certificate
-- Navigate to Settings->External Integration->Application to Application
-- Add a new A2A registration
-- Give the registration a Name and assign it to the new certificate user
-- Check the checkboxes for Credential Retrieval and Visible To Certificate Users
-- Navigate to the Credential Retrieval tab and add the Account that was previously entered
-- Make sure that the A2A registration is enabled
+- Create an AssetAccount for each third party vault that will be used by the DevOps service.  The account should contain the vault credential that will be used to authenticate to the vault itself.  This account will be used as part of the configuration of the third party vault plugin.
+- Optional: Create a new certificate with a private key (PFX format) that will be assigned to the certificate user.  The public certificate will be uploaded into SPP as a trusted certificate along with any other issuer certificates that may be part of the certificate chain.  The certificate and private key will be uploaded into the DevOps service during configuration and be used to create a new certificate user and A2A registration.  This certificate can be created independent of the DevOps service or from a CSR that is created by the DevOps service.  (See Configuring the DevOps Service)
 
-### Safeguard DevOps Service Setup
+## Safeguard DevOps Service Setup
+
+### From Source
 
 - Checkout and rebuild all (Rebuild Solution) the SafeguardDevOpsService (<https://github.com/OneIdentity/SafeguardDevOpsService>)
 - Start the SafeguardDevOpsService
-- In a browser navigate to <http://localhost:5000/swagger/index.html>
-- Run endpoint: `POST /devops/Configuration`
+- In a browser navigate to <https://localhost/service/devops/swagger/index.html>
+- Right-click on the SetupSafeguardDevOpsService project and select "Build" to build the installer MSI package.
+
+### From Installer
+
+- Copy the installer MSI package to the local file system of a Windows 10 or Windows Server 2016 or better, computer.
+- Open a PowerShell command window as an administrator and invoke the above MSI installer package.
+- Follow all prompts - This should deploy the package and automatically start it as a Windows service.
+- At start up the DevOps service will create a new folder under the root directory as /SafeguardDevOpsService.  This folder will contain the log file and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins)  The configuration database will be created in the folder C:\Windows\system32\config\systemprofile\AppData\Roaming\SafeguardDevOpsService\Configuration.db.
+- Make sure that the firewall on the Windows computer has an inbound rule for allowing https port 443
+- Acquire a valid login token to SPP.  Use the Powershell cmdlet (See <https://github.com/OneIdentity/safeguard-ps>):
+
+```powershell
+    Connect-Safeguard insecure <spp-ip-address> local <user-with-admin-permissions> -NoSessionVariable
+```
+
+- In a browser navigate to `<https://<your-server-ip>/service/devops/swagger/index.html>`
+- Click on the "Authorize" button on the upper left-hand side of the DevOps Service swagger page.
+Enter spp-token <paste token> as the value and click the Authorize button and then Close button
+  - At this point the swagger page has a login token that will be used in every call made to the DevOps API
+- Navigate to and call: `PUT /service/devops/Safeguard`
 
 ```json
     {
-        "SppAddress": "<spp-address>",
-        "CertificateUserThumbprint": "<your-certificate-thumbprint>"
+    "NetworkAddress": "<your SPP appliance>",
+    "ApiVersion": 3,
+    "IgnoreSsl": true
     }
 ```
 
-- Run endpoint: `GET /devops/Configuration` -- Returns the new configuraiton
-- Run endpoint: `GET /devops/Configuration/RetrievableAccounts` -- Returns a list of all of the retrievable accounts
-- Run endpoint: `GET /devops/Configuration/Plugins` -- Return a list of all of the registered plugins.
-- Set the HashiCorpVault plugin configuration using endpoint: `PUT /devops/Configuration/Plugins/{name}/Configuration`
-- Enter HashiCorpVault as the name in the URL
+- This endpoint will check the connectivity to the SPP appliance and fetch and store the token signing certificate
+  - It is also a little unique in that the call must contain a valid authorization token just like all other calls, but it can be called before the user actually logs into the DevOps service.  The user authorization will still be validated but it is a one-time validation just to make sure that the user is authorized to setup the SPP network information.
+- Navigate to and call" `GET /service/devops/Safeguard/Logon`
+  - At this point the swagger page is logged into the DevOps service and will remain logged in until the page is refreshed, closed or `POST /service/devops/Safeguard/Logoff` is called.
 
-```json
+## Configuring the DevOps Service
+
+- There are two different certificates that the DevOps service needs in order to function properly.
+  - The first certificate is the web service SSL certificate.  A default self-signed SSL certificate was create when the DevOps service was launched for the first time.  This certificate can be replaced with your own server authentication SSL certificate if desired.  This is optional.
+  - The second certificate is a client authentication certificate which will be used to create the SPP certificate user and A2A registration.
+  - Both of these certificates with their corresponding private keys can be generated outside of the DevOps service and uploaded in PFX format or the DevOps service can generate a private key and CSR which can be signed and uploaded.
+- Install a client certificate and private key - Since the web service SSL certificate is optional, only the steps for creating the client certificate will be described here.  A similar procedure can be used to generate and upload the web service SSL certificate.
+  - Navigate to and call: `GET /service/devops/Safeguard/CSR` with the certificate type `A2AClient`.  An optional certificate size and subject name can be provided.
+  - Sign the CSR to produce a public certificate
+    - KeyUsage - DigitalSignature, KeyEncipherment
+    - ExtendedKeyUsage - ClientAuth
+  - Navigate to and call the POST /service/devops/Safeguard/ClientCertificate with the JSON body
+
+    ```json
     {
-        "Configuration":
-        {
-            "authToken":"<hashicorp-root-token>",
-            "address":"<hasicorp-url>",
-            "mountPoint":"secret",
-            "secretsPath":"oneidentity"
-        }
+      "Base64CertificateData" : "<string>",
+      "Passphrase" : "<string>" - Only if uploading a PFX with a private key otherwise omit
     }
-```
+    ```
 
-- Replace the authToken with the vault root token that you saved in the HashiCorp Vault setup.  Everything else can be left at the default.
-- Set up the Account Mapping using endpoint: `PUT /devops/configuration/AccountMapping`
+  - Navigate to and call: `POST /service/devops/Safeguard/Configuration` with an empty body  `{}`
+    - Optionally the client certificate can be uploaded as part of configuring the DevOps service in this call, by passing the same body as above.
+    - This call will store the client certificate and private key in the DevOps database, create a new DevOpsService User in SPP with the appropriate permissions, create a two new A2A registrations with the appropriate IP restrictions and prepare both the DevOps service and SPP to start pulling passwords.
 
-```json
-    [
-        {
-            "accountName": "<account-name>",
-            "apiKey": "<a2a-apikey>",
-            "VaultName":"HashiCorpVault"
-        }
-    ]
-```
+## Deploying Vault Plugins
 
-- Replace the accountName with the account name from the RetrievableAccounts output above
-- Replace the apiKey with the api key from the RetrievableAccounts output above
-- VaultName should be HashiCorpVault
-- Set the AzureKeyVault plugin configuration using endpoint: `PUT /devops/Configuration/Plugins/{name}/Configuration`
-- Enter AzureKeyVault as the name in the URL
+- Copy one or more plugin zip files to the Windows local file system
+- Navigate to and call: `POST /service/devops/Plugins/File` to upload the plugin zip file.
+  - The DevOps service will automatically detect, load and register each plugin.
+- Navigate to and call: `GET /service/devops/Plugins` to verify that the plugin(s) were deployed and registered in the DevOps service
+- Since each plugin has its own unique configuration, each one must be configured individually.
+  - Navigate to and call: `PUT /service/devops/Plugins/{name}` with the appropriate body to configure the plugin.
+  - The appropriate body can be copy and pasted from the corresponding JSON that is returned from `GET /service/devops/Plugins/{name}`. The PUT API for configuring the plugin will only recognize the entries under the "Configuration" tag even though the body will accept the entire plugin JSON body. For example, the following can be used to configure the HashiCorp Vault plugin:
 
-```json
+    ```json
     {
-        "Configuration":
-        {
-            "applicationId":"<azure-application-id>",
-            "clientSecret":"<azure-client-secret>",
-            "vaultUri":"<azure-vault-url>"
-        }
+      "Configuration":
+      {
+        "address":"<hasicorp-url>",
+        "mountPoint":"secret",
+      }
     }
-```
+    ```
 
-- Set up the Account Mapping using endpoint: `PUT /devops/configuration/AccountMapping`
+## Configuring and Mapping Accounts to the Vault Plugins  
 
-```json
-    [
-        {
-            "accountName": "<account-name>",
-            "apiKey": "<a2a-apikey>",
-            "VaultName":"AzureKeyVault"
-        }
-    ]
-```
+- Navigate to and call: `GET /service/devops/Safeguard/AvailableAccounts`
+  - This call will produce a list of all of the available accounts in SPP that can be requested.
+  - Copy and paste the desired contents of this call to the following API for adding retrievable accounts
+- Navigate to and call: `POST /service/Devops/Safeguard/A2ARegistration/RetrievableAccounts`
+  - The body of this call should be copied and pasted from the previous results.  The body can be edited to remove any account data that should not be include in the A2A retrievable accounts.
+  - Copy the results of this call into the following API for mapping accounts to plugins.
+- Navigate to and call: `POST /service/devops/Plugins/{name}/Accounts`
+  - The body of this call should be copied and pasted from the previous results.  The body can be edited to remove any account data that should not be used to pull a password and send it to the vault plugin.
+  - Repeat the above call for each plugin which needs to be configured for pulling account passwords.
 
-- Replace the accountName with the account name from the RetrievableAccounts output above
-- Replace the apiKey with the api key from the RetrievableAccounts output above
-- Set the KubernetesVault plugin configuration using endpoint: `PUT /devops/Configuration/Plugins/{name}/Configuration`
-- Enter KubernetesVault as the name in the URL
+## Configuring the Vault Credential Account for the Plugin
 
-```json
-    {
-        "Configuration":
-        {
-            "configFilePath": null,
-            "vaultNamespace": "default"
-        }
-    }
-```
+- Navigate to and call: `GET /service/devops/Safeguard/AvailableAccounts`
+  - This call will produce a list of all of the available accounts in SPP that can be requested.
+  - Copy and paste the Asset-Account that corresponds to the third party vault, to the following API for adding a vault account.
+- Navigate to and call: `POST /service/devops/Plugins/{name}/VaultAccount`
+  - The body of this call should be copied and pasted from the previous results.  It should be just the account information that corresponds to the third party vault.
+  - Repeat the above call for each plugin that needs to be configured for pulling the vault credential.
 
-- Set up the Account Mapping using endpoint: `PUT /devops/configuration/AccountMapping`
+## Start the DevOps Password Monitoring Service
 
-```json
-    [
-        {
-            "accountName": "<account-name>",
-            "apiKey": "<a2a-apikey>",
-            "VaultName":"KubernetesVault"
-        }
-    ]
-```
+- Navigate to and call POST /service/devops/Monitor
 
-- Replace the accountName with the account name from the RetrievableAccounts output above
-- Replace the apiKey with the api key from the RetrievableAccounts output above
-- Enable password monitoring using the endpoint: `POST /devops/Configuration/Monitoring?enable=true`
+  ```json
+  {
+    "Enabled": true
+  }
+  ```
+
+- The same API can be used to stop the password monitoring service.
+- At this point the DevOps service will detect whenever a password changes in SPP, pull the password and push it to the appropriate plugin(s).  The custom code in the plugin(s) will push the password to the third party vault.
 
 ## Notice
 
 This project is currently in **technology preview**. It should not be used for any
 production environment.
 
-It is still in the **Alpha** stages. The plugin interface is still being
+It is still in the **Beta** stages. The plugin interface is still being
 developed and **may be changed**.
 
-There are many security considerations that have not yet been addressed.
+There are some security considerations that have not yet been addressed.
 
 More documentation will be provided in the near future.
 
