@@ -27,9 +27,9 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="powershell -ExecutionPolicy Unrestricted $(SolutionDir)zipplugin.ps1 $(OutDir) $(SolutionDir)bin\$(ProjectName).zip &#xD;&#xA;"
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Unrestricted $(SolutionDir)zipplugin.ps1 $(ProjectDir) $(OutDir) $(SolutionDir)bin\$(ProjectName).zip &#xD;&#xA;"
       Condition=" '$(OS)' == 'Windows_NT' " />
-    <Exec Command="$(SolutionDir)zipplugin.sh $(OutDir) $(SolutionDir)bin\$(ProjectName).zip"
+    <Exec Command="$(SolutionDir)zipplugin.sh $(ProjectDir) $(OutDir) $(SolutionDir)bin\$(ProjectName).zip"
       Condition=" '$(OS)' != 'Windows_NT' " />
   </Target>
 
