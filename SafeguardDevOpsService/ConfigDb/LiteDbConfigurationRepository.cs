@@ -13,15 +13,18 @@ namespace OneIdentity.DevOps.ConfigDb
     {
         private bool _disposed;
         private LiteDatabase _configurationDb;
+        private X509Certificate2Collection _trustedCertificateCollection = null;
         private readonly ILiteCollection<Setting> _settings;
         private readonly ILiteCollection<AccountMapping> _accountMappings;
         private readonly ILiteCollection<Plugin> _plugins;
+        private readonly ILiteCollection<TrustedCertificate> _trustedCertificates;
 
         private const string DbFileName = "Configuration.db";
 
         private const string SettingsTableName = "settings";
         private const string AccountMappingsTableName = "accountmappings";
         private const string PluginsTableName = "plugins";
+        private const string TrustedCertificateTableName = "trustedcertificates";
 
         private const string SafeguardAddressKey = "SafeguardAddress";
         private const string ApiVersionKey = "ApiVersion";
@@ -51,6 +54,7 @@ namespace OneIdentity.DevOps.ConfigDb
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
             _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
             _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
+            _trustedCertificates = _configurationDb.GetCollection<TrustedCertificate>(TrustedCertificateTableName);
         }
 
         private string GetSimpleSetting(string name)
@@ -140,6 +144,62 @@ namespace OneIdentity.DevOps.ConfigDb
         {
             _accountMappings.DeleteAll();
         }
+
+        public IEnumerable<TrustedCertificate> GetAllTrustedCertificates()
+        {
+            return _trustedCertificates.FindAll();
+        }
+
+        public TrustedCertificate GetTrustedCertificateByThumbPrint(string thumbprint)
+        {
+            return _trustedCertificates.FindById(thumbprint);
+        }
+
+        public TrustedCertificate SaveTrustedCertificate(TrustedCertificate trustedCertificate)
+        {
+            _trustedCertificateCollection = null;
+            _trustedCertificates.Upsert(trustedCertificate);
+            return trustedCertificate;
+        }
+
+        public void DeleteTrustedCertificateByThumbPrint(string thumbprint)
+        {
+            _trustedCertificateCollection = null;
+            _trustedCertificates.Delete(thumbprint);
+        }
+
+        public void DeleteAllTrustedCertificates()
+        {
+            _trustedCertificateCollection = null;
+            _trustedCertificates.DeleteAll();
+        }
+
+        public X509Chain GetTrustedChain()
+        {
+            if (_trustedCertificateCollection == null)
+            {
+                _trustedCertificateCollection = new X509Certificate2Collection();
+                var trustedCertificates = GetAllTrustedCertificates();
+                foreach (var trustedCertificate in trustedCertificates)
+                {
+                    _trustedCertificateCollection.Add(trustedCertificate.GetCertificate());
+                }
+            }
+
+            var trustedChain = new X509Chain
+            {
+                ChainPolicy =
+                {
+                    VerificationFlags = X509VerificationFlags.IgnoreRootRevocationUnknown | X509VerificationFlags.IgnoreCertificateAuthorityRevocationUnknown,
+                    RevocationFlag = X509RevocationFlag.EntireChain,
+                    RevocationMode = X509RevocationMode.NoCheck
+                }
+            };
+            trustedChain.ChainPolicy.ExtraStore.AddRange(_trustedCertificateCollection);
+
+            return trustedChain;
+        }
+
 
         public string SafeguardAddress
         {

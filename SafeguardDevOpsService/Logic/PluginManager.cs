@@ -3,7 +3,9 @@ using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Security;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
@@ -29,6 +31,12 @@ namespace OneIdentity.DevOps.Logic
             _configDb = configDb;
             _safeguardLogic = safeguardLogic;
             _logger = Serilog.Log.Logger;
+        }
+
+        bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain,
+            SslPolicyErrors sslPolicyErrors)
+        {
+            return CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger, _configDb);
         }
 
         private void OnChanged(object source, FileSystemEventArgs e)
@@ -156,8 +164,9 @@ namespace OneIdentity.DevOps.Logic
             if (sppAddress != null && userCertificate != null && apiVersion.HasValue && ignoreSsl.HasValue && apiKey != null)
             {
                 // connect to Safeguard
-                var a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate),
-                    passPhrase, apiVersion.Value, ignoreSsl.Value);
+                var a2AContext = (ignoreSsl == true) ? 
+                    Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion.Value, true) : 
+                    Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
                 using (var password = a2AContext.RetrievePassword(apiKey.ToSecureString()))
                 {
                     return password.ToInsecureString();

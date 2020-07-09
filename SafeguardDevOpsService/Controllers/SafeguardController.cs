@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading;
 using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
-using Topshelf;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 #pragma warning disable 1573
 
@@ -382,6 +379,104 @@ namespace OneIdentity.DevOps.Controllers
         public ActionResult RestartService([FromServices] ISafeguardLogic safeguard)
         {
             safeguard.RestartService();
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Get a list of the trusted certificates that the DevOps service uses to validate an SSL connection to a Safeguard.
+        /// </summary>
+        /// <response code="200">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("TrustedCertificates")]
+        public ActionResult<IEnumerable<CertificateInfo>> GetTrustedCertificates([FromServices] ISafeguardLogic safeguard)
+        {
+            var trustedCertificates = safeguard.GetTrustedCertificates();
+
+            return Ok(trustedCertificates);
+        }
+
+        /// <summary>
+        /// Get a trusted certificates that the DevOps service uses to validate an SSL connection to a Safeguard using a thumbprint.
+        /// </summary>
+        /// <param name="thumbprint">Certificate thumbprint.</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("TrustedCertificates/{thumbprint}")]
+        public ActionResult<CertificateInfo> GetTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromRoute] string thumbprint)
+        {
+            var trustedCertificate = safeguard.GetTrustedCertificate(thumbprint);
+
+            return Ok(trustedCertificate);
+        }
+
+        /// <summary>
+        /// Add a trusted certificate to the DevOps service.
+        /// </summary>
+        /// <param name="certificate">Certificate to add.</param>
+        /// <param name="importFromSafeguard">Import all of the trusted certificates from the connected Safeguard appliance. If this parameter is true then the body will be ignored.</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost("TrustedCertificates")]
+        public ActionResult<IEnumerable<CertificateInfo>> AddTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromBody] CertificateInfo certificate, [FromQuery] bool importFromSafeguard)
+        {
+            IEnumerable<CertificateInfo> trustedCertificates;
+
+            if (importFromSafeguard)
+            {
+                trustedCertificates = safeguard.ImportTrustedCertificates();
+            }
+            else
+            {
+                var trustedCertificate = safeguard.AddTrustedCertificate(certificate);
+                trustedCertificates = new List<CertificateInfo>() {trustedCertificate};
+            }
+
+            return Ok(trustedCertificates);
+        }
+
+        /// <summary>
+        /// Delete a trusted certificate from the DevOps service.
+        /// </summary>
+        /// <param name="thumbprint">Certificate thumbprint.</param>
+        /// <param name="deleteAll">Delete all of the trusted certificates.</param>
+        /// <response code="204">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpDelete("TrustedCertificates/{thumbprint}")]
+        public ActionResult DeleteTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromRoute] string thumbprint, [FromQuery] bool deleteAll)
+        {
+            if (deleteAll)
+            {
+                safeguard.DeleteAllTrustedCertificates();
+            }
+            else
+            {
+                safeguard.DeleteTrustedCertificate(thumbprint);
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Delete all of the trusted certificate from the DevOps service.  To help prevent unintended trusted certificate removal, the confirm query param is required.
+        /// </summary>
+        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove all of the trusted certificates.</param>
+        /// <response code="204">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpDelete("TrustedCertificates")]
+        public ActionResult DeleteAllTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
+        {
+            if (!confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+                return BadRequest();
+
+            safeguard.DeleteAllTrustedCertificates();
 
             return NoContent();
         }

@@ -39,5 +39,11 @@ namespace OneIdentity.DevOps.Logic
 
         void RestartService();
 
+        IEnumerable<CertificateInfo> GetTrustedCertificates();
+        CertificateInfo GetTrustedCertificate(string thumbPrint);
+        CertificateInfo AddTrustedCertificate(CertificateInfo certificate);
+        void DeleteTrustedCertificate(string thumbPrint);
+        IEnumerable<CertificateInfo> ImportTrustedCertificates();
+        void DeleteAllTrustedCertificates();
     }
 }
