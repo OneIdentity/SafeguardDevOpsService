@@ -1,16 +1,18 @@
 #!/bin/bash
 
-if [[ $# -ne 2 ]]; then
-    >&2 echo "Usage: zipplugin.sh <sourcedir> <zipfilename>"
+if [[ $# -ne 3 ]]; then
+    >&2 echo "Usage: zipplugin.sh <projectdir> <builddir> <zipfilename>"
     exit 1
 fi
 
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-sourcedir=$1
-zipfilename=$2
+projectdir=$1
+builddir=$2
+zipfilename=$3
 
 echo "scriptdir=$scriptdir"
-echo "sourcedir=$sourcedir"
+echo "projectdir=$projectdir"
+echo "builddir=$builddir"
 echo "zipfilename=$zipfilename"
 
 if [ -z "$(which zip)" ]; then
@@ -22,8 +24,5 @@ if [ -f "$zipfilename" ]; then
     rm -f $zipfilename
 fi
 
-# cp $scriptdir/Manifest.json $sourcedir
-echo "missing zip command"
-#Add-Type -Assembly System.IO.Compression.FileSystem
-#$compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
-#[System.IO.Compression.ZipFile]::CreateFromDirectory($sourcedir, $zipfilename, $compressionLevel, $false)
+cp $projectdir/Manifest.json $builddir
+cd $builddir && zip -r $zipfilename . -x netcoreapp2.2/ -x netcoreapp2.2/* -x netcoreapp2/publish/ -x netcoreapp2.2/publish/*
