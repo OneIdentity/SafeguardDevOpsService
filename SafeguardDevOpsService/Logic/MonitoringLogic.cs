@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Security;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;
@@ -29,6 +31,11 @@ namespace OneIdentity.DevOps.Logic
             _configDb = configDb;
             _pluginManager = pluginManager;
             _logger = Serilog.Log.Logger;
+        }
+
+        bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger, _configDb);
         }
 
         public void EnableMonitoring(bool enable)
@@ -67,8 +74,8 @@ namespace OneIdentity.DevOps.Logic
             _pluginManager.RefreshPluginCredentials();
 
             // connect to Safeguard
-            _a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion.Value, ignoreSsl.Value);
-
+            _a2AContext = (ignoreSsl == true) ? Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion.Value, true) : 
+                Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
             // figure out what API keys to monitor
             _retrievableAccounts = _configDb.GetAccountMappings().ToList();
             if (_retrievableAccounts.Count == 0)

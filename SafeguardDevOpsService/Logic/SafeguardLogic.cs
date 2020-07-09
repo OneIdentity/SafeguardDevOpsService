@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Security;
 using System.Security.Cryptography;
@@ -38,6 +39,12 @@ namespace OneIdentity.DevOps.Logic
             _logger = Serilog.Log.Logger;
         }
 
+        bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain,
+            SslPolicyErrors sslPolicyErrors)
+        {
+            return CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger, _configDb);
+        }
+        
         private DevOpsException LogAndThrow(string msg, Exception ex = null)
         {
             _logger.Error(msg);
@@ -78,16 +85,17 @@ namespace OneIdentity.DevOps.Logic
 
         private bool FetchAndStoreSignatureCertificate(string token, SafeguardConnection safeguardConnection)
         {
-            HttpClientHandler handler = null;
-            if (safeguardConnection.IgnoreSsl)
+            // Chicken and egg problem here. Fetching and storing the signature certificate is the first
+            //  thing that has to happen on a new system.  We can't check the SSL certificate unless a certificate
+            //  chain has been provided.  However a certificate chain can't be provided until after login but
+            //  login can't happen until we have the signature certificate.  So we will just ignore the
+            //  the validation of the SSL certificate.
+            HttpClientHandler handler = new HttpClientHandler
             {
-                handler = new HttpClientHandler
-                {
-                    ClientCertificateOptions = ClientCertificateOption.Manual,
-                    ServerCertificateCustomValidationCallback =
-                        (httpRequestMessage, cert, cetChain, policyErrors) => true
-                };
-            }
+                ClientCertificateOptions = ClientCertificateOption.Manual,
+                ServerCertificateCustomValidationCallback =
+                    (httpRequestMessage, cert, certChain, policyErrors) => true
+            };
 
             string result = null;
             using (var client = new HttpClient(handler))
@@ -125,7 +133,9 @@ namespace OneIdentity.DevOps.Logic
                     IgnoreSsl = ignoreSsl,
                     ApiVersion = apiVersion
                 };
-                sg = SafeguardDotNet.Safeguard.Connect(safeguardAddress, apiVersion, ignoreSsl);
+
+                sg = ignoreSsl ? SafeguardDotNet.Safeguard.Connect(safeguardAddress, apiVersion, true) : 
+                    SafeguardDotNet.Safeguard.Connect(safeguardAddress, CertificateValidationCallback, apiVersion);
                 return GetSafeguardAvailability(sg, safeguardConnection);
             }
             catch (SafeguardDotNetException ex)
@@ -432,6 +442,13 @@ namespace OneIdentity.DevOps.Logic
             return string.Join(",", addresses.Select(x => $"\"{x}\""));
         }
 
+        private string StripCertificateHeaders(string certificate)
+        {
+            var certData = Regex.Replace(certificate, "-----BEGIN .*-----", "");
+            certData = Regex.Replace(certData, "-----END .*", "");
+            return certData.Replace("\r\n", "").Replace("\n", "");
+        }
+
         public void RemoveClientCertificate()
         {
             _configDb.UserCertificateBase64Data = null;
@@ -471,8 +488,9 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                return SafeguardDotNet.Safeguard.Connect(address, token, version ?? DefaultApiVersion, ignoreSsl ?? false);
-
+                return (ignoreSsl.HasValue && ignoreSsl.Value) ? 
+                    SafeguardDotNet.Safeguard.Connect(address, token, version ?? DefaultApiVersion, true) :
+                    SafeguardDotNet.Safeguard.Connect(address, token, CertificateValidationCallback, version ?? DefaultApiVersion);
             }
             catch (SafeguardDotNetException ex)
             {
@@ -783,6 +801,116 @@ namespace OneIdentity.DevOps.Logic
             // Sleep just for a second to give the caller time to respond before we exit.
             Thread.Sleep(1000);
             Task.Run(() => Environment.Exit(54));
+        }
+
+        public IEnumerable<CertificateInfo> GetTrustedCertificates()
+        {
+            var trustedCertificates = _configDb.GetAllTrustedCertificates().ToArray();
+            if (!trustedCertificates.Any())
+                return new List<CertificateInfo>();
+
+            return trustedCertificates.Select(x => x.GetCertificateInfo());
+        }
+
+        public CertificateInfo GetTrustedCertificate(string thumbPrint)
+        {
+            if (string.IsNullOrEmpty(thumbPrint))
+                throw LogAndThrow("Invalid thumbprint");
+
+            var certificate = _configDb.GetTrustedCertificateByThumbPrint(thumbPrint);
+
+            return certificate?.GetCertificateInfo();
+        }
+
+        private CertificateInfo AddTrustedCertificate(string base64CertificateData)
+        {
+            if (base64CertificateData == null)
+                throw LogAndThrow("Certificate cannot be null");
+
+            try
+            {
+                var certificateBase64 = StripCertificateHeaders(base64CertificateData);
+                var certificateBytes = Convert.FromBase64String(certificateBase64);
+                var cert = new X509Certificate2(certificateBytes);
+
+                // Check of the certificate already exists and just return it if it does.
+                var existingCert = _configDb.GetTrustedCertificateByThumbPrint(cert.Thumbprint);
+                if (existingCert != null)
+                    return existingCert.GetCertificateInfo();
+
+                if (!CertificateHelper.ValidateCertificate(cert, CertificateType.Trusted))
+                    throw new DevOpsException("Invalid certificate");
+
+                var trustedCertificate = new TrustedCertificate()
+                {
+                    Thumbprint = cert.Thumbprint,
+                    Base64CertificateData = certificateBase64
+                };
+
+                _configDb.SaveTrustedCertificate(trustedCertificate);
+                return trustedCertificate.GetCertificateInfo();
+            }
+            catch (Exception ex)
+            {
+                throw LogAndThrow($"Failed to add the certificate: {ex.Message}", ex);
+            }
+        }
+
+        public CertificateInfo AddTrustedCertificate(CertificateInfo certificate)
+        {
+            return AddTrustedCertificate(certificate.Base64CertificateData);
+        }
+
+        public void DeleteTrustedCertificate(string thumbPrint)
+        {
+            if (string.IsNullOrEmpty(thumbPrint))
+                throw LogAndThrow("Invalid thumbprint");
+
+            _configDb.DeleteTrustedCertificateByThumbPrint(thumbPrint);
+        }
+
+        public IEnumerable<CertificateInfo> ImportTrustedCertificates()
+        {
+            using var sg = Connect();
+
+            IEnumerable<ServerCertificate> serverCertificates = null;
+            var trustedCertificates = new List<CertificateInfo>();
+            
+            try
+            {
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "TrustedCertificates");
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    serverCertificates = JsonHelper.DeserializeObject<IEnumerable<ServerCertificate>>(result.Body);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogAndThrow("Failed to get the Safeguard trusted certificates.", ex);
+            }
+
+            if (serverCertificates != null)
+            {
+                foreach (var cert in serverCertificates)
+                {
+                    try
+                    {
+                        var certificateInfo = AddTrustedCertificate(cert.Base64CertificateData);
+                        trustedCertificates.Add(certificateInfo);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Failed to import certificate {cert.Subject} {cert.Thumbprint} from Safeguard. {ex.Message}");
+                    }
+                }
+            }
+
+            return trustedCertificates;
+        }
+
+        public void DeleteAllTrustedCertificates()
+        {
+            _configDb.DeleteAllTrustedCertificates();
         }
 
         public IEnumerable<SppAccount> GetAvailableAccounts()

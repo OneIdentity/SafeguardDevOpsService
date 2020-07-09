@@ -1,17 +1,54 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Security.Policy;
-using System.Text;
+using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
-using RestSharp.Extensions;
 
 namespace OneIdentity.DevOps.Logic
 {
     class CertificateHelper
     {
+        public static bool CertificateValidation(object sender, X509Certificate certificate, X509Chain chain,
+            SslPolicyErrors sslPolicyErrors, Serilog.ILogger logger, IConfigurationRepository configDb)
+        {
+            if (configDb.IgnoreSsl ?? false)
+                return true;
+
+            var trustedChain = configDb.GetTrustedChain();
+            if (trustedChain.ChainPolicy.ExtraStore.Count == 0)
+            {
+                logger.Error("IgnoreSsl is false and there no trusted certificates have been specified.");
+                return false;
+            }
+
+            try
+            {
+                var cert2 = new X509Certificate2(certificate);
+
+                if (chain.ChainElements.Count <= 1)
+                {
+                    var found = trustedChain.ChainPolicy.ExtraStore.Find(X509FindType.FindByThumbprint, cert2.Thumbprint, false);
+                    if (found.Count == 1)
+                        return true;
+                }
+
+                if (!configDb.GetTrustedChain().Build(new X509Certificate2(certificate)))
+                {
+                    logger.Error("Failed SPP SSL certificate validation.");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Failed SPP SSL certificate validation: {ex.Message}");
+                return false;
+            }
+
+            return true;
+        }
+        
         public static X509Certificate2 CreateDefaultSSLCertificate()
         {
             int certSize = 2048;
@@ -55,11 +92,6 @@ namespace OneIdentity.DevOps.Logic
             }
 
             var curDate = DateTime.UtcNow;
-            if (sslCertificate.HasPrivateKey == false)
-            {
-                logger.Error("No private key found.");
-                return false;
-            }
             if (curDate < sslCertificate.NotBefore || curDate > sslCertificate.NotAfter)
             {
                 logger.Error("Certificate is expired.");
@@ -74,6 +106,11 @@ namespace OneIdentity.DevOps.Logic
             switch (certificateType)
             {
                 case CertificateType.WebSsh:
+                    if (sslCertificate.HasPrivateKey == false)
+                    {
+                        logger.Error("No private key found.");
+                        return false;
+                    }
                     if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
                     {
                         logger.Error("Missing key encipherment or enhanced key usage client authentication.");
@@ -81,11 +118,18 @@ namespace OneIdentity.DevOps.Logic
                     }
                     break;
                 case CertificateType.A2AClient:
+                    if (sslCertificate.HasPrivateKey == false)
+                    {
+                        logger.Error("No private key found.");
+                        return false;
+                    }
                     if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
                     {
                         logger.Error("Missing key agreement or enhanced key usage server authentication.");
                         return false;
                     }
+                    break;
+                case CertificateType.Trusted:
                     break;
                 default:
                     return false;

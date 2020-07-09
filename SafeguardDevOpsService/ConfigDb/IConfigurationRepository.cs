@@ -21,6 +21,12 @@ namespace OneIdentity.DevOps.ConfigDb
         void DeleteAccountMappingsByKey(string key);
         void DeleteAccountMappings();
 
+        IEnumerable<TrustedCertificate> GetAllTrustedCertificates();
+        TrustedCertificate GetTrustedCertificateByThumbPrint(string thumbprint);
+        TrustedCertificate SaveTrustedCertificate(TrustedCertificate trustedCertificate);
+        void DeleteTrustedCertificateByThumbPrint(string thumbprint);
+        void DeleteAllTrustedCertificates();
+        X509Chain GetTrustedChain();
 
         string SafeguardAddress { get; set; }
         int? ApiVersion { get; set; }
