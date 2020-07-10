@@ -2,14 +2,15 @@
 using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.SignalR;
-using OneIdentity.DevOps.Authorization;
+
 #pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
 {
     public static class WellKnownData
     {
+        public const string AppSettings = "appsettings";
+
         public const string PluginInfoClassName = "PluginDescriptor";
 
         public const string DevOpsServiceName = "SafeguardDevOpsService";

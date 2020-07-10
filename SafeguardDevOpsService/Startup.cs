@@ -16,7 +16,6 @@ namespace OneIdentity.DevOps
 {
     internal class Startup
     {
-        private const string AppSettings = "appsettings";
 
         private static readonly string ServiceName = "Safeguard DevOps Service";
         private static readonly string ApiName = $"{ServiceName} API";
@@ -33,8 +32,8 @@ namespace OneIdentity.DevOps
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
-                .AddJsonFile($"{AppSettings}.json", optional:true, reloadOnChange:true)
-                .AddJsonFile($"{AppSettings}.{env.EnvironmentName}.json", optional: true)
+                .AddJsonFile($"{WellKnownData.AppSettings}.json", optional:true, reloadOnChange:true)
+                .AddJsonFile($"{WellKnownData.AppSettings}.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
         }

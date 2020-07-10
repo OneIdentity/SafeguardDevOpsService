@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using OneIdentity.DevOps.Logic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.Extensions.Configuration;
 using OneIdentity.DevOps.ConfigDb;
 
 #pragma warning disable 1591
@@ -27,10 +28,17 @@ namespace OneIdentity.DevOps
                 System.Environment.Exit(1);
             }
 
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile($"{WellKnownData.AppSettings}.json", optional: true, reloadOnChange: true).Build();
+            var httpsPort = configuration["HttpsPort"] ?? "443";
+
             _host = new WebHostBuilder()
                 .UseKestrel(options =>
                 {
-                    options.ListenAnyIP(443, listenOptions =>
+                    int port;
+                    if (int.TryParse(httpsPort, out port) == false)
+                        port = 443;
+                    options.ListenAnyIP(port, listenOptions =>
                         {
                             listenOptions.UseHttps(webSslCert);
                         });
