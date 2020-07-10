@@ -25,4 +25,4 @@ if [ -f "$zipfilename" ]; then
 fi
 
 cp $projectdir/Manifest.json $builddir
-cd $builddir && zip -r $zipfilename . -x netcoreapp2.2/ -x netcoreapp2.2/* -x netcoreapp2/publish/ -x netcoreapp2.2/publish/*
+#cd $builddir && zip -r $zipfilename . -x netcoreapp2.2/ -x netcoreapp2.2/* -x netcoreapp2/publish/ -x netcoreapp2.2/publish/*
