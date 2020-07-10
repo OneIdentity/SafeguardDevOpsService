@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.AspNetCore.Http;
 
 #pragma warning disable 1591
@@ -30,10 +31,9 @@ namespace OneIdentity.DevOps.Logic
         public const string PluginStageName = "PluginStaging";
         public const string PluginVaultCredentialName = "VaultCredential";
 
-        public static readonly string AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), WellKnownData.DevOpsServiceName);
-        public static readonly string AppDataPathExt = Path.Combine(@"\", DevOpsServiceName);
-        public static readonly string PluginDirPath = Path.Combine(AppDataPathExt, PluginDirName);
-        public static readonly string PluginStageDirPath = Path.Combine(AppDataPathExt, PluginDirName, PluginStageName);
+        public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
+        public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
+        public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginDirName, PluginStageName);
 
         public static string GetSppToken(HttpContext context)
         {

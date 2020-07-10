@@ -46,8 +46,9 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public LiteDbConfigurationRepository()
         {
-            Directory.CreateDirectory(WellKnownData.AppDataPath);
-            var dbPath = Path.Combine(WellKnownData.AppDataPath, DbFileName);
+            if (!Directory.Exists(WellKnownData.ProgramDataPath))
+                Directory.CreateDirectory(WellKnownData.ProgramDataPath);
+            var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
             Serilog.Log.Logger.Information($"Loading configuration database at {dbPath}.");
 
             _configurationDb = new LiteDatabase(dbPath);
@@ -356,7 +357,7 @@ namespace OneIdentity.DevOps.ConfigDb
                     try
                     {
                         var bytes = Convert.FromBase64String(UserCertificateBase64Data);
-                        var cert = string.IsNullOrEmpty(UserCertificatePassphrase) 
+                        var cert = string.IsNullOrEmpty(UserCertificatePassphrase)
                             ? new X509Certificate2(bytes)
                             : new X509Certificate2(bytes, UserCertificatePassphrase);
                         return cert;
@@ -404,7 +405,7 @@ namespace OneIdentity.DevOps.ConfigDb
                     try
                     {
                         var bytes = Convert.FromBase64String(WebSslCertificateBase64Data);
-                        var cert = string.IsNullOrEmpty(WebSslCertificatePassphrase) 
+                        var cert = string.IsNullOrEmpty(WebSslCertificatePassphrase)
                             ? new X509Certificate2(bytes)
                             : new X509Certificate2(bytes, WebSslCertificatePassphrase);
                         return cert;

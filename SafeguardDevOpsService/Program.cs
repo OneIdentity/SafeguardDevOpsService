@@ -10,11 +10,11 @@ namespace OneIdentity.DevOps
     {
         private static void Main()
         {
-            Directory.CreateDirectory(WellKnownData.AppDataPathExt);
-            var logDirPath = Path.Combine(WellKnownData.AppDataPathExt, "SafeguardDevOpsService.log");
+            Directory.CreateDirectory(WellKnownData.ProgramDataPath);
+            var logDirPath = Path.Combine(WellKnownData.ProgramDataPath, "SafeguardDevOpsService.log");
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.File(logDirPath, 
+                .WriteTo.File(logDirPath,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
 
