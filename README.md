@@ -101,7 +101,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 - In a browser navigate to `<https://<your-server-ip>/service/devops/swagger/index.html>`
 - Click on the "Authorize" button on the upper left-hand side of the DevOps Service swagger page.
-Enter spp-token <paste token> as the value and click the Authorize button and then Close button
+Enter `spp-token <paste token>` as the value and click the Authorize button and then Close button
   - At this point the swagger page has a login token that will be used in every call made to the DevOps API
 - Navigate to and call: `PUT /service/devops/Safeguard`
 
@@ -162,7 +162,7 @@ Enter spp-token <paste token> as the value and click the Authorize button and th
     }
     ```
 
-## Configuring and Mapping Accounts to the Vault Plugins  
+## Configuring and Mapping Accounts to the Vault Plugins
 
 - Navigate to and call: `GET /service/devops/Safeguard/AvailableAccounts`
   - This call will produce a list of all of the available accounts in SPP that can be requested.

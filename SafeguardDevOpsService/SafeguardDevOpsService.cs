@@ -73,7 +73,7 @@ namespace OneIdentity.DevOps
 
             webSslCert = CertificateHelper.CreateDefaultSSLCertificate();
             db.WebSslCertificate = webSslCert;
-            Serilog.Log.Logger.Error("Created and installed a default web ssl certificate.");
+            Serilog.Log.Logger.Information("Created and installed a default web ssl certificate.");
 
             // Need to make sure that we return a db instance of the certificate rather than a local instance
             //  So rather than just returning the webSslCert created above, get a new instance of the certificate
