@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using OneIdentity.DevOps.Logic;
 using Serilog;
 using Topshelf;
+using Topshelf.Runtime.DotNetCore;
 
 namespace OneIdentity.DevOps
 {
@@ -29,6 +31,10 @@ namespace OneIdentity.DevOps
                     service.WhenStarted(s => s.Start());
                     service.WhenStopped(s => s.Stop());
                 });
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    hostConfig.UseEnvironmentBuilder(c => new DotNetCoreEnvironmentBuilder(c));
+                }
                 hostConfig.UseSerilog();
                 hostConfig.StartAutomaticallyDelayed();
                 hostConfig.SetDisplayName("SafeguardDevOpsService");
