@@ -5,11 +5,11 @@ using OneIdentity.SafeguardDotNet;
 
 namespace OneIdentity.DevOps.Logic
 {
-    class AuthorizedCache
+    internal class AuthorizedCache
     {
         private static AuthorizedCache _instance;
         private static readonly object InstanceLock = new object();
-        private static readonly Dictionary<string,ServiceConfiguration> _cache = new Dictionary<string,ServiceConfiguration>();
+        private static readonly Dictionary<string,ServiceConfiguration> Cache = new Dictionary<string,ServiceConfiguration>();
 
         public static AuthorizedCache Instance
         {
@@ -17,7 +17,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 lock (InstanceLock)
                 {
-                    return _instance ?? (_instance = new AuthorizedCache());
+                    return _instance ??= new AuthorizedCache();
                 }
             }
         }
@@ -28,16 +28,16 @@ namespace OneIdentity.DevOps.Logic
             {
                 var currentConnection = Find(managementConnection);
                 if (currentConnection != null)
-                    _cache.Remove(currentConnection.SessionKey);
-                _cache.Add(managementConnection.SessionKey, managementConnection);
+                    Cache.Remove(currentConnection.SessionKey);
+                Cache.Add(managementConnection.SessionKey, managementConnection);
             }
         }
 
         public ServiceConfiguration Find(string sessionKey)
         {
-            if (sessionKey != null && _cache.ContainsKey(sessionKey))
+            if (sessionKey != null && Cache.ContainsKey(sessionKey))
             {
-                return _cache[sessionKey];
+                return Cache[sessionKey];
             }
 
             return null;
@@ -45,12 +45,12 @@ namespace OneIdentity.DevOps.Logic
 
         public ServiceConfiguration FindByToken(string token)
         {
-            return _cache.Values.FirstOrDefault(x => x.AccessToken.ToInsecureString().Equals(token));
+            return Cache.Values.FirstOrDefault(x => x.AccessToken.ToInsecureString().Equals(token));
         }
 
         public ServiceConfiguration Find(ServiceConfiguration managementConnection)
         {
-            return _cache.Values.FirstOrDefault(x =>
+            return Cache.Values.FirstOrDefault(x =>
                 x.Appliance.ApplianceAddress.Equals(managementConnection.Appliance.ApplianceAddress)
                 && x.IdentityProviderName.Equals(managementConnection.IdentityProviderName) &&
                 x.UserName.Equals(managementConnection.UserName));
@@ -62,7 +62,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 lock (InstanceLock)
                 {
-                    _cache.Remove(sessionKey);
+                    Cache.Remove(sessionKey);
                 }
             }
         }

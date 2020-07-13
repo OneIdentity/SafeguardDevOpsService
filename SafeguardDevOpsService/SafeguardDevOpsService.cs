@@ -8,12 +8,11 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
 using OneIdentity.DevOps.ConfigDb;
-
-#pragma warning disable 1591
+using Serilog;
 
 namespace OneIdentity.DevOps
 {
-    public class SafeguardDevOpsService
+    internal class SafeguardDevOpsService
     {
         private readonly IWebHost _host;
         private readonly IEnumerable<IPluginManager> _services;
@@ -24,7 +23,7 @@ namespace OneIdentity.DevOps
 
             if (webSslCert == null)
             {
-                Serilog.Log.Logger.Error("Failed to find or change the default SSL certificate.");
+                Log.Logger.Error("Failed to find or change the default SSL certificate.");
                 Environment.Exit(1);
             }
 
@@ -33,6 +32,7 @@ namespace OneIdentity.DevOps
             var httpsPort = configuration["HttpsPort"] ?? "443";
 
             _host = new WebHostBuilder()
+                .UseSerilog()
                 .UseKestrel(options =>
                 {
                     int port;
@@ -73,7 +73,7 @@ namespace OneIdentity.DevOps
 
             webSslCert = CertificateHelper.CreateDefaultSSLCertificate();
             db.WebSslCertificate = webSslCert;
-            Serilog.Log.Logger.Information("Created and installed a default web ssl certificate.");
+            Log.Logger.Information("Created and installed a default web ssl certificate.");
 
             // Need to make sure that we return a db instance of the certificate rather than a local instance
             //  So rather than just returning the webSslCert created above, get a new instance of the certificate

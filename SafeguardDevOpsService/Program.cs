@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Hosting;
 using OneIdentity.DevOps.Logic;
 using Serilog;
 using Topshelf;
@@ -18,6 +19,7 @@ namespace OneIdentity.DevOps
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.File(logDirPath,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                .Enrich.FromLogContext()
                 .CreateLogger();
 
             Console.WriteLine($"DevOps Service logging to: {logDirPath}");
@@ -25,6 +27,7 @@ namespace OneIdentity.DevOps
 
             HostFactory.Run(hostConfig =>
             {
+                hostConfig.UseSerilog();
                 hostConfig.Service<SafeguardDevOpsService>(service =>
                 {
                     service.ConstructUsing(c => new SafeguardDevOpsService());
@@ -35,7 +38,6 @@ namespace OneIdentity.DevOps
                 {
                     hostConfig.UseEnvironmentBuilder(c => new DotNetCoreEnvironmentBuilder(c));
                 }
-                hostConfig.UseSerilog();
                 hostConfig.StartAutomaticallyDelayed();
                 hostConfig.SetDisplayName("SafeguardDevOpsService");
                 hostConfig.SetServiceName("SafeguardDevOpsService");

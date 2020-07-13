@@ -1,8 +1,6 @@
-﻿#pragma warning disable 1591
-
-namespace OneIdentity.DevOps.Logic
+﻿namespace OneIdentity.DevOps.Logic
 {
-    public sealed class RestartManager
+    internal sealed class RestartManager
     {
         private static readonly RestartManager instance = new RestartManager();
         

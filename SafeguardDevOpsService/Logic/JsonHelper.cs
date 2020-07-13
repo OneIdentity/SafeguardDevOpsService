@@ -1,11 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using OneIdentity.DevOps.Exceptions;
-#pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
 {
-    public class JsonHelper
+    internal class JsonHelper
     {
         public static T DeserializeObject<T>(string rawJson) where T : class
         {

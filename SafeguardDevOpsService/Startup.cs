@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Autofac;
+using AutofacSerilogIntegration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Logic;
 using Microsoft.OpenApi.Models;
+using Serilog;
 
 namespace OneIdentity.DevOps
 {
@@ -97,19 +99,19 @@ namespace OneIdentity.DevOps
 
         public void ConfigureContainer(ContainerBuilder builder)
         {
+            builder.RegisterLogger();
             builder.Register(c => new LiteDbConfigurationRepository()).As<IConfigurationRepository>().SingleInstance();
             builder.Register(c => new SafeguardLogic(c.Resolve<IConfigurationRepository>())).As<ISafeguardLogic>().SingleInstance();
             builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>(), c.Resolve<ISafeguardLogic>())).As<IPluginManager>().SingleInstance();
             builder.Register(c => new PluginsLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>(), c.Resolve<ISafeguardLogic>())).As<IPluginsLogic>().SingleInstance();
             builder.Register(c => new MonitoringLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>())).As<IMonitoringLogic>().SingleInstance();
-            //builder.RegisterType<ConfigurationLogic>().As<IConfigurationLogic>();
-
-            //builder.RegisterType<SafeguardTokenAuthenticationProvider>().AsImplementedInterfaces().SingleInstance();
-
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
+            // Enable middleware for request logging
+            app.UseSerilogRequestLogging();
+
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger(c => { c.RouteTemplate = SwaggerRouteTemplate; });
 

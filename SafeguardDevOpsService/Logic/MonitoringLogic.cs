@@ -13,7 +13,6 @@ using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Event;
 using Safeguard = OneIdentity.SafeguardDotNet.Safeguard;
 
-
 namespace OneIdentity.DevOps.Logic
 {
     internal class MonitoringLogic : IMonitoringLogic

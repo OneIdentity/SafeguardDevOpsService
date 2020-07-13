@@ -3,11 +3,9 @@ using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
 
-#pragma warning disable 1591
-
 namespace OneIdentity.DevOps.Logic
 {
-    public static class WellKnownData
+    internal static class WellKnownData
     {
         public const string AppSettings = "appsettings";
 
