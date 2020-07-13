@@ -23,4 +23,4 @@ echo -e "${YELLOW}Sleeping to give SafeguardDevOpsService time to start${NC}"
 sleep 3
 
 echo -e "${YELLOW}Showing SafeguardDevOpsService logs${NC}"
-tail -f /usr/share/SafeguardDevOpsService/SafeguardDevOpsService.log
+tail -f -n +1 /usr/share/SafeguardDevOpsService/SafeguardDevOpsService.log
