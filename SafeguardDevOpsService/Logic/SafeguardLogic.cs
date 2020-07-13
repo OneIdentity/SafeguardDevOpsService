@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -44,7 +43,7 @@ namespace OneIdentity.DevOps.Logic
         {
             return CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger, _configDb);
         }
-        
+
         private DevOpsException LogAndThrow(string msg, Exception ex = null)
         {
             _logger.Error(msg);
@@ -97,7 +96,7 @@ namespace OneIdentity.DevOps.Logic
                     (httpRequestMessage, cert, certChain, policyErrors) => true
             };
 
-            string result = null;
+            string result;
             using (var client = new HttpClient(handler))
             {
                 client.BaseAddress = new Uri($"https://{safeguardConnection.ApplianceAddress}");
@@ -134,7 +133,7 @@ namespace OneIdentity.DevOps.Logic
                     ApiVersion = apiVersion
                 };
 
-                sg = ignoreSsl ? SafeguardDotNet.Safeguard.Connect(safeguardAddress, apiVersion, true) : 
+                sg = ignoreSsl ? SafeguardDotNet.Safeguard.Connect(safeguardAddress, apiVersion, true) :
                     SafeguardDotNet.Safeguard.Connect(safeguardAddress, CertificateValidationCallback, apiVersion);
                 return GetSafeguardAvailability(sg, safeguardConnection);
             }
@@ -238,7 +237,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 if (!a2aUser.PrimaryAuthenticationIdentity.Equals(thumbprint, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    try { 
+                    try {
                         a2aUser.PrimaryAuthenticationIdentity = thumbprint;
                         var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
                         sg.InvokeMethodFull(Service.Core, Method.Put, $"Users/{a2aUser.Id}", a2aUserStr);
@@ -347,7 +346,7 @@ namespace OneIdentity.DevOps.Logic
             FullResponse result;
 
             // If we don't have a registration Id then try to find the registration by name
-            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) || 
+            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
                 var knownRegistrationName = (registrationType == A2ARegistrationType.Account)
@@ -434,11 +433,10 @@ namespace OneIdentity.DevOps.Logic
                 return null;
             }
 
-            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+            var host = Dns.GetHostEntry(Dns.GetHostName());
 
             var addresses = host.AddressList.Where(ip => ip.AddressFamily == AddressFamily.InterNetwork);
 
-            var a = addresses.Select(x => $"\"{x}\"");
             return string.Join(",", addresses.Select(x => $"\"{x}\""));
         }
 
@@ -488,7 +486,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                return (ignoreSsl.HasValue && ignoreSsl.Value) ? 
+                return (ignoreSsl.HasValue && ignoreSsl.Value) ?
                     SafeguardDotNet.Safeguard.Connect(address, token, version ?? DefaultApiVersion, true) :
                     SafeguardDotNet.Safeguard.Connect(address, token, CertificateValidationCallback, version ?? DefaultApiVersion);
             }
@@ -500,7 +498,7 @@ namespace OneIdentity.DevOps.Logic
 
         public bool ValidateLogin(string token, bool tokenOnly = false)
         {
-            
+
             return ValidateLogin(token, new SafeguardConnection()
             {
                 ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion,
@@ -527,7 +525,7 @@ namespace OneIdentity.DevOps.Logic
 
                 var data = Encoding.UTF8.GetBytes(header + '.' + payload);
 
-                bool validToken = cert.GetRSAPublicKey()
+                var validToken = cert.GetRSAPublicKey()
                     .VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
                 if (validToken && !tokenOnly)
@@ -610,7 +608,7 @@ namespace OneIdentity.DevOps.Logic
                 try
                 {
                     using var rsa = RSA.Create();
-                    var privateKeyBytes = certificateType == CertificateType.A2AClient ? 
+                    var privateKeyBytes = certificateType == CertificateType.A2AClient ?
                         Convert.FromBase64String(_configDb.UserCsrPrivateKeyBase64Data) : Convert.FromBase64String(_configDb.WebSslCsrPrivateKeyBase64Data);
                     rsa.ImportRSAPrivateKey(privateKeyBytes, out _);
 
@@ -651,7 +649,7 @@ namespace OneIdentity.DevOps.Logic
         public string GetCSR(int? size, string subjectName, CertificateType certificateType)
         {
             int certSize = 2048;
-            string certSubjectName = certificateType == CertificateType.A2AClient ? 
+            string certSubjectName = certificateType == CertificateType.A2AClient ?
                 WellKnownData.DevOpsServiceClientCertificate : WellKnownData.DevOpsServiceWebSslCertificate;
 
             if (size != null)
@@ -875,7 +873,7 @@ namespace OneIdentity.DevOps.Logic
 
             IEnumerable<ServerCertificate> serverCertificates = null;
             var trustedCertificates = new List<CertificateInfo>();
-            
+
             try
             {
                 var result = sg.InvokeMethodFull(Service.Core, Method.Get, "TrustedCertificates");
@@ -977,16 +975,16 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeleteA2ARegistration(A2ARegistrationType registrationType)
         {
-            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) || 
+            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
                 var msg = "A2A registration not configured";
                 _logger.Error(msg);
                 throw new DevOpsException(msg);
             }
-        
+
             using var sg = Connect();
-        
+
             A2ARegistration registration = null;
             try
             {
@@ -1039,7 +1037,7 @@ namespace OneIdentity.DevOps.Logic
 
         public A2ARetrievableAccount GetA2ARetrievableAccount(int id, A2ARegistrationType registrationType)
         {
-            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) || 
+            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
                 throw LogAndThrow("A2A registration not configured");
@@ -1068,7 +1066,7 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeleteA2ARetrievableAccount(int id, A2ARegistrationType registrationType)
         {
-            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) || 
+            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
                 throw LogAndThrow("A2A registration not configured");
@@ -1095,7 +1093,7 @@ namespace OneIdentity.DevOps.Logic
 
         public IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts(A2ARegistrationType registrationType)
         {
-            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) || 
+            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
                 throw LogAndThrow("A2A registration not configured");
@@ -1170,11 +1168,11 @@ namespace OneIdentity.DevOps.Logic
                 _serviceConfiguration.AdminRoles = a2aUser.AdminRoles;
             }
 
-            _serviceConfiguration.Appliance = GetSafeguardAvailability(sg, 
+            _serviceConfiguration.Appliance = GetSafeguardAvailability(sg,
                 new SafeguardConnection()
                 {
-                    ApplianceAddress = _configDb.SafeguardAddress, 
-                    IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value, 
+                    ApplianceAddress = _configDb.SafeguardAddress,
+                    IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value,
                     ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion
                 });
 

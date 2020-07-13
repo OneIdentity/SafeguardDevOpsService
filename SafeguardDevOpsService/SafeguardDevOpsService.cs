@@ -25,7 +25,7 @@ namespace OneIdentity.DevOps
             if (webSslCert == null)
             {
                 Serilog.Log.Logger.Error("Failed to find or change the default SSL certificate.");
-                System.Environment.Exit(1);
+                Environment.Exit(1);
             }
 
             var configuration = new ConfigurationBuilder()

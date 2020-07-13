@@ -48,7 +48,7 @@ namespace OneIdentity.DevOps.Logic
 
             return true;
         }
-        
+
         public static X509Certificate2 CreateDefaultSSLCertificate()
         {
             int certSize = 2048;

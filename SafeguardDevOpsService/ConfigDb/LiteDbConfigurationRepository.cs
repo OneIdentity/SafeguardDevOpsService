@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using LiteDB;
 using OneIdentity.DevOps.Data;

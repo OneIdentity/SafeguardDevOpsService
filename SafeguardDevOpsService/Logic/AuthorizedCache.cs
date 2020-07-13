@@ -7,7 +7,7 @@ namespace OneIdentity.DevOps.Logic
 {
     class AuthorizedCache
     {
-        private static AuthorizedCache _instance = null;
+        private static AuthorizedCache _instance;
         private static readonly object InstanceLock = new object();
         private static readonly Dictionary<string,ServiceConfiguration> _cache = new Dictionary<string,ServiceConfiguration>();
 

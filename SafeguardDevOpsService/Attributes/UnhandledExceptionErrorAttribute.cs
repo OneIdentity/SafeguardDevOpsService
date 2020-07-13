@@ -27,7 +27,7 @@ namespace OneIdentity.DevOps.Attributes
                 var response = devOpsException.ResponseMessage;
                 var errorMessage = devOpsException.Message;
                 var message = $"Executed action: {context.HttpContext.Request.Method} {context.HttpContext.Request.Path} = {context.Exception?.GetType().FullName}: {(int)(response?.StatusCode ?? HttpStatusCode.InternalServerError)} {(response?.StatusCode ?? HttpStatusCode.InternalServerError).ToString()}\r\n{errorMessage}";
-                Serilog.Log.Logger.Error(message);
+                _logger.Error(message);
             }
 
             context.ExceptionHandled = true;

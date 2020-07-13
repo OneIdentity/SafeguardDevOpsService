@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using OneIdentity.DevOps.Exceptions;
 #pragma warning disable 1591
@@ -46,7 +45,7 @@ namespace OneIdentity.DevOps.Logic
         public static void HandleDeserializationError(object sender, ErrorEventArgs errorArgs)
         {
             var currentError = errorArgs.ErrorContext.Error.Message;
-            Debug.WriteLine(currentError);
+            Serilog.Log.Logger.Debug(currentError);
             errorArgs.ErrorContext.Handled = true;
         }
 
