@@ -4,16 +4,39 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+- phase2/*
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  setupprojectdir: 'SafeguardDevOpsServiceWix'
+  setupproject: '**/$(setupprojectdir)/*.wixproj'
+  buildPlatform: 'x64'
+  buildConfiguration: 'Release'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- task: NuGetToolInstaller@1
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(setupproject)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '$(Build.SourcesDirectory)/$(setupprojectdir)'
+    contents: '**/bin/**'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)' 
+    artifactName: 'SafeguardDevOpsService' 
+
