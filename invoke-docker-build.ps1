@@ -21,18 +21,38 @@ if (-not (Get-Command "docker" -EA SilentlyContinue))
     throw "Unable to find docker command. Is docker installed on this machine?"
 }
 
+if (-not (Get-Command "dotnet" -EA SilentlyContinue))
+{
+    throw "This script requires dotnet cli for building the service"
+}
+
 if ($Version)
 {
     $Version = "$Version-"
 }
+$ImageName = "oneidentity/safeguard-devops:$Version$ImageType"
 
-ImageName="oneidentity/safeguard-devops:$Version$ImageType"
-
-if (Invoke-Expression "docker images -q oneidentity/safeguard-ps:$ImageType")
+try
 {
-    Write-Host "Cleaning up the old image: $ImageName ..."
-    & docker rmi --force "$ImageName"
-}
+    Push-Location $PSScriptRoot
+    Write-Host "Cleaning up all build directories ..."
+    (Get-ChildItem -Recurse -Filter obj -EA SilentlyContinue) | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
+    (Get-ChildItem -Recurse -Filter bin -EA SilentlyContinue) | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
+    Write-Host "Building for full-size Linux distros ..."
+    dotnet publish -v d -r linux-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
+    Write-Host "Building for tiny Linux distros ..."
+    dotnet publish -v d -r linux-musl-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
 
-Write-Host "Building a new image: $ImageName ..."
-& docker build --no-cache -t "$ImageName" -f "$SafeguardDockerFile" "$PSScriptRoot"
+    if (Invoke-Expression "docker images -q $ImageName")
+    {
+        Write-Host "Cleaning up the old image: $ImageName ..."
+        & docker rmi --force "$ImageName"
+    }
+
+    Write-Host "Building a new image: $ImageName ..."
+    & docker build --no-cache -t "$ImageName" -f "$SafeguardDockerFile" "$PSScriptRoot"
+}
+finally
+{
+    Pop-Location
+}
