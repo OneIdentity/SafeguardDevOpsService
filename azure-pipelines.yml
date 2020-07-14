@@ -11,6 +11,7 @@ pool:
 
 variables:
   solution: '**/*.sln'
+  setupproject: '**/SafeguardDevOpsServiceWix/*.wixproj'
   buildPlatform: 'x64'
   buildConfiguration: 'Debug'
 
@@ -27,4 +28,8 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-
+- task: VSBuild@1
+  inputs:
+    solution: '$(setupproject)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
