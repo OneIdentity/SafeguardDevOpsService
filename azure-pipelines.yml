@@ -13,9 +13,9 @@ variables:
   solution: '**/*.sln'
   setupprojectdir: '**/SafeguardDevOpsServiceWix'
   setupproject: '$(setupprojectdir)/*.wixproj'
-  setupproject_buildOutput: '$(setupprojectdir)/bin'
   buildPlatform: 'x64'
   buildConfiguration: 'Debug'
+  setupproject_buildOutput: '$(setupprojectdir)/bin/$(buildConfiguration)/en-us'
 
 steps:
 - task: NuGetToolInstaller@1
@@ -31,10 +31,13 @@ steps:
     configuration: '$(buildConfiguration)'
 
 - script: echo $(Build.BuildNumber)
+- script: echo $(Build.SourcesDirectory)
+- script: echo $(Agent.BuildDirectory)
 
 - task: CopyFiles@2
   inputs:
-    contents: '$(setupproject_buildOutput)'
+    #sourceFolder: '$(setupproject_buildOutput)'
+    contents: '**/bin/**'
     targetFolder: $(Build.ArtifactStagingDirectory)
 
 # Publish build artifacts
