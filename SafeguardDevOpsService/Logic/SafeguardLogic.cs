@@ -753,8 +753,9 @@ namespace OneIdentity.DevOps.Logic
         public SafeguardConnection GetSafeguardConnection()
         {
             if (string.IsNullOrEmpty(_configDb.SafeguardAddress))
-                return null;
-            return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? DefaultApiVersion, _configDb.IgnoreSsl ?? false);
+                return new SafeguardConnection();
+
+            return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? DefaultApiVersion, _configDb.IgnoreSsl ?? true);
         }
 
         public SafeguardConnection SetSafeguardData(string token, SafeguardData safeguardData)
@@ -762,18 +763,18 @@ namespace OneIdentity.DevOps.Logic
             if (token == null)
                 throw new DevOpsException("Invalid authorization token.");
 
-            var safeguardConnection = ConnectAnonymous(safeguardData.NetworkAddress,
+            var safeguardConnection = ConnectAnonymous(safeguardData.ApplianceAddress,
                 safeguardData.ApiVersion ?? DefaultApiVersion, safeguardData.IgnoreSsl ?? false);
 
             if (safeguardConnection != null && FetchAndStoreSignatureCertificate(token, safeguardConnection))
             {
-                _configDb.SafeguardAddress = safeguardData.NetworkAddress;
+                _configDb.SafeguardAddress = safeguardData.ApplianceAddress;
                 _configDb.ApiVersion = safeguardData.ApiVersion ?? DefaultApiVersion;
                 _configDb.IgnoreSsl = safeguardData.IgnoreSsl ?? false;
                 return safeguardConnection;
             }
 
-            throw new DevOpsException($"Invalid authorization token or SPP appliance {safeguardData.NetworkAddress} is unavailable.");
+            throw new DevOpsException($"Invalid authorization token or SPP appliance {safeguardData.ApplianceAddress} is unavailable.");
         }
 
         public void DeleteDevOpsConfiguration()

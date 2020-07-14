@@ -48,7 +48,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 ## Component Description
 
-**Safeguard API** -- Safeguard has the A2A (Application to Application) REST API and the Core REST API (labeled Config in the diagram) that is used to configure the A2A service as well as other Safeguard services.  There are aksi open source SDKs for accessing these APIs from a .NET Standard 2.0 library.
+**Safeguard API** -- Safeguard has the A2A (Application to Application) REST API and the Core REST API (labeled Config in the diagram) that is used to configure the A2A service as well as other Safeguard services.  There are also open source SDKs for accessing these APIs from a .NET Standard 2.0 library.
 
 - Discover -- A2A registrations are visible to certificate users via the core API.
 - Monitor -- The A2A API includes a SignalR web socket connection that will give real-time updates for when passwords change (no polling).

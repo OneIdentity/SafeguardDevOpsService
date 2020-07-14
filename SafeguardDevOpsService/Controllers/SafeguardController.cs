@@ -31,7 +31,6 @@ namespace OneIdentity.DevOps.Controllers
         /// Get the state of the Safeguard appliance that the DevOps service is currently using.
         /// </summary>
         /// <response code="200">Success</response>
-        [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet]
         public ActionResult<SafeguardConnection> GetSafeguard([FromServices] ISafeguardLogic safeguard)
