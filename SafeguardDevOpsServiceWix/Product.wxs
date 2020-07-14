@@ -9,7 +9,7 @@
 		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes"  />
 
-    <Icon Id="safeguard.ico" SourceFile="$(var.SolutionDir)\SafeguardLogo.ico"/>
+    <Icon Id="safeguard.ico" SourceFile="$(var.ProjectDir)\..\SafeguardLogo.ico"/>
 
     <Property Id="ARPPRODUCTICON">safeguard.icon</Property>
     <Property Id="ARPURLINFOABOUT">https://github.com/OneIdentity/SafeguardDevOpsService</Property>
@@ -22,7 +22,7 @@
     <UIRef Id="WixUI_Minimal" />
     <WixVariable Id="WixUIBannerBmp" Value="$(var.ProjectDir)\install-banner.bmp"/>
     <WixVariable Id="WixUIDialogBmp" Value="$(var.ProjectDir)\install-panel.bmp"/>
-    <WixVariable Id="WixUILicenseRtf" Value="$(var.SolutionDir)\LICENSE.rtf"/>
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)\..\LICENSE.rtf"/>
 
     <Feature Id="ProductFeature" Title="SafeguardDevOpsService" Level="1">
 			<ComponentGroupRef Id="DevOps_CommonAssemblies" />
