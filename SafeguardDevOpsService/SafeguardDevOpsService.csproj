@@ -45,7 +45,7 @@
     <ProjectReference Include="..\DevOpsPluginCommon\DevOpsPluginCommon.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition=" '$(OS)' != 'Windows_NT' And '$(SelfContained)' != 'true' " >
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

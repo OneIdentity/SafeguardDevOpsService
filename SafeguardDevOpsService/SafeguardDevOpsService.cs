@@ -27,8 +27,10 @@ namespace OneIdentity.DevOps
                 Environment.Exit(1);
             }
 
+            Log.Logger.Information($"Configuration file location: {Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json");
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile($"{WellKnownData.AppSettings}.json", optional: true, reloadOnChange: true).Build();
+                .AddJsonFile($"{Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json",
+                    optional: true, reloadOnChange: true).Build();
             var httpsPort = configuration["HttpsPort"] ?? "443";
 
             _host = new WebHostBuilder()
@@ -38,6 +40,7 @@ namespace OneIdentity.DevOps
                     int port;
                     if (int.TryParse(httpsPort, out port) == false)
                         port = 443;
+                    Log.Logger.Information($"Binding web server to port: {port}.");
                     options.ListenAnyIP(port, listenOptions =>
                         {
                             listenOptions.UseHttps(webSslCert);

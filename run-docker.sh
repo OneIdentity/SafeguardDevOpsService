@@ -35,6 +35,6 @@ fi
 echo "Running the image: $ImageName ..."
 docker run \
     --name $ContainerName \
-    -p $Port:443 \
+    -p $Port:4443 \
     --cap-add NET_ADMIN \
     -it $ImageName "$@"

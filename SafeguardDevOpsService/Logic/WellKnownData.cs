@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Microsoft.AspNetCore.Http;
 
 namespace OneIdentity.DevOps.Logic
@@ -29,6 +31,9 @@ namespace OneIdentity.DevOps.Logic
         public const string PluginVaultCredentialName = "VaultCredential";
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
+        public static readonly string ServiceDirPath = Path.GetDirectoryName(
+            System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ?
+                Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule.FileName);
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginDirName, PluginStageName);
 

@@ -31,10 +31,11 @@ cd $ScriptDir
 echo "Cleaning up all build directories ..."
 find . -name obj | xargs rm -rf
 find . -name bin | xargs rm -rf
+set -e
 echo "Building for full-size Linux distros ..."
-dotnet publish -r linux-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
+dotnet publish -v d -r linux-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
 echo "Building for tiny Linux distros ..."
-dotnet publish -r linux-musl-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
+dotnet publish -v d -r linux-musl-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
 
 DockerFile=`get_safeguard_dockerfile $ImageType`
 
@@ -44,3 +45,4 @@ if [ ! -z "$(docker images -q oneidentity/safeguard-devops:$Version$ImageType)" 
 fi
 echo "Building a new image: oneidentity/safeguard-devops:$Version$ImageType ..."
 docker build --no-cache -t "oneidentity/safeguard-devops:$Version$ImageType" -f "docker/$DockerFile" $ScriptDir
+set +e

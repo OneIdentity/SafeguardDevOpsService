@@ -13,7 +13,9 @@ RUN apk -U --no-cache add \
     && useradd -r -g safeguard -s /bin/bash safeguard \
     && mkdir -p /home/safeguard \
     && chown -R safeguard:safeguard /home/safeguard \
-    && chown -R safeguard:safeguard /usr/share
+    && chown -R safeguard:safeguard /usr/share \
+    && echo -e "{\n    \"HttpsPort\": "4443"\n}" > /home/safeguard/appsettings.json
+
 
 USER safeguard
 WORKDIR /home/safeguard
