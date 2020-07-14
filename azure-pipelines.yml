@@ -15,7 +15,6 @@ variables:
   setupproject: '$(setupprojectdir)/*.wixproj'
   buildPlatform: 'x64'
   buildConfiguration: 'Debug'
-  setupproject_buildOutput: '$(setupprojectdir)/bin/$(buildConfiguration)/en-us'
 
 steps:
 - task: NuGetToolInstaller@1
@@ -30,13 +29,9 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
-- script: echo $(Build.BuildNumber)
-- script: echo $(Build.SourcesDirectory)
-- script: echo $(Agent.BuildDirectory)
-
 - task: CopyFiles@2
   inputs:
-    #sourceFolder: '$(setupproject_buildOutput)'
+    sourceFolder: '$(setupprojectdir)'
     contents: '**/bin/**'
     targetFolder: $(Build.ArtifactStagingDirectory)
 
