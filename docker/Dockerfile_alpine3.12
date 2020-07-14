@@ -12,9 +12,9 @@ RUN apk -U --no-cache add \
     && groupadd -r safeguard \
     && useradd -r -g safeguard -s /bin/bash safeguard \
     && mkdir -p /home/safeguard \
+    && echo -e "{\n    \"HttpsPort\": "4443"\n}" > /home/safeguard/appsettings.json \
     && chown -R safeguard:safeguard /home/safeguard \
-    && chown -R safeguard:safeguard /usr/share \
-    && echo -e "{\n    \"HttpsPort\": "4443"\n}" > /home/safeguard/appsettings.json
+    && chown -R safeguard:safeguard /usr/share
 
 
 USER safeguard

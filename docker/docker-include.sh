@@ -3,9 +3,7 @@
 print_usage()
 {
     >&2 cat <<EOF
-USAGE: run-docker.sh [imagetype] [-h]
-
-  -h  Show help and exit
+USAGE: get_safeguard_dockerfile [imagetype]
 
 imagetype should be one of the following:
 
