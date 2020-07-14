@@ -11,7 +11,7 @@ pool:
 
 variables:
   solution: '**/*.sln'
-  setupprojectdir = '**/SafeguardDevOpsServiceWix'
+  setupprojectdir: '**/SafeguardDevOpsServiceWix'
   setupproject: '$(setupprojectdir)/*.wixproj'
   setupproject_buildOutput: '$(setupprojectdir)/bin'
   buildPlatform: 'x64'
