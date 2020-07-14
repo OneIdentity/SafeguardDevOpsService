@@ -11,8 +11,8 @@ pool:
 
 variables:
   solution: '**/*.sln'
-  setupprojectdir: '**/SafeguardDevOpsServiceWix'
-  setupproject: '$(setupprojectdir)/*.wixproj'
+  setupprojectdir: 'SafeguardDevOpsServiceWix'
+  setupproject: '**/$(setupprojectdir)/*.wixproj'
   buildPlatform: 'x64'
   buildConfiguration: 'Debug'
 
@@ -31,7 +31,7 @@ steps:
 
 - task: CopyFiles@2
   inputs:
-    sourceFolder: '$(setupprojectdir)'
+    sourceFolder: '$(Build.SourcesDirectory)/$(setupprojectdir)'
     contents: '**/bin/**'
     targetFolder: $(Build.ArtifactStagingDirectory)
 
