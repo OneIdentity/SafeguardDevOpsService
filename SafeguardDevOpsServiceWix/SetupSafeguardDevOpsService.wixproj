@@ -11,13 +11,14 @@
     <Name>SetupSafeguardDevOpsService</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
-    <DefineConstants>Debug;SourceDir=bin\debug\publish</DefineConstants>
+    <DefineConstants>Debug;SourceDir=bin\$(Configuration)\publish</DefineConstants>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
-    <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
+    <DefineConstants>SourceDir=bin\$(Configuration)\publish</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Component-generated.wxs" />
