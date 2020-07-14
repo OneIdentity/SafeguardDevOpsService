@@ -1,6 +1,4 @@
 ﻿
-using Newtonsoft.Json;
-
 namespace OneIdentity.DevOps.Data.Spp
 {
     /// <summary>

@@ -50,7 +50,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
             {
                 try
                 {
-                    var authMethod = new TokenAuthMethodInfo(credential ?? "");
+                    var authMethod = new TokenAuthMethodInfo(credential);
                     var vaultClientSettings = new VaultClientSettings(_configuration[AddressName], authMethod);
                     _vaultClient = new VaultClient(vaultClientSettings);
                     _logger.Information($"Plugin {Name} successfully authenticated.");

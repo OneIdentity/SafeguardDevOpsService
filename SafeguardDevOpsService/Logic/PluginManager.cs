@@ -41,7 +41,8 @@ namespace OneIdentity.DevOps.Logic
 
         private void OnChanged(object source, FileSystemEventArgs e)
         {
-            if (Path.GetExtension(e.FullPath).ToLower().Equals(WellKnownData.DllExtension))
+            var fileExtension = Path.GetExtension(e.FullPath);
+            if (fileExtension != null && fileExtension.ToLower().Equals(WellKnownData.DllExtension))
             {
                 //Give the file copy just a half of a second to settle down.
                 Thread.Sleep(500);
@@ -191,6 +192,12 @@ namespace OneIdentity.DevOps.Logic
                     _logger.Information($"Loading plugin from path {pluginPath}.");
                     var plugin = (ILoadablePlugin) Activator.CreateInstance(type);
 
+                    if (plugin == null)
+                    {
+                        _logger.Warning($"Unable to instantiate plugin from {pluginPath}");
+                        continue;
+                    }
+                    
                     var name = plugin.Name;
                     var description = plugin.Description;
                     plugin.SetLogger(_logger);

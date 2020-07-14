@@ -26,8 +26,11 @@
     <ProjectReference Include="..\..\DevOpsPluginCommon\DevOpsPluginCommon.csproj" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="powershell -ExecutionPolicy Unrestricted $(SolutionDir)zipplugin.ps1 $(OutDir) $(SolutionDir)bin\$(ProjectName).zip" />
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition=" '$(OS)' == 'Windows_NT' ">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Unrestricted $(SolutionDir)zipplugin.ps1 $(ProjectDir) $(OutDir) $(SolutionDir)bin\$(ProjectName).zip &#xD;&#xA;" />
+  </Target>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition=" '$(OS)' != 'Windows_NT' And '$(SelfContained)' != 'true' " >
+    <Exec Command="$(SolutionDir)zipplugin.sh $(ProjectDir) $(OutDir) $(SolutionDir)bin\$(ProjectName).zip" />
   </Target>
 
 </Project>

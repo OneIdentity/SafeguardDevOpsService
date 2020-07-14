@@ -1,0 +1,27 @@
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine3.12
+MAINTAINER support@oneidentity.com
+
+RUN apk -U --no-cache add \
+        shadow \
+        vim \
+        coreutils \
+        util-linux \
+        bash \
+    && rm /usr/bin/vi \
+    && ln -s /usr/bin/vim /usr/bin/vi \
+    && groupadd -r safeguard \
+    && useradd -r -g safeguard -s /bin/bash safeguard \
+    && mkdir -p /home/safeguard \
+    && echo -e "{\n    \"HttpsPort\": "4443"\n}" > /home/safeguard/appsettings.json \
+    && chown -R safeguard:safeguard /home/safeguard \
+    && chown -R safeguard:safeguard /usr/share
+
+
+USER safeguard
+WORKDIR /home/safeguard
+
+COPY ["SafeguardDevOpsService/bin/Release/linux-musl-x64/publish/SafeguardDevOpsService", "/home/safeguard/"]
+COPY ["docker/run-devops.sh", "/home/safeguard/run-devops.sh"]
+
+ENTRYPOINT ["/bin/bash"]
+CMD ["-c", "/home/safeguard/run-devops.sh"]

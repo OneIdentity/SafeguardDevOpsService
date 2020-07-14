@@ -8,7 +8,7 @@ using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.Logic
 {
-    class CertificateHelper
+    internal class CertificateHelper
     {
         public static bool CertificateValidation(object sender, X509Certificate certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors, Serilog.ILogger logger, IConfigurationRepository configDb)
@@ -48,11 +48,11 @@ namespace OneIdentity.DevOps.Logic
 
             return true;
         }
-        
+
         public static X509Certificate2 CreateDefaultSSLCertificate()
         {
-            int certSize = 2048;
-            string certSubjectName = "CN=DevOpsServiceServerSSL";
+            var certSize = 2048;
+            var certSubjectName = "CN=DevOpsServiceServerSSL";
 
             using (RSA rsa = RSA.Create(certSize))
             {
