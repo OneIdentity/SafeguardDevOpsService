@@ -11,7 +11,9 @@ pool:
 
 variables:
   solution: '**/*.sln'
-  setupproject: '**/SafeguardDevOpsServiceWix/*.wixproj'
+  setupprojectdir = '**/SafeguardDevOpsServiceWix'
+  setupproject: '$(setupprojectdir)/*.wixproj'
+  setupproject_buildOutput: '$(setupprojectdir)/bin'
   buildPlatform: 'x64'
   buildConfiguration: 'Debug'
 
@@ -28,9 +30,11 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
+- script: echo $(Build.BuildNumber)
+
 - task: CopyFiles@2
   inputs:
-    contents: '_buildOutput/**'
+    contents: '$(setupproject_buildOutput)'
     targetFolder: $(Build.ArtifactStagingDirectory)
 
 # Publish build artifacts
