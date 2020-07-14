@@ -38,11 +38,12 @@ echo "Building for tiny Linux distros ..."
 dotnet publish -v d -r linux-musl-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
 
 DockerFile=`get_safeguard_dockerfile $ImageType`
+ImageName="oneidentity/safeguard-devops:$Version$ImageType"
 
-if [ ! -z "$(docker images -q oneidentity/safeguard-devops:$Version$ImageType)" ]; then
-    echo "Cleaning up the old image: oneidentity/safeguard-devops:$Version$ImageType ..."
-    docker rmi --force "oneidentity/safeguard-devops:$Version$ImageType"
+if [ ! -z "$(docker images -q $ImageName)" ]; then
+    echo "Cleaning up the old image: $ImageName ..."
+    docker rmi --force "$ImageName"
 fi
-echo "Building a new image: oneidentity/safeguard-devops:$Version$ImageType ..."
-docker build --no-cache -t "oneidentity/safeguard-devops:$Version$ImageType" -f "docker/$DockerFile" $ScriptDir
+echo "Building a new image: $ImageName ..."
+docker build --no-cache -t "$ImageName" -f "docker/$DockerFile" $ScriptDir
 set +e

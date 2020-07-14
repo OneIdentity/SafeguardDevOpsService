@@ -65,13 +65,13 @@ echo "Rebuilding the image: $ImageName ..."
 $ScriptDir/build-docker.sh $ImageType
 set +e
 
-# Clean up any old container with that name
+echo "Clean up any old container named $ContainerName ..."
 docker ps -a | grep $ContainerName
 if [ $? -eq 0 ]; then
     docker rm $ContainerName
 fi
 
-echo -e "Running interactive container for $ImageName"
+echo -e "Running interactive container ($ContainerName) for $ImageName on port $Port ..."
 docker run \
     --name $ContainerName \
     -p $Port:4443 \
