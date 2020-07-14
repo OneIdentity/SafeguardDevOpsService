@@ -36,8 +36,13 @@ if ($Exists)
 
 if ($DebugContainer)
 {
-    $AlternateCommand = "/bin/bash"
+    & docker run --name "$ContainerName" -p "${Port}:4443" --cap-add=NET_ADMIN -it "$ImageName" "/bin/bash"
+}
+else
+{
+    Write-Host "Running interactive container ($ContainerName) for $ImageName on port $Port ..."
+    & docker run --name "$ContainerName" -p "${Port}:4443" --cap-add=NET_ADMIN -it "$ImageName"
 }
 
-Write-Host "Running interactive container ($ContainerName) for $ImageName on port $Port ..."
-& docker run --name "$ContainerName" -p "$Port:4443" --cap-add=NET_ADMIN -it "$ImageName" "$AlternateCommand"
+
+
