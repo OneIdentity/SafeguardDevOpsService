@@ -8,13 +8,13 @@ using OneIdentity.DevOps.Logic;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 #pragma warning disable 1573
 
-namespace OneIdentity.DevOps.Controllers
+namespace OneIdentity.DevOps.Controllers.V1
 {
     /// <summary>
     /// 
     /// </summary>
     [ApiController]
-    [Route("service/devops/[controller]")]
+    [Route("service/devops/v1/[controller]")]
     public class SafeguardController : ControllerBase
     {
         private readonly Serilog.ILogger _logger;
