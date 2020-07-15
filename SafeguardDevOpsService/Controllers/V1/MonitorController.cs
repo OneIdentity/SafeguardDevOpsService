@@ -3,13 +3,13 @@ using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Logic;
 
-namespace OneIdentity.DevOps.Controllers
+namespace OneIdentity.DevOps.Controllers.V1
 {
     /// <summary>
     /// 
     /// </summary>
     [ApiController]
-    [Route("service/devops/[controller]")]
+    [Route("service/devops/v1/[controller]")]
     public class MonitorController : ControllerBase
     {
         private readonly Serilog.ILogger _logger;
