@@ -58,7 +58,7 @@
                   Execute="immediate"
                   Impersonate="yes"
                   Return="ignore"
-                  ExeCommand='/c rmdir "[AppDataFolder]!(loc.ProductNameFolder)" /s /q' />
+                  ExeCommand='/c rmdir "[CommonAppDataFolder]!(loc.ProductNameFolder)" /s /q' />
     <CustomAction Id="CLEANUP_EXT_DATA_ON_UNINSTALL"
                   Property="ExecuteCommand"
                   Execute="immediate"
