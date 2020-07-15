@@ -6,9 +6,9 @@
     public class SafeguardData
     {
         /// <summary>
-        /// Network address
+        /// Safeguard appliance network address
         /// </summary>
-        public string NetworkAddress { get; set; }
+        public string ApplianceAddress { get; set; }
         /// <summary>
         /// Api version
         /// </summary>
