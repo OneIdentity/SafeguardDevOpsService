@@ -61,7 +61,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
             }
         }
 
-        public bool SetPassword(string account, string password)
+        public bool SetPassword(string asset, string account, string password)
         {
             if (_keyVaultClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
             {
@@ -71,12 +71,12 @@ namespace OneIdentity.DevOps.AzureKeyVault
 
             try
             {
-                Task.Run(async () => await _keyVaultClient.SetSecretAsync(_configuration[VaultUriName], account, password));
+                Task.Run(async () => await _keyVaultClient.SetSecretAsync(_configuration[VaultUriName], $"{asset}-{account}", password));
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {account}: {ex.Message}.");
+                _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
                 return false;
             }
         }

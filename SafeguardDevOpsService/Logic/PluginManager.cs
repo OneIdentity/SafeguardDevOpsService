@@ -102,13 +102,13 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public bool SendPassword(string name, string accountName, SecureString password)
+        public bool SendPassword(string name, string assetName, string accountName, SecureString password)
         {
             if (LoadedPlugins.ContainsKey(name))
             {
                 var pluginInstance = LoadedPlugins[name];
                 if (pluginInstance != null)
-                    return pluginInstance.SetPassword(accountName, password.ToInsecureString());
+                    return pluginInstance.SetPassword(assetName, accountName, password.ToInsecureString());
             }
             else
             {
