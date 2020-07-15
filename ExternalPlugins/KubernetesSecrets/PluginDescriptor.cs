@@ -62,7 +62,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             }
         }
 
-        public bool SetPassword(string account, string password)
+        public bool SetPassword(string asset, string account, string password)
         {
             if (_client == null)
             {
@@ -82,7 +82,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             V1Secret secret = null;
             try
             {
-                secret = _client.ReadNamespacedSecret(account, vaultNamespace);
+                secret = _client.ReadNamespacedSecret($"{asset}-{account}", vaultNamespace);
             }
             catch (Exception)
             {
@@ -101,7 +101,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                         StringData = passwordData,
                         Metadata = new V1ObjectMeta()
                         {
-                            Name = account,
+                            Name = $"{asset}-{account}",
                             NamespaceProperty = vaultNamespace
                         }
                     };
@@ -110,15 +110,15 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                 else
                 {
                     secret.StringData = passwordData;
-                    _client.ReplaceNamespacedSecret(secret, account, vaultNamespace);
+                    _client.ReplaceNamespacedSecret(secret, $"{asset}-{account}", vaultNamespace);
                 }
 
-                _logger.Information($"Password for account {account} has been successfully stored in the vault.");
+                _logger.Information($"Password for {asset}-{account} has been successfully stored in the vault.");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {account}: {ex.Message}.");
+                _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
                 return false;
             }
         }
