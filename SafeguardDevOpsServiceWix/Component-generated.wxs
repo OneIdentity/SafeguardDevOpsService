@@ -134,6 +134,9 @@
             <Component Id="Autofac.Extensions.DependencyInjection.dll" Guid="*">
                 <File Id="Autofac.Extensions.DependencyInjection.dll" KeyPath="yes" Source="$(var.SourceDir)\Autofac.Extensions.DependencyInjection.dll" />
             </Component>
+            <Component Id="AutofacSerilogIntegration.dll" Guid="*">
+                <File Id="AutofacSerilogIntegration.dll" KeyPath="yes" Source="$(var.SourceDir)\AutofacSerilogIntegration.dll" />
+            </Component>
             <Component Id="clrcompression.dll" Guid="*">
                 <File Id="clrcompression.dll" KeyPath="yes" Source="$(var.SourceDir)\clrcompression.dll" />
             </Component>
@@ -410,6 +413,9 @@
             <Component Id="Microsoft.DiaSymReader.Native.amd64.dll" Guid="*">
                 <File Id="Microsoft.DiaSymReader.Native.amd64.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.DiaSymReader.Native.amd64.dll" />
             </Component>
+            <Component Id="Microsoft.DotNet.PlatformAbstractions.dll" Guid="*">
+                <File Id="Microsoft.DotNet.PlatformAbstractions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.DotNet.PlatformAbstractions.dll" />
+            </Component>
             <Component Id="Microsoft.Extensions.Caching.Abstractions.dll" Guid="*">
                 <File Id="Microsoft.Extensions.Caching.Abstractions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.Extensions.Caching.Abstractions.dll" />
             </Component>
@@ -454,6 +460,9 @@
             </Component>
             <Component Id="Microsoft.Extensions.DependencyInjection.dll" Guid="*">
                 <File Id="Microsoft.Extensions.DependencyInjection.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.Extensions.DependencyInjection.dll" />
+            </Component>
+            <Component Id="Microsoft.Extensions.DependencyModel.dll" Guid="*">
+                <File Id="Microsoft.Extensions.DependencyModel.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.Extensions.DependencyModel.dll" />
             </Component>
             <Component Id="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll" Guid="*">
                 <File Id="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll" />
@@ -614,20 +623,35 @@
             <Component Id="SafeguardDevOpsService.xml" Guid="*">
                 <File Id="SafeguardDevOpsService.xml" KeyPath="yes" Source="$(var.SourceDir)\SafeguardDevOpsService.xml" />
             </Component>
+            <Component Id="Serilog.AspNetCore.dll" Guid="*">
+                <File Id="Serilog.AspNetCore.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.AspNetCore.dll" />
+            </Component>
             <Component Id="Serilog.dll" Guid="*">
                 <File Id="Serilog.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.dll" />
             </Component>
             <Component Id="Serilog.Extensions.Autofac.DependencyInjection.dll" Guid="*">
                 <File Id="Serilog.Extensions.Autofac.DependencyInjection.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Extensions.Autofac.DependencyInjection.dll" />
             </Component>
+            <Component Id="Serilog.Extensions.Hosting.dll" Guid="*">
+                <File Id="Serilog.Extensions.Hosting.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Extensions.Hosting.dll" />
+            </Component>
             <Component Id="Serilog.Extensions.Logging.dll" Guid="*">
                 <File Id="Serilog.Extensions.Logging.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Extensions.Logging.dll" />
+            </Component>
+            <Component Id="Serilog.Formatting.Compact.dll" Guid="*">
+                <File Id="Serilog.Formatting.Compact.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Formatting.Compact.dll" />
+            </Component>
+            <Component Id="Serilog.Settings.Configuration.dll" Guid="*">
+                <File Id="Serilog.Settings.Configuration.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Settings.Configuration.dll" />
             </Component>
             <Component Id="Serilog.Sinks.ColoredConsole.dll" Guid="*">
                 <File Id="Serilog.Sinks.ColoredConsole.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Sinks.ColoredConsole.dll" />
             </Component>
             <Component Id="Serilog.Sinks.Console.dll" Guid="*">
                 <File Id="Serilog.Sinks.Console.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Sinks.Console.dll" />
+            </Component>
+            <Component Id="Serilog.Sinks.Debug.dll" Guid="*">
+                <File Id="Serilog.Sinks.Debug.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Sinks.Debug.dll" />
             </Component>
             <Component Id="Serilog.Sinks.File.dll" Guid="*">
                 <File Id="Serilog.Sinks.File.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Sinks.File.dll" />
@@ -1211,6 +1235,7 @@
             <ComponentRef Id="aspnetcorev2_inprocess.dll" />
             <ComponentRef Id="Autofac.dll" />
             <ComponentRef Id="Autofac.Extensions.DependencyInjection.dll" />
+            <ComponentRef Id="AutofacSerilogIntegration.dll" />
             <ComponentRef Id="clrcompression.dll" />
             <ComponentRef Id="clretwrc.dll" />
             <ComponentRef Id="clrjit.dll" />
@@ -1303,6 +1328,7 @@
             <ComponentRef Id="Microsoft.AspNetCore.WebUtilities.dll" />
             <ComponentRef Id="Microsoft.CSharp.dll" />
             <ComponentRef Id="Microsoft.DiaSymReader.Native.amd64.dll" />
+            <ComponentRef Id="Microsoft.DotNet.PlatformAbstractions.dll" />
             <ComponentRef Id="Microsoft.Extensions.Caching.Abstractions.dll" />
             <ComponentRef Id="Microsoft.Extensions.Caching.Memory.dll" />
             <ComponentRef Id="Microsoft.Extensions.Configuration.Abstractions.dll" />
@@ -1318,6 +1344,7 @@
             <ComponentRef Id="Microsoft.Extensions.Configuration.Xml.dll" />
             <ComponentRef Id="Microsoft.Extensions.DependencyInjection.Abstractions.dll" />
             <ComponentRef Id="Microsoft.Extensions.DependencyInjection.dll" />
+            <ComponentRef Id="Microsoft.Extensions.DependencyModel.dll" />
             <ComponentRef Id="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll" />
             <ComponentRef Id="Microsoft.Extensions.Diagnostics.HealthChecks.dll" />
             <ComponentRef Id="Microsoft.Extensions.FileProviders.Abstractions.dll" />
@@ -1371,11 +1398,16 @@
             <ComponentRef Id="SafeguardDevOpsService.pdb" />
             <ComponentRef Id="SafeguardDevOpsService.runtimeconfig.json" />
             <ComponentRef Id="SafeguardDevOpsService.xml" />
+            <ComponentRef Id="Serilog.AspNetCore.dll" />
             <ComponentRef Id="Serilog.dll" />
             <ComponentRef Id="Serilog.Extensions.Autofac.DependencyInjection.dll" />
+            <ComponentRef Id="Serilog.Extensions.Hosting.dll" />
             <ComponentRef Id="Serilog.Extensions.Logging.dll" />
+            <ComponentRef Id="Serilog.Formatting.Compact.dll" />
+            <ComponentRef Id="Serilog.Settings.Configuration.dll" />
             <ComponentRef Id="Serilog.Sinks.ColoredConsole.dll" />
             <ComponentRef Id="Serilog.Sinks.Console.dll" />
+            <ComponentRef Id="Serilog.Sinks.Debug.dll" />
             <ComponentRef Id="Serilog.Sinks.File.dll" />
             <ComponentRef Id="Serilog.Sinks.RollingFile.dll" />
             <ComponentRef Id="SOS_README.md" />
