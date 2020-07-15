@@ -1,0 +1,554 @@
+# Make sure that safeguard-ps is installed
+if (-not (Get-Module safeguard-ps)) { Import-Module safeguard-ps }
+if (-not (Get-Module safeguard-ps))
+{
+    throw "safeguard-devops requires safeguard-ps.  Please using Install-Module to install safeguard-ps."
+}
+# Global session variable for login information
+Remove-Variable -Name "SgDevOpsSession" -Scope Global -ErrorAction "SilentlyContinue"
+New-Variable -Name "SgDevOpsSession" -Scope Global -Value $null
+$MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
+    Set-Variable -Name "SgDevOpsSession" -Scope Global -Value $null -ErrorAction "SilentlyContinue"
+}
+# Make sure SSL is configured properly to use TLS instead
+Edit-SslVersionSupport
+
+
+# Helpers
+function Resolve-ServiceAddressAndPort
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$ServiceAddress,
+        [Parameter(Mandatory=$false, Position=1)]
+        [int]$ServicePort
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if (-not $ServiceAddress)
+    {
+        if ($SgDevOpsSession -and $SgDevOpsSession.ServiceAddress)
+        {
+            $ServiceAddress = $SgDevOpsSession.ServiceAddress
+        }
+        else
+        {
+            $ServiceAddress = (Read-Host "ServiceAddress")
+        }
+    }
+
+    if ($ServicePort)
+    {
+        $local:SpecifiedPort = $ServicePort
+    }
+
+    if ($ServiceAddress.ToCharArray() -contains ':')
+    {
+        $local:Values = $ServiceAddress.Split(":");
+        $ServiceAddress = $local:Values[0]
+        if ($local:SpecifiedPort -and $local:SpecifiedPort -ne $ServicePort)
+        {
+            throw "Specified different ports in ServiceAddress (${ServiceAddress}) and in ServicePort (${ServicePort})"
+        }
+        $ServicePort = [int]$local:Values[1]
+    }
+
+    if (-not $local:SpecifiedPort -and -not $ServicePort)
+    {
+        if ($SgDevOpsSession -and $SgDevOpsSession.ServicePort)
+        {
+            $ServicePort = $SgDevOpsSession.ServicePort
+        }
+        else
+        {
+            $ServicePort = 443 # default
+        }
+    }
+
+    @{
+        ServiceAddress = $ServiceAddress;
+        ServicePort = $ServicePort
+    }
+}
+function Get-ApplianceToken
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$Appliance,
+        [Parameter(Mandatory=$false)]
+        [switch]$Gui,
+        [Parameter(Mandatory=$false)]
+        [switch]$Insecure,
+        [Parameter(Mandatory=$false)]
+        [int]$ApplianceApiVersion = 3
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if ($SafeguardSession -and $SafeguardSession.AccessToken)
+    {
+        $SafeguardSession.AccessToken
+    }
+    else
+    {
+        if ($Gui)
+        {
+            (Connect-Safeguard $Appliance -Gui -Version $ApplianceApiVersion -Insecure:$Insecure -NoSessionVariable)
+        }
+        else
+        {
+            (Connect-Safeguard $Appliance -Version $ApplianceApiVersion -Insecure:$Insecure -NoSessionVariable)
+        }
+    }
+}
+function New-SgDevOpsUrl
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true,Position=3)]
+        [string]$Url,
+        [Parameter(Mandatory=$false)]
+        [object]$Parameters
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if ($Parameters -and $Parameters.Length -gt 0)
+    {
+        $Url += "?"
+        $Parameters.Keys | ForEach-Object {
+            $Url += ($_ + "=" + [uri]::EscapeDataString($Parameters.Item($_)) + "&")
+        }
+        $Url = $local:Url -replace ".$"
+    }
+    $Url
+}
+function Invoke-WithoutBody
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [object]$HttpSession,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$Method,
+        [Parameter(Mandatory=$true, Position=2)]
+        [string]$Url,
+        [Parameter(Mandatory=$true, Position=3)]
+        [object]$Headers,
+        [Parameter(Mandatory=$false)]
+        [object]$Parameters,
+        [Parameter(Mandatory=$false)]
+        [string]$InFile,
+        [Parameter(Mandatory=$false)]
+        [string]$OutFile,
+        [Parameter(Mandatory=$false)]
+        [int]$Timeout
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $Url = (New-SgDevOpsUrl $Url -Parameters $Parameters)
+    Write-Verbose "Url=$($Url)"
+    Write-Verbose "Parameters=$(ConvertTo-Json -InputObject $Parameters)"
+    if ($InFile)
+    {
+        Write-Verbose "File-based payload -- $InFile"
+        Invoke-RestMethod -Method $Method -Headers $Headers -Uri $Url -InFile $InFile -OutFile $OutFile -TimeoutSec $Timeout -WebSession $HttpSession
+    }
+    else
+    {
+        Invoke-RestMethod -Method $Method -Headers $Headers -Uri $Url -OutFile $OutFile -TimeoutSec $Timeout -WebSession $HttpSession
+    }
+}
+function Invoke-WithBody
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [object]$HttpSession,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$Method,
+        [Parameter(Mandatory=$true, Position=2)]
+        [string]$Url,
+        [Parameter(Mandatory=$true, Position=3)]
+        [object]$Headers,
+        [Parameter(Mandatory=$false)]
+        [object]$Parameters,
+        [Parameter(Mandatory=$false)]
+        [object]$Body,
+        [Parameter(Mandatory=$false)]
+        [object]$JsonBody,
+        [Parameter(Mandatory=$false)]
+        [string]$OutFile,
+        [Parameter(Mandatory=$false)]
+        [int]$Timeout
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:BodyInternal = $JsonBody
+    if ($Body)
+    {
+        $local:BodyInternal = (ConvertTo-Json -Depth 20 -InputObject $Body)
+    }
+    $Url = (New-SgDevOpsUrl $Url -Parameters $Parameters)
+    Write-Verbose "Url=$($Url)"
+    Write-Verbose "Parameters=$(ConvertTo-Json -InputObject $Parameters)"
+    Write-Verbose "---Request Body---"
+    Write-Verbose "$($local:BodyInternal)"
+
+    Invoke-RestMethod -Method $Method -Headers $Headers -Uri $Url `
+            -Body ([System.Text.Encoding]::UTF8.GetBytes($local:BodyInternal)) `
+            -OutFile $OutFile -TimeoutSec $Timeout -WebSession $HttpSession
+
+}
+function Invoke-Internal
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [object]$HttpSession,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$Method,
+        [Parameter(Mandatory=$true, Position=2)]
+        [string]$Url,
+        [Parameter(Mandatory=$true, Position=3)]
+        [object]$Headers,
+        [Parameter(Mandatory=$false)]
+        [string]$Parameters,
+        [Parameter(Mandatory=$false)]
+        [object]$Body,
+        [Parameter(Mandatory=$false)]
+        [object]$JsonBody,
+        [Parameter(Mandatory=$false)]
+        [string]$InFile,
+        [Parameter(Mandatory=$false)]
+        [string]$OutFile,
+        [Parameter(Mandatory=$false)]
+        [int]$Timeout
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    try
+    {
+        switch ($Method.ToLower())
+        {
+            {$_ -in "get","delete"} {
+                Invoke-WithoutBody $HttpSession $Method $Url $Headers -Parameters $Parameters -Timeout $Timeout
+                break
+            }
+            {$_ -in "put","post"} {
+                if ($InFile)
+                {
+                    Invoke-WithoutBody $HttpSession $Method $Version $Url $Headers -Parameters $Parameters -InFile $InFile -OutFile $OutFile -Timeout $Timeout
+                }
+                else
+                {
+                    Invoke-WithBody $HttpSession $Method $Url $Headers -Parameters $Parameters  -Body $Body -JsonBody $JsonBody -OutFile $OutFile -Timeout $Timeout
+                }
+                break
+            }
+        }
+    }
+    catch
+    {
+        throw $_.Exception
+
+        # TODO: exception handling
+        <#
+        Import-Module -Name "$PSScriptRoot\sg-utilities.psm1" -Scope Local
+        Out-SafeguardExceptionIfPossible $_.Exception
+        #>
+    }
+}
+
+
+function Get-SgDevOpsStatus
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$ServiceAddress,
+        [Parameter(Mandatory=$false, Position=1)]
+        [int]$ServicePort,
+        [Parameter(Mandatory=$false)]
+        [switch]$Insecure
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    try
+    {
+        Edit-SslVersionSupport
+        if ($Insecure)
+        {
+            Disable-SslVerification
+            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+        }
+        $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
+        $ServiceAddress = $local:Resolved.ServiceAddress
+        $ServicePort = $local:Resolved.ServicePort
+        Invoke-RestMethod -Method GET -Uri "https://${ServiceAddress}:${ServicePort}/service/devops/Safeguard" -Headers @{
+                "Accept" = "application/json";
+                "Content-type" = "application/json";
+            }
+    }
+    finally
+    {
+        if ($Insecure)
+        {
+            Enable-SslVerification
+            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+        }
+    }
+}
+
+function Initialize-SgDevOps
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$Appliance,
+        [Parameter(Mandatory=$false, Position=1)]
+        [string]$ServiceAddress,
+        [Parameter(Mandatory=$false)]
+        [int]$ServicePort,
+        [Parameter(Mandatory=$false)]
+        [switch]$Gui,
+        [Parameter(Mandatory=$false)]
+        [switch]$Insecure,
+        [Parameter(Mandatory=$false)]
+        [switch]$Force,
+        [Parameter(Mandatory=$false)]
+        [int]$ApplianceApiVersion = 3,
+        [Parameter(Mandatory=$false)]
+        [int]$ServiceApiVersion = 1
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    # Initial check to status is always done with Insecure flag... out of box Safeguard DevOps Service uses a self-signed certificate
+    $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
+    $ServiceAddress = $local:Resolved.ServiceAddress
+    $ServicePort = $local:Resolved.ServicePort
+    $local:Status = (Get-SgDevOpsStatus $ServiceAddress $ServicePort -Insecure)
+    if ($local:Status.ApplianceId)
+    {
+        Write-Host -ForegroundColor Yellow "WARNING: This Safeguard DevOps Service is currently associated with ${local:Status.ApplianceName} (${local:Status.ApplianceAddress})."
+        if ($Force)
+        {
+            $local:Confirmed = $true
+        }
+        else
+        {
+            $local:Confirmed = (Get-Confirmation "Initialize Safeguard DevOps Service" "Do you want to associate with a different Safeguard appliance?" `
+                                                 "Initialize." "Cancels this operation.")
+        }
+    }
+    else
+    {
+        # not associated yet
+        $local:Confirmed = $true
+    }
+
+    if ($local:Confirmed)
+    {
+        if (-not $Appliance)
+        {
+            if ($SafeguardSession -and $SafeguardSession.Appliance)
+            {
+                $Appliance = $SafeguardSession.Appliance
+            }
+            else
+            {
+                $Appliance = (Read-Host "Appliance")
+            }
+        }
+        $local:Token = (Get-ApplianceToken $Appliance -Gui:$Gui -Insecure:$Insecure -ApplianceApiVersion $ApplianceApiVersion)
+        try
+        {
+            Edit-SslVersionSupport
+            if ($Insecure)
+            {
+                Disable-SslVerification
+                if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+            }
+
+            $local:Status = (Invoke-RestMethod -Method PUT -Uri "https://${ServiceAddress}:${ServicePort}/service/devops/Safeguard" -Headers @{
+                                    "Accept" = "application/json";
+                                    "Content-type" = "application/json";
+                                    "Authorization" = "spp-token ${local:Token}"
+                                } -Body @"
+{
+    "ApplianceAddress": "$Appliance",
+    "ApiVersion": "$ApplianceApiVersion",
+    "IgnoreSsl": $(([string]([bool]$Insecure)).ToLower())
+}
+"@)
+            $local:Status
+
+        }
+        finally
+        {
+            if ($Insecure)
+            {
+                Enable-SslVerification
+                if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+            }
+        }
+    }
+    else
+    {
+        Write-Host -ForegroundColor Yellow "Operation canceled."
+    }
+}
+
+function Connect-SgDevOps
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$ServiceAddress,
+        [Parameter(Mandatory=$false)]
+        [int]$ServicePort,
+        [Parameter(Mandatory=$false)]
+        [switch]$Gui,
+        [Parameter(Mandatory=$false)]
+        [switch]$Insecure
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
+    $ServiceAddress = $local:Resolved.ServiceAddress
+    $ServicePort = $local:Resolved.ServicePort
+    $local:Status = (Get-SgDevOpsStatus $ServiceAddress $ServicePort -Insecure:$Insecure)
+    if (-not $local:Status.ApplianceId)
+    {
+        Write-Host -ForegroundColor Magenta "Run Initialize-SgDevOps to assocate to a Safeguard appliance."
+        throw "This Safeguard DevOps Service is not associated with a Safeguard appliance"
+    }
+    $local:Token = (Get-ApplianceToken $local:Status.ApplianceAddress -Gui:$Gui -Insecure:$Insecure -ApplianceApiVersion $local:Status.ApiVersion)
+    try
+    {
+        Edit-SslVersionSupport
+        if ($Insecure)
+        {
+            Disable-SslVerification
+            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+        }
+        $local:HttpSession = $null
+        $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/Safeguard/Logon"
+        $local:Response = (Invoke-WebRequest -Method GET -Uri $local:Url -Headers @{
+                "Accept" = "application/json";
+                "Content-type" = "application/json";
+                "Authorization" = "spp-token ${local:Token}"
+            } -SessionVariable HttpSession)
+
+        Write-Verbose "Setting up the SafeguardSession variable"
+
+        Set-Variable -Name "SgDevOpsSession" -Scope Global -Value @{
+            "ServiceAddress" = $ServiceAddress;
+            "ServicePort" = $ServicePort;
+            "AccessToken" = $local:LoginResponse.UserToken;
+            "Session" = $local:HttpSession;
+            "Gui" = $Gui
+        }
+
+        Write-Verbose $local:Response.Content
+
+        Write-Host "Login Successful."
+    }
+    finally
+    {
+        if ($Insecure)
+        {
+            Enable-SslVerification
+            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+        }
+    }
+}
+
+function Invoke-SgDevOpsMethod
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [ValidateSet("Get","Put","Post","Delete",IgnoreCase=$true)]
+        [string]$Method,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$RelativeUrl,
+        [Parameter(Mandatory=$false)]
+        [HashTable]$Parameters,
+        [Parameter(Mandatory=$false)]
+        [object]$Body,
+        [Parameter(Mandatory=$false)]
+        [string]$JsonBody,
+        [Parameter(Mandatory=$false)]
+        [HashTable]$ExtraHeaders
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if (-not $SgDevOpsSession)
+    {
+        Write-Host -ForegroundColor Magenta "Run Connect-SgDevOps to initialize a session."
+        throw "This cmdlet requires a connect session with the Safeguard DevOps Service"
+    }
+
+    $local:Url = "https://$($SgDevOpsSession.ServiceAddress):$($SgDevOpsSession.ServicePort)/service/devops/${RelativeUrl}"
+    $local:Headers = @{
+        "Accept" = "application/json";
+        "Content-type" = "application/json";
+    }
+    foreach ($local:Key in $ExtraHeaders.Keys)
+    {
+        $local:Headers[$local:Key] = $ExtraHeaders[$local:Key]
+    }
+
+    Write-Verbose "---Request---"
+    Write-Verbose "Headers=$(ConvertTo-Json -InputObject $local:Headers)"
+
+    $local:Headers["Authorization"] = "spp-token $($SgDevOpsSession.AccessToken)"
+
+    Invoke-Internal $SgDevOpsSession.Session $Method $local:Url $local:Headers -Parameters $Parameters -Body $Body -JsonBody $JsonBody
+}
+
+function Disconnect-SgDevOps
+{
+    [CmdletBinding()]
+    Param(
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+
+}
+
+function Clear-SgDevOps
+{
+    [CmdletBinding()]
+    Param(
+
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+
+}
