@@ -582,7 +582,7 @@ function Connect-SgDevOps
         Set-Variable -Name "SgDevOpsSession" -Scope Global -Value @{
             "ServiceAddress" = $ServiceAddress;
             "ServicePort" = $ServicePort;
-            "AccessToken" = $local:LoginResponse.UserToken;
+            "AccessToken" = $local:Token;
             "Session" = $local:HttpSession;
             "Gui" = $Gui
         }
