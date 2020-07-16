@@ -37,9 +37,42 @@ namespace OneIdentity.DevOps.Logic
 
         public IEnumerable<Plugin> GetAllPlugins()
         {
-            return _configDb.GetAllPlugins();
+            var plugins = _configDb.GetAllPlugins().ToList();
+            plugins.ForEach(x => x.IsLoaded = _pluginManager.IsLoadedPlugin(x.Name));
+            return plugins;
         }
 
+        private void InstallPlugin(ZipArchive zipArchive)
+        {
+            var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
+            if (manifestEntry == null)
+            {
+                throw LogAndThrow("Failed to find the manifest for the vault plugin.");
+            }
+
+            using (var reader = new StreamReader(manifestEntry.Open()))
+            {
+                var manifest = reader.ReadToEnd();
+                var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
+                if (pluginManifest != null)
+                {
+                    var extractLocation = Path.Combine(WellKnownData.PluginDirPath, pluginManifest.Name);
+                    if (_pluginManager.IsLoadedPlugin(pluginManifest.Name))
+                    {
+                        RestartManager.Instance.ShouldRestart = true;
+
+                        if (!Directory.Exists(WellKnownData.PluginStageDirPath))
+                            Directory.CreateDirectory(WellKnownData.PluginStageDirPath);
+                        extractLocation = Path.Combine(WellKnownData.PluginStageDirPath, pluginManifest.Name);
+                    }
+                    zipArchive.ExtractToDirectory(extractLocation, true);
+                }
+                else
+                {
+                    throw LogAndThrow($"Plugin package does not contain a {WellKnownData.ManifestPattern} file.");
+                }
+            }
+        }
         public void InstallPlugin(IFormFile formFile)
         {
             if (formFile.Length <= 0)
@@ -50,34 +83,7 @@ namespace OneIdentity.DevOps.Logic
                 using (var inputStream = formFile.OpenReadStream())
                 using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
                 {
-                    var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
-                    if (manifestEntry == null)
-                    {
-                        throw LogAndThrow("Failed to find the manifest for the vault plugin.");
-                    }
-
-                    using (var reader = new StreamReader(manifestEntry.Open()))
-                    {
-                        var manifest = reader.ReadToEnd();
-                        var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
-                        if (pluginManifest != null)
-                        {
-                            var extractLocation = WellKnownData.PluginDirPath;
-                            if (_pluginManager.IsLoadedPlugin(pluginManifest.Name))
-                            {
-                                RestartManager.Instance.ShouldRestart = true;
-
-                                if (!Directory.Exists(WellKnownData.PluginStageDirPath))
-                                    Directory.CreateDirectory(WellKnownData.PluginStageDirPath);
-                                extractLocation = WellKnownData.PluginStageDirPath;
-                            }
-                            zipArchive.ExtractToDirectory(extractLocation, true);
-                        }
-                        else
-                        {
-                            throw LogAndThrow($"Plugin package does not contain a {WellKnownData.ManifestPattern} file.");
-                        }
-                    }
+                    InstallPlugin(zipArchive);
                 }
             }
             catch (Exception ex)
@@ -93,16 +99,29 @@ namespace OneIdentity.DevOps.Logic
 
             var bytes = Convert.FromBase64String(base64Plugin);
 
-            using (var inputStream = new MemoryStream(bytes))
-            using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
+            try
             {
-                zipArchive.ExtractToDirectory(WellKnownData.PluginDirPath);
+                using (var inputStream = new MemoryStream(bytes))
+                using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
+                {
+                    InstallPlugin(zipArchive);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndThrow($"Failed to install the vault plugin. {ex.Message}");
             }
         }
 
         public Plugin GetPluginByName(string name)
         {
-            return _configDb.GetPluginByName(name);
+            var plugin = _configDb.GetPluginByName(name);
+            if (plugin != null)
+            {
+                plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
+            }
+
+            return plugin;
         }
 
         public void DeletePluginByName(string name)

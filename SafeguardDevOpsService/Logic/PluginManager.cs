@@ -39,14 +39,15 @@ namespace OneIdentity.DevOps.Logic
             return CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger, _configDb);
         }
 
-        private void OnChanged(object source, FileSystemEventArgs e)
+        private void OnDirectoryCreate(object source, FileSystemEventArgs e)
         {
-            var fileExtension = Path.GetExtension(e.FullPath);
-            if (fileExtension != null && fileExtension.ToLower().Equals(WellKnownData.DllExtension))
+            if (Directory.Exists(e.FullPath))
             {
-                //Give the file copy just a half of a second to settle down.
-                Thread.Sleep(500);
-                LoadRegisterPlugin(e.FullPath);
+                //Give the file copy a few seconds to settle down.  If it takes longer than this to copy, 
+                // the plugin may not load.  But since the copy is a local file system copy, hopefully 
+                // this is enough time.  Otherwise restart will catch it.
+                Thread.Sleep(2000);
+                DetectPlugin(e.FullPath);
             }
         }
 
@@ -57,12 +58,24 @@ namespace OneIdentity.DevOps.Logic
 
             if (Directory.Exists(WellKnownData.PluginStageDirPath))
             {
-                var files = Directory.GetFiles(WellKnownData.PluginStageDirPath);
-                if (files.Length > 0)
+                var directories = Directory.GetDirectories(WellKnownData.PluginStageDirPath);
+                if (directories.Length > 0)
                 {
-                    foreach (var file in files)
+                    foreach (var directory in directories)
                     {
-                        File.Move(file, Path.Combine(pluginDirPath, Path.GetFileName(file)), true);
+                        try
+                        {
+                            var dirInfo = new DirectoryInfo(directory);
+                            var dirPath = Path.Combine(pluginDirPath, dirInfo.Name);
+                            if (Directory.Exists(dirPath))
+                                Directory.Delete(dirPath, true);
+
+                            Directory.Move(directory, Path.Combine(pluginDirPath, dirInfo.Name));
+                        }
+                        catch (Exception ex)
+                        {
+                            Serilog.Log.Logger.Information($"Failed to install plugin {directory}. {ex.Message}");
+                        }
                     }
                 }
                 Directory.Delete(WellKnownData.PluginStageDirPath, true);
@@ -74,11 +87,11 @@ namespace OneIdentity.DevOps.Logic
             _watcher = new FileSystemWatcher()
             {
                 Path = pluginDirPath,
-                NotifyFilter = NotifyFilters.LastWrite,
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.DirectoryName,
                 Filter = "*.*",
                 EnableRaisingEvents = true
             };
-            _watcher.Changed += OnChanged;
+            _watcher.Created += OnDirectoryCreate;
 
             DetectPlugins(pluginDirPath);
         }
@@ -122,11 +135,20 @@ namespace OneIdentity.DevOps.Logic
         {
             if (Directory.Exists(pluginDirPath))
             {
-                var pluginFiles = Directory.GetFiles(pluginDirPath, WellKnownData.DllPattern);
-                foreach (var file in pluginFiles)
+                var pluginDirectories = Directory.GetDirectories(pluginDirPath);
+                foreach (var directory in pluginDirectories)
                 {
-                    LoadRegisterPlugin(file);
+                    DetectPlugin(directory);
                 }
+            }
+        }
+
+        private void DetectPlugin(string pluginDirPath)
+        {
+            var pluginFiles = Directory.GetFiles(pluginDirPath, WellKnownData.DllPattern);
+            foreach (var file in pluginFiles)
+            {
+                LoadRegisterPlugin(file);
             }
         }
 
@@ -178,6 +200,30 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
+        private string ReadPluginVersion(string pluginPath)
+        {
+            var version = "Unknown";
+            var manifestPath = Path.Combine(Path.GetDirectoryName(pluginPath) ?? pluginPath, WellKnownData.ManifestPattern);
+            if (File.Exists(manifestPath))
+            {
+                try
+                {
+                    var manifest = File.ReadAllText(manifestPath);
+                    var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
+                    if (pluginManifest != null)
+                    {
+                        version = pluginManifest.Version ?? version;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to read the manifest file for {pluginPath}. {ex.Message}");
+                }
+            }
+
+            return version;
+        }
+
         private void LoadRegisterPlugin(string pluginPath)
         {
             try
@@ -219,13 +265,16 @@ namespace OneIdentity.DevOps.Logic
 
                     try
                     {
+                        var pluginVersion = ReadPluginVersion(pluginPath);
+
                         if (pluginInfo == null)
                         {
                             pluginInfo = new Plugin
                             {
                                 Name = name,
                                 Description = description,
-                                Configuration = pluginInstance.GetPluginInitialConfiguration()
+                                Configuration = pluginInstance.GetPluginInitialConfiguration(),
+                                Version = pluginVersion
                             };
 
                             _configDb.SavePluginConfiguration(pluginInfo);
@@ -239,6 +288,12 @@ namespace OneIdentity.DevOps.Logic
                             if (configuration != null)
                             {
                                 pluginInstance.SetPluginConfiguration(configuration);
+                            }
+
+                            if (pluginInfo.Version == null || !pluginInfo.Version.Equals(pluginVersion, StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                pluginInfo.Version = pluginVersion;
+                                _configDb.SavePluginConfiguration(pluginInfo);
                             }
                         }
                     }
@@ -295,7 +350,7 @@ namespace OneIdentity.DevOps.Logic
 
         public void Dispose()
         {
-            _watcher.Changed -= OnChanged;
+            _watcher.Created -= OnDirectoryCreate;
             _watcher.Dispose();
         }
     }
