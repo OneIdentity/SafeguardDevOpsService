@@ -1,9 +1,9 @@
 param (
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, Position=0)]
     [string]$projectdir,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, Position=1)]
     [string]$builddir,
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory=$true, Position=2)]
     [string]$zipfilename
 )
 
