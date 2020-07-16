@@ -656,7 +656,23 @@ function Disconnect-SgDevOps
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-
+    try
+    {
+        if (-not $SgDevOpsSession)
+        {
+            Write-Host "Not logged in."
+        }
+        else
+        {
+            Invoke-SgDevOpsMethod GET "Safeguard/Logoff"
+        }
+        Write-Host "Log out Successful."
+    }
+    finally
+    {
+        Write-Host "Session variable removed."
+        Set-Variable -Name "SafeguardSession" -Scope Global -Value $null
+    }
 }
 
 function Clear-SgDevOps
