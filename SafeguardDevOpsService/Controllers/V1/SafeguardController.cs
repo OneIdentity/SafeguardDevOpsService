@@ -56,18 +56,23 @@ namespace OneIdentity.DevOps.Controllers.V1
             return Ok(appliance);
         }
 
-        // /// <summary>
-        // /// Deletes the current Safeguard configuration so that none is in use with the DevOps service.
-        // /// </summary>
-        // /// <response code="204">Success</response>
-        // [UnhandledExceptionError]
-        // [HttpDelete]
-        // public ActionResult DeleteSafeguard([FromServices] ISafeguardLogic safeguard)
-        // {
-        //     safeguard.DeleteSafeguardData();
-        //     return NoContent();
-        //     // TODO: error handling?
-        // }
+        /// <summary>
+        /// Deletes the current Safeguard DevOps service configuration, drops the configuration database and restarts the service. This endpoint
+        /// does not clean up any of the DevOps service related elements in any previously connected Safeguard appliance. (see DELETE /service/devops/{version}/Configuration)
+        /// </summary>
+        /// <response code="204">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpDelete]
+        public ActionResult DeleteSafeguard([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
+        {
+            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+                return BadRequest();
+
+            safeguard.DeleteSafeguardData();
+
+            return NoContent();
+        }
 
         /// <summary>
         /// Get the current DevOps service configuration.
@@ -108,7 +113,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete the DevOps service configuration.  This endpoint includes removing all account mappings, removing the A2A registration, A2A user and trusted
+        /// Delete the DevOps service configuration and restarts the service.  This endpoint includes removing all account mappings, removing the A2A registration, A2A user and trusted
         /// certificate from Safeguard and removing all stored configuration in the DevOps service.
         /// </summary>
         /// <response code="204">No Content</response>

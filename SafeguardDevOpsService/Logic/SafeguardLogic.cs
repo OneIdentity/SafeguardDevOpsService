@@ -777,22 +777,18 @@ namespace OneIdentity.DevOps.Logic
             throw new DevOpsException($"Invalid authorization token or SPP appliance {safeguardData.ApplianceAddress} is unavailable.");
         }
 
+        public void DeleteSafeguardData()
+        {
+            _configDb.DropDatabase();
+            RestartService();
+        }
+
         public void DeleteDevOpsConfiguration()
         {
             DeleteA2ARegistration(A2ARegistrationType.Account);
             DeleteA2ARegistration(A2ARegistrationType.Vault);
             RemoveClientCertificate();
-
-            _configDb.SafeguardAddress = null;
-            _configDb.ApiVersion = null;
-            _configDb.IgnoreSsl = null;
-            _configDb.A2aRegistrationId = null;
-            _configDb.A2aUserId = null;
-            _configDb.UserCsrPrivateKeyBase64Data = null;
-            _configDb.UserCsrBase64Data = null;
-            _configDb.UserCertificateBase64Data = null;
-            _configDb.UserCertificatePassphrase = null;
-            _configDb.UserCertificateThumbprint = null;
+            DeleteSafeguardData();
         }
 
         public void RestartService()
