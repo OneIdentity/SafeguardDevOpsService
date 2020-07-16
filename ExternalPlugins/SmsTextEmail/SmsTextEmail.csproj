@@ -1,10 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>OneIdentity.DevOps.SmsTextEmail</RootNamespace>
+    <AssemblyName>SmsTextEmail</AssemblyName>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <Platforms>x64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -12,8 +19,11 @@
     <OutputPath>bin\Debug\</OutputPath>
   </PropertyGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Unrestricted $(SolutionDir)zipplugin.ps1 $(ProjectDir) $(OutDir) $(SolutionDir)bin\$(ProjectName).zip" />
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition=" '$(OS)' == 'Windows_NT' ">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Unrestricted $(SolutionDir)zipplugin.ps1 $(ProjectDir) $(OutDir) $(SolutionDir)bin\$(ProjectName).zip &#xD;&#xA;" />
+  </Target>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition=" '$(OS)' != 'Windows_NT' And '$(SelfContained)' != 'true' " >
+    <Exec Command="$(SolutionDir)zipplugin.sh $(ProjectDir) $(OutDir) $(SolutionDir)bin\$(ProjectName).zip" />
   </Target>
 
   <ItemGroup>

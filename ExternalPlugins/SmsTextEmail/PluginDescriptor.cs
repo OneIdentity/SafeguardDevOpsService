@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net.Mail;
 using OneIdentity.DevOps.Common;
 using Serilog;
 
-namespace OneIdentity.DevOps.HashiCorpVault
+namespace OneIdentity.DevOps.SmsTextEmail
 {
     public class PluginDescriptor : ILoadablePlugin
     {
