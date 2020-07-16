@@ -28,5 +28,15 @@ namespace OneIdentity.DevOps.Data
         /// A2A registration vault account id
         /// </summary>
         public int? VaultAccountId { get; set; }
+
+        /// <summary>
+        /// Is the plugin loaded
+        /// </summary>
+        public bool IsLoaded { get; set; }
+
+        /// <summary>
+        /// Plugin version
+        /// </summary>
+        public string Version { get; set; }
     }
 }

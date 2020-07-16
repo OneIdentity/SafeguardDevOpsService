@@ -23,19 +23,17 @@ namespace OneIdentity.DevOps.Logic
         public const string DevOpsServiceWebSslCertificate = "CN=DevOpsServiceWebSslCertificate";
 
         public const string ManifestPattern = "Manifest.json";
-        public const string DllExtension = ".dll";
         public const string DllPattern = "*.dll";
 
         public const string PluginDirName = "ExternalPlugins";
         public const string PluginStageName = "PluginStaging";
-        public const string PluginVaultCredentialName = "VaultCredential";
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ?
                 Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule.FileName);
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
-        public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginDirName, PluginStageName);
+        public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
 
         public static string GetSppToken(HttpContext context)
         {
