@@ -13,10 +13,10 @@ namespace OneIdentity.DevOps.ConfigDb
         private bool _disposed;
         private LiteDatabase _configurationDb;
         private X509Certificate2Collection _trustedCertificateCollection = null;
-        private readonly ILiteCollection<Setting> _settings;
-        private readonly ILiteCollection<AccountMapping> _accountMappings;
-        private readonly ILiteCollection<Plugin> _plugins;
-        private readonly ILiteCollection<TrustedCertificate> _trustedCertificates;
+        private ILiteCollection<Setting> _settings;
+        private ILiteCollection<AccountMapping> _accountMappings;
+        private ILiteCollection<Plugin> _plugins;
+        private ILiteCollection<TrustedCertificate> _trustedCertificates;
 
         private const string DbFileName = "Configuration.db";
 
@@ -45,17 +45,23 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public LiteDbConfigurationRepository()
         {
+            InitializeDatabase();
+        }
+
+        private void InitializeDatabase()
+        {
             if (!Directory.Exists(WellKnownData.ProgramDataPath))
                 Directory.CreateDirectory(WellKnownData.ProgramDataPath);
             var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
             Serilog.Log.Logger.Information($"Loading configuration database at {dbPath}.");
 
             _configurationDb = new LiteDatabase(dbPath);
+            _disposed = false;
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
             _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
             _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
             _trustedCertificates = _configurationDb.GetCollection<TrustedCertificate>(TrustedCertificateTableName);
-        }
+        } 
 
         private string GetSimpleSetting(string name)
         {
@@ -430,6 +436,16 @@ namespace OneIdentity.DevOps.ConfigDb
                     WebSslCertificateBase64Data = null;
                 }
             }
+        }
+
+        public void DropDatabase()
+        {
+            Dispose();
+            var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
+            File.Delete(dbPath);
+            Serilog.Log.Logger.Information($"Dropped the database at {dbPath}.");
+
+            InitializeDatabase();
         }
 
         public void Dispose()

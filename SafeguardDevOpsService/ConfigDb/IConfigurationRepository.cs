@@ -48,5 +48,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
         X509Certificate2 UserCertificate { get; }
         X509Certificate2 WebSslCertificate { get; set; }
+
+        void DropDatabase();
     }
 }
