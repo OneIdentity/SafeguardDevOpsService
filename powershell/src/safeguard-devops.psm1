@@ -15,6 +15,131 @@ Edit-SslVersionSupport
 
 
 # Helpers
+function Out-SgDevOpsExceptionIfPossible
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true,Position=0)]
+        [object]$ThrownException
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if (-not ([System.Management.Automation.PSTypeName]"Ex.SgDevOpsMethodException").Type)
+    {
+        Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.Serialization;
+
+namespace Ex
+{
+    public class SgDevOpsMethodException : System.Exception
+    {
+        public SgDevOpsMethodException()
+            : base("Unknown SgDevOpsMethodException") {}
+        public SgDevOpsMethodException(int httpCode, string httpMessage, string errorMessage, string errorJson)
+            : base(httpCode + ": " + httpMessage + " -- " + errorMessage)
+        {
+            HttpStatusCode = httpCode;
+            ErrorMessage = errorMessage;
+            ErrorJson = errorJson;
+        }
+        public SgDevOpsMethodException(string message, Exception innerException)
+            : base(message, innerException) {}
+        protected SgDevOpsMethodException
+            (SerializationInfo info, StreamingContext context)
+            : base(info, context) {}
+        public int HttpStatusCode { get; set; }
+        public string ErrorMessage { get; set; }
+        public string ErrorJson { get; set; }
+    }
+}
+"@
+    }
+    $local:ExceptionToThrow = $ThrownException
+    if ($ThrownException.Response)
+    {
+        Write-Verbose "---Response Status---"
+        if ($ThrownException.Response | Get-Member StatusDescription -MemberType Properties)
+        {
+            $local:StatusDescription = $ThrownException.Response.StatusDescription
+        }
+        elseif ($ThrownException.Response | Get-Member ReasonPhrase -MemberType Properties)
+        {
+            $local:StatusDescription = $ThrownException.Response.ReasonPhrase
+        }
+        Write-Verbose "$([int]$ThrownException.Response.StatusCode) $($local:StatusDescription)"
+        Write-Verbose "---Response Body---"
+        if ($ThrownException.Response | Get-Member GetResponseStream -MemberType Methods)
+        {
+            $local:Stream = $ThrownException.Response.GetResponseStream()
+            $local:Reader = New-Object System.IO.StreamReader($local:Stream)
+            $local:Reader.BaseStream.Position = 0
+            $local:Reader.DiscardBufferedData()
+            $local:ResponseBody = $local:Reader.ReadToEnd()
+            $local:Reader.Dispose()
+        }
+        elseif ($ThrownException.Response | Get-Member Content -MemberType Properties)
+        { # different properties and methods on net core
+            try
+            {
+                $local:ResponseBody = $ThrownException.Response.Content.ReadAsStringAsync().Result
+            }
+            catch {}
+        }
+        if ($local:ResponseBody)
+        {
+            Write-Verbose $local:ResponseBody
+            try # try/catch is a workaround for this bug in PowerShell:
+            {   # https://stackoverflow.com/questions/41272128/does-convertfrom-json-respect-erroraction
+                $local:ResponseObject = (ConvertFrom-Json $local:ResponseBody) # -ErrorAction SilentlyContinue
+            }
+            catch {}
+            if ($local:ResponseObject.Message) # SgDevOps error
+            {
+                $local:Message = $local:ResponseObject.Message
+                $local:ExceptionToThrow = (New-Object Ex.SgDevOpsMethodException -ArgumentList @(
+                    [int]$ThrownException.Response.StatusCode, $local:StatusDescription,
+                    $local:Message, $local:ResponseBody
+                ))
+            }
+            elseif ($local:ResponseObject.error_description) # rSTS error
+            {
+                $local:ExceptionToThrow = (New-Object Ex.SgDevOpsMethodException -ArgumentList @(
+                    [int]$ThrownException.Response.StatusCode, $local:StatusDescription,
+                    $local:ResponseObject.error_description, $local:ResponseBody
+                ))
+            }
+            else # ??
+            {
+                $local:ExceptionToThrow = (New-Object Ex.SgDevOpsMethodException -ArgumentList @(
+                    [int]$ThrownException.Response.StatusCode, $local:StatusDescription,
+                    "Unknown error", $local:ResponseBody
+                ))
+            }
+        }
+        else # ??
+        {
+            $local:ExceptionToThrow = (New-Object Ex.SgDevOpsMethodException -ArgumentList @(
+                [int]$ThrownException.Response.StatusCode, $local:StatusDescription,
+                0, "", "<unable to retrieve response content>"
+            ))
+        }
+    }
+    if ($ThrownException.Status -eq "TrustFailure")
+    {
+        Write-Host -ForegroundColor Magenta "To ignore SSL/TLS trust failure use the -Insecure parameter to bypass server certificate validation."
+    }
+    Write-Verbose "---Exception---"
+    $ThrownException | Format-List * -Force | Out-String | Write-Verbose
+    if ($ThrownException.InnerException)
+    {
+        Write-Verbose "---Inner Exception---"
+        $ThrownException.InnerException | Format-List * -Force | Out-String | Write-Verbose
+    }
+    throw $local:ExceptionToThrow
+}
 function Resolve-ServiceAddressAndPort
 {
     [CmdletBinding()]
@@ -262,13 +387,7 @@ function Invoke-Internal
     }
     catch
     {
-        throw $_.Exception
-
-        # TODO: exception handling
-        <#
-        Import-Module -Name "$PSScriptRoot\sg-utilities.psm1" -Scope Local
-        Out-SafeguardExceptionIfPossible $_.Exception
-        #>
+        Out-SgDevOpsExceptionIfPossible $_.Exception
     }
 }
 
