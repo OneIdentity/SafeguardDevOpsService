@@ -66,7 +66,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
             }
         }
 
-        public bool SetPassword(string account, string password)
+        public bool SetPassword(string asset, string account, string password)
         {
             if (_vaultClient == null)
             {
@@ -81,14 +81,14 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             try
             {
-                _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(account, passwordData, null, _configuration[MountPointName])
+                _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync($"{asset}-{account}", passwordData, null, _configuration[MountPointName])
                     .Wait();
-                _logger.Information($"Password for account {account} has been successfully stored in the vault.");
+                _logger.Information($"Password for {asset} - {account} has been successfully stored in the vault.");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {account}: {ex.Message}.");
+                _logger.Error($"Failed to set the secret for {asset} - {account}: {ex.Message}.");
                 return false;
             }
         }
