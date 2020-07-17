@@ -16,6 +16,9 @@ if (Test-Path $zipfilename)
     Remove-Item $zipfilename
 }
 
+$pluginbindir = (Split-Path -Path $zipfilename -Parent)
+New-Item -ItemType Directory -Force -Path $pluginbindir
+
 Copy-Item -Path $projectdir\Manifest.json $builddir
 Add-Type -Assembly System.IO.Compression.FileSystem
 $compressionLevel = [System.IO.Compression.CompressionLevel]::Optimal
