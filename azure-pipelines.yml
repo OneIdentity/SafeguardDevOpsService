@@ -13,6 +13,7 @@ variables:
   solution: '**/*.sln'
   setupprojectdir: 'SafeguardDevOpsServiceWix'
   setupproject: '**/$(setupprojectdir)/*.wixproj'
+  pluginsdir: 'ExternalPlugins'
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
 
@@ -25,15 +26,27 @@ steps:
 
 - task: VSBuild@1
   inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: VSBuild@1
+  inputs:
     solution: '$(setupproject)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
 - task: CopyFiles@2
   inputs:
-    sourceFolder: '$(Build.SourcesDirectory)/$(setupprojectdir)'
-    contents: '**/bin/**'
+    sourceFolder: '$(Build.SourcesDirectory)\$(setupprojectdir)'
+    contents: '**\bin\**'
     targetFolder: $(Build.ArtifactStagingDirectory)
+
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '$(Build.SourcesDirectory)\$(pluginsdir)\bin\$(buildConfiguration)'
+    contents: '**'
+    targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)
 
 - task: PublishBuildArtifacts@1
   inputs:
