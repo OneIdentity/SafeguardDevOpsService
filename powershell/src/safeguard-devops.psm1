@@ -598,7 +598,7 @@ function Disconnect-SgDevOps
     finally
     {
         Write-Host "Session variable removed."
-        Set-Variable -Name "SafeguardSession" -Scope Global -Value $null
+        Set-Variable -Name "SgDevOpsSession" -Scope Global -Value $null
     }
 }
 
