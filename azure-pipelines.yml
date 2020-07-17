@@ -52,8 +52,8 @@ steps:
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)\$(pluginsdir)\bin\$(buildConfiguration)'
     contents: '**'
-    targetFolder: $(Build.ArtifactStagingDirectory)
-    #targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)
+    #targetFolder: $(Build.ArtifactStagingDirectory)
+    targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)
 
 - task: PublishBuildArtifacts@1
   inputs:
