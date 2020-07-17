@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using OneIdentity.DevOps.Exceptions;
@@ -24,10 +25,15 @@ namespace OneIdentity.DevOps.Attributes
                     devOpsException.StackTrace,
                 });
 
-                var response = devOpsException.ResponseMessage;
                 var errorMessage = devOpsException.Message;
-                var message = $"Executed action: {context.HttpContext.Request.Method} {context.HttpContext.Request.Path} = {context.Exception?.GetType().FullName}: {(int)(response?.StatusCode ?? HttpStatusCode.InternalServerError)} {(response?.StatusCode ?? HttpStatusCode.InternalServerError).ToString()}\r\n{errorMessage}";
+                var message = $"Executed action: {context.HttpContext.Request.Method} {context.HttpContext.Request.Path} = {context.Exception?.GetType().FullName}: {(int)devOpsException.Status} {devOpsException.Status.ToString()}\r\n{errorMessage}";
                 _logger.Error(message);
+
+                context.Result = new DevOpsExceptionResult(context.Exception, devOpsException.Status);
+            }
+            else
+            {
+                context.Result = new DevOpsExceptionResult(context.Exception, HttpStatusCode.InternalServerError);
             }
 
             context.ExceptionHandled = true;
