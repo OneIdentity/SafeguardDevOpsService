@@ -348,7 +348,7 @@ function Invoke-Internal
         [Parameter(Mandatory=$true, Position=3)]
         [object]$Headers,
         [Parameter(Mandatory=$false)]
-        [string]$Parameters,
+        [object]$Parameters,
         [Parameter(Mandatory=$false)]
         [object]$Body,
         [Parameter(Mandatory=$false)]
@@ -392,7 +392,7 @@ function Invoke-Internal
 }
 
 
-function Get-SgDevOpsStatus
+function Get-SgDevOpsApplianceStatus
 {
     [CmdletBinding()]
     Param(
@@ -412,7 +412,7 @@ function Get-SgDevOpsStatus
     try
     {
         Edit-SslVersionSupport
-        if ($Insecure)
+        if ($Insecure -or $SgDevOpsSession.Insecure)
         {
             Disable-SslVerification
             if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
@@ -428,6 +428,80 @@ function Get-SgDevOpsStatus
     }
     finally
     {
+        if ($Insecure -or $SgDevOpsSession.Insecure)
+        {
+            Enable-SslVerification
+            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+        }
+    }
+}
+
+function Connect-SgDevOps
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$ServiceAddress,
+        [Parameter(Mandatory=$false)]
+        [int]$ServicePort,
+        [Parameter(Mandatory=$false)]
+        [switch]$Gui,
+        [Parameter(Mandatory=$false)]
+        [switch]$Insecure,
+        [Parameter(Mandatory=$false)]
+        [int]$ServiceApiVersion = 1
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
+    $ServiceAddress = $local:Resolved.ServiceAddress
+    $ServicePort = $local:Resolved.ServicePort
+    $local:Status = (Get-SgDevOpsApplianceStatus $ServiceAddress $ServicePort -Insecure:$Insecure -ServiceApiVersion $ServiceApiVersion)
+    if (-not $local:Status.ApplianceId)
+    {
+        Write-Host -ForegroundColor Magenta "Run Initialize-SgDevOps to assocate to a Safeguard appliance."
+        throw "This Safeguard DevOps Service is not associated with a Safeguard appliance"
+    }
+    $local:Token = (Get-ApplianceToken $local:Status.ApplianceAddress -Gui:$Gui -Insecure:$Insecure -ApplianceApiVersion $local:Status.ApiVersion)
+    $local:OldProgressPreference = $ProgressPreference
+    try
+    {
+        Edit-SslVersionSupport
+        if ($Insecure)
+        {
+            Disable-SslVerification
+            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+        }
+        $local:HttpSession = $null
+        $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/v${ServiceApiVersion}/Safeguard/Logon"
+        $ProgressPreference = "SilentlyContinue"
+        $local:Response = (Invoke-WebRequest -Method GET -Uri $local:Url -Headers @{
+                "Accept" = "application/json";
+                "Content-type" = "application/json";
+                "Authorization" = "spp-token ${local:Token}"
+            } -SessionVariable HttpSession)
+
+        Write-Verbose "Setting up the SafeguardSession variable"
+
+        Set-Variable -Name "SgDevOpsSession" -Scope Global -Value @{
+            "ServiceAddress" = $ServiceAddress;
+            "ServicePort" = $ServicePort;
+            "Insecure" = $Insecure;
+            "AccessToken" = $local:Token;
+            "Session" = $local:HttpSession;
+            "Gui" = $Gui;
+            "ServiceApiVersion" = $ServiceApiVersion
+        }
+
+        Write-Verbose $local:Response.Content
+
+        Write-Host "Login Successful."
+    }
+    finally
+    {
+        $ProgressPreference = $local:OldProgressPreference
         if ($Insecure)
         {
             Enable-SslVerification
@@ -436,7 +510,99 @@ function Get-SgDevOpsStatus
     }
 }
 
-function Initialize-SgDevOps
+function Invoke-SgDevOpsMethod
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [ValidateSet("Get","Put","Post","Delete",IgnoreCase=$true)]
+        [string]$Method,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$RelativeUrl,
+        [Parameter(Mandatory=$false)]
+        [HashTable]$Parameters,
+        [Parameter(Mandatory=$false)]
+        [object]$Body,
+        [Parameter(Mandatory=$false)]
+        [string]$JsonBody,
+        [Parameter(Mandatory=$false)]
+        [HashTable]$ExtraHeaders
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if (-not $SgDevOpsSession)
+    {
+        Write-Host -ForegroundColor Magenta "Run Connect-SgDevOps to initialize a session."
+        throw "This cmdlet requires a connect session with the Safeguard DevOps Service"
+    }
+
+    try
+    {
+        Edit-SslVersionSupport
+        if ($SgDevOpsSession.Insecure)
+        {
+            Disable-SslVerification
+            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+        }
+
+        $local:Url = "https://$($SgDevOpsSession.ServiceAddress):$($SgDevOpsSession.ServicePort)/service/devops/v$($SgDevOpsSession.ServiceApiVersion)/${RelativeUrl}"
+        $local:Headers = @{
+            "Accept" = "application/json";
+            "Content-type" = "application/json";
+        }
+        foreach ($local:Key in $ExtraHeaders.Keys)
+        {
+            $local:Headers[$local:Key] = $ExtraHeaders[$local:Key]
+        }
+
+        Write-Verbose "---Request---"
+        Write-Verbose "Headers=$(ConvertTo-Json -InputObject $local:Headers)"
+
+        $local:Headers["Authorization"] = "spp-token $($SgDevOpsSession.AccessToken)"
+
+        Invoke-Internal $SgDevOpsSession.Session $Method $local:Url $local:Headers -Parameters $Parameters -Body $Body -JsonBody $JsonBody
+    }
+    finally
+    {
+        if ($SgDevOpsSession.Insecure)
+        {
+            Enable-SslVerification
+            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+        }
+    }
+}
+
+function Disconnect-SgDevOps
+{
+    [CmdletBinding()]
+    Param(
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    try
+    {
+        if (-not $SgDevOpsSession)
+        {
+            Write-Host "Not logged in."
+        }
+        else
+        {
+            Invoke-SgDevOpsMethod GET "Safeguard/Logoff"
+        }
+        Write-Host "Log out Successful."
+    }
+    finally
+    {
+        Write-Host "Session variable removed."
+        Set-Variable -Name "SafeguardSession" -Scope Global -Value $null
+    }
+}
+
+function Initialize-SgDevOpsAppliance
 {
     [CmdletBinding()]
     Param(
@@ -465,10 +631,10 @@ function Initialize-SgDevOps
     $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
     $ServiceAddress = $local:Resolved.ServiceAddress
     $ServicePort = $local:Resolved.ServicePort
-    $local:Status = (Get-SgDevOpsStatus $ServiceAddress $ServicePort -Insecure -ServiceApiVersion $ServiceApiVersion)
+    $local:Status = (Get-SgDevOpsApplianceStatus $ServiceAddress $ServicePort -Insecure -ServiceApiVersion $ServiceApiVersion)
     if ($local:Status.ApplianceId)
     {
-        Write-Host -ForegroundColor Yellow "WARNING: This Safeguard DevOps Service is currently associated with ${local:Status.ApplianceName} (${local:Status.ApplianceAddress})."
+        Write-Host -ForegroundColor Yellow "WARNING: This Safeguard DevOps Service is currently associated with $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
         if ($Force)
         {
             $local:Confirmed = $true
@@ -538,159 +704,39 @@ function Initialize-SgDevOps
     }
 }
 
-function Connect-SgDevOps
+function Clear-SgDevOpsAppliance
 {
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$false, Position=0)]
-        [string]$ServiceAddress,
         [Parameter(Mandatory=$false)]
-        [int]$ServicePort,
-        [Parameter(Mandatory=$false)]
-        [switch]$Gui,
-        [Parameter(Mandatory=$false)]
-        [switch]$Insecure,
-        [Parameter(Mandatory=$false)]
-        [int]$ServiceApiVersion = 1
+        [switch]$Force
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
-    $ServiceAddress = $local:Resolved.ServiceAddress
-    $ServicePort = $local:Resolved.ServicePort
-    $local:Status = (Get-SgDevOpsStatus $ServiceAddress $ServicePort -Insecure:$Insecure -ServiceApiVersion $ServiceApiVersion)
-    if (-not $local:Status.ApplianceId)
+    $local:Status = (Get-SgDevOpsApplianceStatus)
+    if ($local:Status.ApplianceId)
     {
-        Write-Host -ForegroundColor Magenta "Run Initialize-SgDevOps to assocate to a Safeguard appliance."
-        throw "This Safeguard DevOps Service is not associated with a Safeguard appliance"
-    }
-    $local:Token = (Get-ApplianceToken $local:Status.ApplianceAddress -Gui:$Gui -Insecure:$Insecure -ApplianceApiVersion $local:Status.ApiVersion)
-    try
-    {
-        Edit-SslVersionSupport
-        if ($Insecure)
+        Write-Host -ForegroundColor Yellow "WARNING: This Safeguard DevOps Service is currently associated with $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
+        if ($Force)
         {
-            Disable-SslVerification
-            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
-        }
-        $local:HttpSession = $null
-        $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/v${ServiceApiVersion}/Safeguard/Logon"
-        $local:Response = (Invoke-WebRequest -Method GET -Uri $local:Url -Headers @{
-                "Accept" = "application/json";
-                "Content-type" = "application/json";
-                "Authorization" = "spp-token ${local:Token}"
-            } -SessionVariable HttpSession)
-
-        Write-Verbose "Setting up the SafeguardSession variable"
-
-        Set-Variable -Name "SgDevOpsSession" -Scope Global -Value @{
-            "ServiceAddress" = $ServiceAddress;
-            "ServicePort" = $ServicePort;
-            "AccessToken" = $local:Token;
-            "Session" = $local:HttpSession;
-            "Gui" = $Gui;
-            "ServiceApiVersion" = $ServiceApiVersion
-        }
-
-        Write-Verbose $local:Response.Content
-
-        Write-Host "Login Successful."
-    }
-    finally
-    {
-        if ($Insecure)
-        {
-            Enable-SslVerification
-            if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
-        }
-    }
-}
-
-function Invoke-SgDevOpsMethod
-{
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory=$true, Position=0)]
-        [ValidateSet("Get","Put","Post","Delete",IgnoreCase=$true)]
-        [string]$Method,
-        [Parameter(Mandatory=$true, Position=1)]
-        [string]$RelativeUrl,
-        [Parameter(Mandatory=$false)]
-        [HashTable]$Parameters,
-        [Parameter(Mandatory=$false)]
-        [object]$Body,
-        [Parameter(Mandatory=$false)]
-        [string]$JsonBody,
-        [Parameter(Mandatory=$false)]
-        [HashTable]$ExtraHeaders
-    )
-
-    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
-    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
-
-    if (-not $SgDevOpsSession)
-    {
-        Write-Host -ForegroundColor Magenta "Run Connect-SgDevOps to initialize a session."
-        throw "This cmdlet requires a connect session with the Safeguard DevOps Service"
-    }
-
-    $local:Url = "https://$($SgDevOpsSession.ServiceAddress):$($SgDevOpsSession.ServicePort)/service/devops/v$($SgDevOpsSession.ServiceApiVersion)/${RelativeUrl}"
-    $local:Headers = @{
-        "Accept" = "application/json";
-        "Content-type" = "application/json";
-    }
-    foreach ($local:Key in $ExtraHeaders.Keys)
-    {
-        $local:Headers[$local:Key] = $ExtraHeaders[$local:Key]
-    }
-
-    Write-Verbose "---Request---"
-    Write-Verbose "Headers=$(ConvertTo-Json -InputObject $local:Headers)"
-
-    $local:Headers["Authorization"] = "spp-token $($SgDevOpsSession.AccessToken)"
-
-    Invoke-Internal $SgDevOpsSession.Session $Method $local:Url $local:Headers -Parameters $Parameters -Body $Body -JsonBody $JsonBody
-}
-
-function Disconnect-SgDevOps
-{
-    [CmdletBinding()]
-    Param(
-    )
-
-    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
-    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
-
-    try
-    {
-        if (-not $SgDevOpsSession)
-        {
-            Write-Host "Not logged in."
+            $local:Confirmed = $true
         }
         else
         {
-            Invoke-SgDevOpsMethod GET "Safeguard/Logoff"
+            $local:Confirmed = (Get-Confirmation "Clear Safeguard DevOps Service" "Do you want clear the association with this Safeguard appliance?" `
+                                                 "Clear." "Cancels this operation.")
         }
-        Write-Host "Log out Successful."
     }
-    finally
+
+    if ($local:Confirmed)
     {
-        Write-Host "Session variable removed."
-        Set-Variable -Name "SafeguardSession" -Scope Global -Value $null
+        Invoke-SgDevOpsMethod DELETE "Safeguard" -Parameters @{ confirm = "yes" }
+        Write-Host "Appliance information has been cleared."
     }
-}
-
-function Clear-SgDevOps
-{
-    [CmdletBinding()]
-    Param(
-
-    )
-
-    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
-    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
-
-
+    else
+    {
+        Write-Host -ForegroundColor Yellow "Operation canceled."
+    }
 }
