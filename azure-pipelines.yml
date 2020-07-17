@@ -42,17 +42,12 @@ steps:
     contents: '**\bin\**'
     targetFolder: $(Build.ArtifactStagingDirectory)
 
-- script: md $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)
-
-- script: dir $(Build.SourcesDirectory)
-
-- script: dir $(Build.SourcesDirectory)\$(pluginsdir)
+#- script: md $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)
 
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)\$(pluginsdir)\bin\$(buildConfiguration)'
     contents: '**'
-    #targetFolder: $(Build.ArtifactStagingDirectory)
     targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)
 
 - task: PublishBuildArtifacts@1
