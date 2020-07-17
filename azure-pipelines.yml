@@ -38,8 +38,8 @@ steps:
 
 - task: CopyFiles@2
   inputs:
-    sourceFolder: '$(Build.SourcesDirectory)/$(pluginsdir)'
-    contents: '**/bin/$(buildConfiguration)/**'
+    sourceFolder: '$(Build.SourcesDirectory)/$(pluginsdir)/bin/$(buildConfiguration)'
+    contents: '**'
     targetFolder: $(Build.ArtifactStagingDirectory)/bin/$(buildConfiguration)/$(pluginsdir)
 
 - task: PublishBuildArtifacts@1
