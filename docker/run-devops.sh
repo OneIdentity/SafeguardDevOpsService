@@ -17,7 +17,7 @@ cleanup()
 trap cleanup EXIT
 
 echo -e "${YELLOW}Starting SafeguardDevOpsService${NC}"
-/home/safeguard/SafeguardDevOpsService &
+bash -c 'while true; do echo -e "SafeguardDevOpsService is not running, executing..."; /home/safeguard/SafeguardDevOpsService; sleep 1; done' &
 
 echo -e "${YELLOW}Sleeping to give SafeguardDevOpsService time to start${NC}"
 sleep 3
