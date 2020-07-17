@@ -24,5 +24,8 @@ if [ -f "$zipfilename" ]; then
     rm -f $zipfilename
 fi
 
+$pluginbindir = $(dirname $zipfilename)
+mkdir -p $pluginbindir
+
 cp $projectdir/Manifest.json $builddir
 cd $builddir && zip -r $zipfilename . -x netcoreapp2.2/ -x netcoreapp2.2/* -x netcoreapp2/publish/ -x netcoreapp2.2/publish/*
