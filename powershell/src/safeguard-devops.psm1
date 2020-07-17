@@ -401,7 +401,9 @@ function Get-SgDevOpsStatus
         [Parameter(Mandatory=$false, Position=1)]
         [int]$ServicePort,
         [Parameter(Mandatory=$false)]
-        [switch]$Insecure
+        [switch]$Insecure,
+        [Parameter(Mandatory=$false)]
+        [int]$ServiceApiVersion = 1
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
@@ -418,7 +420,8 @@ function Get-SgDevOpsStatus
         $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
         $ServiceAddress = $local:Resolved.ServiceAddress
         $ServicePort = $local:Resolved.ServicePort
-        Invoke-RestMethod -Method GET -Uri "https://${ServiceAddress}:${ServicePort}/service/devops/Safeguard" -Headers @{
+        $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/v${ServiceApiVersion}/Safeguard"
+        Invoke-RestMethod -Method GET -Uri $local:Url -Headers @{
                 "Accept" = "application/json";
                 "Content-type" = "application/json";
             }
@@ -438,11 +441,11 @@ function Initialize-SgDevOps
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$false, Position=0)]
-        [string]$Appliance,
-        [Parameter(Mandatory=$false, Position=1)]
         [string]$ServiceAddress,
         [Parameter(Mandatory=$false)]
         [int]$ServicePort,
+        [Parameter(Mandatory=$false, Position=1)]
+        [string]$Appliance,
         [Parameter(Mandatory=$false)]
         [switch]$Gui,
         [Parameter(Mandatory=$false)]
@@ -462,7 +465,7 @@ function Initialize-SgDevOps
     $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
     $ServiceAddress = $local:Resolved.ServiceAddress
     $ServicePort = $local:Resolved.ServicePort
-    $local:Status = (Get-SgDevOpsStatus $ServiceAddress $ServicePort -Insecure)
+    $local:Status = (Get-SgDevOpsStatus $ServiceAddress $ServicePort -Insecure -ServiceApiVersion $ServiceApiVersion)
     if ($local:Status.ApplianceId)
     {
         Write-Host -ForegroundColor Yellow "WARNING: This Safeguard DevOps Service is currently associated with ${local:Status.ApplianceName} (${local:Status.ApplianceAddress})."
@@ -505,7 +508,8 @@ function Initialize-SgDevOps
                 if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
             }
 
-            $local:Status = (Invoke-RestMethod -Method PUT -Uri "https://${ServiceAddress}:${ServicePort}/service/devops/Safeguard" -Headers @{
+            $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/v${ServiceApiVersion}/Safeguard"
+            $local:Status = (Invoke-RestMethod -Method PUT -Uri $local:Url -Headers @{
                                     "Accept" = "application/json";
                                     "Content-type" = "application/json";
                                     "Authorization" = "spp-token ${local:Token}"
@@ -545,7 +549,9 @@ function Connect-SgDevOps
         [Parameter(Mandatory=$false)]
         [switch]$Gui,
         [Parameter(Mandatory=$false)]
-        [switch]$Insecure
+        [switch]$Insecure,
+        [Parameter(Mandatory=$false)]
+        [int]$ServiceApiVersion = 1
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
@@ -554,7 +560,7 @@ function Connect-SgDevOps
     $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
     $ServiceAddress = $local:Resolved.ServiceAddress
     $ServicePort = $local:Resolved.ServicePort
-    $local:Status = (Get-SgDevOpsStatus $ServiceAddress $ServicePort -Insecure:$Insecure)
+    $local:Status = (Get-SgDevOpsStatus $ServiceAddress $ServicePort -Insecure:$Insecure -ServiceApiVersion $ServiceApiVersion)
     if (-not $local:Status.ApplianceId)
     {
         Write-Host -ForegroundColor Magenta "Run Initialize-SgDevOps to assocate to a Safeguard appliance."
@@ -570,7 +576,7 @@ function Connect-SgDevOps
             if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
         }
         $local:HttpSession = $null
-        $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/Safeguard/Logon"
+        $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/v${ServiceApiVersion}/Safeguard/Logon"
         $local:Response = (Invoke-WebRequest -Method GET -Uri $local:Url -Headers @{
                 "Accept" = "application/json";
                 "Content-type" = "application/json";
@@ -584,7 +590,8 @@ function Connect-SgDevOps
             "ServicePort" = $ServicePort;
             "AccessToken" = $local:Token;
             "Session" = $local:HttpSession;
-            "Gui" = $Gui
+            "Gui" = $Gui;
+            "ServiceApiVersion" = $ServiceApiVersion
         }
 
         Write-Verbose $local:Response.Content
@@ -629,7 +636,7 @@ function Invoke-SgDevOpsMethod
         throw "This cmdlet requires a connect session with the Safeguard DevOps Service"
     }
 
-    $local:Url = "https://$($SgDevOpsSession.ServiceAddress):$($SgDevOpsSession.ServicePort)/service/devops/${RelativeUrl}"
+    $local:Url = "https://$($SgDevOpsSession.ServiceAddress):$($SgDevOpsSession.ServicePort)/service/devops/v$($SgDevOpsSession.ServiceApiVersion)/${RelativeUrl}"
     $local:Headers = @{
         "Accept" = "application/json";
         "Content-type" = "application/json";
