@@ -36,6 +36,12 @@ steps:
     contents: '**\bin\**'
     targetFolder: $(Build.ArtifactStagingDirectory)
 
+- script: dir $(Build.ArtifactStagingDirectory)
+
+- script: dir $(Build.ArtifactStagingDirectory)\$(pluginsdir)
+
+- script: dir $(Build.ArtifactStagingDirectory)\$(pluginsdir)\bin
+
 - script: md $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)
 
 - task: CopyFiles@2
