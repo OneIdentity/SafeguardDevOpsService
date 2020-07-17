@@ -36,6 +36,8 @@ steps:
     contents: '**/bin/**'
     targetFolder: $(Build.ArtifactStagingDirectory)
 
+-script: mkdir $(Build.ArtifactStagingDirectory)/bin/$(buildConfiguration)/$(pluginsdir)
+
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)/$(pluginsdir)/bin/$(buildConfiguration)'
