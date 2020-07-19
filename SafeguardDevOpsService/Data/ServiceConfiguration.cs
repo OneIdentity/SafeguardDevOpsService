@@ -60,6 +60,7 @@ namespace OneIdentity.DevOps.Data
         /// <summary>
         /// Session key
         /// </summary>
+        [JsonIgnore]
         public string SessionKey
         {
             get => _sessionKey;
