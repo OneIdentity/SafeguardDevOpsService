@@ -545,13 +545,19 @@ namespace OneIdentity.DevOps.Logic
 
             if (cert != null)
             {
+                var builder = new StringBuilder()
+                    .Append("-----BEGIN CERTIFICATE-----")
+                    .Append(Convert.ToBase64String(cert.Export(X509ContentType.Cert), Base64FormattingOptions.None))
+                    .Append("-----END CERTIFICATE-----");
+
                 var result = new CertificateInfo()
                 {
                     Thumbprint = cert.Thumbprint,
                     IssuedBy = cert.Issuer,
                     Subject = cert.Subject,
                     NotAfter = cert.NotBefore,
-                    NotBefore = cert.NotAfter
+                    NotBefore = cert.NotAfter,
+                    Base64CertificateData = builder.ToString()
                 };
                 return result;
             }
