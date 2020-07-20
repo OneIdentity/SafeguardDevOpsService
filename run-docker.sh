@@ -17,11 +17,6 @@ EOF
 
 ScriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 Port=443
-if [ -z "$1" ]; then
-    ImageType=alpine
-else
-    ImageType=$1
-fi
 
 while getopts ":cp:b:h" opt; do
     case $opt in
@@ -47,6 +42,9 @@ while getopts ":cp:b:h" opt; do
     esac
 done
 
+if [ -z "$ImageType" ]; then
+    ImageType=alpine
+fi
 
 # Make sure docker is installed
 if [ -z "$(which docker)" ]; then
