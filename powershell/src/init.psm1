@@ -39,9 +39,17 @@ function Initialize-SgDevOps
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    # Set up the appliance first
+    Write-Host -ForegroundColor Yellow "Associating Safeguard DevOps Service to trust SPP appliance for authentication ..."
     Initialize-SgDevOpsAppliance -ServiceAddress $ServiceAddress -ServicePort $ServicePort -ServiceApiVersion $ServiceApiVersion `
                                  -Appliance $Appliance -ApplianceApiVersion $ApplianceApiVersion -Gui:$Gui -Insecure:$Insecure -Force:$Force
+
+    Write-Host -ForegroundColor Yellow "Connecting to Safeguard DevOps Service using SPP user ..."
+    Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui -Insecure:$Insecure
+
+    # TODO: test whether insecure flag is necessary
+    #       if so, walk the user through fixing it
+
+    Write-Host -ForegroundColor Yellow "Configuring Safeguard DevOps Service instance account in SPP ..."
 
     # TODO: Configure SgDevOps user
 }
