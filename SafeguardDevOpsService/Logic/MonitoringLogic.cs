@@ -118,7 +118,18 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var apiKey = _retrievableAccounts.Single(mp => mp.AssetName == eventInfo.AssetName && mp.AccountName == eventInfo.AccountName).ApiKey;
+                var apiKeys = _retrievableAccounts.Where(mp => mp.AssetName == eventInfo.AssetName && mp.AccountName == eventInfo.AccountName).ToArray();
+
+                // Make sure that we have at least one plugin mapped to the account
+                if (!apiKeys.Any())
+                    _logger.Error("No API keys were found by the password change handler.");
+
+                // Make sure that if there are more than one mapped plugin, all of the API key match for the same account
+                var apiKey = apiKeys.FirstOrDefault()?.ApiKey;
+                if (!apiKeys.All(x => x.ApiKey.Equals(apiKey)))
+                    _logger.Error("Mismatched API keys for the same account were found by the password change handler.");
+
+                // At this point we should have one API key to retrieve.
                 using (var password = _a2AContext.RetrievePassword(apiKey.ToSecureString()))
                 {
                     var accounts = _configDb.GetAccountMappings().ToList();
