@@ -37,8 +37,7 @@ namespace OneIdentity.DevOps
                 .UseSerilog()
                 .UseKestrel(options =>
                 {
-                    int port;
-                    if (int.TryParse(httpsPort, out port) == false)
+                    if (int.TryParse(httpsPort, out var port) == false)
                         port = 443;
                     Log.Logger.Information($"Binding web server to port: {port}.");
                     options.ListenAnyIP(port, listenOptions =>
@@ -66,11 +65,11 @@ namespace OneIdentity.DevOps
             _host.StopAsync().Wait();
         }
 
-        private X509Certificate2 CheckDefaultCertificate()
+        private static X509Certificate2 CheckDefaultCertificate()
         {
             using var db = new LiteDbConfigurationRepository();
 
-            X509Certificate2 webSslCert = db.WebSslCertificate;
+            var webSslCert = db.WebSslCertificate;
             if (webSslCert != null)
                 return webSslCert;
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Hosting;
 using OneIdentity.DevOps.Logic;
 using Serilog;
 using Topshelf;
@@ -11,10 +10,14 @@ namespace OneIdentity.DevOps
 {
     internal class Program
     {
+        private static readonly string ServiceIdentifier = "SafeguardDevOpsService";
+        private static readonly string ServiceDescription =
+            "Safeguard for Privileged Passwords DevOps integration service.";
+
         private static void Main()
         {
             Directory.CreateDirectory(WellKnownData.ProgramDataPath);
-            var logDirPath = Path.Combine(WellKnownData.ProgramDataPath, "SafeguardDevOpsService.log");
+            var logDirPath = Path.Combine(WellKnownData.ProgramDataPath, $"{ServiceIdentifier}.log");
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.File(logDirPath,
@@ -39,9 +42,9 @@ namespace OneIdentity.DevOps
                     hostConfig.UseEnvironmentBuilder(c => new DotNetCoreEnvironmentBuilder(c));
                 }
                 hostConfig.StartAutomaticallyDelayed();
-                hostConfig.SetDisplayName("SafeguardDevOpsService");
-                hostConfig.SetServiceName("SafeguardDevOpsService");
-                hostConfig.SetDescription("Safeguard for Privileged Passwords DevOps integration service.");
+                hostConfig.SetDisplayName(ServiceIdentifier);
+                hostConfig.SetServiceName(ServiceIdentifier);
+                hostConfig.SetDescription(ServiceDescription);
                 hostConfig.EnableServiceRecovery(recoveryOption =>
                 {
                     recoveryOption.RestartService(0);
