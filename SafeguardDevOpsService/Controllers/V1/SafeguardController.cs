@@ -11,7 +11,7 @@ using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 namespace OneIdentity.DevOps.Controllers.V1
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     [ApiController]
     [Route("service/devops/v1/[controller]")]
@@ -20,7 +20,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         private readonly Serilog.ILogger _logger;
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public SafeguardController()
         {
@@ -57,9 +57,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Deletes the current Safeguard DevOps service configuration, drops the configuration database and restarts the service. This endpoint
-        /// does not clean up any of the DevOps service related elements in any previously connected Safeguard appliance. (see DELETE /service/devops/{version}/Configuration)
+        /// Deletes the current Safeguard DevOps service configuration, drops the configuration database and restarts the service.
         /// </summary>
+        /// <remarks>
+        /// This endpoint does not clean up any of the DevOps service related elements in any previously connected Safeguard appliance.
+        /// (see DELETE /service/devops/{version}/Configuration)
+        /// </remarks>
         /// <response code="204">Success</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
@@ -91,10 +94,12 @@ namespace OneIdentity.DevOps.Controllers.V1
 
         /// <summary>
         /// Invoke the Safeguard configuration of the A2A registration and A2A certificate user given a client certificate.
+        /// </summary>
+        /// <remarks>
         /// The client certificate that will be used to create the A2A user in Safeguard and referenced by the A2A registration, can be
         /// uploaded as part of the this /Configuration endpoint or can be uploaded separately in the POST /ClientCertificate endpoint.
         /// If the client certificate was already uploaded using the POST /ClientCertificate endpoint, it does not need to be provided as part of this endpoint.
-        /// </summary>
+        /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
@@ -113,9 +118,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete the DevOps service configuration and restarts the service.  This endpoint includes removing all account mappings, removing the A2A registration, A2A user and trusted
-        /// certificate from Safeguard and removing all stored configuration in the DevOps service.
+        /// Delete the DevOps service configuration and restarts the service.
         /// </summary>
+        /// <remarks>
+        /// This endpoint includes removing all account mappings, removing the A2A registration, A2A user and trusted
+        /// certificate from Safeguard and removing all stored configuration in the DevOps service.
+        /// </remarks>
         /// <response code="204">No Content</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
@@ -132,11 +140,14 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Logon to the DevOps service.  The Authorization header should contain a valid Safeguard token.  This token can be acquired by
+        /// Logon to the DevOps service.
+        /// </summary>
+        /// <remarks>
+        /// The Authorization header should contain a valid Safeguard token.  This token can be acquired by
         /// logging into the Safeguard appliance using the Safeguard-ps command 'Connect-Safeguard -NoSessionVariable' and providing valid
         /// login credentials. A successful authentication will respond with a sessionKey that should be provided as a cookie for all
         /// subsequent endpoint calls.
-        /// </summary>
+        /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="400">Bad Request</response>
         /// <response code="401">Unauthorized</response>
@@ -186,9 +197,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Upload an A2A client certificate.  This can be either a PFX format certificate that includes a private key or a signed certificate
-        /// that was issued from a CSR.  (See GET /CSR). A client certificate must be uploaded before calling the POST /Configure endpoint.
+        /// Upload an A2A client certificate.
         /// </summary>
+        /// <remarks>
+        /// This can be either a PFX format certificate that includes a private key or a signed certificate
+        /// that was issued from a CSR.  (See GET /CSR). A client certificate must be uploaded before calling the POST /Configure endpoint.
+        /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
@@ -234,9 +248,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Upload a web server certificate.  This can be either a PFX format certificate that includes a private key or a signed certificate
-        /// that was issued from a CSR.  (See GET /CSR). The DevOps service must be restarted before the new web server certificate will be applied.
+        /// Upload a web server certificate.
         /// </summary>
+        /// <remarks>
+        /// This can be either a PFX format certificate that includes a private key or a signed certificate
+        /// that was issued from a CSR.  (See GET /CSR). The DevOps service must be restarted before the new web server certificate will be applied.
+        /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
@@ -251,9 +268,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Remove the installed web server certificate and reset a new default certificate. The DevOps service must be
-        /// restarted before the new web server certificate will be applied.
+        /// Remove the installed web server certificate and reset a new default certificate.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service must be restarted before the new web server certificate will be applied.
+        /// </remarks>
         /// <response code="204">No Content</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
@@ -266,7 +285,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get a CSR that can be signed and uploaded back to the DevOps service. 
+        /// Get a CSR that can be signed and uploaded back to the DevOps service.
         /// </summary>
         /// <param name="size">Size of the certificate</param>
         /// <param name="subjectName">Subject name of the certificate</param>
@@ -276,7 +295,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("CSR")]
-        public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size, 
+        public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size,
             [FromQuery] string subjectName, [FromQuery] string certType = "A2AClient")
         {
             if (!Enum.TryParse(certType, true, out CertificateType cType))
@@ -325,7 +344,7 @@ namespace OneIdentity.DevOps.Controllers.V1
 
         // /// <summary>
         // /// Delete the A2A registration that is being used by the DevOps service. To help prevent unintended removal of the A2A registration,
-        // /// A2A user and trusted client certificate as well as removal of the account mappings, the confirm query param is required. 
+        // /// A2A user and trusted client certificate as well as removal of the account mappings, the confirm query param is required.
         // /// </summary>
         // /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the A2A registration.</param>
         // /// <response code="200">Success</response>
@@ -468,8 +487,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete all of the trusted certificate from the DevOps service.  To help prevent unintended trusted certificate removal, the confirm query param is required.
+        /// Delete all of the trusted certificate from the DevOps service.
         /// </summary>
+        /// <remarks>
+        /// To help prevent unintended trusted certificate removal, the confirm query param is required.
+        /// </remarks>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove all of the trusted certificates.</param>
         /// <response code="204">Success</response>
         [SafeguardSessionKeyAuthorization]
