@@ -57,7 +57,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Deletes the current Safeguard DevOps service configuration, drops the configuration database and restarts the service.
+        /// Deletes the current DevOps service configuration, drops the configuration database and restarts the service.
         /// </summary>
         /// <remarks>
         /// This endpoint does not clean up any of the DevOps service related elements in any previously connected Safeguard appliance.

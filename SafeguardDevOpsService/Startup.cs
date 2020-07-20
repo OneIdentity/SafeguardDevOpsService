@@ -48,12 +48,14 @@ namespace OneIdentity.DevOps
                 .AddNewtonsoftJson(opts => opts.UseMemberCasing())
                 .AddMvcOptions(opts => { opts.EnableEndpointRouting = false; });
 
-            services.AddSwaggerGen(c => { 
+            services.AddSwaggerGen(c => {
                 c.SwaggerDoc(ApiVersion, new OpenApiInfo
                 {
                     Title = ApiName,
-                    Version = ApiVersion
+                    Version = ApiVersion,
+                    Description = ""
                 });
+                c.EnableAnnotations();
                 c.AddSecurityDefinition("spp-token", new OpenApiSecurityScheme()
                 {
                     Description = "Authorization header using the spp-token scheme",
