@@ -4,6 +4,7 @@ using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using LiteDB;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.ConfigDb
@@ -17,6 +18,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private ILiteCollection<AccountMapping> _accountMappings;
         private ILiteCollection<Plugin> _plugins;
         private ILiteCollection<TrustedCertificate> _trustedCertificates;
+        private string _svcId;
 
         private const string DbFileName = "Configuration.db";
 
@@ -227,6 +229,28 @@ namespace OneIdentity.DevOps.ConfigDb
                 }
             }
             set => SetSimpleSetting(ApiVersionKey, value.ToString());
+        }
+
+        public string SvcId
+        {
+            get
+            {
+                if (_svcId == null) 
+                {
+                    try
+                    {
+                        _svcId = File.ReadAllText(WellKnownData.SvcIdPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        var msg = $"Failed to read the service instance identifier: {WellKnownData.SvcIdPath}";
+                        Serilog.Log.Logger.Error(msg, ex);
+                        throw new DevOpsException(msg, ex);
+                    }
+                }
+
+                return _svcId;
+            }
         }
 
         public bool? IgnoreSsl
