@@ -19,6 +19,7 @@ using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
 using Microsoft.AspNetCore.WebUtilities;
 using OneIdentity.DevOps.Exceptions;
+using OneIdentity.DevOps.Extensions;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 
 namespace OneIdentity.DevOps.Logic
@@ -133,8 +134,8 @@ namespace OneIdentity.DevOps.Logic
                     ApiVersion = apiVersion
                 };
 
-                sg = ignoreSsl ? SafeguardDotNet.Safeguard.Connect(safeguardAddress, apiVersion, true) :
-                    SafeguardDotNet.Safeguard.Connect(safeguardAddress, CertificateValidationCallback, apiVersion);
+                sg = ignoreSsl ? Safeguard.Connect(safeguardAddress, apiVersion, true) :
+                    Safeguard.Connect(safeguardAddress, CertificateValidationCallback, apiVersion);
                 return GetSafeguardAvailability(sg, safeguardConnection);
             }
             catch (SafeguardDotNetException ex)
@@ -487,8 +488,8 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 return (ignoreSsl.HasValue && ignoreSsl.Value) ?
-                    SafeguardDotNet.Safeguard.Connect(address, token, version ?? DefaultApiVersion, true) :
-                    SafeguardDotNet.Safeguard.Connect(address, token, CertificateValidationCallback, version ?? DefaultApiVersion);
+                    Safeguard.Connect(address, token, version ?? DefaultApiVersion, true) :
+                    Safeguard.Connect(address, token, CertificateValidationCallback, version ?? DefaultApiVersion);
             }
             catch (SafeguardDotNetException ex)
             {
@@ -545,11 +546,6 @@ namespace OneIdentity.DevOps.Logic
 
             if (cert != null)
             {
-                var builder = new StringBuilder()
-                    .Append("-----BEGIN CERTIFICATE-----")
-                    .Append(Convert.ToBase64String(cert.Export(X509ContentType.Cert), Base64FormattingOptions.None))
-                    .Append("-----END CERTIFICATE-----");
-
                 var result = new CertificateInfo()
                 {
                     Thumbprint = cert.Thumbprint,
@@ -557,7 +553,7 @@ namespace OneIdentity.DevOps.Logic
                     Subject = cert.Subject,
                     NotAfter = cert.NotBefore,
                     NotBefore = cert.NotAfter,
-                    Base64CertificateData = builder.ToString()
+                    Base64CertificateData = cert.ToPemFormat()
                 };
                 return result;
             }
@@ -654,8 +650,8 @@ namespace OneIdentity.DevOps.Logic
 
         public string GetCSR(int? size, string subjectName, CertificateType certificateType)
         {
-            int certSize = 2048;
-            string certSubjectName = certificateType == CertificateType.A2AClient ?
+            var certSize = 2048;
+            var certSubjectName = certificateType == CertificateType.A2AClient ?
                 WellKnownData.DevOpsServiceClientCertificate : WellKnownData.DevOpsServiceWebSslCertificate;
 
             if (size != null)
@@ -737,9 +733,9 @@ namespace OneIdentity.DevOps.Logic
                     }
                 }
 
-                StringBuilder builder = new StringBuilder();
+                var builder = new StringBuilder();
                 builder.AppendLine("-----BEGIN CERTIFICATE REQUEST-----");
-                builder.AppendLine(Convert.ToBase64String(csr, Base64FormattingOptions.InsertLineBreaks));
+                builder.AppendLine(PemExtensions.AddPemLineBreaks(Convert.ToBase64String(csr)));
                 builder.AppendLine("-----END CERTIFICATE REQUEST-----");
 
                 return builder.ToString();
