@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Filters;
 using OneIdentity.DevOps.Authorization;
 using OneIdentity.DevOps.Logic;
 #pragma warning disable 1591
@@ -19,7 +20,7 @@ namespace OneIdentity.DevOps.Attributes
             }
 
             var managementConnection = AuthorizedCache.Instance.FindByToken(sppToken);
-            context.HttpContext.Response.Cookies.Append("sessionKey", managementConnection.SessionKey);
+            context.HttpContext.Response.Cookies.Append("sessionKey", managementConnection.SessionKey, new CookieOptions(){Secure = true});
         }
     }
 }
