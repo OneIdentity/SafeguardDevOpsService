@@ -26,9 +26,9 @@ namespace OneIdentity.DevOps.Extensions
         {
             var b64String = Convert.ToBase64String(This.Export(X509ContentType.Cert), Base64FormattingOptions.None);
             var builder = new StringBuilder()
-                .AppendLine("-----BEGIN CERTIFICATE-----")
-                .AppendLine(AddPemLineBreaks(b64String))
-                .Append("-----END CERTIFICATE-----");
+                .Append("-----BEGIN CERTIFICATE-----\r\n")
+                .Append(AddPemLineBreaks(b64String))
+                .Append("\r\n-----END CERTIFICATE-----");
             return builder.ToString();
         }
     }

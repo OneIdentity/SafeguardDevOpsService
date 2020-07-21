@@ -766,9 +766,9 @@ namespace OneIdentity.DevOps.Logic
                 }
 
                 var builder = new StringBuilder();
-                builder.AppendLine("-----BEGIN CERTIFICATE REQUEST-----");
-                builder.AppendLine(PemExtensions.AddPemLineBreaks(Convert.ToBase64String(csr)));
-                builder.Append("-----END CERTIFICATE REQUEST-----");
+                builder.Append("-----BEGIN CERTIFICATE REQUEST-----\r\n");
+                builder.Append(PemExtensions.AddPemLineBreaks(Convert.ToBase64String(csr)));
+                builder.Append("\r\n-----END CERTIFICATE REQUEST-----");
 
                 return builder.ToString();
             }
