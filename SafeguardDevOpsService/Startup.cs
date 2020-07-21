@@ -13,6 +13,7 @@ using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Logic;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Swashbuckle.AspNetCore.SwaggerUI;
 
 namespace OneIdentity.DevOps
 {
@@ -127,6 +128,9 @@ namespace OneIdentity.DevOps
                 c.SwaggerEndpoint(OpenApiRelativeUrl, VersionApiName);
                 c.RoutePrefix = SwaggerRoutePrefix;
                 c.ShowCommonExtensions();
+                c.HeadContent = "https://github.com/OneIdentity/SafeguardDevOpsService";
+                c.DisplayRequestDuration();
+                c.DefaultModelRendering(ModelRendering.Example);
             });
 
             app.UseExceptionHandler("/Error");
