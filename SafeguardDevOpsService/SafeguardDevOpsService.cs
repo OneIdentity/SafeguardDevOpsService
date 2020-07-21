@@ -19,6 +19,7 @@ namespace OneIdentity.DevOps
 
         public SafeguardDevOpsService()
         {
+            CheckGenerateUniqueIdentifier();
             var webSslCert = CheckDefaultCertificate();
 
             if (webSslCert == null)
@@ -65,7 +66,48 @@ namespace OneIdentity.DevOps
             _host.StopAsync().Wait();
         }
 
-        private static X509Certificate2 CheckDefaultCertificate()
+        private void CheckGenerateUniqueIdentifier()
+        {
+            Log.Logger.Information($"Service instance identifier file location: {WellKnownData.SvcIdPath}");
+
+            string svcId = null;
+            try
+            {
+                if (File.Exists(WellKnownData.SvcIdPath))
+                {
+                    svcId = File.ReadAllText(WellKnownData.SvcIdPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Logger.Information($"Failed to read the service instance identifier: {WellKnownData.SvcIdPath}", ex);
+            }
+
+            if (svcId == null)
+            {
+                try
+                {
+                    var random = new Random((int) DateTime.Now.Ticks);
+                    const string pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                    var chars = Enumerable.Range(0, 10).Select(x => pool[random.Next(0, pool.Length)]);
+                    var id = new string(chars.ToArray());
+
+                    File.WriteAllText(WellKnownData.SvcIdPath, id);
+                    svcId = id;
+                }
+                catch (Exception ex)
+                {
+                    Log.Logger.Information($"Failed to generate the service instance identifier: {WellKnownData.SvcIdPath}", ex);
+                }
+            }
+
+            if (svcId == null)
+            {
+                Environment.Exit(1);
+            }
+        }
+
+        private X509Certificate2 CheckDefaultCertificate()
         {
             using var db = new LiteDbConfigurationRepository();
 

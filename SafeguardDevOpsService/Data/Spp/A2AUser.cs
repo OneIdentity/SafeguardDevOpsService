@@ -7,7 +7,7 @@ namespace OneIdentity.DevOps.Data.Spp
     public class A2AUser
     {
         public int Id { get; set; }
-        public string UserName { get; set; } = WellKnownData.DevOpsUserName;
+        public string UserName { get; set; }
         public string Description { get; set; } = "Safeguard User for DevOps Service";
         public string DisplayName { get; set; } = "Safeguard DevOps User";
         public string LastName { get; set; } = "DevOps Service";
