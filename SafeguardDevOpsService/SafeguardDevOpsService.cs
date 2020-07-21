@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
 using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.Extensions;
 using Serilog;
 
 namespace OneIdentity.DevOps
@@ -27,6 +28,9 @@ namespace OneIdentity.DevOps
                 Log.Logger.Error("Failed to find or change the default SSL certificate.");
                 Environment.Exit(1);
             }
+
+            Log.Logger.Information($"Thumbprint for {webSslCert.Subject}: {webSslCert.Thumbprint}");
+            Log.Logger.Information(webSslCert.ToPemFormat());
 
             Log.Logger.Information($"Configuration file location: {Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json");
             var configuration = new ConfigurationBuilder()

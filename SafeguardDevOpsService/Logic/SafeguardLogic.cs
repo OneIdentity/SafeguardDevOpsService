@@ -652,7 +652,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public string GetCSR(int? size, string subjectName, CertificateType certificateType)
+        public string GetCSR(int? size, string subjectName, string sanDns, string sanIp, CertificateType certificateType)
         {
             var certSize = 2048;
             var certSubjectName = certificateType == CertificateType.A2AClient ?
@@ -716,6 +716,34 @@ namespace OneIdentity.DevOps.Logic
                 certificateRequest.CertificateExtensions.Add(
                     new X509SubjectKeyIdentifierExtension(certificateRequest.PublicKey, false));
 
+                var sanBuilder = new SubjectAlternativeNameBuilder();
+                if (sanIp != null)
+                {
+                    try
+                    {
+                        var addresses = sanIp.Split(',').ToList();
+                        addresses.ForEach(x => sanBuilder.AddIpAddress(IPAddress.Parse(x)));
+                    }
+                    catch (Exception ex)
+                    {
+                        LogAndThrow("Invalid SAN IP address list.", ex);
+                    }
+                }
+
+                if (sanDns != null)
+                {
+                    try
+                    {
+                        var dnsNames = sanDns.Split(',').ToList();
+                        dnsNames.ForEach(x => sanBuilder.AddDnsName(x.Trim()));
+                    }
+                    catch (Exception ex)
+                    {
+                        LogAndThrow("Invalid SAN DNS list.", ex);
+                    }
+                }
+                certificateRequest.CertificateExtensions.Add(sanBuilder.Build());
+
                 var csr = certificateRequest.CreateSigningRequest();
                 switch (certificateType)
                 {
@@ -738,9 +766,9 @@ namespace OneIdentity.DevOps.Logic
                 }
 
                 var builder = new StringBuilder();
-                builder.AppendLine("-----BEGIN CERTIFICATE REQUEST-----\r\n");
-                builder.AppendLine(PemExtensions.AddPemLineBreaks(Convert.ToBase64String(csr)));
-                builder.AppendLine("\r\n-----END CERTIFICATE REQUEST-----");
+                builder.Append("-----BEGIN CERTIFICATE REQUEST-----\r\n");
+                builder.Append(PemExtensions.AddPemLineBreaks(Convert.ToBase64String(csr)));
+                builder.Append("\r\n-----END CERTIFICATE REQUEST-----");
 
                 return builder.ToString();
             }

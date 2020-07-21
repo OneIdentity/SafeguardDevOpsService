@@ -331,10 +331,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost("WebServerCertificate")]
-        public ActionResult InstallWebServerCertificate([FromServices] ISafeguardLogic safeguard, CertificateInfo certInfo)
+        public ActionResult InstallWebServerCertificate([FromServices] ISafeguardLogic safeguard, [FromBody] CertificateInfo certInfo, [FromQuery] bool restart = true)
         {
             safeguard.InstallCertificate(certInfo, CertificateType.WebSsl);
             var certificate = safeguard.GetCertificateInfo(CertificateType.WebSsl);
+
+            if (restart)
+                safeguard.RestartService();
 
             return Ok(certificate);
         }
@@ -356,9 +359,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("WebServerCertificate")]
-        public ActionResult RemoveWebServerCertificate([FromServices] ISafeguardLogic safeguard)
+        public ActionResult RemoveWebServerCertificate([FromServices] ISafeguardLogic safeguard, [FromQuery] bool restart = true)
         {
             safeguard.RemoveWebServerCertificate();
+
+            if (restart)
+                safeguard.RestartService();
 
             return NoContent();
         }
@@ -385,13 +391,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("CSR")]
-        public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size,
-            [FromQuery] string subjectName, [FromQuery] string certType = "A2AClient")
+        public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size, 
+            [FromQuery] string subjectName, [FromQuery] string sanDns, [FromQuery] string sanIp, [FromQuery] string certType = "A2AClient")
         {
             if (!Enum.TryParse(certType, true, out CertificateType cType))
                 return BadRequest("Invalid certificate type");
 
-            var csr = safeguard.GetCSR(size, subjectName, cType);
+            var csr = safeguard.GetCSR(size, subjectName, sanDns, sanIp, cType);
             return Ok(csr);
         }
 

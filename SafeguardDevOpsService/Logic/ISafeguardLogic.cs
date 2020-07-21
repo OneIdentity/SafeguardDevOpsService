@@ -21,7 +21,7 @@ namespace OneIdentity.DevOps.Logic
         void InstallCertificate(CertificateInfo certificatePfx, CertificateType certificateType);
         void RemoveClientCertificate();
         void RemoveWebServerCertificate();
-        string GetCSR(int? size, string subjectName, CertificateType certificateType);
+        string GetCSR(int? size, string subjectName, string sanDns, string sanIp, CertificateType certificateType);
 
         IEnumerable<SppAccount> GetAvailableAccounts();
         AssetAccount GetAccount(int id);
