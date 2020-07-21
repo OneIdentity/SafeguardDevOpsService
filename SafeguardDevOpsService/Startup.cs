@@ -127,10 +127,11 @@ namespace OneIdentity.DevOps
             {
                 c.SwaggerEndpoint(OpenApiRelativeUrl, VersionApiName);
                 c.RoutePrefix = SwaggerRoutePrefix;
-                c.ShowCommonExtensions();
                 c.HeadContent = "https://github.com/OneIdentity/SafeguardDevOpsService";
                 c.DisplayRequestDuration();
                 c.DefaultModelRendering(ModelRendering.Example);
+                c.ShowExtensions();
+                c.ShowCommonExtensions();
             });
 
             app.UseExceptionHandler("/Error");
