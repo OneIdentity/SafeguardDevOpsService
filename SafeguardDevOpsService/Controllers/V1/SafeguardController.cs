@@ -396,8 +396,17 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get available Safeguard accounts that can registered with the DevOps service.
+        /// Get available Safeguard asset accounts that can registered with the DevOps service.
         /// </summary>
+        /// <remarks>
+        /// This endpoint returns asset accounts from the associated Safeguard for Privileged Passwords appliance that
+        /// can be registered with the DevOps service.  This registration occurs by adding these asset accounts as
+        /// retrievable accounts to the A2A registration associated with this DevOps service.  Adding and removing
+        /// asset account registrations should be done using the DevOps service.
+        ///
+        /// (see GET /service​/devops​/v1​/Safeguard​/A2ARegistration​/RetrievableAccounts)
+        /// (see POST /service​/devops​/v1​/Safeguard​/A2ARegistration​/RetrievableAccounts)
+        /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
@@ -411,7 +420,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get the A2A registration that was created and used by the DevOps service.
+        /// Get the A2A registration used by the DevOps service.
         /// </summary>
         /// <param name="registrationType">Type of registration.  Types: Account (default), Vault</param>
         /// <response code="200">Success</response>
@@ -432,28 +441,8 @@ namespace OneIdentity.DevOps.Controllers.V1
             return Ok(registration);
         }
 
-        // /// <summary>
-        // /// Delete the A2A registration that is being used by the DevOps service. To help prevent unintended removal of the A2A registration,
-        // /// A2A user and trusted client certificate as well as removal of the account mappings, the confirm query param is required.
-        // /// </summary>
-        // /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the A2A registration.</param>
-        // /// <response code="200">Success</response>
-        // /// <response code="404">Not found</response>
-        // [SafeguardSessionKeyAuthorization]
-        // [UnhandledExceptionError]
-        // [HttpDelete("A2ARegistration")]
-        // public ActionResult DeleteA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
-        // {
-        //     if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
-        //         return BadRequest();
-        //
-        //     safeguard.DeleteA2ARegistration();
-        //
-        //     return NoContent();
-        // }
-
         /// <summary>
-        /// Get a list of the retrievable accounts that are associated with the A2A registration that is being used by the DevOps service.
+        /// Get accounts registered with the DevOps service.
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -468,7 +457,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Add a set of accounts as retrievable accounts associated with the A2A registration that is being used by the DevOps service.
+        /// Add accounts to be registered with the DevOps service.
         /// </summary>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -483,7 +472,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Restarts the DevOps service.
+        /// Restart the DevOps service.
         /// </summary>
         /// <response code="204">Success</response>
         [SafeguardSessionKeyAuthorization]
