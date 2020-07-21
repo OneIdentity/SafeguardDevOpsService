@@ -81,7 +81,7 @@ namespace OneIdentity.DevOps.Controllers.V1
                 pluginsLogic.RestartService();
 
             if (RestartManager.Instance.ShouldRestart)
-                return Ok("The DevOps Service needs to be restarted to finish installing the new plugin.");
+                return Ok("The DevOps service needs to be restarted to finish installing the new plugin.");
 
             return NoContent();
         }

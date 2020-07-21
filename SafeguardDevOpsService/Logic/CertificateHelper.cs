@@ -105,7 +105,7 @@ namespace OneIdentity.DevOps.Logic
 
             switch (certificateType)
             {
-                case CertificateType.WebSsh:
+                case CertificateType.WebSsl:
                     if (sslCertificate.HasPrivateKey == false)
                     {
                         logger.Error("No private key found.");

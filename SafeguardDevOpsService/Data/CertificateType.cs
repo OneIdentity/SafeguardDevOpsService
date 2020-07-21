@@ -13,7 +13,7 @@ namespace OneIdentity.DevOps.Data
         /// <summary>
         /// Web Ssl certificate
         /// </summary>
-        WebSsh,
+        WebSsl,
         /// <summary>
         /// Trusted certificate
         /// </summary>

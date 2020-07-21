@@ -13,12 +13,12 @@ namespace OneIdentity.DevOps.Exceptions
 
         public DevOpsException(string message, HttpStatusCode status = HttpStatusCode.BadRequest) : base(message)
         {
-            this.Status = status;
+            Status = status;
         }
 
         public DevOpsException(string message, Exception ex, HttpStatusCode status = HttpStatusCode.BadRequest) : base(message, ex)
         {
-            this.Status = status;
+            Status = status;
         }
 
     }

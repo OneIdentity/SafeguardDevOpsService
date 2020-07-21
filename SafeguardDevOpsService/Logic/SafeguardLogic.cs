@@ -597,7 +597,7 @@ namespace OneIdentity.DevOps.Logic
                         _configDb.UserCertificateBase64Data = certificate.Base64CertificateData;
                         break;
                     }
-                    case CertificateType.WebSsh:
+                    case CertificateType.WebSsl:
                     {
                         _configDb.WebSslCertificatePassphrase = certificate.Passphrase;
                         _configDb.WebSslCertificateBase64Data = certificate.Base64CertificateData;
@@ -632,7 +632,7 @@ namespace OneIdentity.DevOps.Logic
                                 _configDb.UserCertificateBase64Data = Convert.ToBase64String(pubPrivEphemeral.Export(X509ContentType.Pfx));
                                 break;
                             }
-                            case CertificateType.WebSsh:
+                            case CertificateType.WebSsl:
                             {
                                 _configDb.WebSslCertificatePassphrase = null;
                                 _configDb.WebSslCertificateBase64Data = Convert.ToBase64String(pubPrivEphemeral.Export(X509ContentType.Pfx));
@@ -692,7 +692,7 @@ namespace OneIdentity.DevOps.Logic
                                 true));
                         break;
                     }
-                    case CertificateType.WebSsh:
+                    case CertificateType.WebSsl:
                     {
                         certificateRequest.CertificateExtensions.Add(
                             new X509KeyUsageExtension(
@@ -725,7 +725,7 @@ namespace OneIdentity.DevOps.Logic
                         _configDb.UserCsrPrivateKeyBase64Data = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
                         break;
                     }
-                    case CertificateType.WebSsh:
+                    case CertificateType.WebSsl:
                     {
                         _configDb.WebSslCsrBase64Data = Convert.ToBase64String(csr);
                         _configDb.WebSslCsrPrivateKeyBase64Data = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
@@ -767,7 +767,7 @@ namespace OneIdentity.DevOps.Logic
         public SafeguardConnection SetSafeguardData(string token, SafeguardData safeguardData)
         {
             if (token == null)
-                throw new DevOpsException("Invalid authorization token.");
+                throw new DevOpsException("Invalid authorization token.", HttpStatusCode.Unauthorized);
 
             var safeguardConnection = ConnectAnonymous(safeguardData.ApplianceAddress,
                 safeguardData.ApiVersion ?? DefaultApiVersion, safeguardData.IgnoreSsl ?? false);

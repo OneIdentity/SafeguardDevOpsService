@@ -13,6 +13,7 @@ using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Logic;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Swashbuckle.AspNetCore.SwaggerUI;
 
 namespace OneIdentity.DevOps
 {
@@ -23,6 +24,9 @@ namespace OneIdentity.DevOps
         private static readonly string ApiName = $"{ServiceName} API";
         private static readonly string ApiVersion = "v1";
         private static readonly string VersionApiName = $"{ApiName} {ApiVersion}";
+        private static readonly string ApiDescription = "Web API for controlling the distribution of DevOps secrets from Safeguard for Privileged Passwords " + 
+                                                        "to third-party vaults and orchestration frameworks.  This gives your developers frictionless integration " +
+                                                        "from their favorite DevOps tooling.";
 
         private static readonly string RoutePrefix = "service/devops";
         private static readonly string SwaggerRoutePrefix = $"{RoutePrefix}/swagger";
@@ -48,12 +52,14 @@ namespace OneIdentity.DevOps
                 .AddNewtonsoftJson(opts => opts.UseMemberCasing())
                 .AddMvcOptions(opts => { opts.EnableEndpointRouting = false; });
 
-            services.AddSwaggerGen(c => { 
+            services.AddSwaggerGen(c => {
                 c.SwaggerDoc(ApiVersion, new OpenApiInfo
                 {
                     Title = ApiName,
-                    Version = ApiVersion
+                    Version = ApiVersion,
+                    Description = ApiDescription
                 });
+                c.EnableAnnotations();
                 c.AddSecurityDefinition("spp-token", new OpenApiSecurityScheme()
                 {
                     Description = "Authorization header using the spp-token scheme",
@@ -121,6 +127,11 @@ namespace OneIdentity.DevOps
             {
                 c.SwaggerEndpoint(OpenApiRelativeUrl, VersionApiName);
                 c.RoutePrefix = SwaggerRoutePrefix;
+                c.HeadContent = "https://github.com/OneIdentity/SafeguardDevOpsService";
+                c.DisplayRequestDuration();
+                c.DefaultModelRendering(ModelRendering.Example);
+                c.ShowExtensions();
+                c.ShowCommonExtensions();
             });
 
             app.UseExceptionHandler("/Error");
