@@ -53,6 +53,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// This appliance will be trusted for authentication.  It is also the appliance that will notify the DevOps service
         /// of secret changes so that they can be pushed to the configured plugins.
         /// </remarks>
+        /// <param name="safeguardData">Information that represents the Safeguard appliance that should be associated with the DevOps service.</param>
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
         /// <response code="401">Invalid authorization token.</response>
@@ -80,8 +81,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// 
         /// It will also remove the DevOps service configuration database and restart the DevOps service.
         /// 
+        /// To help prevent unintended Safeguard appliance connection removal, the confirm query param is required and must be set to "yes".
+        /// 
         /// (see DELETE /service/devops/{version}/Safeguard/Configuration)
         /// </remarks>
+        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the Safeguard appliance connection.</param>
         /// <response code="204">Success.</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
@@ -129,10 +133,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// endpoint or can be uploaded separately in the POST /ClientCertificate endpoint.
         /// 
         /// If the client certificate was already uploaded using the ClientCertificate endpoint, it does not need to be provided
-        /// in this operation.
+        /// in this operation and the POST body should be empty. ("{}")
         /// 
         /// (see POST /service/devops/{version}/Safeguard/ClientCertificate)
         /// </remarks>
+        /// <param name="certFile">If the "Base64CertificateData" parameter contains a base64 encoded (or PEM) A2A client certificate, the certificate
+        /// will be installed before the DevOps service completes the configuration. Providing the A2A client certificate in the /Configuration call
+        /// replaces the need to install the certificate separately.</param>
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
         [SafeguardSessionKeyAuthorization]
@@ -160,7 +167,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// 
         /// This endpoint will remove all A2A credential retrievals, the A2A registration and the A2A user from Safeguard for
         /// Privileged Passwords.  It will also remove the DevOps service configuration database and restart the DevOps service.
+        /// 
+        /// To help prevent unintended Safeguard client configuration removal, the confirm query param is required and must be set to "yes".
         /// </remarks>
+        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the Safeguard client configuration.</param>
         /// <response code="204">No Content.</response>
         /// <response code="400">Bad request.</response>
         [SafeguardSessionKeyAuthorization]
@@ -259,6 +269,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         ///
         /// (see GET /service/devops/v1/Safeguard/CSR)
         /// </remarks>
+        /// <param name="certInfo">The certificate info should contain the base64 (or PEM) encoded certificate and pass phrase if the certificate includes a private key.</param>
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
         [SafeguardSessionKeyAuthorization]
@@ -275,6 +286,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Delete the A2A client certificate being used by the DevOps service.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
+        /// 
+        /// This endpoint removes the current client certificate from the DevOps service.
+        /// </remarks>
         /// <response code="204">No Content.</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
@@ -318,14 +334,16 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// The DevOps service use TLS to authenticate itself and to protect its API.  The first time it starts
         /// it generates a self-signed web server certificate.  To ensure secure access this web certificate should
         /// be replaced.  The most secure way to create this certificate is using a certificate signing request (CSR).
-        ///
+        /// 
         /// This endpoint can receive either a PFX formatted certificate that includes the private key and a passphrase for decrypting
         /// that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.
-        ///
+        /// 
         /// The DevOps service will be restarted so the new certificate can be applied.
-        ///
+        /// 
         /// (see GET /service/devops/v1/Safeguard/CSR)
         /// </remarks>
+        /// <param name="certInfo">The certificate info should contain the base64 (or PEM) encoded certificate and pass phrase if the certificate includes a private key.</param>
+        /// <param name="restart">Restart the DevOps service after certificate installation.</param>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
@@ -355,6 +373,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// 
         /// The DevOps service must be restarted before the new self-signed web server certificate will be applied.
         /// </remarks>
+        /// <param name="restart">Restart the DevOps service after installing a new default certificate.</param>
         /// <response code="204">No Content</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
@@ -375,16 +394,18 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <remarks>
         /// Using a certificate signing request is the most secure method for configuring a web server certificate or
         /// a client certificate in the DevOps service.  This is because the private key never leaves the DevOps service.
-        ///
+        /// 
         /// This endpoint will generate a CSR and return it in PKCS#10 PEM format.  This can be submitted to your own
         /// secure certificate authority (CA) resulting in a signed certificate.  This certificate can be uploaded as a
         /// web server certificate or a client certificate for the DevOps service to use for secure communications.
-        ///
+        /// 
         /// (see POST /service​/devops​/v1​/Safeguard​/ClientCertificate)
         /// (see POST /service/devops/v1/Safeguard/WebServerCertificate)
         /// </remarks>
         /// <param name="size">Size of the certificate</param>
         /// <param name="subjectName">Subject name of the certificate</param>
+        /// <param name="sanDns">DNS subject alternative names</param>
+        /// <param name="sanIp">IP subject alternative names</param>
         /// <param name="certType">Type of CSR to create.  Types: A2AClient (default), WebSsl</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -428,6 +449,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Get the A2A registration used by the DevOps service.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. The DevOps service create a special A2A registration
+        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// by the DevOps service.
+        /// </remarks>
         /// <param name="registrationType">Type of registration.  Types: Account (default), Vault</param>
         /// <response code="200">Success</response>
         /// <response code="400">Bad Request</response>
@@ -448,8 +475,16 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get accounts registered with the DevOps service.
+        /// Get accounts registered with the DevOps service A2A registration.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. The DevOps service create a special A2A registration
+        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// by the DevOps service.
+        ///
+        /// This endpoint gets a list of accounts that have been registred with the DevOps service A2A registration.
+        /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
@@ -463,8 +498,17 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Add accounts to be registered with the DevOps service.
+        /// Register accounts with the DevOps service A2A registration.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. The DevOps service create a special A2A registration
+        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// by the DevOps service.
+        ///
+        /// This endpoint registers one or more accounts with the DevOps service A2A registration.
+        /// </remarks>
+        /// <param name="accounts">List of accounts to add to the DevOps service A2A registration</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
@@ -480,6 +524,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Restart the DevOps service.
         /// </summary>
+        /// <remarks>
+        /// Some DevOps service operations require that the service is restarted.  Some of these operations include replacing or regenerating
+        /// the DevOps service web SSL certificate and updating third party vault plugins.
+        /// </remarks>
         /// <response code="204">Success</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
@@ -494,6 +542,14 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Get a list of the trusted certificates that the DevOps service uses to validate an SSL connection to a Safeguard.
         /// </summary>
+        /// <remarks>
+        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
+        ///
+        /// This endpoint lists all of the certificates that have been uploaded and trusted by the DevOps service.
+        ///
+        /// (See PUT /service/devops/{version}/Safeguard/Configuration - ignoreSsl parameter)
+        /// </remarks>
         /// <response code="200">Success</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
@@ -506,9 +562,15 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get a trusted certificates that the DevOps service uses to validate an SSL connection to a Safeguard using a thumbprint.
+        /// Get a trusted certificate that matches the specified thumbprint.
         /// </summary>
-        /// <param name="thumbprint">Certificate thumbprint.</param>
+        /// <remarks>
+        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
+        ///
+        /// This endpoint gets a specific trusted certificate that matches the specified thumbprint.
+        /// </remarks>
+        /// <param name="thumbprint">Trusted certificate thumbprint.</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
@@ -524,8 +586,15 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Add a trusted certificate to the DevOps service.
         /// </summary>
-        /// <param name="certificate">Certificate to add.</param>
-        /// <param name="importFromSafeguard">Import all of the trusted certificates from the connected Safeguard appliance. If this parameter is true then the body will be ignored.</param>
+        /// <remarks>
+        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
+        ///
+        /// This endpoint adds a certificate as a trusted certificate in the DevOps service. An optional "importFromSafeguard" parameter will
+        /// allow the DevOps service to import all of the trusted certificates directly from the associated Safeguard for Privileged Passwords appliance.
+        /// </remarks>
+        /// <param name="certificate">Trusted certificate to add.</param>
+        /// <param name="importFromSafeguard">Import all of the trusted certificates from the associated Safeguard appliance. If this parameter is true then the body will be ignored.</param>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
@@ -551,22 +620,20 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Delete a trusted certificate from the DevOps service.
         /// </summary>
+        /// <remarks>
+        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
+        ///
+        /// This endpoint removes the certificate that is identified by the thumbprint, as a trusted certificate in the DevOps service.
+        /// </remarks>
         /// <param name="thumbprint">Certificate thumbprint.</param>
-        /// <param name="deleteAll">Delete all of the trusted certificates.</param>
         /// <response code="204">Success</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("TrustedCertificates/{thumbprint}")]
-        public ActionResult DeleteTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromRoute] string thumbprint, [FromQuery] bool deleteAll)
+        public ActionResult DeleteTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromRoute] string thumbprint)
         {
-            if (deleteAll)
-            {
-                safeguard.DeleteAllTrustedCertificates();
-            }
-            else
-            {
-                safeguard.DeleteTrustedCertificate(thumbprint);
-            }
+            safeguard.DeleteTrustedCertificate(thumbprint);
 
             return NoContent();
         }
@@ -575,7 +642,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Delete all of the trusted certificate from the DevOps service.
         /// </summary>
         /// <remarks>
-        /// To help prevent unintended trusted certificate removal, the confirm query param is required.
+        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
+        ///
+        /// This endpoint removes all of the trusted certificates from the DevOps service.
+        /// 
+        /// To help prevent unintended trusted certificate removal, the confirm query param is required and must be set to "yes".
         /// </remarks>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove all of the trusted certificates.</param>
         /// <response code="204">Success</response>
@@ -584,7 +656,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpDelete("TrustedCertificates")]
         public ActionResult DeleteAllTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
         {
-            if (!confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
 
             safeguard.DeleteAllTrustedCertificates();

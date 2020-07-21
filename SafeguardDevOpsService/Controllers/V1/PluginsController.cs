@@ -32,6 +32,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Get a list of all registered plugins.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint lists all of the plugins that have been install along with the specific configuration requirements.
+        /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
@@ -47,26 +53,49 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Upload a new plugin.  The plugin must be a zip compressed file that has been converted to a base64 string.\n
-        /// Powershell example:\n
-        /// $fileContentBytes = get-content 'plugin-zip-file' -Encoding Byte
-        /// [System.Convert]::ToBase64String($fileContentBytes) | Out-File 'plugin-text-file.txt'
+        /// Upload a new plugin.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// The plugin must be a zip compressed file that has been converted to a base64 string.&lt;br /&gt;
+        /// Powershell example:&lt;br /&gt;
+        ///   $fileContentBytes = get-content 'plugin-zip-file' -Encoding Byte&lt;br /&gt;
+        ///   [System.Convert]::ToBase64String($fileContentBytes) | Out-File 'plugin-text-file.txt'&lt;br /&gt;
+        ///
+        /// Each plugin is installed into the \ProgramData\SafeguardDevOpsService\ExternalPlugins folder.
+        ///
+        /// (See POST /service/devops/{version}/Plugins/File to upload a plugin file using multipart-form-data)
+        /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost]
-        public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, Plugin pluginInfo)
+        public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, Plugin pluginInfo, [FromQuery] bool restart = false)
         {
             pluginsLogic.InstallPlugin(pluginInfo.Base64PluginData);
+
+            if (restart)
+                pluginsLogic.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok("The DevOps service needs to be restarted to finish installing the new plugin.");
 
             return NoContent();
         }
 
         /// <summary>
-        /// Upload a new plugin via multipartformdata.
+        /// Upload a new plugin via multipart-form-data.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// The plugin must be a zip compressed. Each plugin is installed into the \ProgramData\SafeguardDevOpsService\ExternalPlugins folder.
+        /// </remarks>
+        /// <param name="formFile">Zip compressed plugin file.</param>
+        /// <param name="restart">Restart the DevOps service after plugin install.</param>
         /// <response code="200">Success. Needing restart</response>
         /// <response code="204">Success</response>
         /// <response code="400">Bad request</response>
@@ -79,8 +108,7 @@ namespace OneIdentity.DevOps.Controllers.V1
 
             if (restart)
                 pluginsLogic.RestartService();
-
-            if (RestartManager.Instance.ShouldRestart)
+            else if (RestartManager.Instance.ShouldRestart)
                 return Ok("The DevOps service needs to be restarted to finish installing the new plugin.");
 
             return NoContent();
@@ -89,6 +117,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Get the configuration for a specific plugin.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint gets the configuration for a specific plugin by name.
+        /// </remarks>
         /// <param name="name">Name of the plugin.</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -107,6 +141,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Update the configuration for a plugin.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint sets the configuration for a specific plugin by name.
+        /// </remarks>
         /// <param name="pluginConfiguration">Object containing a JSON configuration string.</param>
         /// <param name="name">Name of plugin to update</param>
         /// <response code="200">Success</response>
@@ -124,6 +164,14 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Delete the configuration for a specific plugin.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint removes the configuration for a specific plugin by name and unregisters the plugin from the DevOps service.
+        /// However, this endpoint does not remove the plugin from the \ProgramData\SafeguardDevOpsService\ExternalPlugins folder. The
+        /// plugin files must be manually removed from the ExternalPlugins folder once the DevOps service has been stopped.
+        /// </remarks>
         /// <param name="name">Name of the plugin.</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -141,6 +189,14 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Get the list of accounts that are mapped to a vault plugin.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
+        /// party vault. By mapping an account to a plugin, the DevOps service monitor will recognize that any password change for
+        /// the mapped account, should be pushed to the plugin.
+        ///
+        /// This endpoint gets a list of accounts that have been mapped to the specified plugin.
+        /// </remarks>
         /// <param name="name">Name of the plugin</param>
         /// <response code="200">Success</response>
         [SafeguardSessionKeyAuthorization]
@@ -156,6 +212,14 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Map a set of accounts to a vault plugin.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
+        /// party vault. By mapping an account to a plugin, the DevOps service monitor will recognize that any password change for
+        /// the mapped account, should be pushed to the plugin.
+        ///
+        /// This endpoint maps a list of accounts to the specified plugin.
+        /// </remarks>
         /// <param name="name">Name of the plugin</param>
         /// <param name="accounts">List of accounts to be mapped</param>
         /// <response code="200">Success</response>
@@ -173,6 +237,14 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Delete all of the mapped accounts for a vault plugin.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
+        /// party vault. By mapping an account to a plugin, the DevOps service monitor will recognize that any password change for
+        /// the mapped account, should be pushed to the plugin.
+        ///
+        /// This endpoint removes all of the mapped accounts for the specified plugin.
+        /// </remarks>
         /// <param name="name">Name of the plugin</param>
         /// <response code="204">No Content</response>
         /// <response code="400">Bad Request</response>
@@ -187,8 +259,18 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete all of the mapped accounts.  To help prevent unintended mapped accounts removal, the confirm query param is required.
+        /// Delete all of the mapped accounts.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
+        /// party vault. By mapping an account to a plugin, the DevOps service monitor will recognize that any password change for
+        /// the mapped account, should be pushed to the plugin.
+        ///
+        /// This endpoint removes all of the mapped accounts from all of the registered plugin.
+        /// 
+        /// To help prevent unintended Safeguard appliance connection removal, the confirm query param is required and must be set to "yes".
+        /// </remarks>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove all of the account mappings.</param>
         /// <response code="200">Success</response>
         [SafeguardSessionKeyAuthorization]
@@ -196,7 +278,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpDelete("Accounts")]
         public ActionResult<IEnumerable<AccountMapping>> DeleteAllAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromQuery] string confirm)
         {
-            if (!confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
 
             pluginsLogic.DeleteAccountMappings();
@@ -207,6 +289,14 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Get the vault account that is associated with a specific plugin.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Each plugin usually has a credential that is used to authenticate to the third party vault. This credential
+        /// must be stored in the Safeguard for Privileged Passwords appliance and fetched at the time when the DevOps service needs
+        /// to authenticate to the third party vault.
+        ///
+        /// This endpoint gets the Safeguard for Privileged Passwords asset/account that has been mapped to a plugin.
+        /// </remarks>
         /// <param name="name">Name of the plugin.</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -223,8 +313,18 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Associate an account with a plugin. The associated account will provide the vault with the authentication credential. (See /service/devops/Safeguard/AvailableAccounts)
+        /// Map an account with the vault credential to a plugin.
         /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Each plugin usually has a credential that is used to authenticate to the third party vault. This credential
+        /// must be stored in the Safeguard for Privileged Passwords appliance and fetched at the time when the DevOps service needs
+        /// to authenticate to the third party vault.
+        ///
+        /// This endpoint maps a Safeguard for Privileged Passwords asset/account to a plugin.
+        ///
+        /// (See /service/devops/Safeguard/AvailableAccounts)
+        /// </remarks>
         /// <param name="name">Name of plugin to update</param>
         /// <param name="assetAccount">Account to associate with the vault.</param>
         /// <response code="200">Success</response>
