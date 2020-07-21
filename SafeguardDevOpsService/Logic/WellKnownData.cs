@@ -10,17 +10,18 @@ namespace OneIdentity.DevOps.Logic
     internal static class WellKnownData
     {
         public const string AppSettings = "appsettings";
+        public const string ServiceIdentifier = "svcid";
 
         public const string PluginInfoClassName = "PluginDescriptor";
 
         public const string DevOpsServiceName = "SafeguardDevOpsService";
-        public const string DevOpsUserName = "SafeguardDevOpsUser";
 
-        public const string DevOpsRegistrationName = DevOpsServiceName;
-        public const string DevOpsVaultRegistrationName = DevOpsRegistrationName + "VaultCredentials";
+        private const string _devOpsUserName = "SafeguardDevOpsUser";
+        private const string _devOpsRegistrationName = DevOpsServiceName;
+        private const string _devOpsVaultRegistrationName = _devOpsRegistrationName + "VaultCredentials";
 
-        public const string DevOpsServiceClientCertificate = "CN=DevOpsServiceClientCertificate";
-        public const string DevOpsServiceWebSslCertificate = "CN=DevOpsServiceWebSslCertificate";
+        private const string _devOpsServiceClientCertificate = "CN=DevOpsServiceClientCertificate";
+        private const string _devOpsServiceWebSslCertificate = "CN=DevOpsServiceWebSslCertificate";
 
         public const string ManifestPattern = "Manifest.json";
         public const string DllPattern = "*.dll";
@@ -34,6 +35,8 @@ namespace OneIdentity.DevOps.Logic
                 Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule.FileName);
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
+        public static readonly string SvcIdPath = Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.ServiceIdentifier);
+
 
         public static string GetSppToken(HttpContext context)
         {
@@ -46,5 +49,31 @@ namespace OneIdentity.DevOps.Logic
 
             return sppToken.Split(" ").LastOrDefault();
         }
+
+        public static string DevOpsUserName(string svcId)
+        {
+            return $"{_devOpsUserName}-{svcId}";
+        }
+
+        public static string DevOpsRegistrationName(string svcId)
+        {
+            return $"{_devOpsRegistrationName}-{svcId}";
+        }
+
+        public static string DevOpsVaultRegistrationName(string svcId)
+        {
+            return $"{_devOpsVaultRegistrationName}-{svcId}";
+        }
+
+        public static string DevOpsServiceClientCertificate(string svcId)
+        {
+            return $"{_devOpsServiceClientCertificate}-{svcId}";
+        }
+
+        public static string DevOpsServiceWebSslCertificate(string svcId)
+        {
+            return $"{_devOpsServiceWebSslCertificate}-{svcId}";
+        }
+
     }
 }

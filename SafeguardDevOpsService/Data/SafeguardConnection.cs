@@ -21,5 +21,9 @@
         /// Safeguard appliance current state
         /// </summary>
         public string ApplianceState { get; set; }
+        /// <summary>
+        /// Safeguard DevOps instance Id
+        /// </summary>
+        public string DevOpsInstanceId { get; set; }
     }
 }

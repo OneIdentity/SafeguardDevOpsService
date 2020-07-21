@@ -63,7 +63,8 @@ namespace OneIdentity.DevOps.Logic
                     ApplianceId = applianceAvailability.ApplianceId,
                     ApplianceName = applianceAvailability.ApplianceName,
                     ApplianceVersion = applianceAvailability.ApplianceVersion,
-                    ApplianceState = applianceAvailability.ApplianceCurrentState
+                    ApplianceState = applianceAvailability.ApplianceCurrentState,
+                    DevOpsInstanceId = _configDb.SvcId
                 };
             }
             catch (SafeguardDotNetException ex)
@@ -79,6 +80,7 @@ namespace OneIdentity.DevOps.Logic
             safeguardConnection.ApplianceName = safeguard.ApplianceName;
             safeguardConnection.ApplianceVersion = safeguard.ApplianceVersion;
             safeguardConnection.ApplianceState = safeguard.ApplianceState;
+            safeguardConnection.DevOpsInstanceId = _configDb.SvcId;
 
             return safeguardConnection;
         }
@@ -216,6 +218,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 a2aUser = new A2AUser()
                 {
+                    UserName = WellKnownData.DevOpsRegistrationName(_configDb.SvcId),
                     PrimaryAuthenticationIdentity = thumbprint
                 };
 
@@ -258,7 +261,7 @@ namespace OneIdentity.DevOps.Logic
             // If we don't have a user Id then try to find the user by name
             if (_configDb.A2aUserId == null)
             {
-                var p = new Dictionary<string, string> {{"filter", $"UserName eq '{WellKnownData.DevOpsUserName}'"}};
+                var p = new Dictionary<string, string> {{"filter", $"UserName eq '{WellKnownData.DevOpsUserName(_configDb.SvcId)}'"}};
 
                 try
                 {
@@ -312,7 +315,8 @@ namespace OneIdentity.DevOps.Logic
             {
                 var registration = new A2ARegistration()
                 {
-                    AppName = registrationType == A2ARegistrationType.Account ? WellKnownData.DevOpsRegistrationName : WellKnownData.DevOpsVaultRegistrationName,
+                    AppName = registrationType == A2ARegistrationType.Account ? 
+                        WellKnownData.DevOpsRegistrationName(_configDb.SvcId) : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId),
                     CertificateUserId = _configDb.A2aUserId.Value,
                     VisibleToCertificateUsers = true
                 };
@@ -351,8 +355,8 @@ namespace OneIdentity.DevOps.Logic
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
                 var knownRegistrationName = (registrationType == A2ARegistrationType.Account)
-                    ? WellKnownData.DevOpsRegistrationName
-                    : WellKnownData.DevOpsVaultRegistrationName;
+                    ? WellKnownData.DevOpsRegistrationName(_configDb.SvcId)
+                    : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId);
                 try
                 {
                     var p = new Dictionary<string, string>
@@ -652,7 +656,7 @@ namespace OneIdentity.DevOps.Logic
         {
             var certSize = 2048;
             var certSubjectName = certificateType == CertificateType.A2AClient ?
-                WellKnownData.DevOpsServiceClientCertificate : WellKnownData.DevOpsServiceWebSslCertificate;
+                WellKnownData.DevOpsServiceClientCertificate(_configDb.SvcId) : WellKnownData.DevOpsServiceWebSslCertificate(_configDb.SvcId);
 
             if (size != null)
                 certSize = size.Value;
