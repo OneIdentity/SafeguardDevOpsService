@@ -125,7 +125,7 @@ namespace OneIdentity.DevOps.Logic
                     // key agreement is used in diffe-hellman ciphers, key encipherment is used in traditional ssl handshake key exchange
                     if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) && !HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment))
                     {
-                        logger.Error("Must have keu usage for key agreement or key encipherment.");
+                        logger.Error("Must have key usage for key agreement or key encipherment.");
                         return false;
                     }
                     // require server authentication EKU
@@ -144,7 +144,7 @@ namespace OneIdentity.DevOps.Logic
                     // key agreement is used in diffe-hellman ciphers, key encipherment is used in traditional ssl handshake key exchange
                     if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) && !HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment))
                     {
-                        logger.Error("Must have keu usage for key agreement or key encipherment.");
+                        logger.Error("Must have key usage for key agreement or key encipherment.");
                         return false;
                     }
                     // require server authentication EKU
