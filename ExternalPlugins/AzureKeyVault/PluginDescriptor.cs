@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Azure.KeyVault;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
@@ -13,6 +14,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
         private static IKeyVaultClient _keyVaultClient;
         private static Dictionary<string,string> _configuration;
         private static ILogger _logger;
+        private static Regex _rgx;
 
         private const string ApplicationIdName = "applicationId";
         private const string VaultUriName = "vaultUri";
@@ -36,6 +38,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
             {
                 _configuration = configuration;
                 _logger.Information($"Plugin {Name} has been successfully configured.");
+                _rgx = new Regex("[^a-zA-Z0-9-]");
             }
             else
             {
@@ -71,7 +74,8 @@ namespace OneIdentity.DevOps.AzureKeyVault
 
             try
             {
-                Task.Run(async () => await _keyVaultClient.SetSecretAsync(_configuration[VaultUriName], $"{asset}-{account}", password));
+                var name = _rgx.Replace($"{asset}-{account}", "-");
+                Task.Run(async () => await _keyVaultClient.SetSecretAsync(_configuration[VaultUriName], name, password));
                 return true;
             }
             catch (Exception ex)
