@@ -219,7 +219,7 @@ function Install-SgDevOpsTrustedCertificate
     }
 
     Write-Host "Uploading Certificate..."
-    Invoke-SgDevOpsMethod POST "Safeguard/TrustedCertificates" -Body @{
+    Invoke-SgDevOpsMethod POST "Safeguard/TrustedCertificates" -Parameters @{ importFromSafeguard = $false } -Body @{
         Base64CertificateData = "$($local:CertificateContents)"
     }
 
