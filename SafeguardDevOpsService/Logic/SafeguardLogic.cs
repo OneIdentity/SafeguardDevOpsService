@@ -484,6 +484,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
+                _logger.Debug("Connecting to Safeguard: {address}");
                 return (ignoreSsl.HasValue && ignoreSsl.Value) ?
                     Safeguard.Connect(address, token, version ?? DefaultApiVersion, true) :
                     Safeguard.Connect(address, token, CertificateValidationCallback, version ?? DefaultApiVersion);
@@ -901,10 +902,12 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
+
                 var result = sg.InvokeMethodFull(Service.Core, Method.Get, "TrustedCertificates");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     serverCertificates = JsonHelper.DeserializeObject<IEnumerable<ServerCertificate>>(result.Body);
+                    _logger.Debug($"Received {serverCertificates.Count()} certificates from Safeguard.");
                 }
             }
             catch (Exception ex)
@@ -918,6 +921,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
+                        _logger.Debug($"Importing trusted certificate {cert.Subject} {cert.Thumbprint}.");
                         var certificateInfo = AddTrustedCertificate(cert.Base64CertificateData);
                         trustedCertificates.Add(certificateInfo);
                     }

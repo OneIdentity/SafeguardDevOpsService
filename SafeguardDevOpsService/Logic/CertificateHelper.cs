@@ -108,11 +108,6 @@ namespace OneIdentity.DevOps.Logic
                 logger.Error("Certificate is expired.");
                 return false;
             }
-            if (!HasUsage(sslCertificate, X509KeyUsageFlags.DigitalSignature))
-            {
-                logger.Error("Missing digital signature usage.");
-                return false;
-            }
 
             switch (certificateType)
             {
@@ -155,7 +150,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     break;
                 case CertificateType.Trusted:
-                    if (!IsCa(sslCertificate))
+                    if (!IsCa(sslCertificate) && !IsSelfSigned(sslCertificate))
                     {
                         logger.Error("Not a certificate authority.");
                         return false;
@@ -168,14 +163,23 @@ namespace OneIdentity.DevOps.Logic
             return true;
         }
 
+        private static bool IsSelfSigned(X509Certificate2 cert)
+        {
+            return cert.SubjectName.RawData.SequenceEqual(cert.IssuerName.RawData);
+        }
+
         private static bool IsCa(X509Certificate2 cert)
         {
-            var extensions = cert.Extensions.OfType<X509BasicConstraintsExtension>().ToList();
-            if (extensions.Any() && extensions[0].CertificateAuthority && extensions[0].CertificateAuthority)
+            var basic = cert.Extensions.OfType<X509BasicConstraintsExtension>().ToList();
+            if (basic.Any() && basic[0].CertificateAuthority && basic[0].CertificateAuthority)
             {
+                var ku = cert.Extensions.OfType<X509KeyUsageExtension>().ToList();
+                if (!ku.Any())
+                {
+                    return true; // if KUs aren't present, then don't require CRL sign and key sign cert
+                }
                 return HasUsage(cert, X509KeyUsageFlags.CrlSign | X509KeyUsageFlags.KeyCertSign);
             }
-
             return false;
         }
 
