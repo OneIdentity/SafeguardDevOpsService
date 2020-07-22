@@ -119,7 +119,7 @@ namespace OneIdentity.DevOps
             if (webSslCert != null)
                 return webSslCert;
 
-            webSslCert = CertificateHelper.CreateDefaultSSLCertificate();
+            webSslCert = CertificateHelper.CreateDefaultSslCertificate();
             db.WebSslCertificate = webSslCert;
             Log.Logger.Information("Created and installed a default web ssl certificate.");
 

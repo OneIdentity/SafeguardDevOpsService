@@ -463,7 +463,7 @@ namespace OneIdentity.DevOps.Logic
         {
             _configDb.WebSslCertificateBase64Data = null;
             _configDb.WebSslCertificatePassphrase = null;
-            _configDb.WebSslCertificate = CertificateHelper.CreateDefaultSSLCertificate();
+            _configDb.WebSslCertificate = CertificateHelper.CreateDefaultSslCertificate();
         }
 
         public bool IsLoggedIn()

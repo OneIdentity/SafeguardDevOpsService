@@ -29,7 +29,7 @@ namespace OneIdentity.DevOps.Logic
 
                 if (chain.ChainElements.Count <= 1)
                 {
-                    var found = trustedChain.ChainPolicy.ExtraStore.Find(X509FindType.FindByThumbprint, cert2.Thumbprint, false);
+                    var found = trustedChain.ChainPolicy.ExtraStore.Find(X509FindType.FindByThumbprint, cert2.Thumbprint ?? string.Empty, false);
                     if (found.Count == 1)
                         return true;
                 }
@@ -49,7 +49,7 @@ namespace OneIdentity.DevOps.Logic
             return true;
         }
 
-        public static X509Certificate2 CreateDefaultSSLCertificate()
+        public static X509Certificate2 CreateDefaultSslCertificate()
         {
             var certSize = 2048;
             var certSubjectName = "CN=DevOpsServiceServerSSL";
@@ -111,9 +111,9 @@ namespace OneIdentity.DevOps.Logic
                         logger.Error("No private key found.");
                         return false;
                     }
-                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
+                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
                     {
-                        logger.Error("Missing key encipherment or enhanced key usage client authentication.");
+                        logger.Error("Missing key agreement or enhanced key usage client authentication.");
                         return false;
                     }
                     break;
@@ -130,13 +130,28 @@ namespace OneIdentity.DevOps.Logic
                     }
                     break;
                 case CertificateType.Trusted:
+                    if (!IsCa(sslCertificate))
+                    {
+                        logger.Error("Not a certificate authority.");
+                        return false;
+                    }
                     break;
                 default:
                     return false;
             }
 
-
             return true;
+        }
+
+        private static bool IsCa(X509Certificate2 cert)
+        {
+            var extensions = cert.Extensions.OfType<X509BasicConstraintsExtension>().ToList();
+            if (extensions.Any() && extensions[0].CertificateAuthority && extensions[0].CertificateAuthority)
+            {
+                return HasUsage(cert, X509KeyUsageFlags.CrlSign | X509KeyUsageFlags.KeyCertSign);
+            }
+
+            return false;
         }
 
         private static bool HasUsage(X509Certificate2 cert, X509KeyUsageFlags flag)
@@ -146,7 +161,7 @@ namespace OneIdentity.DevOps.Logic
             var extensions = cert.Extensions.OfType<X509KeyUsageExtension>().ToList();
             if (!extensions.Any())
             {
-                return flag != X509KeyUsageFlags.CrlSign && flag != X509KeyUsageFlags.KeyCertSign;
+                return false;
             }
             return (extensions[0].KeyUsages & flag) > 0;
         }
@@ -172,7 +187,7 @@ namespace OneIdentity.DevOps.Logic
             // particular purpose be indicated in order for the certificate to be acceptable to that application.
             if (eku == null)
             {
-                return true;
+                return true; // DevOps requires that the desired EKU exist
             }
 
             // Otherwise, the extension exists, so we must validate that it contains the we OID we need.
