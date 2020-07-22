@@ -123,3 +123,57 @@ function Clear-SgDevOpsClientCertificate
 
     Invoke-SgDevOpsMethod DELETE "Safeguard/ClientCertificate"
 }
+
+function New-SgDevOpsCsr
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [ValidateSet('Ssl', 'Client', IgnoreCase=$true)]
+        [string]$CertificateType,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$Subject,
+        [Parameter(Mandatory=$false)]
+        [ValidateSet(1024, 2048, 3072, 4096)]
+        [int]$KeyLength = 2048,
+        [Parameter(Mandatory=$false)]
+        [string[]]$IpAddresses = $null,
+        [Parameter(Mandatory=$false)]
+        [string[]]$DnsNames = $null,
+        [Parameter(Mandatory=$false,Position=2)]
+        [string]$OutFile = "$CertificateType.csr"
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Parameters = @{
+        subjectName = $Subject;
+        size = $KeyLength
+    }
+
+    switch ($CertificateType)
+    {
+        "ssl" { $local:Parameters.certType = "WebSsl"; break }
+        "client" { $local:Parameters.certType = "A2AClient"; break }
+    }
+
+    if ($PSBoundParameters.ContainsKey("IpAddresses"))
+    {
+        Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
+        $IpAddresses | ForEach-Object {
+            if (-not (Test-IpAddress $_))
+            {
+                throw "$_ is not an IP address"
+            }
+        }
+        $local:Parameters.sanIp = ($IpAddresses -join ",")
+    }
+    if ($PSBoundParameters.ContainsKey("DnsNames")) { $local:Parameters.sanDns = ($DnsNames -join ",") }
+
+    $local:Csr = (Invoke-SgDevOpsMethod GET "Safeguard/CSR" -Parameters $local:Parameters)
+    $local:Csr
+
+    $local:Csr | Out-File -Encoding ASCII -FilePath $OutFile -NoNewline -Force
+    Write-Host "`nCSR saved to '$OutFile'"
+}
