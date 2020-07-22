@@ -222,8 +222,21 @@ function Install-SgDevOpsTrustedCertificate
     Invoke-SgDevOpsMethod POST "Safeguard/TrustedCertificates" -Parameters @{ importFromSafeguard = $false } -Body @{
         Base64CertificateData = "$($local:CertificateContents)"
     }
-
 }
+
+function Sync-SgDevOpsTrustedCertificate
+{
+    [CmdletBinding()]
+    Param(
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    Write-Host "Synchronizing Trusted Certificates..."
+    Invoke-SgDevOpsMethod POST "Safeguard/TrustedCertificates" -Parameters @{ importFromSafeguard = $true } -JsonBody "{}"
+}
+
 
 function Remove-SgDevOpsTrustedCertificate
 {
