@@ -315,7 +315,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var registration = new A2ARegistration()
                 {
-                    AppName = registrationType == A2ARegistrationType.Account ? 
+                    AppName = registrationType == A2ARegistrationType.Account ?
                         WellKnownData.DevOpsRegistrationName(_configDb.SvcId) : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId),
                     CertificateUserId = _configDb.A2aUserId.Value,
                     VisibleToCertificateUsers = true
@@ -445,13 +445,6 @@ namespace OneIdentity.DevOps.Logic
             return string.Join(",", addresses.Select(x => $"\"{x}\""));
         }
 
-        private string StripCertificateHeaders(string certificate)
-        {
-            var certData = Regex.Replace(certificate, "-----BEGIN .*-----", "");
-            certData = Regex.Replace(certData, "-----END .*", "");
-            return certData.Replace("\r\n", "").Replace("\n", "");
-        }
-
         public void RemoveClientCertificate()
         {
             _configDb.UserCertificateBase64Data = null;
@@ -463,7 +456,7 @@ namespace OneIdentity.DevOps.Logic
         {
             _configDb.WebSslCertificateBase64Data = null;
             _configDb.WebSslCertificatePassphrase = null;
-            _configDb.WebSslCertificate = CertificateHelper.CreateDefaultSSLCertificate();
+            _configDb.WebSslCertificate = CertificateHelper.CreateDefaultSslCertificate();
         }
 
         public bool IsLoggedIn()
@@ -491,6 +484,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
+                _logger.Debug("Connecting to Safeguard: {address}");
                 return (ignoreSsl.HasValue && ignoreSsl.Value) ?
                     Safeguard.Connect(address, token, version ?? DefaultApiVersion, true) :
                     Safeguard.Connect(address, token, CertificateValidationCallback, version ?? DefaultApiVersion);
@@ -567,17 +561,14 @@ namespace OneIdentity.DevOps.Logic
 
         public void InstallCertificate(CertificateInfo certificate, CertificateType certificateType)
         {
-            var certData = Regex.Replace(certificate.Base64CertificateData, "-----BEGIN .*-----", "");
-            certData = Regex.Replace(certData, "-----END .*", "");
-            certData = certData.Replace("\r\n", "").Replace("\n", "");
-
+            var certificateBytes = CertificateHelper.ConvertPemToData(certificate.Base64CertificateData);
             X509Certificate2 cert;
             try
             {
-                var certificateBytes = Convert.FromBase64String(certData);
                 cert = certificate.Passphrase == null
                     ? new X509Certificate2(certificateBytes)
                     : new X509Certificate2(certificateBytes, certificate.Passphrase);
+                _logger.Debug($"Parsed certificate for installation: subject={cert.SubjectName}, thumbprint={cert.Thumbprint}");
             }
             catch (Exception ex)
             {
@@ -586,6 +577,7 @@ namespace OneIdentity.DevOps.Logic
 
             if (cert.HasPrivateKey)
             {
+                _logger.Debug($"Parsed certificate contains private key");
                 if (!CertificateHelper.ValidateCertificate(cert, certificateType))
                     throw new DevOpsException("Invalid certificate");
 
@@ -681,7 +673,7 @@ namespace OneIdentity.DevOps.Logic
                     {
                         certificateRequest.CertificateExtensions.Add(
                             new X509KeyUsageExtension(
-                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement,
+                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement | X509KeyUsageFlags.KeyEncipherment,
                                 true));
                         certificateRequest.CertificateExtensions.Add(
                             new X509EnhancedKeyUsageExtension(
@@ -689,14 +681,14 @@ namespace OneIdentity.DevOps.Logic
                                 {
                                     new Oid("1.3.6.1.5.5.7.3.2")
                                 },
-                                true));
+                                false));
                         break;
                     }
                     case CertificateType.WebSsl:
                     {
                         certificateRequest.CertificateExtensions.Add(
                             new X509KeyUsageExtension(
-                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment,
+                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement | X509KeyUsageFlags.KeyEncipherment,
                                 true));
                         certificateRequest.CertificateExtensions.Add(
                             new X509EnhancedKeyUsageExtension(
@@ -704,7 +696,7 @@ namespace OneIdentity.DevOps.Logic
                                 {
                                     new Oid("1.3.6.1.5.5.7.3.1")
                                 },
-                                true));
+                                false));
                         break;
                     }
                     default:
@@ -858,14 +850,17 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var certificateBase64 = StripCertificateHeaders(base64CertificateData);
-                var certificateBytes = Convert.FromBase64String(certificateBase64);
+                var certificateBytes = CertificateHelper.ConvertPemToData(base64CertificateData);
                 var cert = new X509Certificate2(certificateBytes);
+                _logger.Debug($"Parsed new trusted certificate: subject={cert.SubjectName}, thumbprint={cert.Thumbprint}.");
 
                 // Check of the certificate already exists and just return it if it does.
                 var existingCert = _configDb.GetTrustedCertificateByThumbPrint(cert.Thumbprint);
                 if (existingCert != null)
+                {
+                    _logger.Debug($"New trusted certificate already exists.");
                     return existingCert.GetCertificateInfo();
+                }
 
                 if (!CertificateHelper.ValidateCertificate(cert, CertificateType.Trusted))
                     throw new DevOpsException("Invalid certificate");
@@ -873,7 +868,7 @@ namespace OneIdentity.DevOps.Logic
                 var trustedCertificate = new TrustedCertificate()
                 {
                     Thumbprint = cert.Thumbprint,
-                    Base64CertificateData = certificateBase64
+                    Base64CertificateData = cert.ToPemFormat()
                 };
 
                 _configDb.SaveTrustedCertificate(trustedCertificate);
@@ -907,10 +902,12 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
+
                 var result = sg.InvokeMethodFull(Service.Core, Method.Get, "TrustedCertificates");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     serverCertificates = JsonHelper.DeserializeObject<IEnumerable<ServerCertificate>>(result.Body);
+                    _logger.Debug($"Received {serverCertificates.Count()} certificates from Safeguard.");
                 }
             }
             catch (Exception ex)
@@ -924,6 +921,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
+                        _logger.Debug($"Importing trusted certificate {cert.Subject} {cert.Thumbprint}.");
                         var certificateInfo = AddTrustedCertificate(cert.Base64CertificateData);
                         trustedCertificates.Add(certificateInfo);
                     }

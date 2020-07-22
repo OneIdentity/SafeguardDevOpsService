@@ -3,13 +3,24 @@ using System.Linq;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
+
 
 namespace OneIdentity.DevOps.Logic
 {
     internal class CertificateHelper
     {
+        public static byte[] ConvertPemToData(string pem)
+        {
+            var noLabel = Regex.Replace(pem, "-----.*?-----", "",
+                RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
+            var b64String = Regex.Replace(noLabel, "\r|\n", "",
+                RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
+            return Convert.FromBase64String(b64String);
+        }
+
         public static bool CertificateValidation(object sender, X509Certificate certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors, Serilog.ILogger logger, IConfigurationRepository configDb)
         {
@@ -29,7 +40,7 @@ namespace OneIdentity.DevOps.Logic
 
                 if (chain.ChainElements.Count <= 1)
                 {
-                    var found = trustedChain.ChainPolicy.ExtraStore.Find(X509FindType.FindByThumbprint, cert2.Thumbprint, false);
+                    var found = trustedChain.ChainPolicy.ExtraStore.Find(X509FindType.FindByThumbprint, cert2.Thumbprint ?? string.Empty, false);
                     if (found.Count == 1)
                         return true;
                 }
@@ -49,7 +60,7 @@ namespace OneIdentity.DevOps.Logic
             return true;
         }
 
-        public static X509Certificate2 CreateDefaultSSLCertificate()
+        public static X509Certificate2 CreateDefaultSslCertificate()
         {
             var certSize = 2048;
             var certSubjectName = "CN=DevOpsServiceServerSSL";
@@ -97,11 +108,6 @@ namespace OneIdentity.DevOps.Logic
                 logger.Error("Certificate is expired.");
                 return false;
             }
-            if (!HasUsage(sslCertificate, X509KeyUsageFlags.DigitalSignature))
-            {
-                logger.Error("Missing digital signature usage.");
-                return false;
-            }
 
             switch (certificateType)
             {
@@ -111,9 +117,16 @@ namespace OneIdentity.DevOps.Logic
                         logger.Error("No private key found.");
                         return false;
                     }
-                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
+                    // key agreement is used in diffe-hellman ciphers, key encipherment is used in traditional ssl handshake key exchange
+                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) && !HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment))
                     {
-                        logger.Error("Missing key encipherment or enhanced key usage client authentication.");
+                        logger.Error("Must have key usage for key agreement or key encipherment.");
+                        return false;
+                    }
+                    // require server authentication EKU
+                    if (!HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
+                    {
+                        logger.Error("Must have extended key usage for server authentication.");
                         return false;
                     }
                     break;
@@ -123,20 +136,51 @@ namespace OneIdentity.DevOps.Logic
                         logger.Error("No private key found.");
                         return false;
                     }
-                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
+                    // key agreement is used in diffe-hellman ciphers, key encipherment is used in traditional ssl handshake key exchange
+                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) && !HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment))
                     {
-                        logger.Error("Missing key agreement or enhanced key usage server authentication.");
+                        logger.Error("Must have key usage for key agreement or key encipherment.");
+                        return false;
+                    }
+                    // require server authentication EKU
+                    if (!HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
+                    {
+                        logger.Error("Must have extended key usage for client authentication.");
                         return false;
                     }
                     break;
                 case CertificateType.Trusted:
+                    if (!IsCa(sslCertificate) && !IsSelfSigned(sslCertificate))
+                    {
+                        logger.Error("Not a certificate authority.");
+                        return false;
+                    }
                     break;
                 default:
                     return false;
             }
 
-
             return true;
+        }
+
+        private static bool IsSelfSigned(X509Certificate2 cert)
+        {
+            return cert.SubjectName.RawData.SequenceEqual(cert.IssuerName.RawData);
+        }
+
+        private static bool IsCa(X509Certificate2 cert)
+        {
+            var basic = cert.Extensions.OfType<X509BasicConstraintsExtension>().ToList();
+            if (basic.Any() && basic[0].CertificateAuthority && basic[0].CertificateAuthority)
+            {
+                var ku = cert.Extensions.OfType<X509KeyUsageExtension>().ToList();
+                if (!ku.Any())
+                {
+                    return true; // if KUs aren't present, then don't require CRL sign and key sign cert
+                }
+                return HasUsage(cert, X509KeyUsageFlags.CrlSign | X509KeyUsageFlags.KeyCertSign);
+            }
+            return false;
         }
 
         private static bool HasUsage(X509Certificate2 cert, X509KeyUsageFlags flag)
@@ -146,7 +190,7 @@ namespace OneIdentity.DevOps.Logic
             var extensions = cert.Extensions.OfType<X509KeyUsageExtension>().ToList();
             if (!extensions.Any())
             {
-                return flag != X509KeyUsageFlags.CrlSign && flag != X509KeyUsageFlags.KeyCertSign;
+                return false;
             }
             return (extensions[0].KeyUsages & flag) > 0;
         }
@@ -172,7 +216,7 @@ namespace OneIdentity.DevOps.Logic
             // particular purpose be indicated in order for the certificate to be acceptable to that application.
             if (eku == null)
             {
-                return true;
+                return true; // DevOps requires that the desired EKU exist
             }
 
             // Otherwise, the extension exists, so we must validate that it contains the we OID we need.

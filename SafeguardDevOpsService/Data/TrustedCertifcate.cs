@@ -4,6 +4,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using LiteDB;
 using OneIdentity.DevOps.Extensions;
+using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.Data
 {
@@ -45,7 +46,7 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public X509Certificate2 GetCertificate()
         {
-            var certificateBytes = Convert.FromBase64String(Base64CertificateData);
+            var certificateBytes = CertificateHelper.ConvertPemToData(Base64CertificateData);
             return new X509Certificate2(certificateBytes);
         }
 

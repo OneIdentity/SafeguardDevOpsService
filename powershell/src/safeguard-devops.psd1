@@ -90,7 +90,11 @@ FunctionsToExport = @(
      'Get-SgDevOpsStatus', 'Initialize-SgDevOps'
 
      # certificates.psm1 -- handles web server and client certificate setup
-     'Get-SgDevOpsSslCertificate', 'Install-SgDevOpsSslCertificate', 'Clear-SgDevOpsSslCertificate'
+     'Get-SgDevOpsSslCertificate', 'Install-SgDevOpsSslCertificate', 'Clear-SgDevOpsSslCertificate',
+     'Get-SgDevOpsClientCertificate', 'Install-SgDevOpsClientCertificate', 'Clear-SgDevOpsClientCertificate',
+     'New-SgDevOpsCsr',
+     'Get-SgDevOpsTrustedCertificate', 'Install-SgDevOpsTrustedCertificate', 'Remove-SgDevOpsTrustedCertificate',
+     'Sync-SgDevOpsTrustedCertificate'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
