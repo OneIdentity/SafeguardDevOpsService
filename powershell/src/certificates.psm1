@@ -177,3 +177,66 @@ function New-SgDevOpsCsr
     $local:Csr | Out-File -Encoding ASCII -FilePath $OutFile -NoNewline -Force
     Write-Host "`nCSR saved to '$OutFile'"
 }
+
+function Get-SgDevOpsTrustedCertificate
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$Thumbprint
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if ($Thumbprint)
+    {
+        Invoke-SgDevOpsMethod GET "Safeguard/TrustedCertificates/$Thumbprint"
+    }
+    else
+    {
+        Invoke-SgDevOpsMethod GET "Safeguard/TrustedCertificates"
+    }
+}
+
+function Install-SgDevOpsTrustedCertificate
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true,Position=0)]
+        [string]$CertificateFile
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
+
+    $local:CertificateContents = (Get-CertificateFileContents $CertificateFile)
+    if (-not $CertificateContents)
+    {
+        throw "No valid certificate to upload"
+    }
+
+    Write-Host "Uploading Certificate..."
+    Invoke-SgDevOpsMethod POST "Safeguard/TrustedCertificates" -Body @{
+        Base64CertificateData = "$($local:CertificateContents)"
+    }
+
+}
+
+function Remove-SgDevOpsTrustedCertificate
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$Thumbprint
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    # no support for remove all in PowerShell
+
+    Invoke-SgDevOpsMethod DELETE "Safeguard/TrustedCertificates/$Thumbprint"
+}
