@@ -681,7 +681,7 @@ namespace OneIdentity.DevOps.Logic
                     {
                         certificateRequest.CertificateExtensions.Add(
                             new X509KeyUsageExtension(
-                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement,
+                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement | X509KeyUsageFlags.KeyEncipherment,
                                 true));
                         certificateRequest.CertificateExtensions.Add(
                             new X509EnhancedKeyUsageExtension(
@@ -689,14 +689,14 @@ namespace OneIdentity.DevOps.Logic
                                 {
                                     new Oid("1.3.6.1.5.5.7.3.2")
                                 },
-                                true));
+                                false));
                         break;
                     }
                     case CertificateType.WebSsl:
                     {
                         certificateRequest.CertificateExtensions.Add(
                             new X509KeyUsageExtension(
-                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment,
+                                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyAgreement | X509KeyUsageFlags.KeyEncipherment,
                                 true));
                         certificateRequest.CertificateExtensions.Add(
                             new X509EnhancedKeyUsageExtension(
@@ -704,7 +704,7 @@ namespace OneIdentity.DevOps.Logic
                                 {
                                     new Oid("1.3.6.1.5.5.7.3.1")
                                 },
-                                true));
+                                false));
                         break;
                     }
                     default:

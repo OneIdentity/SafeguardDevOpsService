@@ -111,9 +111,16 @@ namespace OneIdentity.DevOps.Logic
                         logger.Error("No private key found.");
                         return false;
                     }
-                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
+                    // key agreement is used in diffe-hellman ciphers, key encipherment is used in traditional ssl handshake key exchange
+                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) && !HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment))
                     {
-                        logger.Error("Missing key agreement or enhanced key usage client authentication.");
+                        logger.Error("Must have keu usage for key agreement or key encipherment.");
+                        return false;
+                    }
+                    // require server authentication EKU
+                    if (!HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
+                    {
+                        logger.Error("Must have extended key usage for server authentication.");
                         return false;
                     }
                     break;
@@ -123,9 +130,16 @@ namespace OneIdentity.DevOps.Logic
                         logger.Error("No private key found.");
                         return false;
                     }
-                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) || !HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
+                    // key agreement is used in diffe-hellman ciphers, key encipherment is used in traditional ssl handshake key exchange
+                    if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) && !HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment))
                     {
-                        logger.Error("Missing key agreement or enhanced key usage server authentication.");
+                        logger.Error("Must have keu usage for key agreement or key encipherment.");
+                        return false;
+                    }
+                    // require server authentication EKU
+                    if (!HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
+                    {
+                        logger.Error("Must have extended key usage for client authentication.");
                         return false;
                     }
                     break;
