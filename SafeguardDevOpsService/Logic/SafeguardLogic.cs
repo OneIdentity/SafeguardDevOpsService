@@ -315,7 +315,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var registration = new A2ARegistration()
                 {
-                    AppName = registrationType == A2ARegistrationType.Account ? 
+                    AppName = registrationType == A2ARegistrationType.Account ?
                         WellKnownData.DevOpsRegistrationName(_configDb.SvcId) : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId),
                     CertificateUserId = _configDb.A2aUserId.Value,
                     VisibleToCertificateUsers = true
@@ -447,9 +447,11 @@ namespace OneIdentity.DevOps.Logic
 
         private string StripCertificateHeaders(string certificate)
         {
-            var certData = Regex.Replace(certificate, "-----BEGIN .*-----", "");
-            certData = Regex.Replace(certData, "-----END .*", "");
-            return certData.Replace("\r\n", "").Replace("\n", "");
+            var noLabel = Regex.Replace(certificate, "-----.*?-----", "",
+                RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
+            var b64String = Regex.Replace(noLabel, "\r|\n", "",
+                RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
+            return b64String;
         }
 
         public void RemoveClientCertificate()
@@ -567,10 +569,7 @@ namespace OneIdentity.DevOps.Logic
 
         public void InstallCertificate(CertificateInfo certificate, CertificateType certificateType)
         {
-            var certData = Regex.Replace(certificate.Base64CertificateData, "-----BEGIN .*-----", "");
-            certData = Regex.Replace(certData, "-----END .*", "");
-            certData = certData.Replace("\r\n", "").Replace("\n", "");
-
+            var certData = StripCertificateHeaders(certificate.Base64CertificateData);
             X509Certificate2 cert;
             try
             {
@@ -578,6 +577,7 @@ namespace OneIdentity.DevOps.Logic
                 cert = certificate.Passphrase == null
                     ? new X509Certificate2(certificateBytes)
                     : new X509Certificate2(certificateBytes, certificate.Passphrase);
+                _logger.Debug($"Parsed certificate for installation: subject={cert.SubjectName}, thumbprint={cert.Thumbprint}");
             }
             catch (Exception ex)
             {
@@ -586,6 +586,7 @@ namespace OneIdentity.DevOps.Logic
 
             if (cert.HasPrivateKey)
             {
+                _logger.Debug($"Parsed certificate contains private key");
                 if (!CertificateHelper.ValidateCertificate(cert, certificateType))
                     throw new DevOpsException("Invalid certificate");
 
@@ -861,11 +862,15 @@ namespace OneIdentity.DevOps.Logic
                 var certificateBase64 = StripCertificateHeaders(base64CertificateData);
                 var certificateBytes = Convert.FromBase64String(certificateBase64);
                 var cert = new X509Certificate2(certificateBytes);
+                _logger.Debug($"Parsed new trusted certificate: subject={cert.SubjectName}, thumbprint={cert.Thumbprint}.");
 
                 // Check of the certificate already exists and just return it if it does.
                 var existingCert = _configDb.GetTrustedCertificateByThumbPrint(cert.Thumbprint);
                 if (existingCert != null)
+                {
+                    _logger.Debug($"New trusted certificate already exists.");
                     return existingCert.GetCertificateInfo();
+                }
 
                 if (!CertificateHelper.ValidateCertificate(cert, CertificateType.Trusted))
                     throw new DevOpsException("Invalid certificate");
