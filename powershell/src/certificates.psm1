@@ -12,6 +12,7 @@ function Install-CertificateViaApi
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
     Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
 
     $local:CertificateContents = (Get-CertificateFileContents $CertificateFile)
@@ -62,9 +63,9 @@ function Install-SgDevOpsSslCertificate
 {
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true,Position=0)]
+        [Parameter(Mandatory=$true, Position=0)]
         [string]$CertificateFile,
-        [Parameter(Mandatory=$false,Position=1)]
+        [Parameter(Mandatory=$false, Position=1)]
         [SecureString]$Password
     )
 
@@ -103,9 +104,9 @@ function Install-SgDevOpsClientCertificate
 {
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true,Position=0)]
+        [Parameter(Mandatory=$true, Position=0)]
         [string]$CertificateFile,
-        [Parameter(Mandatory=$false,Position=1)]
+        [Parameter(Mandatory=$false, Position=1)]
         [SecureString]$Password
     )
 
@@ -203,7 +204,7 @@ function Install-SgDevOpsTrustedCertificate
 {
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$true,Position=0)]
+        [Parameter(Mandatory=$true, Position=0)]
         [string]$CertificateFile
     )
 

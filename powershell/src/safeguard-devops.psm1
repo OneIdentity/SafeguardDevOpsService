@@ -734,6 +734,7 @@ function Clear-SgDevOpsAppliance
     {
         Invoke-SgDevOpsMethod DELETE "Safeguard" -Parameters @{ confirm = "yes" }
         Write-Host "Appliance information has been cleared."
+        Write-Host "The DevOps service will restart, you must reinitialize using Initialize-SgDevOpsAppliance."
     }
     else
     {
