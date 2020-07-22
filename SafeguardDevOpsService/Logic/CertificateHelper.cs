@@ -3,13 +3,24 @@ using System.Linq;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
+
 
 namespace OneIdentity.DevOps.Logic
 {
     internal class CertificateHelper
     {
+        public static byte[] ConvertPemToData(string pem)
+        {
+            var noLabel = Regex.Replace(pem, "-----.*?-----", "",
+                RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
+            var b64String = Regex.Replace(noLabel, "\r|\n", "",
+                RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
+            return Convert.FromBase64String(b64String);
+        }
+
         public static bool CertificateValidation(object sender, X509Certificate certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors, Serilog.ILogger logger, IConfigurationRepository configDb)
         {

@@ -445,15 +445,6 @@ namespace OneIdentity.DevOps.Logic
             return string.Join(",", addresses.Select(x => $"\"{x}\""));
         }
 
-        private string StripCertificateHeaders(string certificate)
-        {
-            var noLabel = Regex.Replace(certificate, "-----.*?-----", "",
-                RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
-            var b64String = Regex.Replace(noLabel, "\r|\n", "",
-                RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
-            return b64String;
-        }
-
         public void RemoveClientCertificate()
         {
             _configDb.UserCertificateBase64Data = null;
@@ -569,11 +560,10 @@ namespace OneIdentity.DevOps.Logic
 
         public void InstallCertificate(CertificateInfo certificate, CertificateType certificateType)
         {
-            var certData = StripCertificateHeaders(certificate.Base64CertificateData);
+            var certificateBytes = CertificateHelper.ConvertPemToData(certificate.Base64CertificateData);
             X509Certificate2 cert;
             try
             {
-                var certificateBytes = Convert.FromBase64String(certData);
                 cert = certificate.Passphrase == null
                     ? new X509Certificate2(certificateBytes)
                     : new X509Certificate2(certificateBytes, certificate.Passphrase);
@@ -859,8 +849,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var certificateBase64 = StripCertificateHeaders(base64CertificateData);
-                var certificateBytes = Convert.FromBase64String(certificateBase64);
+                var certificateBytes = CertificateHelper.ConvertPemToData(base64CertificateData);
                 var cert = new X509Certificate2(certificateBytes);
                 _logger.Debug($"Parsed new trusted certificate: subject={cert.SubjectName}, thumbprint={cert.Thumbprint}.");
 
@@ -878,7 +867,7 @@ namespace OneIdentity.DevOps.Logic
                 var trustedCertificate = new TrustedCertificate()
                 {
                     Thumbprint = cert.Thumbprint,
-                    Base64CertificateData = certificateBase64
+                    Base64CertificateData = cert.ToPemFormat()
                 };
 
                 _configDb.SaveTrustedCertificate(trustedCertificate);
