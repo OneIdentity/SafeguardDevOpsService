@@ -940,13 +940,20 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteAllTrustedCertificates();
         }
 
-        public IEnumerable<SppAccount> GetAvailableAccounts()
+        public IEnumerable<SppAccount> GetAvailableAccounts(string filter, int? page, int? limit, string orderby, string q)
         {
             using var sg = Connect();
 
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "PolicyAccounts");
+                var p = new Dictionary<string, string>();
+                JsonHelper.AddQueryParameter(p,nameof(filter), filter);
+                JsonHelper.AddQueryParameter(p,nameof(page), page == null ? null : page.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(limit), limit == null ? null : limit.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(orderby), orderby);
+                JsonHelper.AddQueryParameter(p,nameof(q), q);
+
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "PolicyAccounts", null, p);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     var accounts = JsonHelper.DeserializeObject<IEnumerable<SppAccount>>(result.Body);

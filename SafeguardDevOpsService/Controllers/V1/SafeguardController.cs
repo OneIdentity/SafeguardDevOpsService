@@ -434,14 +434,20 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// (see GET /service​/devops​/v1​/Safeguard​/A2ARegistration​/RetrievableAccounts)
         /// (see POST /service​/devops​/v1​/Safeguard​/A2ARegistration​/RetrievableAccounts)
         /// </remarks>
+        /// <param name="filter">Filter results. Available operators: eq, ne, gt, ge, lt, le, and, or, not, contains, ieq, icontains, in [ {item1}, {item2}, etc], (). Use \ to escape quotes in strings.</param>
+        /// <param name="page">Which page (starting with 0) of data to return</param>
+        /// <param name="limit">The size of a page of data</param>
+        /// <param name="orderby">List of property names (comma-separated) to sort entities by. Prepend properties with - for descending.</param>
+        /// <param name="q">Search all string fields for the specified value</param>
         /// <response code="200">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("AvailableAccounts")]
-        public ActionResult<IEnumerable<SppAccount>> GetAvailableAccounts([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<IEnumerable<SppAccount>> GetAvailableAccounts([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null, 
+            [FromQuery] int? page = null, [FromQuery] int? limit = null, [FromQuery] string orderby = null, [FromQuery] string q = null)
         {
-            var availableAccounts = safeguard.GetAvailableAccounts();
+            var availableAccounts = safeguard.GetAvailableAccounts(filter, page, limit, orderby, q);
 
             return Ok(availableAccounts);
         }

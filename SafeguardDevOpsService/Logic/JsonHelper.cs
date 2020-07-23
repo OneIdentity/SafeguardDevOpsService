@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using OneIdentity.DevOps.Exceptions;
 
@@ -48,5 +49,10 @@ namespace OneIdentity.DevOps.Logic
             errorArgs.ErrorContext.Handled = true;
         }
 
+        public static void AddQueryParameter(Dictionary<string, string> paramsDictionary, string key, string value)
+        {
+            if (value != null)
+                paramsDictionary.Add(key, value);
+        }
     }
 }
