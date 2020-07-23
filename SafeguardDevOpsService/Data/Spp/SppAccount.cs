@@ -22,6 +22,10 @@
         /// </summary>
         public bool HasPassword { get; set; }
         /// <summary>
+        /// Account has a password
+        /// </summary>
+        public bool HasSshKey { get; set; }
+        /// <summary>
         /// Account is disabled
         /// </summary>
         public bool Disabled { get; set; }
