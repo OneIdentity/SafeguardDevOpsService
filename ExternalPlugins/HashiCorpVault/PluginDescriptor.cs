@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using OneIdentity.DevOps.Common;
 using Serilog;
 using VaultSharp;
@@ -12,6 +13,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
         private static IVaultClient _vaultClient;
         private static Dictionary<string,string> _configuration;
         private static ILogger _logger;
+        private static Regex _rgx;
 
         private const string Address = "http://127.0.0.1:8200";
         private const string MountPoint = "oneidentity";
@@ -37,6 +39,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
             {
                 _configuration = configuration;
                 _logger.Information($"Plugin {Name} has been successfully configured.");
+                _rgx = new Regex("[^a-zA-Z0-9-]");
             }
             else
             {
@@ -81,14 +84,15 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             try
             {
-                _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync($"{asset}-{account}", passwordData, null, _configuration[MountPointName])
+                var name = _rgx.Replace($"{asset}-{account}", "-");
+                _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(name, passwordData, null, _configuration[MountPointName])
                     .Wait();
-                _logger.Information($"Password for {asset} - {account} has been successfully stored in the vault.");
+                _logger.Information($"Password for {asset}-{account} has been successfully stored in the vault.");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {asset} - {account}: {ex.Message}.");
+                _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
                 return false;
             }
         }
