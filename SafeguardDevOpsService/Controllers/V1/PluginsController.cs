@@ -173,17 +173,18 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// plugin files must be manually removed from the ExternalPlugins folder once the DevOps service has been stopped.
         /// </remarks>
         /// <param name="name">Name of the plugin.</param>
-        /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("{name}")]
-        public ActionResult<Plugin> DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        public ActionResult DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
             pluginsLogic.DeleteAccountMappings(name);
+            pluginsLogic.RemovePluginVaultAccount(name);
             pluginsLogic.DeletePluginByName(name);
         
-            return Ok();
+            return NoContent();
         }
 
         /// <summary>
@@ -226,7 +227,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
-        [HttpPost("{name}/Accounts")]
+        [HttpPut("{name}/Accounts")]
         public ActionResult<IEnumerable<AccountMapping>> AddAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, IEnumerable<A2ARetrievableAccount> accounts)
         {
             var accountMappings = pluginsLogic.SaveAccountMappings(name, accounts);
@@ -235,7 +236,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete all of the mapped accounts for a vault plugin.
+        /// Remove a set of accounts or all accounts from a vault plugin.
         /// </summary>
         /// <remarks>
         /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
@@ -243,17 +244,26 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// party vault. By mapping an account to a plugin, the DevOps service monitor will recognize that any password change for
         /// the mapped account, should be pushed to the plugin.
         ///
-        /// This endpoint removes all of the mapped accounts for the specified plugin.
+        /// This endpoint removes a list of accounts from the specified plugin. If query param removeAll is set to true, the body will
+        /// be ignored and all accounts that are mapped to the plugin will be removed.
         /// </remarks>
         /// <param name="name">Name of the plugin</param>
-        /// <response code="204">No Content</response>
+        /// <param name="accounts">List of accounts to be mapped</param>
+        /// <param name="removeAll">Remove all mapped accounts for the plugin. If set to true, the body will be ignored.</param>
+        /// <response code="204">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("{name}/Accounts")]
-        public ActionResult<IEnumerable<AccountMapping>> DeleteAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        public ActionResult RemoveAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, 
+            [FromBody] IEnumerable<AccountMapping> accounts, [FromQuery] bool removeAll = false)
         {
-            pluginsLogic.DeleteAccountMappings(name);
+            if (removeAll)
+                pluginsLogic.DeleteAccountMappings(name);
+            else
+            {
+                pluginsLogic.DeleteAccountMappings(name, accounts);
+            }
 
             return NoContent();
         }
@@ -272,11 +282,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// To help prevent unintended Safeguard appliance connection removal, the confirm query param is required and must be set to "yes".
         /// </remarks>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove all of the account mappings.</param>
-        /// <response code="200">Success</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("Accounts")]
-        public ActionResult<IEnumerable<AccountMapping>> DeleteAllAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromQuery] string confirm)
+        public ActionResult DeleteAllAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromQuery] string confirm)
         {
             if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
@@ -328,15 +339,37 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <param name="name">Name of plugin to update</param>
         /// <param name="assetAccount">Account to associate with the vault.</param>
         /// <response code="200">Success</response>
-        /// <response code="404">Not found</response>
+        /// <response code="400">Not found</response>
         [HttpPut("{name}/VaultAccount")]
         public ActionResult<AssetAccount> PutPluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] AssetAccount assetAccount)
         {
             var account = pluginsLogic.SavePluginVaultAccount(name, assetAccount);
-            if (account == null)
-                return NotFound();
 
             return Ok(account);
+        }
+
+        /// <summary>
+        /// Remove a mapped vault credential account from a plugin.
+        /// </summary>
+        /// <remarks>
+        /// The DevOps service uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Each plugin usually has a credential that is used to authenticate to the third party vault. This credential
+        /// must be stored in the Safeguard for Privileged Passwords appliance and fetched at the time when the DevOps service needs
+        /// to authenticate to the third party vault.
+        ///
+        /// This endpoint removes a Safeguard for Privileged Passwords asset/account for a plugin.
+        ///
+        /// (See /service/devops/Safeguard/AvailableAccounts)
+        /// </remarks>
+        /// <param name="name">Name of plugin to update</param>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad Request</response>
+        [HttpDelete("{name}/VaultAccount")]
+        public ActionResult RemovePluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        {
+            pluginsLogic.RemovePluginVaultAccount(name);
+
+            return NoContent();
         }
     }
 }

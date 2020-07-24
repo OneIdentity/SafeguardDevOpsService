@@ -29,7 +29,7 @@ namespace OneIdentity.DevOps.Logic
             _logger = Serilog.Log.Logger;
         }
 
-        private DevOpsException LogAndThrow(string msg, Exception ex = null)
+        private DevOpsException LogAndException(string msg, Exception ex = null)
         {
             _logger.Error(msg);
             return new DevOpsException(msg, ex);
@@ -47,7 +47,7 @@ namespace OneIdentity.DevOps.Logic
             var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
             if (manifestEntry == null)
             {
-                throw LogAndThrow("Failed to find the manifest for the vault plugin.");
+                throw LogAndException("Failed to find the manifest for the vault plugin.");
             }
 
             using (var reader = new StreamReader(manifestEntry.Open()))
@@ -69,14 +69,14 @@ namespace OneIdentity.DevOps.Logic
                 }
                 else
                 {
-                    throw LogAndThrow($"Plugin package does not contain a {WellKnownData.ManifestPattern} file.");
+                    throw LogAndException($"Plugin package does not contain a {WellKnownData.ManifestPattern} file.");
                 }
             }
         }
         public void InstallPlugin(IFormFile formFile)
         {
             if (formFile.Length <= 0)
-                throw LogAndThrow("Plugin cannot be null or empty");
+                throw LogAndException("Plugin cannot be null or empty");
 
             try
             {
@@ -88,14 +88,14 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                throw LogAndThrow($"Failed to install the vault plugin. {ex.Message}");
+                throw LogAndException($"Failed to install the vault plugin. {ex.Message}");
             }
         }
 
         public void InstallPlugin(string base64Plugin)
         {
             if (base64Plugin == null)
-                throw LogAndThrow("Plugin cannot be null");
+                throw LogAndException("Plugin cannot be null");
 
             var bytes = Convert.FromBase64String(base64Plugin);
 
@@ -109,7 +109,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                throw LogAndThrow($"Failed to install the vault plugin. {ex.Message}");
+                throw LogAndException($"Failed to install the vault plugin. {ex.Message}");
             }
         }
 
@@ -224,7 +224,38 @@ namespace OneIdentity.DevOps.Logic
 
             foreach (var account in mappings)
             {
-                _configDb.DeleteAccountMappingsByKey(account.Key);
+                try
+                {
+                    _configDb.DeleteAccountMappingsByKey(account.Key);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
+                }
+            }
+        }
+
+        public void DeleteAccountMappings(string name, IEnumerable<AccountMapping> mappings)
+        {
+            if (mappings == null)
+            {
+                throw LogAndException("A list of accounts mappings must be provided.");
+            }
+
+            foreach (var account in mappings)
+            {
+                // Skip any mapping that doesn't have the matching vault name.
+                if (!account.VaultName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+
+                try
+                {
+                    _configDb.DeleteAccountMappingsByKey(account.Key);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
+                }
             }
         }
 
@@ -238,14 +269,21 @@ namespace OneIdentity.DevOps.Logic
             var plugin = _configDb.GetPluginByName(name);
             if (plugin == null)
             {
-                LogAndThrow($"Plugin {name} not found");
+                throw LogAndException($"Plugin {name} not found");
             }
             if (!plugin.VaultAccountId.HasValue)
             {
-                LogAndThrow($"Plugin {name} is not associated with an account");
+                return null;
             }
 
             return _safeguardLogic.GetA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+        }
+
+        private int VaultAccountUsage(int accountId)
+        {
+            var plugins = _configDb.GetAllPlugins();
+            var usage = plugins.Where(x => x.VaultAccountId == accountId).ToArray();
+            return usage.Length;
         }
 
         public A2ARetrievableAccount SavePluginVaultAccount(string name, AssetAccount sppAccount)
@@ -253,20 +291,21 @@ namespace OneIdentity.DevOps.Logic
             var plugin = _configDb.GetPluginByName(name);
             if (plugin == null)
             {
-                LogAndThrow($"Plugin {name} not found.");
+                throw LogAndException($"Plugin {name} not found.");
             }
             if (sppAccount == null)
             {
-                LogAndThrow("Invalid account.");
+                throw LogAndException("Invalid account.");
             }
 
             var account = _safeguardLogic.GetAccount(sppAccount.Id);
             if (account == null)
             {
-                LogAndThrow($"Account {sppAccount.Id} not found.");
+                throw LogAndException($"Account {sppAccount.Id} not found.");
             }
 
-            if (plugin.VaultAccountId != null)
+            // Make sure that the vault account isn't being used by another plugin before we delete it.
+            if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
             {
                 _safeguardLogic.DeleteA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
             }
@@ -277,15 +316,32 @@ namespace OneIdentity.DevOps.Logic
             if (a2aAccount != null)
             {
                 plugin.VaultAccountId = a2aAccount.AccountId;
-                // plugin.ApiKey = a2aAccount.ApiKey;
                 _configDb.SavePluginConfiguration(plugin);
             }
             else
             {
-                LogAndThrow($"Failed to add the account to the A2A vault registration.  {account.Id} - {account.Name}.");
+                throw LogAndException($"Failed to add the account to the A2A vault registration.  {account.Id} - {account.Name}.");
             }
 
             return a2aAccount;
+        }
+
+        public void RemovePluginVaultAccount(string name)
+        {
+            var plugin = _configDb.GetPluginByName(name);
+            if (plugin == null)
+            {
+                throw LogAndException($"Plugin {name} not found.");
+            }
+
+            // Make sure that the vault account isn't being used by another plugin before we delete it.
+            if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
+            {
+                _safeguardLogic.DeleteA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+            }
+
+            plugin.VaultAccountId = null;
+            _configDb.SavePluginConfiguration(plugin);
         }
 
         public void RestartService()

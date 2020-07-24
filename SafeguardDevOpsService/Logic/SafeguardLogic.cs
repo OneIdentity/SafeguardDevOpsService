@@ -45,7 +45,7 @@ namespace OneIdentity.DevOps.Logic
             return CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger, _configDb);
         }
 
-        private DevOpsException LogAndThrow(string msg, Exception ex = null)
+        private DevOpsException LogAndException(string msg, Exception ex = null)
         {
             _logger.Error(msg);
             return new DevOpsException(msg, ex);
@@ -142,7 +142,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (SafeguardDotNetException ex)
             {
-                throw LogAndThrow($"Failed to contact Safeguard at '{safeguardAddress}': {ex.Message}", ex);
+                throw LogAndException($"Failed to contact Safeguard at '{safeguardAddress}': {ex.Message}", ex);
             }
             finally
             {
@@ -234,7 +234,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    throw LogAndThrow($"Failed to create the A2A user: {ex.Message}", ex);
+                    throw LogAndException($"Failed to create the A2A user: {ex.Message}", ex);
                 }
             }
             else
@@ -248,7 +248,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        throw LogAndThrow($"Failed to update the A2A user: {ex.Message}", ex);
+                        throw LogAndException($"Failed to update the A2A user: {ex.Message}", ex);
                     }
                 }
             }
@@ -341,7 +341,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    throw LogAndThrow($"Failed to create the A2A registration: {ex.Message}", ex);
+                    throw LogAndException($"Failed to create the A2A registration: {ex.Message}", ex);
                 }
             }
         }
@@ -413,7 +413,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     else
                     {
-                        throw LogAndThrow($"Failed to get the registration for id '{registrationId}': {ex.Message}", ex);
+                        throw LogAndException($"Failed to get the registration for id '{registrationId}': {ex.Message}", ex);
                     }
                 }
             }
@@ -491,7 +491,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (SafeguardDotNetException ex)
             {
-                throw LogAndThrow($"Failed to connect to Safeguard at '{address}': {ex.Message}", ex);
+                throw LogAndException($"Failed to connect to Safeguard at '{address}': {ex.Message}", ex);
             }
         }
 
@@ -572,7 +572,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                throw LogAndThrow($"Failed to convert the provided certificate: {ex.Message}", ex);
+                throw LogAndException($"Failed to convert the provided certificate: {ex.Message}", ex);
             }
 
             if (cert.HasPrivateKey)
@@ -639,7 +639,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    throw LogAndThrow($"Failed to import the certificate: {ex.Message}", ex);
+                    throw LogAndException($"Failed to import the certificate: {ex.Message}", ex);
                 }
             }
         }
@@ -718,7 +718,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        LogAndThrow("Invalid SAN IP address list.", ex);
+                        throw LogAndException("Invalid SAN IP address list.", ex);
                     }
                 }
 
@@ -731,7 +731,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        LogAndThrow("Invalid SAN DNS list.", ex);
+                        throw LogAndException("Invalid SAN DNS list.", ex);
                     }
                 }
                 certificateRequest.CertificateExtensions.Add(sanBuilder.Build());
@@ -836,7 +836,7 @@ namespace OneIdentity.DevOps.Logic
         public CertificateInfo GetTrustedCertificate(string thumbPrint)
         {
             if (string.IsNullOrEmpty(thumbPrint))
-                throw LogAndThrow("Invalid thumbprint");
+                throw LogAndException("Invalid thumbprint");
 
             var certificate = _configDb.GetTrustedCertificateByThumbPrint(thumbPrint);
 
@@ -846,7 +846,7 @@ namespace OneIdentity.DevOps.Logic
         private CertificateInfo AddTrustedCertificate(string base64CertificateData)
         {
             if (base64CertificateData == null)
-                throw LogAndThrow("Certificate cannot be null");
+                throw LogAndException("Certificate cannot be null");
 
             try
             {
@@ -876,7 +876,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                throw LogAndThrow($"Failed to add the certificate: {ex.Message}", ex);
+                throw LogAndException($"Failed to add the certificate: {ex.Message}", ex);
             }
         }
 
@@ -888,7 +888,7 @@ namespace OneIdentity.DevOps.Logic
         public void DeleteTrustedCertificate(string thumbPrint)
         {
             if (string.IsNullOrEmpty(thumbPrint))
-                throw LogAndThrow("Invalid thumbprint");
+                throw LogAndException("Invalid thumbprint");
 
             _configDb.DeleteTrustedCertificateByThumbPrint(thumbPrint);
         }
@@ -912,7 +912,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                LogAndThrow("Failed to get the Safeguard trusted certificates.", ex);
+                throw LogAndException("Failed to get the Safeguard trusted certificates.", ex);
             }
 
             if (serverCertificates != null)
@@ -995,7 +995,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 else
                 {
-                    throw LogAndThrow($"Failed to get the account for id '{id}': {ex.Message}", ex);
+                    throw LogAndException($"Failed to get the account for id '{id}': {ex.Message}", ex);
                 }
             }
 
@@ -1076,7 +1076,7 @@ namespace OneIdentity.DevOps.Logic
             if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
-                throw LogAndThrow("A2A registration not configured");
+                throw LogAndException("A2A registration not configured");
             }
 
             using var sg = Connect();
@@ -1094,7 +1094,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                throw LogAndThrow($"Get retrievable account failed for account {id}", ex);
+                throw LogAndException($"Get retrievable account failed for account {id}", ex);
             }
 
             return null;
@@ -1105,7 +1105,7 @@ namespace OneIdentity.DevOps.Logic
             if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
-                throw LogAndThrow("A2A registration not configured");
+                throw LogAndException("A2A registration not configured");
             }
 
             using var sg = Connect();
@@ -1123,7 +1123,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                throw LogAndThrow($"Failed to remove A2A retrievable account {id}", ex);
+                throw LogAndException($"Failed to remove A2A retrievable account {id}", ex);
             }
         }
 
@@ -1132,7 +1132,7 @@ namespace OneIdentity.DevOps.Logic
             if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
-                throw LogAndThrow("A2A registration not configured");
+                throw LogAndException("A2A registration not configured");
             }
 
             using var sg = Connect();
@@ -1160,7 +1160,7 @@ namespace OneIdentity.DevOps.Logic
         {
             if (_configDb.A2aRegistrationId == null)
             {
-                throw LogAndThrow("A2A registration not configured");
+                throw LogAndException("A2A registration not configured");
             }
 
             using var sg = Connect();
@@ -1185,6 +1185,30 @@ namespace OneIdentity.DevOps.Logic
             return GetA2ARetrievableAccounts(registrationType);
         }
 
+        public void RemoveA2ARetrievableAccounts(IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType)
+        {
+            if (_configDb.A2aRegistrationId == null)
+            {
+                throw LogAndException("A2A registration not configured");
+            }
+
+            using var sg = Connect();
+            var registrationId = (registrationType == A2ARegistrationType.Account)
+                ? _configDb.A2aRegistrationId
+                : _configDb.A2aVaultRegistrationId;
+
+            foreach (var account in accounts)
+            {
+                try
+                {
+                    sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registrationId}/RetrievableAccounts/{account.Id}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to remove account {account.Id} - {account.Name}: {ex.Message}");
+                }
+            }
+        }
 
         public ServiceConfiguration GetDevOpsConfiguration()
         {
