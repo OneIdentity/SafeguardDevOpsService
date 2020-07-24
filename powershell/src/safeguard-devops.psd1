@@ -74,7 +74,8 @@ NestedModules = @(
      # Public Modules
      'init.psm1',
      'certificates.psm1',
-     'configuration.psm1'
+     'configuration.psm1',
+     'plugins.psm1'
 )
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
@@ -98,10 +99,12 @@ FunctionsToExport = @(
      'Sync-SgDevOpsTrustedCertificate',
 
      # configuration.psm1
-     'Get-SgDevOpsConfiguration', 'Initialize-SgDevOpsConfiguration', 'Clear-SgDevOpsConfiguration'
+     'Get-SgDevOpsConfiguration', 'Initialize-SgDevOpsConfiguration', 'Clear-SgDevOpsConfiguration',
+     'Get-SgDevOpsAvailableAssetAccount','Get-SgDevOpsRegisteredAssetAccount',
+     'Register-SgDevOpsAssetAccount','Unregister-SgDevOpsAssetAccount',
 
      # plugins.psm1
-
+     'Get-SgDevOpsPlugin', 'Install-SgDevOpsPlugin', 'Remove-SgDevOpsPlugin', 'Edit-SgDevOpsPlugin'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
