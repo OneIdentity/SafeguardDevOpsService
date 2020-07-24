@@ -2,12 +2,21 @@ function Get-SgDevOpsPlugin
 {
     [CmdletBinding()]
     Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$PluginName
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    Invoke-SgDevOpsMethod GET "Plugins"
+    if ($PluginName)
+    {
+        Invoke-SgDevOpsMethod GET "Plugins/$PluginName"
+    }
+    else
+    {
+        Invoke-SgDevOpsMethod GET "Plugins"
+    }
 }
 
 function Install-SgDevOpsPlugin
@@ -67,23 +76,84 @@ function Remove-SgDevOpsPlugin
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory=$true, Position=0)]
-        [string]$Name
+        [string]$PluginName
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    Invoke-SgDevOpsMethod DELETE "Plugins/$Name"
+    Invoke-SgDevOpsMethod DELETE "Plugins/$PluginName"
 }
 
-function Edit-SgDevOpsPlugin
+function Get-SgDevOpsPluginVaultAccount
 {
     [CmdletBinding()]
     Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$PluginName
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
+    Invoke-SgDevOpsMethod GET "Plugins/$PluginName/VaultAccount"
+}
 
+function Set-SgDevOpsPluginVaultAccount
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$PluginName,
+        [Parameter(Mandatory=$true, Position=1)]
+        [object]$Asset,
+        [Parameter(Mandatory=$true, Position=2)]
+        [object]$Account
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
+    $local:AssetAccount = (Resolve-SgDevOpsAssetAccount $Asset $Account -Domain $Domain)[0]
+
+    Invoke-SgDevOpsMethod PUT "Plugins/$PluginName/VaultAccount" -Body $local:AssetAccount
+}
+
+function Get-SgDevOpsPluginSetting
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$PluginName,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$SettingName
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Plugin = (Get-SgDevOpsPlugin $PluginName)
+    $local:Plugin.Configuration[$SettingName]
+}
+
+function Set-SgDevOpsPluginSetting
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$PluginName,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$SettingName,
+        [Parameter(Mandatory=$true, Position=2)]
+        [string]$SettingValue
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Plugin = (Get-SgDevOpsPlugin $PluginName)
+    $local:Plugin.Configuration[$SettingName] = $SettingValue
+
+    Invoke-SgDevOpsMethod PUT "Plugins/$PluginName" -Body $local:Plugin
 }
