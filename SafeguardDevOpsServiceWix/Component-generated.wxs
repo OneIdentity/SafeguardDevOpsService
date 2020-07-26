@@ -659,6 +659,9 @@
             <Component Id="SOS_README.md" Guid="*">
                 <File Id="SOS_README.md" KeyPath="yes" Source="$(var.SourceDir)\SOS_README.md" />
             </Component>
+            <Component Id="Swashbuckle.AspNetCore.Annotations.dll" Guid="*">
+                <File Id="Swashbuckle.AspNetCore.Annotations.dll" KeyPath="yes" Source="$(var.SourceDir)\Swashbuckle.AspNetCore.Annotations.dll" />
+            </Component>
             <Component Id="Swashbuckle.AspNetCore.Newtonsoft.dll" Guid="*">
                 <File Id="Swashbuckle.AspNetCore.Newtonsoft.dll" KeyPath="yes" Source="$(var.SourceDir)\Swashbuckle.AspNetCore.Newtonsoft.dll" />
             </Component>
@@ -1407,6 +1410,7 @@
             <ComponentRef Id="Serilog.Sinks.File.dll" />
             <ComponentRef Id="Serilog.Sinks.RollingFile.dll" />
             <ComponentRef Id="SOS_README.md" />
+            <ComponentRef Id="Swashbuckle.AspNetCore.Annotations.dll" />
             <ComponentRef Id="Swashbuckle.AspNetCore.Newtonsoft.dll" />
             <ComponentRef Id="Swashbuckle.AspNetCore.Swagger.dll" />
             <ComponentRef Id="Swashbuckle.AspNetCore.SwaggerGen.dll" />

@@ -6,17 +6,28 @@
   <Product Id="*" Name="SafeguardDevOpsService" Language="1033" Version="1.0.0.0" Manufacturer="!(loc.CompanyName)" UpgradeCode="8a0194a6-6aed-441c-8130-a81b96490bd7">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
-		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MajorUpgrade AllowSameVersionUpgrades="yes" Schedule="afterInstallInitialize" DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes"  />
 
     <Icon Id="safeguard.ico" SourceFile="$(var.ProjectDir)\..\SafeguardLogo.ico"/>
 
     <Property Id="ARPPRODUCTICON">safeguard.icon</Property>
     <Property Id="ARPURLINFOABOUT">https://github.com/OneIdentity/SafeguardDevOpsService</Property>
+    <!--<Property Id="ARPCOMMENTS" Value="$(var.ProductCopyright)" />-->
     <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
+
+    <SetProperty Id="_INSTALL"   After="FindRelatedProducts" Value="1"><![CDATA[Installed="" AND PREVIOUSVERSIONSINSTALLED=""]]></SetProperty>
+    <SetProperty Id="_UNINSTALL" After="FindRelatedProducts" Value="1"><![CDATA[PREVIOUSVERSIONSINSTALLED="" AND REMOVE="ALL"]]></SetProperty>
+    <SetProperty Id="_CHANGE"    After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="" AND PREVIOUSVERSIONSINSTALLED<>"" AND REMOVE=""]]></SetProperty>
+    <SetProperty Id="_REPAIR"    After="FindRelatedProducts" Value="1"><![CDATA[REINSTALL<>""]]></SetProperty>
+    <SetProperty Id="_UPGRADE"   After="FindRelatedProducts" Value="1"><![CDATA[PREVIOUSVERSIONSINSTALLED<>"" ]]></SetProperty>
 
     <Condition Message="Installation requires Administrator privileges">
       <![CDATA[Privileged]]>
+    </Condition>
+
+    <Condition Message="32 bit windows is not supported.">
+      VersionNT64
     </Condition>
 
     <UIRef Id="WixUI_Minimal" />
@@ -67,12 +78,12 @@
                   ExeCommand='/c rmdir "\!(loc.ProductNameFolder)" /s /q' />
 
     <InstallExecuteSequence>
-      <Custom Action="EXECUTE_STOP" After="CostFinalize">Installed</Custom>
-      <Custom Action="EXECUTE_UNINSTALL" After="EXECUTE_STOP">Installed</Custom>
-      <Custom Action="CLEANUP_DATA_ON_UNINSTALL" After="RemoveFiles">REMOVE="ALL"</Custom>
-      <Custom Action="CLEANUP_EXT_DATA_ON_UNINSTALL" After="CLEANUP_DATA_ON_UNINSTALL">REMOVE="ALL"</Custom>
-      <Custom Action="EXECUTE_INSTALL" After="InstallFinalize">NOT Installed</Custom>
-      <Custom Action="EXECUTE_START" After="EXECUTE_INSTALL">NOT Installed</Custom>
+      <Custom Action="EXECUTE_STOP" Before="InstallInitialize">NOT _INSTALL</Custom>
+      <Custom Action="EXECUTE_UNINSTALL" Before="EXECUTE_STOP">NOT _INSTALL</Custom>
+      <Custom Action="CLEANUP_DATA_ON_UNINSTALL" After="RemoveFiles">_UNINSTALL</Custom>
+      <Custom Action="CLEANUP_EXT_DATA_ON_UNINSTALL" After="CLEANUP_DATA_ON_UNINSTALL">_UNINSTALL</Custom>
+      <Custom Action="EXECUTE_INSTALL" After="InstallFinalize">NOT _UNINSTALL</Custom>
+      <Custom Action="EXECUTE_START" After="EXECUTE_INSTALL">NOT _UNINSTALL</Custom>
     </InstallExecuteSequence>
 
 
