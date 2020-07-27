@@ -23,7 +23,7 @@ namespace OneIdentity.DevOps
                 .WriteTo.File(logDirPath,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .Enrich.FromLogContext()
-                //.MinimumLevel.Debug()
+                .MinimumLevel.ControlledBy(LogLevelSwitcher.Instance.LogLevelSwitch)
                 .CreateLogger();
 
             Console.WriteLine($"DevOps Service logging to: {logDirPath}");

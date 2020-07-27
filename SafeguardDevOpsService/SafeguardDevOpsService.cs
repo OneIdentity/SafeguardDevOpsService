@@ -7,9 +7,12 @@ using OneIdentity.DevOps.Logic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Extensions;
 using Serilog;
+using Serilog.Events;
 
 namespace OneIdentity.DevOps
 {
@@ -37,6 +40,43 @@ namespace OneIdentity.DevOps
                 .AddJsonFile($"{Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json",
                     optional: true, reloadOnChange: true).Build();
             var httpsPort = configuration["HttpsPort"] ?? "443";
+            var logLevel = configuration["LogLevel"];
+
+            if (logLevel != null)
+            {
+                if (Enum.TryParse(logLevel, out DevOpsLogLevel level))
+                {
+                    var logLevelSwitch = LogLevelSwitcher.Instance.LogLevelSwitch;
+
+                    switch (level)
+                    {
+                        case DevOpsLogLevel.Information:
+                            logLevelSwitch.MinimumLevel = LogEventLevel.Information;
+                            break;
+
+                        case DevOpsLogLevel.Debug:
+                            logLevelSwitch.MinimumLevel = LogEventLevel.Debug;
+                            break;
+                        case DevOpsLogLevel.Error:
+                            logLevelSwitch.MinimumLevel = LogEventLevel.Error;
+                            break;
+                        case DevOpsLogLevel.Warning:
+                            logLevelSwitch.MinimumLevel = LogEventLevel.Warning;
+                            break;
+                        case DevOpsLogLevel.Fatal:
+                            logLevelSwitch.MinimumLevel = LogEventLevel.Fatal;
+                            break;
+                        case DevOpsLogLevel.Verbose:
+                            logLevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+                            break;
+                    }
+                }
+                else
+                {
+                    Log.Logger.Error($"{logLevel} is not not a recognized log level.");
+                }
+            }
+
 
             _host = new WebHostBuilder()
                 .UseSerilog()
