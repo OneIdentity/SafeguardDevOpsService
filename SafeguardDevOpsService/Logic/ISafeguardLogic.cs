@@ -32,6 +32,7 @@ namespace OneIdentity.DevOps.Logic
         void DeleteA2ARetrievableAccount(int id, A2ARegistrationType registrationType);
         IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts(A2ARegistrationType registrationType);
         IEnumerable<A2ARetrievableAccount> AddA2ARetrievableAccounts(IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType);
+        void RemoveA2ARetrievableAccounts(IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType);
 
         ServiceConfiguration GetDevOpsConfiguration();
         ServiceConfiguration ConfigureDevOpsService();

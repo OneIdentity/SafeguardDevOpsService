@@ -87,6 +87,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </remarks>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the Safeguard appliance connection.</param>
         /// <response code="204">Success.</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete]
@@ -176,7 +177,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("Configuration")]
-        public ActionResult<ServiceConfiguration> DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
+        public ActionResult DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
         {
             if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
@@ -292,6 +293,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// This endpoint removes the current client certificate from the DevOps service.
         /// </remarks>
         /// <response code="204">No Content.</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("ClientCertificate")]
@@ -375,6 +377,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </remarks>
         /// <param name="restart">Restart the DevOps service after installing a new default certificate.</param>
         /// <response code="204">No Content</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("WebServerCertificate")]
@@ -519,12 +522,36 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
-        [HttpPost("A2ARegistration/RetrievableAccounts")]
+        [HttpPut("A2ARegistration/RetrievableAccounts")]
         public ActionResult<IEnumerable<A2ARetrievableAccount>> AddRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<SppAccount> accounts)
         {
             var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(accounts, A2ARegistrationType.Account);
 
             return Ok(retrievableAccounts);
+        }
+
+        /// <summary>
+        /// Unregister accounts with the DevOps service A2A registration.
+        /// </summary>
+        /// <remarks>
+        /// The DevOps service uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. The DevOps service create a special A2A registration
+        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// by the DevOps service.
+        ///
+        /// This endpoint unregisters one or more accounts with the DevOps service A2A registration.
+        /// </remarks>
+        /// <param name="accounts">List of accounts to remove from the DevOps service A2A registration</param>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad Request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpDelete("A2ARegistration/RetrievableAccounts")]
+        public ActionResult RemoveRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<SppAccount> accounts)
+        {
+            safeguard.RemoveA2ARetrievableAccounts(accounts, A2ARegistrationType.Account);
+
+            return NoContent();
         }
 
         /// <summary>
@@ -634,6 +661,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </remarks>
         /// <param name="thumbprint">Certificate thumbprint.</param>
         /// <response code="204">Success</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("TrustedCertificates/{thumbprint}")]
@@ -657,6 +685,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </remarks>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove all of the trusted certificates.</param>
         /// <response code="204">Success</response>
+        /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("TrustedCertificates")]
