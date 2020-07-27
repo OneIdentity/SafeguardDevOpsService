@@ -87,6 +87,7 @@ FunctionsToExport = @(
      'Get-SgDevOpsApplianceStatus', 'Initialize-SgDevOpsAppliance', 'Clear-SgDevOpsAppliance',
      'Connect-SgDevOps', 'Disconnect-SgDevOps',  'Restart-SgDevOps', # <-- session init / deinit
      'Invoke-SgDevOpsMethod', # <-- this is the function used to implement most of the others
+     'Get-SgDevOpsCommand',
 
      # init.psm1 -- handles full service initialization walkthrough UX
      'Get-SgDevOpsStatus', 'Initialize-SgDevOps',

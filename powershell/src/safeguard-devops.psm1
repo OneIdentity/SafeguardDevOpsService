@@ -774,3 +774,22 @@ function Restart-SgDevOps
         Write-Host -ForegroundColor Yellow "Operation canceled."
     }
 }
+
+function Get-SgDevOpsCommand
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false,Position=0)]
+        [string]$Criteria1,
+        [Parameter(Mandatory=$false,Position=1)]
+        [string]$Criteria2,
+        [Parameter(Mandatory=$false,Position=2)]
+        [string]$Criteria3
+    )
+
+    $local:Commands = (Get-Command -Module 'safeguard-devops')
+    if ($Criteria1) { $local:Commands = ($local:Commands | Where-Object { $_.Name -match $Criteria1 }) }
+    if ($Criteria2) { $local:Commands = ($local:Commands | Where-Object { $_.Name -match $Criteria2 }) }
+    if ($Criteria3) { $local:Commands = ($local:Commands | Where-Object { $_.Name -match $Criteria3 }) }
+    $local:Commands
+}
