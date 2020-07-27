@@ -49,5 +49,9 @@
         /// Allow session request
         /// </summary>
         public bool AllowSessionRequest { get; set; }
+        /// <summary>
+        /// Allow Ssh key request
+        /// </summary>
+        public bool AllowSshKeyRequest { get; set; }
     }
 }
