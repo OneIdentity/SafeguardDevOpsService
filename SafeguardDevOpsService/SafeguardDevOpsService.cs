@@ -73,7 +73,7 @@ namespace OneIdentity.DevOps
                 }
                 else
                 {
-                    Log.Logger.Error($"{logLevel} is not not a recognized log level.");
+                    Log.Logger.Error($"{logLevel} is not not a recognized log level. Continuing to use the default log level.");
                 }
             }
 

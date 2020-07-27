@@ -54,7 +54,7 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(OS)' != 'Windows_NT' And '$(SelfContained)' != 'true' ">
+  <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <None Update="svcid">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
