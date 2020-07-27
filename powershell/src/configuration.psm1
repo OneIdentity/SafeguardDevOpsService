@@ -146,7 +146,7 @@ function Register-SgDevOpsAssetAccount
         }
     }
 
-    Invoke-SgDevOpsMethod POST "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
+    Invoke-SgDevOpsMethod PUT "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
 }
 
 function Unregister-SgDevOpsAssetAccount
@@ -189,5 +189,5 @@ function Unregister-SgDevOpsAssetAccount
         }
     }
 
-    Invoke-SgDevOpsMethod POST "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
+    Invoke-SgDevOpsMethod PUT "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
 }

@@ -725,7 +725,7 @@ function Clear-SgDevOpsAppliance
         }
         else
         {
-            $local:Confirmed = (Get-Confirmation "Clear Safeguard DevOps Service" "Do you want clear the association with this Safeguard appliance?" `
+            $local:Confirmed = (Get-Confirmation "Clear Safeguard DevOps Service" "Do you want to clear the association with this Safeguard appliance?" `
                                                  "Clear." "Cancels this operation.")
         }
     }
@@ -735,6 +735,39 @@ function Clear-SgDevOpsAppliance
         Invoke-SgDevOpsMethod DELETE "Safeguard" -Parameters @{ confirm = "yes" }
         Write-Host "Appliance information has been cleared."
         Write-Host "The DevOps service will restart, you must reinitialize using Initialize-SgDevOpsAppliance."
+    }
+    else
+    {
+        Write-Host -ForegroundColor Yellow "Operation canceled."
+    }
+}
+
+function Restart-SgDevOps
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false)]
+        [switch]$Force
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    Write-Host -ForegroundColor Yellow "WARNING: Restarting this Safeguard DevOps Service will require you to log in again."
+    if ($Force)
+    {
+        $local:Confirmed = $true
+    }
+    else
+    {
+        $local:Confirmed = (Get-Confirmation "Restart Safeguard DevOps Service" "Do you want to restart this Safeguard DevOps Service?" `
+                                             "Restart." "Cancels this operation.")
+    }
+
+    if ($local:Confirmed)
+    {
+        Invoke-SgDevOpsMethod POST "Safeguard/Restart" -Parameters @{ confirm = "yes" }
+        Write-Host "Safeguard DevOps Service has restarted, you must reconnect using Connect-SgDevOps."
     }
     else
     {
