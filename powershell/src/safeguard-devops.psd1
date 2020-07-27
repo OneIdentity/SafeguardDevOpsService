@@ -73,7 +73,9 @@ NestedModules = @(
      'ps-utilities.psm1',
      # Public Modules
      'init.psm1',
-     'certificates.psm1'
+     'certificates.psm1',
+     'configuration.psm1',
+     'plugins.psm1'
 )
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
@@ -84,17 +86,27 @@ FunctionsToExport = @(
      # safeguard-devops.psm1 -- handles login/logout and calling generic methods
      'Get-SgDevOpsApplianceStatus', 'Initialize-SgDevOpsAppliance', 'Clear-SgDevOpsAppliance',
      'Connect-SgDevOps', 'Disconnect-SgDevOps', # <-- session init / deinit
-     'Invoke-SgDevOpsMethod' # <-- this is the function used to implement most of the others
+     'Invoke-SgDevOpsMethod', # <-- this is the function used to implement most of the others
 
      # init.psm1 -- handles full service initialization walkthrough UX
-     'Get-SgDevOpsStatus', 'Initialize-SgDevOps'
+     'Get-SgDevOpsStatus', 'Initialize-SgDevOps',
 
      # certificates.psm1 -- handles web server and client certificate setup
      'Get-SgDevOpsSslCertificate', 'Install-SgDevOpsSslCertificate', 'Clear-SgDevOpsSslCertificate',
      'Get-SgDevOpsClientCertificate', 'Install-SgDevOpsClientCertificate', 'Clear-SgDevOpsClientCertificate',
      'New-SgDevOpsCsr',
      'Get-SgDevOpsTrustedCertificate', 'Install-SgDevOpsTrustedCertificate', 'Remove-SgDevOpsTrustedCertificate',
-     'Sync-SgDevOpsTrustedCertificate'
+     'Sync-SgDevOpsTrustedCertificate',
+
+     # configuration.psm1
+     'Get-SgDevOpsConfiguration', 'Initialize-SgDevOpsConfiguration', 'Clear-SgDevOpsConfiguration',
+     'Get-SgDevOpsAvailableAssetAccount','Get-SgDevOpsRegisteredAssetAccount',
+     'Register-SgDevOpsAssetAccount','Unregister-SgDevOpsAssetAccount',
+
+     # plugins.psm1
+     'Get-SgDevOpsPlugin', 'Install-SgDevOpsPlugin', 'Remove-SgDevOpsPlugin',
+     'Get-SgDevOpsPluginVaultAccount', 'Set-SgDevOpsPluginVaultAccount',
+     'Get-SgDevOpsPluginSetting', 'Set-SgDevOpsPluginSetting'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

@@ -155,3 +155,68 @@ function Use-CertificateFile
         $local:Cert
     }
 }
+# Helper function for identifying a particular asset account
+function Resolve-SgDevOpsAssetAccount
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [object]$Asset,
+        [Parameter(Mandatory=$true, Position=1)]
+        [object]$Account,
+        [Parameter(Mandatory=$false)]
+        [string]$Domain
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    # Coalesce an object down to an ID
+    # This will allow passing a Safeguard asset or asset account to this method
+    if ($Asset.Id -as [int])
+    {
+        $Asset = $Asset.Id
+    }
+    if ($Account.Id -as [int])
+    {
+        $Account = $Account.Id
+    }
+
+    if (-not ($Account -as [int]))
+    {
+        # Account is a string
+        if (-not ($Asset -as [int]))
+        {
+            # Asset is a string, search for Account name and Asset name
+            $local:AssetAccount = (Invoke-SgDevOpsMethod GET "Safeguard/AvailableAccounts" `
+                -Parameters @{ filter = "(SystemName ieq '$Asset') and (Name ieq '$Account')" })
+            if (-not $local:AssetAccount)
+            {
+                # not found, search for Account name and Asset network address
+                $local:AssetAccount = (Invoke-SgDevOpsMethod GET "Safeguard/AvailableAccounts" `
+                    -Parameters @{ filter = "(SystemNetworkAddress ieq '$Asset') and (Name ieq '$Account')" })
+            }
+        }
+        else
+        {
+            # Asset is an ID, search for Account name
+            $local:AssetAccount = (Invoke-SgDevOpsMethod GET "Safeguard/AvailableAccounts" `
+                -Parameters @{ filter = "(SystemId eq $Asset) and (Name ieq '$Account')" })
+        }
+    }
+    else
+    {
+        # Account is an ID, simply get the ID
+        $local:AssetAccount = (Invoke-SgDevOpsMethod GET "Safeguard/AvailableAccounts" -Parameters @{ filter = "Id eq $Account" })
+    }
+
+    if (-not $local:AssetAccount)
+    {
+        throw "Unable to find asset account matching asset='$Asset' and account='$Account'"
+    }
+    if ($local:AssetAccount.Count -ne 1)
+    {
+        throw "Found $($local:AssetAccount.Count) asset accounts matching asset='$Asset' and account='$Account'"
+    }
+    $local:AssetAccount
+}
