@@ -137,15 +137,6 @@ function Register-SgDevOpsAssetAccount
         }
     }
 
-    # add existing non-duplicate entries
-    (Get-SgDevOpsRegisteredAssetAccount) | ForEach-Object {
-        $local:Current = $_
-        if (-not ($local:NewList | Where-Object { $_.Id -eq $local:Current.AccountId }))
-        {
-            $local:NewList += $local:Current
-        }
-    }
-
     Invoke-SgDevOpsMethod PUT "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
 }
 
@@ -179,15 +170,8 @@ function Unregister-SgDevOpsAssetAccount
         }
     }
 
-    # add everything but removed entries
-    [object[]]$local:NewList = @()
-    (Get-SgDevOpsRegisteredAssetAccount) | ForEach-Object {
-        $local:Current = $_
-        if (-not ($local:RemoveList | Where-Object { $_.Id -eq $local:Current.AccountId }))
-        {
-            $local:NewList += $local:Current
-        }
-    }
+    Invoke-SgDevOpsMethod DELETE "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
 
-    Invoke-SgDevOpsMethod PUT "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
+    # return the current list
+    Get-SgDevOpsRegisteredAssetAccount
 }

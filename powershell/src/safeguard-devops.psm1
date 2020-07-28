@@ -95,13 +95,27 @@ namespace Ex
             {   # https://stackoverflow.com/questions/41272128/does-convertfrom-json-respect-erroraction
                 $local:ResponseObject = (ConvertFrom-Json $local:ResponseBody) # -ErrorAction SilentlyContinue
             }
-            catch {}
+            catch
+            {
+                try
+                {
+                    $local:ResponseObject = (ConvertFrom-Json ($local:ResponseBody -replace '""','" "'))
+                }
+                catch {}
+            }
             if ($local:ResponseObject.Message) # SgDevOps error
             {
                 $local:Message = $local:ResponseObject.Message
                 $local:ExceptionToThrow = (New-Object Ex.SgDevOpsMethodException -ArgumentList @(
                     [int]$ThrownException.Response.StatusCode, $local:StatusDescription,
                     $local:Message, $local:ResponseBody
+                ))
+            }
+            elseif ($local:ResponseObject.errors) # validation error
+            {
+                $local:ExceptionToThrow = (New-Object Ex.SgDevOpsMethodException -ArgumentList @(
+                    [int]$ThrownException.Response.StatusCode, $local:StatusDescription,
+                    [string]($local:ResponseObject.errors." " -join ", "), $local:ResponseBody
                 ))
             }
             elseif ($local:ResponseObject.error_description) # rSTS error
@@ -123,7 +137,7 @@ namespace Ex
         {
             $local:ExceptionToThrow = (New-Object Ex.SgDevOpsMethodException -ArgumentList @(
                 [int]$ThrownException.Response.StatusCode, $local:StatusDescription,
-                0, "", "<unable to retrieve response content>"
+                "", "<unable to retrieve response content>"
             ))
         }
     }
@@ -779,11 +793,11 @@ function Get-SgDevOpsCommand
 {
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory=$false,Position=0)]
+        [Parameter(Mandatory=$false, Position=0)]
         [string]$Criteria1,
-        [Parameter(Mandatory=$false,Position=1)]
+        [Parameter(Mandatory=$false, Position=1)]
         [string]$Criteria2,
-        [Parameter(Mandatory=$false,Position=2)]
+        [Parameter(Mandatory=$false, Position=2)]
         [string]$Criteria3
     )
 
