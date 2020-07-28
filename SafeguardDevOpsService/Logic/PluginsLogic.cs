@@ -178,11 +178,19 @@ namespace OneIdentity.DevOps.Logic
                 throw new DevOpsException(msg);
             }
 
+            var retrievableAccounts = accounts.ToArray();
+            if (retrievableAccounts.All(x => x.AccountId == 0))
+            {
+                var msg = "Invalid list of accounts. Expecting a list of retrievable accounts.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+
             using var sg = _safeguardLogic.Connect();
 
             var newAccounts = new List<AccountMapping>();
 
-            foreach (var account in accounts)
+            foreach (var account in retrievableAccounts)
             {
                 try
                 {
