@@ -54,10 +54,4 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">
-    <None Update="svcid">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
