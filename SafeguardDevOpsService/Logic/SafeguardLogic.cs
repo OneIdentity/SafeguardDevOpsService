@@ -1185,7 +1185,7 @@ namespace OneIdentity.DevOps.Logic
             return GetA2ARetrievableAccounts(registrationType);
         }
 
-        public void RemoveA2ARetrievableAccounts(IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType)
+        public void RemoveA2ARetrievableAccounts(IEnumerable<A2ARetrievableAccount> accounts, A2ARegistrationType registrationType)
         {
             if (_configDb.A2aRegistrationId == null)
             {
@@ -1201,11 +1201,11 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registrationId}/RetrievableAccounts/{account.Id}");
+                    sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registrationId}/RetrievableAccounts/{account.AccountId}");
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed to remove account {account.Id} - {account.Name}: {ex.Message}");
+                    _logger.Error($"Failed to remove account {account.AccountId} - {account.AccountName}: {ex.Message}");
                 }
             }
         }
