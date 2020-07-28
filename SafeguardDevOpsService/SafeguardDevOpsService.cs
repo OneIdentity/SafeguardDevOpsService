@@ -127,7 +127,7 @@ namespace OneIdentity.DevOps
                 Log.Logger.Information($"Failed to read the service instance identifier: {WellKnownData.SvcIdPath}", ex);
             }
 
-            if (svcId == null)
+            if (svcId == null || svcId.Equals("NEVER-INSTALLED", StringComparison.InvariantCultureIgnoreCase))
             {
                 try
                 {
