@@ -157,20 +157,41 @@ function Unregister-SgDevOpsAssetAccount
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
+    $local:RegisteredAccounts = (Get-SgDevOpsRegisteredAssetAccount)
     [object[]]$local:RemoveList = @()
     if ($PsCmdlet.ParameterSetName -eq "Attributes")
     {
-        $local:RemoveList += (Resolve-SgDevOpsAssetAccount $Asset $Account -Domain $Domain)
+        if ($Domain)
+        {
+            $local:RemoveList += ($local:RegisteredAccounts | Where-Object { $_.SystemName -ieq $Asset -and $_.AccountName -ieq $Account -and $_.DomainName -ieq $Domain})
+        }
+        else
+        {
+            $local:RemoveList += ($local:RegisteredAccounts | Where-Object { $_.SystemName -ieq $Asset -and $_.AccountName -ieq $Account })
+        }
     }
     else
     {
         $AccountObjects | ForEach-Object {
-            $local:RemoveList += (Resolve-SgDevOpsAssetAccount -Account $_)
+            $local:Object = $_
+            if ($local:Object.AccountId)
+            {
+                $local:RemoveList += ($local:RegisteredAccounts | Where-Object { $_.AccountId -eq $local:Object.AccountId })
+            }
+            else
+            {
+                # try to match available asset accounts (they have an Id rather than an AccountId)
+                $local:RemoveList += ($local:RegisteredAccounts | Where-Object { $_.AccountId -eq $local:Object.Id })
+            }
         }
     }
 
-    Invoke-SgDevOpsMethod DELETE "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
+    if (-not $local:RemoveList)
+    {
+        throw "Unable to find specified asset accounts to unregister."
+    }
+
+    Invoke-SgDevOpsMethod DELETE "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:RemoveList
 
     # return the current list
     Get-SgDevOpsRegisteredAssetAccount

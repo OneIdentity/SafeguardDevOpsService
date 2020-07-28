@@ -383,7 +383,14 @@ function Invoke-Internal
         switch ($Method.ToLower())
         {
             {$_ -in "get","delete"} {
-                Invoke-WithoutBody $HttpSession $Method $Url $Headers -Parameters $Parameters -Timeout $Timeout
+                if ($Body -or $JsonBody)
+                {
+                    Invoke-WithBody $HttpSession $Method $Url $Headers -Parameters $Parameters -Body $Body -JsonBody $JsonBody -OutFile $OutFile -Timeout $Timeout
+                }
+                else
+                {
+                    Invoke-WithoutBody $HttpSession $Method $Url $Headers -Parameters $Parameters -Timeout $Timeout
+                }
                 break
             }
             {$_ -in "put","post"} {
@@ -393,7 +400,7 @@ function Invoke-Internal
                 }
                 else
                 {
-                    Invoke-WithBody $HttpSession $Method $Url $Headers -Parameters $Parameters  -Body $Body -JsonBody $JsonBody -OutFile $OutFile -Timeout $Timeout
+                    Invoke-WithBody $HttpSession $Method $Url $Headers -Parameters $Parameters -Body $Body -JsonBody $JsonBody -OutFile $OutFile -Timeout $Timeout
                 }
                 break
             }
