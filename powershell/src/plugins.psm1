@@ -102,7 +102,7 @@ function Get-SgDevOpsPluginSetting
     Param(
         [Parameter(Mandatory=$true, Position=0)]
         [string]$PluginName,
-        [Parameter(Mandatory=$true, Position=1)]
+        [Parameter(Mandatory=$false, Position=1)]
         [string]$SettingName
     )
 
@@ -110,7 +110,14 @@ function Get-SgDevOpsPluginSetting
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
     $local:Plugin = (Get-SgDevOpsPlugin $PluginName)
-    $local:Plugin.Configuration[$SettingName]
+    if ($SettingName)
+    {
+        $local:Plugin.Configuration[$SettingName]
+    }
+    else
+    {
+        $local:Plugin.Configuration
+    }
 }
 
 function Set-SgDevOpsPluginSetting
