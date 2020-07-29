@@ -33,7 +33,7 @@ namespace OneIdentity.DevOps.Common
         }
 
         /// <summary>
-        /// Initializes configuration for populating ConfigDB in the DevOps service.
+        /// Initializes configuration for populating ConfigDB in the Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <returns></returns>
         public Dictionary<string, string> InitializeConfiguration()

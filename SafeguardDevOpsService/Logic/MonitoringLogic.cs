@@ -66,7 +66,7 @@ namespace OneIdentity.DevOps.Logic
 
             if (sppAddress == null || userCertificate == null || !apiVersion.HasValue || !ignoreSsl.HasValue)
             {
-                _logger.Error("No safeguardConnection was found.  DevOps service must be configured first");
+                _logger.Error("No safeguardConnection was found.  Safeguard Secrets Broker for DevOps must be configured first");
                 return;
             }
 
