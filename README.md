@@ -91,7 +91,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 - Copy the installer MSI package to the local file system of a Windows 10 or Windows Server 2016 or better, computer.
 - Open a PowerShell command window as an administrator and invoke the above MSI installer package.
 - Follow all prompts - This should deploy the package and automatically start it as a Windows service.
-- At start up the DevOps service will create a new folder under the root directory as /SafeguardDevOpsService.  This folder will contain the log file and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins)  The configuration database will be created in the folder C:\Windows\system32\config\systemprofile\AppData\Roaming\SafeguardDevOpsService\Configuration.db.
+- At start up the DevOps service will create a new folder under the ProgramData directory as /SafeguardDevOpsService.  This folder will contain the log file, databsae and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins)  
 - Make sure that the firewall on the Windows computer has an inbound rule for allowing https port 443
 - Acquire a valid login token to SPP.  Use the Powershell cmdlet (See <https://github.com/OneIdentity/safeguard-ps>):
 
@@ -141,6 +141,12 @@ Enter `spp-token <paste token>` as the value and click the Authorize button and 
   - Navigate to and call: `POST /service/devops/Safeguard/Configuration` with an empty body  `{}`
     - Optionally the client certificate can be uploaded as part of configuring the DevOps service in this call, by passing the same body as above.
     - This call will store the client certificate and private key in the DevOps database, create a new DevOpsService User in SPP with the appropriate permissions, create a two new A2A registrations with the appropriate IP restrictions and prepare both the DevOps service and SPP to start pulling passwords.
+- Configure the Safeguard DevOps listen port and log level
+  - An example appsettings.json file was copied to the ProgramFiles\SafeguardDevOpsService folder during installation.  The example settings file will be prepended with an '_'.  To configure the listen port or the log level, rename this file by removing the preceding '_' so that the file name is 'appsettings.json'.  Then open the settings file in a text editor. The editor must be run as the administrator user.
+    - The appsettings.json file has two configuration settings:
+      - "HttpPort": `"<port>"` - The value of this entry defines the listen port that the Safeguard DevOps service will listen to.
+      - "LogLevel": `"<level>"` - The log level defaults to "Information". However the level can be set to "Information", "Error", "Fatal", "Verbose", "Warning" or "Debug".
+    - After making any changes to the appsettings.json settings file, the Safeguard DevOps service must be restarted in order for the changes to take affect.
 
 ## Deploying Vault Plugins
 
