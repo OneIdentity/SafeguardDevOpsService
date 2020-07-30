@@ -91,7 +91,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 - Copy the installer MSI package to the local file system of a Windows 10 or Windows Server 2016 or better, computer.
 - Open a PowerShell command window as an administrator and invoke the above MSI installer package.
 - Follow all prompts - This should deploy the package and automatically start it as a Windows service.
-- At start up the DevOps service will create a new folder under the ProgramData directory as /SafeguardDevOpsService.  This folder will contain the log file, databsae and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins)  
+- At start up the DevOps service will create a new folder under the ProgramData directory as /SafeguardDevOpsService.  This folder will contain the log file, database and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins)  
 - Make sure that the firewall on the Windows computer has an inbound rule for allowing https port 443
 - Acquire a valid login token to SPP.  Use the Powershell cmdlet (See <https://github.com/OneIdentity/safeguard-ps>):
 
