@@ -16,11 +16,11 @@
     <!--<Property Id="ARPCOMMENTS" Value="$(var.ProductCopyright)" />-->
     <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
 
-    <SetProperty Id="_INSTALL"   After="FindRelatedProducts" Value="1"><![CDATA[Installed="" AND PREVIOUSVERSIONSINSTALLED=""]]></SetProperty>
-    <SetProperty Id="_UNINSTALL" After="FindRelatedProducts" Value="1"><![CDATA[PREVIOUSVERSIONSINSTALLED="" AND REMOVE="ALL"]]></SetProperty>
-    <SetProperty Id="_CHANGE"    After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="" AND PREVIOUSVERSIONSINSTALLED<>"" AND REMOVE=""]]></SetProperty>
-    <SetProperty Id="_REPAIR"    After="FindRelatedProducts" Value="1"><![CDATA[REINSTALL<>""]]></SetProperty>
-    <SetProperty Id="_UPGRADE"   After="FindRelatedProducts" Value="1"><![CDATA[PREVIOUSVERSIONSINSTALLED<>"" ]]></SetProperty>
+    <SetProperty Id="_INSTALL"   After="FindRelatedProducts" Value="1"><![CDATA[Installed="" AND REMOVE="" AND UPGRADINGPRODUCTCODE=""]]></SetProperty>
+    <SetProperty Id="_UNINSTALL" After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REMOVE="ALL" AND UPGRADINGPRODUCTCODE=""]]></SetProperty>
+    <SetProperty Id="_CHANGE"    After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="" AND REMOVE=""]]></SetProperty>
+    <SetProperty Id="_REPAIR"    After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="ALL" AND UPGRADINGPRODUCTCODE=""]]></SetProperty>
+    <SetProperty Id="_UPGRADE"   After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="" AND UPGRADINGPRODUCTCODE<>""]]></SetProperty>
 
     <Condition Message="Installation requires Administrator privileges">
       <![CDATA[Privileged]]>
@@ -40,49 +40,49 @@
 		</Feature>
 
     <CustomAction Id="EXECUTE_INSTALL"
-                  Execute="immediate"
-                  Impersonate="yes"
+                  Execute="commit"
+                  Impersonate="no"
                   Return="check"
                   FileKey="SafeguardDevOpsService.exe"
                   ExeCommand="install" />
     <CustomAction Id="EXECUTE_START"
-                  Execute="immediate"
-                  Impersonate="yes"
+                  Execute="commit"
+                  Impersonate="no"
                   Return="check"
                   FileKey="SafeguardDevOpsService.exe"
                   ExeCommand="start" />
     <CustomAction Id="EXECUTE_STOP"
                   Execute="immediate"
-                  Impersonate="yes"
+                  Impersonate="no"
                   Return="check"
                   FileKey="SafeguardDevOpsService.exe"
                   ExeCommand="stop" />
     <CustomAction Id="EXECUTE_UNINSTALL"
                   Execute="immediate"
-                  Impersonate="yes"
+                  Impersonate="no"
                   Return="check"
                   FileKey="SafeguardDevOpsService.exe"
                   ExeCommand="uninstall" />
     <Property Id="ExecuteCommand">cmd.exe</Property>
     <CustomAction Id="CLEANUP_DATA_ON_UNINSTALL"
                   Property="ExecuteCommand"
-                  Execute="immediate"
-                  Impersonate="yes"
+                  Execute="commit"
+                  Impersonate="no"
                   Return="ignore"
-                  ExeCommand='/c rmdir "[CommonAppDataFolder]!(loc.ProductNameFolder)" /s /q' />
+                  ExeCommand='/c rmdir "[ProgramFiles64Folder]!(loc.ProductNameFolder)" /s /q' />
     <CustomAction Id="CLEANUP_EXT_DATA_ON_UNINSTALL"
                   Property="ExecuteCommand"
-                  Execute="immediate"
-                  Impersonate="yes"
+                  Execute="commit"
+                  Impersonate="no"
                   Return="ignore"
-                  ExeCommand='/c rmdir "\!(loc.ProductNameFolder)" /s /q' />
+                  ExeCommand='/c rmdir "[CommonAppDataFolder]!(loc.ProductNameFolder)" /s /q' />
 
     <InstallExecuteSequence>
-      <Custom Action="EXECUTE_STOP" Before="InstallInitialize">NOT _INSTALL</Custom>
-      <Custom Action="EXECUTE_UNINSTALL" Before="EXECUTE_STOP">NOT _INSTALL</Custom>
-      <Custom Action="CLEANUP_DATA_ON_UNINSTALL" After="RemoveFiles">_UNINSTALL</Custom>
+      <Custom Action="EXECUTE_STOP" After="CostFinalize">NOT _INSTALL</Custom>
+      <Custom Action="EXECUTE_UNINSTALL" After="EXECUTE_STOP">NOT _INSTALL</Custom>
+      <Custom Action="CLEANUP_DATA_ON_UNINSTALL" Before="InstallFinalize">_UNINSTALL</Custom>
       <Custom Action="CLEANUP_EXT_DATA_ON_UNINSTALL" After="CLEANUP_DATA_ON_UNINSTALL">_UNINSTALL</Custom>
-      <Custom Action="EXECUTE_INSTALL" After="InstallFinalize">NOT _UNINSTALL</Custom>
+      <Custom Action="EXECUTE_INSTALL" Before="InstallFinalize">NOT _UNINSTALL</Custom>
       <Custom Action="EXECUTE_START" After="EXECUTE_INSTALL">NOT _UNINSTALL</Custom>
     </InstallExecuteSequence>
 

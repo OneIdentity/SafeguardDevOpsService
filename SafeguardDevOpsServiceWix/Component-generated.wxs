@@ -1187,6 +1187,9 @@
             <Component Id="WindowsBase.dll" Guid="*">
                 <File Id="WindowsBase.dll" KeyPath="yes" Source="$(var.SourceDir)\WindowsBase.dll" />
             </Component>
+            <Component Id="_appsettings.json" Guid="*">
+                <File Id="_appsettings.json" KeyPath="yes" Source="$(var.SourceDir)\_appsettings.json" />
+            </Component>
         </DirectoryRef>
     </Fragment>
     <Fragment>
@@ -1586,6 +1589,7 @@
             <ComponentRef Id="TopShelf.ServiceInstaller.dll" />
             <ComponentRef Id="ucrtbase.dll" />
             <ComponentRef Id="WindowsBase.dll" />
+            <ComponentRef Id="_appsettings.json" />
         </ComponentGroup>
     </Fragment>
 </Wix>
