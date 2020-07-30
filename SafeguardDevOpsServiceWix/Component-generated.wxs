@@ -122,9 +122,6 @@
             <Component Id="api_ms_win_crt_utility_l1_1_0.dll" Guid="*">
                 <File Id="api_ms_win_crt_utility_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-utility-l1-1-0.dll" />
             </Component>
-            <Component Id="appsettings.json" Guid="*">
-                <File Id="appsettings.json" KeyPath="yes" Source="$(var.SourceDir)\appsettings.json" />
-            </Component>
             <Component Id="aspnetcorev2_inprocess.dll" Guid="*">
                 <File Id="aspnetcorev2_inprocess.dll" KeyPath="yes" Source="$(var.SourceDir)\aspnetcorev2_inprocess.dll" />
             </Component>
@@ -661,9 +658,6 @@
             </Component>
             <Component Id="SOS_README.md" Guid="*">
                 <File Id="SOS_README.md" KeyPath="yes" Source="$(var.SourceDir)\SOS_README.md" />
-            </Component>
-            <Component Id="svcid" Guid="*">
-                <File Id="svcid" KeyPath="yes" Source="$(var.SourceDir)\svcid" />
             </Component>
             <Component Id="Swashbuckle.AspNetCore.Annotations.dll" Guid="*">
                 <File Id="Swashbuckle.AspNetCore.Annotations.dll" KeyPath="yes" Source="$(var.SourceDir)\Swashbuckle.AspNetCore.Annotations.dll" />
@@ -1240,7 +1234,6 @@
             <ComponentRef Id="api_ms_win_crt_string_l1_1_0.dll" />
             <ComponentRef Id="api_ms_win_crt_time_l1_1_0.dll" />
             <ComponentRef Id="api_ms_win_crt_utility_l1_1_0.dll" />
-            <ComponentRef Id="appsettings.json" />
             <ComponentRef Id="aspnetcorev2_inprocess.dll" />
             <ComponentRef Id="Autofac.dll" />
             <ComponentRef Id="Autofac.Extensions.DependencyInjection.dll" />
@@ -1420,7 +1413,6 @@
             <ComponentRef Id="Serilog.Sinks.File.dll" />
             <ComponentRef Id="Serilog.Sinks.RollingFile.dll" />
             <ComponentRef Id="SOS_README.md" />
-            <ComponentRef Id="svcid" />
             <ComponentRef Id="Swashbuckle.AspNetCore.Annotations.dll" />
             <ComponentRef Id="Swashbuckle.AspNetCore.Newtonsoft.dll" />
             <ComponentRef Id="Swashbuckle.AspNetCore.Swagger.dll" />
