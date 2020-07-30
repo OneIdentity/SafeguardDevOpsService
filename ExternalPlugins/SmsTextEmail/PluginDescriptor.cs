@@ -63,7 +63,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
             var message = new MailMessage()
             {
                 From = new MailAddress(_configuration[FromAddressName]),
-                Subject = "Message from Safeguard DevOps",
+                Subject = "Message from Safeguard Secrets Broker for DevOps",
                 Body = $"{asset} - {account}\n{password}"
             };
 

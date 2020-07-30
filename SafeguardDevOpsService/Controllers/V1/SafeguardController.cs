@@ -11,7 +11,7 @@ using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 namespace OneIdentity.DevOps.Controllers.V1
 {
     /// <summary>
-    /// Manage the configuration of the DevOps service and its association with Safeguard for Privileged Passwords.
+    /// Manage the configuration of Safeguard Secrets Broker for DevOps and its association with Safeguard for Privileged Passwords.
     /// </summary>
     [ApiController]
     [Route("service/devops/v1/[controller]")]
@@ -28,11 +28,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get the Safeguard appliance connection information being used by the DevOps service.
+        /// Get the Safeguard appliance connection information being used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service must be associated with a Safeguard for Privileged Passwords appliance before it can be used.
-        /// This appliance will be trusted for authentication.  It is also the appliance that will notify the DevOps service
+        /// Safeguard Secrets Broker for DevOps must be associated with a Safeguard for Privileged Passwords appliance before it can be used.
+        /// This appliance will be trusted for authentication.  It is also the appliance that will notify Safeguard Secrets Broker for DevOps
         /// of secret changes so that they can be pushed to the configured plugins.
         /// </remarks>
         /// <response code="200">Success.</response>
@@ -46,14 +46,14 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Set the Safeguard appliance connection information for the DevOps service to use.
+        /// Set the Safeguard appliance connection information for Safeguard Secrets Broker for DevOps to use.
         /// </summary>
         /// <remarks>
-        /// The DevOps service must be associated with a Safeguard for Privileged Passwords appliance before it can be used.
-        /// This appliance will be trusted for authentication.  It is also the appliance that will notify the DevOps service
+        /// Safeguard Secrets Broker for DevOps must be associated with a Safeguard for Privileged Passwords appliance before it can be used.
+        /// This appliance will be trusted for authentication.  It is also the appliance that will notify Safeguard Secrets Broker for DevOps
         /// of secret changes so that they can be pushed to the configured plugins.
         /// </remarks>
-        /// <param name="safeguardData">Information that represents the Safeguard appliance that should be associated with the DevOps service.</param>
+        /// <param name="safeguardData">Information that represents the Safeguard appliance that should be associated with Safeguard Secrets Broker for DevOps.</param>
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
         /// <response code="401">Invalid authorization token.</response>
@@ -69,17 +69,17 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete the Safeguard appliance connection information being used by the DevOps service.
+        /// Delete the Safeguard appliance connection information being used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service must be associated with a Safeguard for Privileged Passwords appliance before it can be used.
-        /// This appliance will be trusted for authentication.  It is also the appliance that will notify the DevOps service
+        /// Safeguard Secrets Broker for DevOps must be associated with a Safeguard for Privileged Passwords appliance before it can be used.
+        /// This appliance will be trusted for authentication.  It is also the appliance that will notify Safeguard Secrets Broker for DevOps
         /// of secret changes so that they can be pushed to the configured plugins.
         /// 
-        /// This endpoint will remove the currently configured association.  It does not clean up any of the DevOps service
+        /// This endpoint will remove the currently configured association.  It does not clean up any of Safeguard Secrets Broker for DevOps
         /// related items added to the Safeguard for Privileged Passwords configuration.  Those must be removed manually.
         /// 
-        /// It will also remove the DevOps service configuration database and restart the DevOps service.
+        /// It will also remove Safeguard Secrets Broker for DevOps configuration database and restart the DevOps service.
         /// 
         /// To help prevent unintended Safeguard appliance connection removal, the confirm query param is required and must be set to "yes".
         /// 
@@ -102,11 +102,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get the Safeguard client configuration information being used by the DevOps service.
+        /// Get the Safeguard client configuration information being used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses client certificate authentication and the A2A service to access Safeguard for Privileged
-        /// Passwords to monitor account secret changes and to pull secrets.  The DevOps service also proxies configuration
+        /// Safeguard Secrets Broker for DevOps uses client certificate authentication and the A2A service to access Safeguard for Privileged
+        /// Passwords to monitor account secret changes and to pull secrets.  Safeguard Secrets Broker for DevOps also proxies configuration
         /// requests to Safeguard for Privileged Passwords as the currently authenticated administrator user.
         /// </remarks>
         /// <response code="200">Success.</response>
@@ -122,11 +122,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Generate and configure the Safeguard client configuration information for the DevOps service to use.
+        /// Generate and configure the Safeguard client configuration information for Safeguard Secrets Broker for DevOps to use.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses client certificate authentication and the A2A service to access Safeguard for Privileged
-        /// Passwords to monitor account secret changes and to pull secrets.  The DevOps service also proxies configuration
+        /// Safeguard Secrets Broker for DevOps uses client certificate authentication and the A2A service to access Safeguard for Privileged
+        /// Passwords to monitor account secret changes and to pull secrets.  Safeguard Secrets Broker for DevOps also proxies configuration
         /// requests to Safeguard for Privileged Passwords as the currently authenticated administrator user.
         ///
         /// This endpoint will modify configuration stored in Safeguard for Privileged Passwords.  The client certificate that will
@@ -139,7 +139,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// (see POST /service/devops/{version}/Safeguard/ClientCertificate)
         /// </remarks>
         /// <param name="certFile">If the "Base64CertificateData" parameter contains a base64 encoded (or PEM) A2A client certificate, the certificate
-        /// will be installed before the DevOps service completes the configuration. Providing the A2A client certificate in the /Configuration call
+        /// will be installed before Safeguard Secrets Broker for DevOps completes the configuration. Providing the A2A client certificate in the /Configuration call
         /// replaces the need to install the certificate separately.</param>
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
@@ -159,15 +159,15 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete the Safeguard client configuration information being used by the DevOps service.
+        /// Delete the Safeguard client configuration information being used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses client certificate authentication and the A2A service to access Safeguard for Privileged
-        /// Passwords to monitor account secret changes and to pull secrets.  The DevOps service also proxies configuration
+        /// Safeguard Secrets Broker for DevOps uses client certificate authentication and the A2A service to access Safeguard for Privileged
+        /// Passwords to monitor account secret changes and to pull secrets.  Safeguard Secrets Broker for DevOps also proxies configuration
         /// requests to Safeguard for Privileged Passwords as the currently authenticated administrator user.
         /// 
         /// This endpoint will remove all A2A credential retrievals, the A2A registration and the A2A user from Safeguard for
-        /// Privileged Passwords.  It will also remove the DevOps service configuration database and restart the DevOps service.
+        /// Privileged Passwords.  It will also remove Safeguard Secrets Broker for DevOps configuration database and restart the DevOps service.
         /// 
         /// To help prevent unintended Safeguard client configuration removal, the confirm query param is required and must be set to "yes".
         /// </remarks>
@@ -188,10 +188,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Logon to the DevOps service.
+        /// Logon to Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service trusts Safeguard for Privileged Passwords for administrator authentication.  In order to authenticate
+        /// Safeguard Secrets Broker for DevOps trusts Safeguard for Privileged Passwords for administrator authentication.  In order to authenticate
         /// using this endpoint the Authorization header must contain a valid Safeguard API token.  This token can be acquired by
         /// logging into Safeguard using the safeguard-ps command 'Connect-Safeguard -NoSessionVariable' and providing valid login
         /// credentials.  A successful authentication will respond with a sessionKey that should be provided as a cookie for all
@@ -213,10 +213,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Logoff from the DevOps service.
+        /// Logoff from Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service trusts Safeguard for Privileged Passwords for authentication.  A successful authentication includes a
+        /// Safeguard Secrets Broker for DevOps trusts Safeguard for Privileged Passwords for authentication.  A successful authentication includes a
         /// sessionKey that should be provided as a cookie for all subsequent endpoint calls.  This endpoint will invalidate that
         /// sessionKey requiring that an administrator re-authenticate.
         /// </remarks>
@@ -234,10 +234,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get the A2A client certificate being used by the DevOps service.
+        /// Get the A2A client certificate being used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
+        /// Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
         /// The most secure way to create this certificate is using a certificate signing request (CSR).
         /// 
         /// (see GET /service/devops/v1/Safeguard/CSR)
@@ -257,10 +257,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Upload the A2A client certificate for the DevOps service to use.
+        /// Upload the A2A client certificate for Safeguard Secrets Broker for DevOps to use.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
+        /// Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
         /// The most secure way to create this certificate is using a certificate signing request (CSR).
         ///
         /// This endpoint can receive either a PFX formatted certificate that includes the private key and a passphrase for decrypting
@@ -285,12 +285,12 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete the A2A client certificate being used by the DevOps service.
+        /// Delete the A2A client certificate being used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
+        /// Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
         /// 
-        /// This endpoint removes the current client certificate from the DevOps service.
+        /// This endpoint removes the current client certificate from Safeguard Secrets Broker for DevOps.
         /// </remarks>
         /// <response code="204">No Content.</response>
         /// <response code="400">Bad Request</response>
@@ -305,10 +305,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get the web server certificate being used by the DevOps service.
+        /// Get the web server certificate being used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service use TLS to authenticate itself and to protect its API.  The first time it starts
+        /// Safeguard Secrets Broker for DevOps use TLS to authenticate itself and to protect its API.  The first time it starts
         /// it generates a self-signed web server certificate.  To ensure secure access this web certificate should
         /// be replaced.  The most secure way to create this certificate is using a certificate signing request (CSR).
         ///
@@ -333,19 +333,19 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </summary>
         /// 
         /// <remarks>
-        /// The DevOps service use TLS to authenticate itself and to protect its API.  The first time it starts
+        /// Safeguard Secrets Broker for DevOps use TLS to authenticate itself and to protect its API.  The first time it starts
         /// it generates a self-signed web server certificate.  To ensure secure access this web certificate should
         /// be replaced.  The most secure way to create this certificate is using a certificate signing request (CSR).
         /// 
         /// This endpoint can receive either a PFX formatted certificate that includes the private key and a passphrase for decrypting
         /// that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.
         /// 
-        /// The DevOps service will be restarted so the new certificate can be applied.
+        /// Safeguard Secrets Broker for DevOps will be restarted so the new certificate can be applied.
         /// 
         /// (see GET /service/devops/v1/Safeguard/CSR)
         /// </remarks>
         /// <param name="certInfo">The certificate info should contain the base64 (or PEM) encoded certificate and pass phrase if the certificate includes a private key.</param>
-        /// <param name="restart">Restart the DevOps service after certificate installation.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after certificate installation.</param>
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
@@ -363,19 +363,19 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete the web server certificate being used by the DevOps service.
+        /// Delete the web server certificate being used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service use TLS to authenticate itself and to protect its API.  The first time it starts
+        /// Safeguard Secrets Broker for DevOps use TLS to authenticate itself and to protect its API.  The first time it starts
         /// it generates a self-signed web server certificate.  To ensure secure access this web certificate should
         /// be replaced.  The most secure way to create this certificate is using a certificate signing request (CSR).
         ///
         /// This endpoint will remove the current web server certificate and will generate a new self-signed certificate
         /// to take its place.
         /// 
-        /// The DevOps service must be restarted before the new self-signed web server certificate will be applied.
+        /// Safeguard Secrets Broker for DevOps must be restarted before the new self-signed web server certificate will be applied.
         /// </remarks>
-        /// <param name="restart">Restart the DevOps service after installing a new default certificate.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after installing a new default certificate.</param>
         /// <response code="204">No Content</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
@@ -392,15 +392,15 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get a CSR that can be signed and the resulting certificate uploaded to the DevOps service.
+        /// Get a CSR that can be signed and the resulting certificate uploaded to Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
         /// Using a certificate signing request is the most secure method for configuring a web server certificate or
-        /// a client certificate in the DevOps service.  This is because the private key never leaves the DevOps service.
+        /// a client certificate in Safeguard Secrets Broker for DevOps.  This is because the private key never leaves the DevOps service.
         /// 
         /// This endpoint will generate a CSR and return it in PKCS#10 PEM format.  This can be submitted to your own
         /// secure certificate authority (CA) resulting in a signed certificate.  This certificate can be uploaded as a
-        /// web server certificate or a client certificate for the DevOps service to use for secure communications.
+        /// web server certificate or a client certificate for Safeguard Secrets Broker for DevOps to use for secure communications.
         /// 
         /// (see POST /service​/devops​/v1​/Safeguard​/ClientCertificate)
         /// (see POST /service/devops/v1/Safeguard/WebServerCertificate)
@@ -426,13 +426,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get available Safeguard asset accounts that can registered with the DevOps service.
+        /// Get available Safeguard asset accounts that can registered with Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
         /// This endpoint returns asset accounts from the associated Safeguard for Privileged Passwords appliance that
-        /// can be registered with the DevOps service.  This registration occurs by adding these asset accounts as
-        /// retrievable accounts to the A2A registration associated with this DevOps service.  Adding and removing
-        /// asset account registrations should be done using the DevOps service.
+        /// can be registered with Safeguard Secrets Broker for DevOps.  This registration occurs by adding these asset accounts as
+        /// retrievable accounts to the A2A registration associated with Safeguard Secrets Broker for DevOps.  Adding and removing
+        /// asset account registrations should be done using Safeguard Secrets Broker for DevOps.
         ///
         /// (see GET /service​/devops​/v1​/Safeguard​/A2ARegistration​/RetrievableAccounts)
         /// (see POST /service​/devops​/v1​/Safeguard​/A2ARegistration​/RetrievableAccounts)
@@ -456,13 +456,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get the A2A registration used by the DevOps service.
+        /// Get the A2A registration used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses the Safeguard for Privileged Passwords A2A service to access
-        /// to monitor account secret changes and to pull secrets. The DevOps service create a special A2A registration
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
         /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
-        /// by the DevOps service.
+        /// by Safeguard Secrets Broker for DevOps.
         /// </remarks>
         /// <param name="registrationType">Type of registration.  Types: Account (default), Vault</param>
         /// <response code="200">Success</response>
@@ -484,15 +484,15 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get accounts registered with the DevOps service A2A registration.
+        /// Get accounts registered with Safeguard Secrets Broker for DevOps A2A registration.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses the Safeguard for Privileged Passwords A2A service to access
-        /// to monitor account secret changes and to pull secrets. The DevOps service create a special A2A registration
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
         /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
-        /// by the DevOps service.
+        /// by Safeguard Secrets Broker for DevOps.
         ///
-        /// This endpoint gets a list of accounts that have been registred with the DevOps service A2A registration.
+        /// This endpoint gets a list of accounts that have been registred with Safeguard Secrets Broker for DevOps A2A registration.
         /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -507,17 +507,17 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Register accounts with the DevOps service A2A registration.
+        /// Register accounts with Safeguard Secrets Broker for DevOps A2A registration.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses the Safeguard for Privileged Passwords A2A service to access
-        /// to monitor account secret changes and to pull secrets. The DevOps service create a special A2A registration
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
         /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
-        /// by the DevOps service.
+        /// by Safeguard Secrets Broker for DevOps.
         ///
-        /// This endpoint registers one or more accounts with the DevOps service A2A registration.
+        /// This endpoint registers one or more accounts with Safeguard Secrets Broker for DevOps A2A registration.
         /// </remarks>
-        /// <param name="accounts">List of accounts to add to the DevOps service A2A registration</param>
+        /// <param name="accounts">List of accounts to add to Safeguard Secrets Broker for DevOps A2A registration</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
@@ -531,17 +531,17 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Unregister accounts with the DevOps service A2A registration.
+        /// Unregister accounts with Safeguard Secrets Broker for DevOps A2A registration.
         /// </summary>
         /// <remarks>
-        /// The DevOps service uses the Safeguard for Privileged Passwords A2A service to access
-        /// to monitor account secret changes and to pull secrets. The DevOps service create a special A2A registration
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
         /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
-        /// by the DevOps service.
+        /// by Safeguard Secrets Broker for DevOps.
         ///
-        /// This endpoint unregisters one or more accounts with the DevOps service A2A registration.
+        /// This endpoint unregisters one or more accounts with Safeguard Secrets Broker for DevOps A2A registration.
         /// </remarks>
-        /// <param name="accounts">List of accounts to remove from the DevOps service A2A registration</param>
+        /// <param name="accounts">List of accounts to remove from Safeguard Secrets Broker for DevOps A2A registration</param>
         /// <response code="204">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
@@ -555,11 +555,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Restart the DevOps service.
+        /// Restart Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// Some DevOps service operations require that the service is restarted.  Some of these operations include replacing or regenerating
-        /// the DevOps service web SSL certificate and updating third party vault plugins.
+        /// Some Safeguard Secrets Broker for DevOps operations require that the service is restarted.  Some of these operations include replacing or regenerating
+        /// Safeguard Secrets Broker for DevOps web SSL certificate and updating third party vault plugins.
         /// </remarks>
         /// <response code="204">Success</response>
         [SafeguardSessionKeyAuthorization]
@@ -573,13 +573,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get a list of the trusted certificates that the DevOps service uses to validate an SSL connection to a Safeguard.
+        /// Get a list of the trusted certificates that Safeguard Secrets Broker for DevOps uses to validate an SSL connection to a Safeguard.
         /// </summary>
         /// <remarks>
-        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// Once Safeguard Secrets Broker for DevOps has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
         /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
         ///
-        /// This endpoint lists all of the certificates that have been uploaded and trusted by the DevOps service.
+        /// This endpoint lists all of the certificates that have been uploaded and trusted by Safeguard Secrets Broker for DevOps.
         ///
         /// (See PUT /service/devops/{version}/Safeguard/Configuration - ignoreSsl parameter)
         /// </remarks>
@@ -598,7 +598,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get a trusted certificate that matches the specified thumbprint.
         /// </summary>
         /// <remarks>
-        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// Once Safeguard Secrets Broker for DevOps has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
         /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
         ///
         /// This endpoint gets a specific trusted certificate that matches the specified thumbprint.
@@ -617,14 +617,14 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Add a trusted certificate to the DevOps service.
+        /// Add a trusted certificate to Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// Once Safeguard Secrets Broker for DevOps has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
         /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
         ///
-        /// This endpoint adds a certificate as a trusted certificate in the DevOps service. An optional "importFromSafeguard" parameter will
-        /// allow the DevOps service to import all of the trusted certificates directly from the associated Safeguard for Privileged Passwords appliance.
+        /// This endpoint adds a certificate as a trusted certificate in Safeguard Secrets Broker for DevOps. An optional "importFromSafeguard" parameter will
+        /// allow Safeguard Secrets Broker for DevOps to import all of the trusted certificates directly from the associated Safeguard for Privileged Passwords appliance.
         /// </remarks>
         /// <param name="certificate">Trusted certificate to add.</param>
         /// <param name="importFromSafeguard">Import all of the trusted certificates from the associated Safeguard appliance. If this parameter is true then the body will be ignored.</param>
@@ -651,13 +651,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete a trusted certificate from the DevOps service.
+        /// Delete a trusted certificate from Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// Once Safeguard Secrets Broker for DevOps has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
         /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
         ///
-        /// This endpoint removes the certificate that is identified by the thumbprint, as a trusted certificate in the DevOps service.
+        /// This endpoint removes the certificate that is identified by the thumbprint, as a trusted certificate in Safeguard Secrets Broker for DevOps.
         /// </remarks>
         /// <param name="thumbprint">Certificate thumbprint.</param>
         /// <response code="204">Success</response>
@@ -673,13 +673,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete all of the trusted certificate from the DevOps service.
+        /// Delete all of the trusted certificate from Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
-        /// Once the DevOps service has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
+        /// Once Safeguard Secrets Broker for DevOps has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be
         /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
         ///
-        /// This endpoint removes all of the trusted certificates from the DevOps service.
+        /// This endpoint removes all of the trusted certificates from Safeguard Secrets Broker for DevOps.
         /// 
         /// To help prevent unintended trusted certificate removal, the confirm query param is required and must be set to "yes".
         /// </remarks>

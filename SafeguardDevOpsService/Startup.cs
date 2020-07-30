@@ -20,11 +20,11 @@ namespace OneIdentity.DevOps
     internal class Startup
     {
 
-        private static readonly string ServiceName = "Safeguard DevOps Service";
+        private static readonly string ServiceName = "Safeguard Secrets Broker for DevOps";
         private static readonly string ApiName = $"{ServiceName} API";
         private static readonly string ApiVersion = "v1";
         private static readonly string VersionApiName = $"{ApiName} {ApiVersion}";
-        private static readonly string ApiDescription = "Web API for controlling the distribution of DevOps secrets from Safeguard for Privileged Passwords " + 
+        private static readonly string ApiDescription = "Web API for controlling the distribution of secrets from Safeguard for Privileged Passwords " + 
                                                         "to third-party vaults and orchestration frameworks.  This gives your developers frictionless integration " +
                                                         "from their favorite DevOps tooling.";
 

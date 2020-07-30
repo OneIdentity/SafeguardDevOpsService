@@ -1192,12 +1192,20 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException("A2A registration not configured");
             }
 
+            var retrievableAccounts = accounts.ToArray();
+            if (retrievableAccounts.All(x => x.AccountId == 0))
+            {
+                var msg = "Invalid list of accounts. Expecting a list of retrievable accounts.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+
             using var sg = Connect();
             var registrationId = (registrationType == A2ARegistrationType.Account)
                 ? _configDb.A2aRegistrationId
                 : _configDb.A2aVaultRegistrationId;
 
-            foreach (var account in accounts)
+            foreach (var account in retrievableAccounts)
             {
                 try
                 {
