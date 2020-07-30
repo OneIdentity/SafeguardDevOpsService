@@ -63,7 +63,7 @@
     <GetAssemblyIdentity AssemblyFiles="$(ProjectDir)bin\$(Configuration)\Publish\DevOpsPluginCommon.dll">
       <Output TaskParameter="Assemblies" ItemName="AsmInfo" />
     </GetAssemblyIdentity>
-    <CreateProperty Value="$(SolutionName)_%(AsmInfo.Version)_$(Configuration)">
+    <CreateProperty Value="SafeguardDevOpsService_%(AsmInfo.Version)_$(Configuration)">
       <Output TaskParameter="Value" PropertyName="TargetName" />
     </CreateProperty>
   </Target>
