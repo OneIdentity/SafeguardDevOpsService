@@ -16,6 +16,7 @@ variables:
   pluginsdir: 'ExternalPlugins'
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
+  system.debug: true
 
 steps:
 - task: NuGetToolInstaller@1
