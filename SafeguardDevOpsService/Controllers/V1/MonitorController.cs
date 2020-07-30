@@ -28,8 +28,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get the current state of the A2A monitor.
         /// </summary>
         /// <remarks>
-        /// The DevOps service monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
-        /// has been registered with the DevOps service.  
+        /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
+        /// has been registered with Safeguard Secrets Broker for DevOps.  
         ///
         /// This endpoint gets the current state of the account monitor.
         /// </remarks>
@@ -48,8 +48,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Set the state of the A2A monitor.
         /// </summary>
         /// <remarks>
-        /// The DevOps service monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
-        /// has been registered with the DevOps service.  
+        /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
+        /// has been registered with Safeguard Secrets Broker for DevOps.  
         ///
         /// This endpoint starts or stops the account monitor.
         /// </remarks>

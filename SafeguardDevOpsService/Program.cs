@@ -26,7 +26,7 @@ namespace OneIdentity.DevOps
                 .MinimumLevel.ControlledBy(LogLevelSwitcher.Instance.LogLevelSwitch)
                 .CreateLogger();
 
-            Console.WriteLine($"DevOps Service logging to: {logDirPath}");
+            Console.WriteLine($"Safeguard Secrets Broker for DevOps logging to: {logDirPath}");
             RestartManager.Instance.ShouldRestart = false;
 
             HostFactory.Run(hostConfig =>
