@@ -29,6 +29,7 @@ steps:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+    msbuildArgs: '/p:buildId=$(Build.BuildId)'
 
 - task: VSBuild@1
   inputs:
