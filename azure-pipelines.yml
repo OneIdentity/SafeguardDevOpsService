@@ -13,8 +13,6 @@ variables:
   solution: '**/*.sln'
   setupprojectdir: 'SafeguardDevOpsServiceWix'
   setupproject: '**/$(setupprojectdir)/*.wixproj'
-  versioningprojectdir: 'ConstructVersionNumber'
-  versioningproject: '**/$(versioningprojectdir)/*.csproj'
   pluginsdir: 'ExternalPlugins'
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
@@ -27,20 +25,13 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(versioningproject)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-
-- script: '$(versioningprojectdir)\bin\$(buildConfiguration)\ConstructVersionNumber.exe $(Build.SourcesDirectory)'
+- powershell: .\versionnumber.ps1 $(Build.SourcesDirectory) $(Build.BuildId)'
 
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-    msbuildArgs: '/p:buildId=$(Build.BuildId)'
 
 - task: VSBuild@1
   inputs:
