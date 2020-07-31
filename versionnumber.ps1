@@ -2,7 +2,7 @@
 Param(
     [Parameter(Mandatory=$true, Position=0)]
     [string]$StartingDir,
-    [Parameter(Mandatory=$false, Position=1)]
+    [Parameter(Mandatory=$true, Position=1)]
     [string]$BuildId
 )
 
@@ -22,6 +22,8 @@ public class VersionNumberEditor {
         var major = 1; var minor = 0; var revision = 0; var build = 0;
 
         Console.WriteLine("BuildId=[{0}] startingDir=[{1}]", buildId, startingDir);
+        if (buildId.StartsWith("-"))
+            buildId = null;
 
         var allFiles = Directory.GetFiles(startingDir, "AssemblyInfo.tmpl", SearchOption.AllDirectories);
         var pattern = new Regex("AssemblyVersion\\(\"(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<revision>\\d+)\\.(?<build>\\d+)\"\\)");
