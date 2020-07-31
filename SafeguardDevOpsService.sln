@@ -24,6 +24,8 @@ Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "SetupSafeguardDevOpsService
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmsTextEmail", "ExternalPlugins\SmsTextEmail\SmsTextEmail.csproj", "{7CE7EFD8-88A6-48F3-9DD0-738529B07070}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConstructVersionNumber", "ConstructVersionNumber\ConstructVersionNumber.csproj", "{FDC6391A-37CD-4BB5-B034-062078EAD111}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -56,6 +58,9 @@ Global
 		{7CE7EFD8-88A6-48F3-9DD0-738529B07070}.Debug|x64.Build.0 = Debug|x64
 		{7CE7EFD8-88A6-48F3-9DD0-738529B07070}.Release|x64.ActiveCfg = Release|x64
 		{7CE7EFD8-88A6-48F3-9DD0-738529B07070}.Release|x64.Build.0 = Release|x64
+		{FDC6391A-37CD-4BB5-B034-062078EAD111}.Debug|x64.ActiveCfg = Debug|x64
+		{FDC6391A-37CD-4BB5-B034-062078EAD111}.Release|x64.ActiveCfg = Release|x64
+		{FDC6391A-37CD-4BB5-B034-062078EAD111}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

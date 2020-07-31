@@ -1,7 +1,5 @@
 
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Resources;
 
 // General Information
@@ -14,8 +12,8 @@ using System.Resources;
 [assembly: AssemblyTrademark("One Identity LLC")]
 [assembly: AssemblyCulture("")]
 
-// Version information(
-[assembly: AssemblyVersion("1.0.0.5")]
-[assembly: AssemblyFileVersion("1.0.0.5")]
+// Version information
+[assembly: AssemblyVersion("1.0.0.25")]
+[assembly: AssemblyFileVersion("1.0.0.25")]
 [assembly: NeutralResourcesLanguageAttribute( "en-US" )]
 
