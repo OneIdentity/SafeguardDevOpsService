@@ -25,7 +25,12 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
-- powershell: .\versionnumber.ps1 $(Build.SourcesDirectory) $(Build.BuildId)'
+- task: PowerShell@2
+  inputs:
+    targetType: filePath
+    filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
+    arguments: $(Build.SourcesDirectory) $(Build.BuildId)
+    ignoreLASTEXITCODE: true
 
 - task: VSBuild@1
   inputs:
