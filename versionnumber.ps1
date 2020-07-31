@@ -52,6 +52,9 @@ public class VersionNumberEditor {
 
             File.Delete(assemblyInfoFile);
             File.WriteAllText(assemblyInfoFile, template);
+            Console.WriteLine("*****");
+            Console.Write(template);
+            Console.WriteLine("*****");
         }
     }
 }
