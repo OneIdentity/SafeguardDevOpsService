@@ -44,7 +44,7 @@ public class VersionNumberEditor {
                 }
             }
 
-            build = string.IsNullOrEmpty(buildId) ? build + 1 : Convert.ToInt32(buildId);
+            build = string.IsNullOrEmpty(buildId) ? build + 1 : Convert.ToInt32(buildId) % UInt16.MaxValue;
 
             var newVersion = string.Format("{0}.{1}.{2}.{3}", major, minor, revision, build);
             var template = File.ReadAllText(templateFile);
