@@ -24,6 +24,13 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
+- task: PowerShell@2
+  inputs:
+    targetType: filePath
+    filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
+    arguments: $(Build.SourcesDirectory) $(Build.BuildId)
+    ignoreLASTEXITCODE: true
+
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
