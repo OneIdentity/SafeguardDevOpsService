@@ -16,7 +16,7 @@ namespace OneIdentity.DevOps.Logic
 {
     internal class PluginManager : IDisposable, IPluginManager
     {
-        private static readonly Dictionary<string,ILoadablePlugin> LoadedPlugins = new Dictionary<string, ILoadablePlugin>();
+        private static readonly Dictionary<string,ILoadablePlugin> LoadedPlugins = new Dictionary<string, ILoadablePlugin>(StringComparer.InvariantCultureIgnoreCase);
 
         private readonly Serilog.ILogger _logger;
         private FileSystemWatcher _watcher;
