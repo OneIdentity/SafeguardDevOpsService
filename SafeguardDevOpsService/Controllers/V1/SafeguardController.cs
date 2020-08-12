@@ -492,7 +492,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
         /// by Safeguard Secrets Broker for DevOps.
         ///
-        /// This endpoint gets a list of accounts that have been registred with Safeguard Secrets Broker for DevOps A2A registration.
+        /// This endpoint gets a list of accounts that have been registered with Safeguard Secrets Broker for DevOps A2A registration.
         /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -504,6 +504,32 @@ namespace OneIdentity.DevOps.Controllers.V1
             var retrievableAccounts = safeguard.GetA2ARetrievableAccounts(A2ARegistrationType.Account);
 
             return Ok(retrievableAccounts);
+        }
+
+        /// <summary>
+        /// Get Safeguard Secrets Broker for DevOps A2A registration account by Id.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
+        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// by Safeguard Secrets Broker for DevOps.
+        ///
+        /// This endpoint gets an account that has been registered with Safeguard Secrets Broker for DevOps A2A registration.
+        /// </remarks>
+        /// <param name="accountId">Account Id of the retrievable account</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("A2ARegistration/RetrievableAccounts/{accountId}")]
+        public ActionResult<A2ARetrievableAccount> GetRetrievableAccountById([FromServices] ISafeguardLogic safeguard, [FromRoute] int accountId)
+        {
+            var retrievableAccount = safeguard.GetA2ARetrievableAccountById(A2ARegistrationType.Account, accountId);
+            if (retrievableAccount == null)
+                return NotFound();
+
+            return Ok(retrievableAccount);
         }
 
         /// <summary>

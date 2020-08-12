@@ -1156,6 +1156,45 @@ namespace OneIdentity.DevOps.Logic
             return new List<A2ARetrievableAccount>();
         }
 
+        public A2ARetrievableAccount GetA2ARetrievableAccountById(A2ARegistrationType registrationType, int accountId)
+        {
+            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
+                (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
+            {
+                throw LogAndException("A2A registration not configured");
+            }
+
+            using var sg = Connect();
+            var registrationId = (registrationType == A2ARegistrationType.Account)
+                ? _configDb.A2aRegistrationId
+                : _configDb.A2aVaultRegistrationId;
+
+            try
+            {
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get,
+                    $"A2ARegistrations/{registrationId}/RetrievableAccounts/{accountId}");
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    return JsonHelper.DeserializeObject<A2ARetrievableAccount>(result.Body);
+                }
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                {
+                    _logger.Error($"Retrievable account {accountId} not found: {ex.Message}");
+                    return null;
+                }
+                throw LogAndException($"Get retrievable account failed for account id {accountId}", ex);
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Get retrievable account failed for account id {accountId}", ex);
+            }
+
+            return null;
+        }
+
         public IEnumerable<A2ARetrievableAccount> AddA2ARetrievableAccounts(IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType)
         {
             if (_configDb.A2aRegistrationId == null)

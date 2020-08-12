@@ -162,6 +162,26 @@ namespace OneIdentity.DevOps.Logic
             return accountMappings;
         }
 
+        public AccountMapping GetAccountMappingById(string name, int accountId)
+        {
+            if (_configDb.GetPluginByName(name) == null)
+            {
+                var msg = $"Plugin {name} not found";
+                _logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+
+            var mappings = _configDb.GetAccountMappings();
+
+            var accountMappings = mappings.Where(x => x.VaultName.Equals(name, StringComparison.InvariantCultureIgnoreCase) && x.AccountId == accountId).ToArray();
+            if (accountMappings.Length > 0)
+            {
+                return accountMappings.FirstOrDefault();
+            }
+
+            return null;
+        }
+
         public IEnumerable<AccountMapping> SaveAccountMappings(string name, IEnumerable<A2ARetrievableAccount> accounts)
         {
             if (_configDb.A2aRegistrationId == null)
@@ -201,8 +221,10 @@ namespace OneIdentity.DevOps.Logic
                         var accountMapping = new AccountMapping()
                         {
                             AccountName = retrievableAccount.AccountName,
+                            AccountId = retrievableAccount.AccountId,
                             ApiKey = retrievableAccount.ApiKey,
                             AssetName = retrievableAccount.SystemName,
+                            SystemId = retrievableAccount.SystemId,
                             DomainName = retrievableAccount.DomainName,
                             NetworkAddress = retrievableAccount.NetworkAddress,
                             VaultName = name

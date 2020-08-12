@@ -17,6 +17,7 @@ namespace OneIdentity.DevOps.Logic
         Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name);
 
         IEnumerable<AccountMapping> GetAccountMappings(string name);
+        AccountMapping GetAccountMappingById(string name, int accountId);
         IEnumerable<AccountMapping> SaveAccountMappings(string name, IEnumerable<A2ARetrievableAccount> mappings);
         void DeleteAccountMappings(string name);
         void DeleteAccountMappings(string name, IEnumerable<AccountMapping> accounts);
