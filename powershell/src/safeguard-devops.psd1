@@ -30,7 +30,7 @@ CompanyName = 'One Identity LLC'
 Copyright = '(c) 2020 One Identity LLC. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Scripting tools for interacting with the One Identity Safeguard DevOps Service.'
+Description = 'Scripting tools for interacting with the One Identity Safeguard Secrets Broker for DevOps.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.0'

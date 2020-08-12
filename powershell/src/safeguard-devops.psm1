@@ -412,7 +412,37 @@ function Invoke-Internal
     }
 }
 
+<#
+.SYNOPSIS
+Get the status of the Safeguard appliance associated with this Secrets Broker.
 
+.DESCRIPTION
+The status information includes Appliance ID, Appliance Name, Appliance Version,
+Appliance State, Appliance Network Address, and API version.  It also includes
+whether or not Secrets Broker has been instructed to ignore validation of the
+Appliance's TLS server certificate.
+
+If there is no associated Secrets Broker the response will contain empty values.
+
+.PARAMETER ServiceAddress
+Network address (IP or DNS) of the Secrets Broker.  This value may also include
+the port information delimited with a colon (e.g. ssbdevops.example.com:12345).
+
+.PARAMETER ServicePort
+Port information for connecting to the Secrets Broker. (default: 443)
+
+.PARAMETER Insecure
+Whether or not to validate the Secrets Broker's TLS server certificate.
+
+.PARAMETER ServiceApiVersion
+API version for the Secrets Broker. (default: 1)
+
+.EXAMPLE
+Get-SgDevOpsApplianceStatus localhost -Insecure
+
+.EXAMPLE
+Get-SgDevOpsApplianceStatus ssbdevops.example.com:12345
+#>
 function Get-SgDevOpsApplianceStatus
 {
     [CmdletBinding()]
@@ -457,6 +487,45 @@ function Get-SgDevOpsApplianceStatus
     }
 }
 
+<#
+.SYNOPSIS
+Log into Secrets Broker in this Powershell session for the purposes of using
+the Web API.
+
+.DESCRIPTION
+Secrets Broker relies on Safeguard for authentication and authorization.  This
+cmdlet will authenticate the caller against the associated Safeguard appliance
+and use that to establish a login session for the Secret Broker.
+
+The other cmdlets in this module require that you first establish a login
+session using this cmdlet.
+
+Before you can establish a login session the first immediately after deployment
+you need to associate the Secrets Broker with a Safeguard Appliance.  This can
+be done using Initialize-SgDevOps, which will walk you through the process.
+
+.PARAMETER ServiceAddress
+Network address (IP or DNS) of the Secrets Broker.  This value may also include
+the port information delimited with a colon (e.g. ssbdevops.example.com:12345).
+
+.PARAMETER ServicePort
+Port information for connecting to the Secrets Broker. (default: 443)
+
+.PARAMETER Gui
+Display Safeguard login window in a browser. Supports 2FA.
+
+.PARAMETER Insecure
+Whether or not to validate the Secrets Broker's TLS server certificate.
+
+.PARAMETER ServiceApiVersion
+API version for the Secrets Broker. (default: 1)
+
+.EXAMPLE
+Connect-SgDevOps localhost -Insecure
+
+.EXAMPLE
+Get-SgDevOpsApplianceStatus ssbdevops.example.com:12345
+#>
 function Connect-SgDevOps
 {
     [CmdletBinding()]
@@ -531,6 +600,49 @@ function Connect-SgDevOps
     }
 }
 
+<#
+.SYNOPSIS
+Call a method in the Secrets Broker API.
+
+.DESCRIPTION
+This utility is useful for calling the Secrets Broker API for testing or
+scripting purposes. It provides a couple benefits over using curl.exe or
+Invoke-RestMethod by handling authentication, composing the Url, parameters,
+and body for the request.
+
+This script is meant to be used with the Connect-SgDevOps cmdlet which
+will create a login session so that it doesn't need to be passed to each call
+to this cmdlet.  Call Disconnect-SgDevOps when finished.
+
+.PARAMETER Method
+HTTP method verb you would like to use: GET, PUT, POST, DELETE.
+
+.PARAMETER RelativeUrl
+Relative portion of the Url you would like to call starting after the version.
+
+.PARAMETER Parameters
+A hash table containing the HTTP query parameters to add to the Url.
+
+.PARAMETER Body
+A hash table containing an object to PUT or POST to the Url.
+
+.PARAMETER JsonBody
+A pre-formatted JSON string to PUT or Post to the URl.  If -Body is also
+specified, this is ignored. It can sometimes be difficult to get arrays of
+objects to behave properly with hashtables in Powershell.
+
+.PARAMETER ExtraHeaders
+A hash table containing additional headers to add to the request.
+
+.EXAMPLE
+Invoke-SgDevOpsMethod GET Safeguard/A2ARegistration/RetrievableAccounts
+
+.EXAMPLE
+Invoke-SgDevOpsMethod PUT Plugins/HashiCorpVault/Accounts -Body $accounts
+
+.EXAMPLE
+Invoke-SgDevOpsMethod DELETE Plugins/HashiCorpVault/Accounts -Parameters @{ removeAll = true }
+#>
 function Invoke-SgDevOpsMethod
 {
     [CmdletBinding()]
