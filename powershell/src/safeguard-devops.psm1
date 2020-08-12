@@ -490,7 +490,7 @@ function Get-SgDevOpsApplianceStatus
 <#
 .SYNOPSIS
 Log into Secrets Broker in this Powershell session for the purposes of using
-the Web API.
+the API.
 
 .DESCRIPTION
 Secrets Broker relies on Safeguard for authentication and authorization.  This
@@ -524,7 +524,7 @@ API version for the Secrets Broker. (default: 1)
 Connect-SgDevOps localhost -Insecure
 
 .EXAMPLE
-Get-SgDevOpsApplianceStatus ssbdevops.example.com:12345
+Connect-SgDevOps ssbdevops.example.com:12345
 #>
 function Connect-SgDevOps
 {
@@ -552,7 +552,7 @@ function Connect-SgDevOps
     if (-not $local:Status.ApplianceId)
     {
         Write-Host -ForegroundColor Magenta "Run Initialize-SgDevOps to assocate to a Safeguard appliance."
-        throw "This Safeguard DevOps Service is not associated with a Safeguard appliance"
+        throw "This Secrets Broker is not associated with a Safeguard appliance"
     }
     $local:Token = (Get-ApplianceToken $local:Status.ApplianceAddress -Gui:$Gui -Insecure:$Insecure -ApplianceApiVersion $local:Status.ApiVersion)
     $local:OldProgressPreference = $ProgressPreference
@@ -668,7 +668,7 @@ function Invoke-SgDevOpsMethod
     if (-not $SgDevOpsSession)
     {
         Write-Host -ForegroundColor Magenta "Run Connect-SgDevOps to initialize a session."
-        throw "This cmdlet requires a connect session with the Safeguard DevOps Service"
+        throw "This cmdlet requires a connect session with the Secrets Broker"
     }
 
     try
@@ -707,6 +707,18 @@ function Invoke-SgDevOpsMethod
     }
 }
 
+<#
+.SYNOPSIS
+Log out of a Secrets Broker in this Powershell session when finished using the
+API.
+
+.DESCRIPTION
+This utility will end your login session and remove the PowerShell session
+variable that was created by the Connect-SgDevOps cmdlet.
+
+.EXAMPLE
+Disconnect-SgDevOps
+#>
 function Disconnect-SgDevOps
 {
     [CmdletBinding()]
@@ -735,6 +747,56 @@ function Disconnect-SgDevOps
     }
 }
 
+<#
+.SYNOPSIS
+Associate this Secrets Broker with a Safeguard Appliance.
+
+.DESCRIPTION
+Associating a Secrets Broker with Safeguard allows it to be used for
+authentication. Secrets Broker can then be configured to use the Safeguard A2A
+API to synchronize secrets with target secret stores via plugins.
+
+Before you can establish a login session the first immediately after deployment
+you need to associate the Secrets Broker with a Safeguard Appliance.  The best
+way to do that is to call Initialize-SgDevOps, which will walk you through the
+process interactively.  Initialize-SgDevOps calls this cmdlet.
+
+If a Safeguard login session has already been established using
+Connect-Safeguard, then this cmdlet will reuse that connection, otherwise this
+cmdlet will authenticate to the Safeguard appliance interactively.
+
+.PARAMETER ServiceAddress
+Network address (IP or DNS) of the Secrets Broker.  This value may also include
+the port information delimited with a colon (e.g. ssbdevops.example.com:12345).
+
+.PARAMETER ServicePort
+Port information for connecting to the Secrets Broker. (default: 443)
+
+.PARAMETER Appliance
+Network address (IP or DNS) of the Safeguard appliance.
+
+.PARAMETER Gui
+Display Safeguard login window in a browser. Supports 2FA.
+
+.PARAMETER Insecure
+Whether or not to validate the Secrets Broker's TLS server certificate.
+
+.PARAMETER Force
+This option will force Secrets Broker to associate with another Safeguard
+appliance even if it has already been associated.
+
+.PARAMETER ApplianceApiVersion
+API version for the Safeguard Appliance. (default: 3)
+
+.PARAMETER ServiceApiVersion
+API version for the Secrets Broker. (default: 1)
+
+.EXAMPLE
+Connect-SgDevOps localhost -Insecure
+
+.EXAMPLE
+Get-SgDevOpsApplianceStatus ssbdevops.example.com:12345
+#>
 function Initialize-SgDevOpsAppliance
 {
     [CmdletBinding()]
@@ -760,21 +822,21 @@ function Initialize-SgDevOpsAppliance
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    # Initial check to status is always done with Insecure flag... out of box Safeguard DevOps Service uses a self-signed certificate
+    # Initial check to status is always done with Insecure flag... out of box Secrets Broker uses a self-signed certificate
     $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
     $ServiceAddress = $local:Resolved.ServiceAddress
     $ServicePort = $local:Resolved.ServicePort
     $local:Status = (Get-SgDevOpsApplianceStatus $ServiceAddress $ServicePort -Insecure -ServiceApiVersion $ServiceApiVersion)
     if ($local:Status.ApplianceId)
     {
-        Write-Host -ForegroundColor Yellow "WARNING: This Safeguard DevOps Service is currently associated with $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
+        Write-Host -ForegroundColor Yellow "WARNING: This Secrets Broker is currently associated with $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
         if ($Force)
         {
             $local:Confirmed = $true
         }
         else
         {
-            $local:Confirmed = (Get-Confirmation "Initialize Safeguard DevOps Service" "Do you want to associate with a different Safeguard appliance?" `
+            $local:Confirmed = (Get-Confirmation "Initialize Secrets Broker" "Do you want to associate with a different Safeguard appliance?" `
                                                  "Initialize." "Cancels this operation.")
         }
     }
@@ -837,6 +899,7 @@ function Initialize-SgDevOpsAppliance
     }
 }
 
+
 function Clear-SgDevOpsAppliance
 {
     [CmdletBinding()]
@@ -851,14 +914,14 @@ function Clear-SgDevOpsAppliance
     $local:Status = (Get-SgDevOpsApplianceStatus)
     if ($local:Status.ApplianceId)
     {
-        Write-Host -ForegroundColor Yellow "WARNING: This Safeguard DevOps Service is currently associated with $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
+        Write-Host -ForegroundColor Yellow "WARNING: This Secrets Broker is currently associated with $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
         if ($Force)
         {
             $local:Confirmed = $true
         }
         else
         {
-            $local:Confirmed = (Get-Confirmation "Clear Safeguard DevOps Service" "Do you want to clear the association with this Safeguard appliance?" `
+            $local:Confirmed = (Get-Confirmation "Clear Secrets Broker" "Do you want to clear the association with this Safeguard appliance?" `
                                                  "Clear." "Cancels this operation.")
         }
     }
@@ -886,21 +949,21 @@ function Restart-SgDevOps
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    Write-Host -ForegroundColor Yellow "WARNING: Restarting this Safeguard DevOps Service will require you to log in again."
+    Write-Host -ForegroundColor Yellow "WARNING: Restarting this Secrets Broker will require you to log in again."
     if ($Force)
     {
         $local:Confirmed = $true
     }
     else
     {
-        $local:Confirmed = (Get-Confirmation "Restart Safeguard DevOps Service" "Do you want to restart this Safeguard DevOps Service?" `
+        $local:Confirmed = (Get-Confirmation "Restart Secrets Broker" "Do you want to restart this Secrets Broker?" `
                                              "Restart." "Cancels this operation.")
     }
 
     if ($local:Confirmed)
     {
         Invoke-SgDevOpsMethod POST "Safeguard/Restart" -Parameters @{ confirm = "yes" }
-        Write-Host "Safeguard DevOps Service has restarted, you must reconnect using Connect-SgDevOps."
+        Write-Host "Secrets Broker has restarted, you must reconnect using Connect-SgDevOps."
     }
     else
     {

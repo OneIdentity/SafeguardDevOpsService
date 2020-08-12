@@ -59,7 +59,7 @@ function Clear-SgDevOpsConfiguration
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
     $local:Status = (Get-SgDevOpsApplianceStatus)
-    Write-Host -ForegroundColor Yellow "WARNING: The Safeguard DevOps Service configuration will be removed from $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
+    Write-Host -ForegroundColor Yellow "WARNING: The Secrets Broker configuration will be removed from $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
     if ($Force)
     {
         $local:Confirmed = $true
@@ -67,7 +67,7 @@ function Clear-SgDevOpsConfiguration
     else
     {
         Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
-        $local:Confirmed = (Get-Confirmation "Clear Safeguard DevOps Service Configuration" "Do you want to clear configuration from the Safeguard appliance?" `
+        $local:Confirmed = (Get-Confirmation "Clear Secrets Broker Configuration" "Do you want to clear configuration from the Safeguard appliance?" `
                                              "Clear configuration." "Cancels this operation.")
     }
 
