@@ -211,6 +211,31 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
+        /// Get an account that is mapped to a vault plugin.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
+        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will recognize that any password change for
+        /// the mapped account, should be pushed to the plugin.
+        ///
+        /// This endpoint gets an account that has been mapped to the specified plugin.
+        /// </remarks>
+        /// <param name="name">Name of the plugin</param>
+        /// <response code="200">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("{name}/Accounts/{accountId}")]
+        public ActionResult<AccountMapping> GetAccountMappingById([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromRoute] int accountId)
+        {
+            var accountMapping = pluginsLogic.GetAccountMappingById(name, accountId);
+            if (accountMapping == null)
+                return NotFound();
+
+            return Ok(accountMapping);
+        }
+
+        /// <summary>
         /// Map a set of accounts to a vault plugin.
         /// </summary>
         /// <remarks>

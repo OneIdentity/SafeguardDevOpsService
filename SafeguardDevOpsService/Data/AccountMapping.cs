@@ -32,6 +32,11 @@ namespace OneIdentity.DevOps.Data
             set => _apiKey = value;
         }
         /// <summary>
+        /// System Id or Asset Id
+        /// </summary>
+        [DataMember]
+        public int SystemId { get; set; }
+        /// <summary>
         /// Asset name
         /// </summary>
         [DataMember]
@@ -41,6 +46,11 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         [DataMember]
         public string NetworkAddress { get; set; }
+        /// <summary>
+        /// Account Id
+        /// </summary>
+        [DataMember]
+        public int AccountId { get; set; }
         /// <summary>
         /// Account name
         /// </summary>
