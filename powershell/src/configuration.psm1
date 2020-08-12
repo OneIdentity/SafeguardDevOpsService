@@ -75,7 +75,7 @@ function Clear-SgDevOpsConfiguration
     {
         Invoke-SgDevOpsMethod DELETE "Safeguard/Configuration" -Parameters @{ confirm = "yes" }
         Write-Host "Configuration has been cleared."
-        Write-Host "The DevOps service will restart, you must reinitialize using Initialize-SgDevOpsAppliance."
+        Write-Host "The Secrets Broker will restart, you must reinitialize using Initialize-SgDevOpsAppliance."
     }
     else
     {

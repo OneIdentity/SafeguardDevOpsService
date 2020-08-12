@@ -43,7 +43,7 @@ function Install-SgDevOpsPlugin
 
     if ($Restart)
     {
-        Write-Host "The DevOps service will restart, you must reconnect using Connect-SgDevOps."
+        Write-Host "The Secrets Broker will restart, you must reconnect using Connect-SgDevOps."
     }
 }
 

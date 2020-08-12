@@ -71,7 +71,7 @@ function Install-SgDevOpsSslCertificate
 
     Install-CertificateViaApi -CertificateFile $CertificateFile -Password $Password -Url "Safeguard/WebServerCertificate"
 
-    Write-Host "The DevOps service will restart, you must reconnect using Connect-SgDevOps."
+    Write-Host "The Secrets Broker will restart, you must reconnect using Connect-SgDevOps."
 }
 
 function Clear-SgDevOpsSslCertificate
@@ -85,7 +85,7 @@ function Clear-SgDevOpsSslCertificate
 
     Invoke-SgDevOpsMethod DELETE "Safeguard/WebServerCertificate"
 
-    Write-Host "The DevOps service will restart, you must reconnect using Connect-SgDevOps."
+    Write-Host "The Secrets Broker will restart, you must reconnect using Connect-SgDevOps."
 }
 
 function Get-SgDevOpsClientCertificate
