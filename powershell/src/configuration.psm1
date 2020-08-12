@@ -112,9 +112,9 @@ function Register-SgDevOpsAssetAccount
     [CmdletBinding(DefaultParameterSetName="Attributes")]
     Param(
         [Parameter(ParameterSetName="Attributes", Mandatory=$true, Position=0)]
-        [object]$Asset,
+        [string]$Asset,
         [Parameter(ParameterSetName="Attributes", Mandatory=$true, Position=1)]
-        [object]$Account,
+        [string]$Account,
         [Parameter(ParameterSetName="Attributes", Mandatory=$false)]
         [string]$Domain,
         [Parameter(ParameterSetName="Objects", Mandatory=$true)]
@@ -128,12 +128,12 @@ function Register-SgDevOpsAssetAccount
     [object[]]$local:NewList = @()
     if ($PsCmdlet.ParameterSetName -eq "Attributes")
     {
-        $local:NewList += (Resolve-SgDevOpsAssetAccount $Asset $Account -Domain $Domain)
+        $local:NewList += (Resolve-SgDevOpsAvailableAccount $Asset $Account -Domain $Domain)
     }
     else
     {
         $AccountObjects | ForEach-Object {
-            $local:NewList += (Resolve-SgDevOpsAssetAccount -Account $_)
+            $local:NewList += (Resolve-SgDevOpsAvailableAccount -Account $_)
         }
     }
 
@@ -145,9 +145,9 @@ function Unregister-SgDevOpsAssetAccount
     [CmdletBinding(DefaultParameterSetName="Attributes")]
     Param(
         [Parameter(ParameterSetName="Attributes", Mandatory=$true, Position=0)]
-        [object]$Asset,
+        [string]$Asset,
         [Parameter(ParameterSetName="Attributes", Mandatory=$true, Position=1)]
-        [object]$Account,
+        [string]$Account,
         [Parameter(ParameterSetName="Attributes", Mandatory=$false)]
         [string]$Domain,
         [Parameter(ParameterSetName="Objects")]

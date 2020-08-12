@@ -107,7 +107,8 @@ FunctionsToExport = @(
      # plugins.psm1
      'Get-SgDevOpsPlugin', 'Install-SgDevOpsPlugin', 'Remove-SgDevOpsPlugin',
      'Get-SgDevOpsPluginVaultAccount', 'Set-SgDevOpsPluginVaultAccount',
-     'Get-SgDevOpsPluginSetting', 'Set-SgDevOpsPluginSetting'
+     'Get-SgDevOpsPluginSetting', 'Set-SgDevOpsPluginSetting',
+     'Get-SgDevOpsMappedAssetAccount', 'Add-SgDevOpsMappedAssetAccount', 'Remove-SgDevOpsMappedAssetAccount'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
