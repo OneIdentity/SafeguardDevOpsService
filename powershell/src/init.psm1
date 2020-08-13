@@ -1,3 +1,14 @@
+<#
+.SYNOPSIS
+Get Secrets Broker status summary.
+
+.DESCRIPTION
+Summary information includes Safeguard Appliance association information,
+Secrets Broker configuration, and list of plugins.
+
+.EXAMPLE
+Get-SgDevOpsStatus
+#>
 function Get-SgDevOpsStatus
 {
     [CmdletBinding()]
@@ -7,12 +18,19 @@ function Get-SgDevOpsStatus
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
+    Import-Module -Name "$PSScriptRoot\configuration.psm1" -Scope Local
+    Import-Module -Name "$PSScriptRoot\plugins.psm1" -Scope Local
+
     Write-Host "---Appliance Connection---"
     Write-Host (Get-SgDevOpsApplianceStatus | Format-List | Out-String)
 
     Write-Host "---Configuration---"
-    Write-Host (Invoke-SgDevOpsMethod GET "Safeguard/Configuration" | Format-List | Out-String)
+    Write-Host (Get-SgDevOpsConfiguration | Format-List | Out-String)
+
+    Write-Host "---Plugins---"
+    Write-Host (Get-SgDevOpsPlugin | Format-Table | Out-String)
 }
+
 
 function Initialize-SgDevOps
 {
