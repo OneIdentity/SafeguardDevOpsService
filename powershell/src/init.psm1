@@ -27,10 +27,6 @@ function Initialize-SgDevOps
         [Parameter(Mandatory=$false)]
         [switch]$Gui,
         [Parameter(Mandatory=$false)]
-        [switch]$Insecure,
-        [Parameter(Mandatory=$false)]
-        [switch]$Force,
-        [Parameter(Mandatory=$false)]
         [int]$ApplianceApiVersion = 3,
         [Parameter(Mandatory=$false)]
         [int]$ServiceApiVersion = 1
@@ -41,7 +37,7 @@ function Initialize-SgDevOps
 
     Write-Host -ForegroundColor Yellow "Associating Secrets Broker to trust SPP appliance for authentication ..."
     Initialize-SgDevOpsAppliance -ServiceAddress $ServiceAddress -ServicePort $ServicePort -ServiceApiVersion $ServiceApiVersion `
-                                 -Appliance $Appliance -ApplianceApiVersion $ApplianceApiVersion -Gui:$Gui -Insecure:$Insecure -Force:$Force
+                                 -Appliance $Appliance -ApplianceApiVersion $ApplianceApiVersion -Gui:$Gui -Insecure -Force:$Force
 
     Write-Host -ForegroundColor Yellow "Connecting to Secrets Broker using SPP user ..."
     Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui -Insecure:$Insecure

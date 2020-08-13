@@ -477,6 +477,10 @@ function Get-SgDevOpsApplianceStatus
                 "Content-type" = "application/json";
             }
     }
+    catch
+    {
+        Out-SgDevOpsExceptionIfPossible $_.Exception
+    }
     finally
     {
         if ($Insecure -or $SgDevOpsSession.Insecure)
@@ -548,7 +552,17 @@ function Connect-SgDevOps
     $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
     $ServiceAddress = $local:Resolved.ServiceAddress
     $ServicePort = $local:Resolved.ServicePort
-    $local:Status = (Get-SgDevOpsApplianceStatus $ServiceAddress $ServicePort -Insecure:$Insecure -ServiceApiVersion $ServiceApiVersion)
+    try
+    {
+        $local:Status = (Get-SgDevOpsApplianceStatus $ServiceAddress $ServicePort -Insecure:$Insecure -ServiceApiVersion $ServiceApiVersion)
+    }
+    catch
+    {
+        Write-Host -ForegroundColor Yellow "WARNING: This Secrets Broker configuration has an error, usually this is because of failed TLS server validation."
+        Write-Host -ForegroundColor Magenta "You must run Initialize-SgDevOps or Initialize-SgDevOpsAppliance with -Insecure option to correct TLS server validation."
+        throw
+    }
+
     if (-not $local:Status.ApplianceId)
     {
         Write-Host -ForegroundColor Magenta "Run Initialize-SgDevOps to assocate to a Safeguard appliance."
@@ -588,6 +602,10 @@ function Connect-SgDevOps
         Write-Verbose $local:Response.Content
 
         Write-Host "Login Successful."
+    }
+    catch
+    {
+        Out-SgDevOpsExceptionIfPossible $_.Exception
     }
     finally
     {
@@ -792,10 +810,10 @@ API version for the Safeguard Appliance. (default: 3)
 API version for the Secrets Broker. (default: 1)
 
 .EXAMPLE
-Connect-SgDevOps localhost -Insecure
+Initialize-SgDevOpsAppliance localhost -Insecure
 
 .EXAMPLE
-Get-SgDevOpsApplianceStatus ssbdevops.example.com:12345
+Initialize-SgDevOpsAppliance ssbdevops.example.com:12345 -Gui
 #>
 function Initialize-SgDevOpsAppliance
 {
@@ -826,7 +844,18 @@ function Initialize-SgDevOpsAppliance
     $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
     $ServiceAddress = $local:Resolved.ServiceAddress
     $ServicePort = $local:Resolved.ServicePort
-    $local:Status = (Get-SgDevOpsApplianceStatus $ServiceAddress $ServicePort -Insecure -ServiceApiVersion $ServiceApiVersion)
+    try
+    {
+        $local:Status = (Get-SgDevOpsApplianceStatus $ServiceAddress $ServicePort -Insecure -ServiceApiVersion $ServiceApiVersion)
+    }
+    catch
+    {
+        Write-Host -ForegroundColor Yellow "WARNING: This Secrets Broker configuration has an error."
+        Write-Host -ForegroundColor Magenta $_
+        $local:Confirmed = (Get-Confirmation "Initialize Secrets Broker" "Do you want to associate with a different Safeguard appliance?" `
+                                             "Initialize." "Cancels this operation.")
+    }
+
     if ($local:Status.ApplianceId)
     {
         Write-Host -ForegroundColor Yellow "WARNING: This Secrets Broker is currently associated with $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
