@@ -38,9 +38,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success.</response>
         [UnhandledExceptionError]
         [HttpGet]
-        public ActionResult<SafeguardConnection> GetSafeguard([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardDevOpsConnection> GetSafeguard([FromServices] ISafeguardLogic safeguard)
         {
-            var safeguardConnection = safeguard.GetSafeguardConnection();
+            var safeguardConnection = safeguard.GetAnonymousSafeguardConnection();
 
             return Ok(safeguardConnection);
         }
@@ -59,7 +59,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="401">Invalid authorization token.</response>
         [UnhandledExceptionError]
         [HttpPut]
-        public ActionResult<SafeguardConnection> SetSafeguard([FromServices] ISafeguardLogic safeguard,
+        public ActionResult<SafeguardDevOpsConnection> SetSafeguard([FromServices] ISafeguardLogic safeguard,
             [FromBody] SafeguardData safeguardData)
         {
             var token = WellKnownData.GetSppToken(HttpContext);
@@ -203,7 +203,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardTokenAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Logon")]
-        public ActionResult<SafeguardConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
         {
             var safeguardConnection = safeguard.GetSafeguardConnection();
             if (safeguardConnection == null)
@@ -225,7 +225,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Logoff")]
-        public ActionResult<SafeguardConnection> GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
         {
             var sessionKey = HttpContext.Items["session-key"].ToString();
             AuthorizedCache.Instance.Remove(sessionKey);

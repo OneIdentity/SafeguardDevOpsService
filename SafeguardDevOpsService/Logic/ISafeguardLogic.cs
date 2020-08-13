@@ -10,8 +10,9 @@ namespace OneIdentity.DevOps.Logic
     public interface ISafeguardLogic
     {
         ISafeguardConnection Connect();
-        SafeguardConnection GetSafeguardConnection();
-        SafeguardConnection SetSafeguardData(string token, SafeguardData safeguardData);
+        SafeguardDevOpsConnection GetAnonymousSafeguardConnection();
+        SafeguardDevOpsConnection GetSafeguardConnection();
+        SafeguardDevOpsConnection SetSafeguardData(string token, SafeguardData safeguardData);
         void DeleteSafeguardData();
 
         bool IsLoggedIn();

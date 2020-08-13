@@ -51,13 +51,13 @@ namespace OneIdentity.DevOps.Logic
             return new DevOpsException(msg, ex);
         }
 
-        private SafeguardConnection GetSafeguardAppliance(ISafeguardConnection sg)
+        private SafeguardDevOpsConnection GetSafeguardAppliance(ISafeguardConnection sg)
         {
             try
             {
                 var availabilityJson = sg.InvokeMethod(Service.Notification, Method.Get, "Status/Availability");
                 var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
-                return new SafeguardConnection()
+                return new SafeguardDevOpsConnection()
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
                     ApplianceId = applianceAvailability.ApplianceId,
@@ -73,7 +73,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private SafeguardConnection GetSafeguardAvailability(ISafeguardConnection sg, SafeguardConnection safeguardConnection)
+        private SafeguardDevOpsConnection GetSafeguardAvailability(ISafeguardConnection sg, SafeguardDevOpsConnection safeguardConnection)
         {
             var safeguard = GetSafeguardAppliance(sg);
             safeguardConnection.ApplianceId = safeguard.ApplianceId;
@@ -85,7 +85,7 @@ namespace OneIdentity.DevOps.Logic
             return safeguardConnection;
         }
 
-        private bool FetchAndStoreSignatureCertificate(string token, SafeguardConnection safeguardConnection)
+        private bool FetchAndStoreSignatureCertificate(string token, SafeguardDevOpsConnection safeguardConnection)
         {
             // Chicken and egg problem here. Fetching and storing the signature certificate is the first
             //  thing that has to happen on a new system.  We can't check the SSL certificate unless a certificate
@@ -124,18 +124,18 @@ namespace OneIdentity.DevOps.Logic
             return false;
         }
 
-        private SafeguardConnection ConnectAnonymous(string safeguardAddress, int apiVersion, bool ignoreSsl)
+        private SafeguardDevOpsConnection ConnectAnonymous(string safeguardAddress, int apiVersion, bool ignoreSsl)
         {
             ISafeguardConnection sg = null;
             try
             {
-                var safeguardConnection = new SafeguardConnection
+                var safeguardConnection = new SafeguardDevOpsConnection
                 {
                     ApplianceAddress = safeguardAddress,
                     IgnoreSsl = ignoreSsl,
                     ApiVersion = apiVersion
                 };
-
+        
                 sg = ignoreSsl ? Safeguard.Connect(safeguardAddress, apiVersion, true) :
                     Safeguard.Connect(safeguardAddress, CertificateValidationCallback, apiVersion);
                 return GetSafeguardAvailability(sg, safeguardConnection);
@@ -150,7 +150,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private ISafeguardConnection ConnectWithAccessToken(string token, SafeguardConnection safeguardConnection)
+        private ISafeguardConnection ConnectWithAccessToken(string token, SafeguardDevOpsConnection safeguardConnection)
         {
             if (_serviceConfiguration != null)
             {
@@ -176,7 +176,7 @@ namespace OneIdentity.DevOps.Logic
             _serviceConfiguration = null;
         }
 
-        private bool GetAndValidateUserPermissions(string token, SafeguardConnection safeguardConnection)
+        private bool GetAndValidateUserPermissions(string token, SafeguardDevOpsConnection safeguardConnection)
         {
             ISafeguardConnection sg = null;
             try
@@ -498,7 +498,7 @@ namespace OneIdentity.DevOps.Logic
         public bool ValidateLogin(string token, bool tokenOnly = false)
         {
 
-            return ValidateLogin(token, new SafeguardConnection()
+            return ValidateLogin(token, new SafeguardDevOpsConnection()
             {
                 ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion,
                 ApplianceAddress = _configDb.SafeguardAddress,
@@ -506,7 +506,7 @@ namespace OneIdentity.DevOps.Logic
             }, tokenOnly);
         }
 
-        private bool ValidateLogin(string token, SafeguardConnection safeguardConnection, bool tokenOnly = false, string tempKey = null)
+        private bool ValidateLogin(string token, SafeguardDevOpsConnection safeguardConnection, bool tokenOnly = false, string tempKey = null)
         {
             if (token == null)
                 return false;
@@ -776,18 +776,51 @@ namespace OneIdentity.DevOps.Logic
             return GetDevOpsConfiguration();
         }
 
-        public SafeguardConnection GetSafeguardConnection()
+        public SafeguardDevOpsConnection GetAnonymousSafeguardConnection()
         {
             if (string.IsNullOrEmpty(_configDb.SafeguardAddress))
-                return new SafeguardConnection();
+                return new SafeguardDevOpsConnection();
 
-            return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? DefaultApiVersion, _configDb.IgnoreSsl ?? true);
+            ISafeguardConnection sg = null;
+            try
+            {
+                var safeguardConnection = new SafeguardDevOpsConnection
+                {
+                    ApplianceAddress = _configDb.SafeguardAddress,
+                    IgnoreSsl = _configDb.IgnoreSsl,
+                    ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion
+                };
+        
+                sg = Safeguard.Connect(safeguardConnection.ApplianceAddress, safeguardConnection.ApiVersion ?? DefaultApiVersion, true);
+                return GetSafeguardAvailability(sg, safeguardConnection);
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                throw LogAndException($"Failed to contact Safeguard at '{_configDb.SafeguardAddress}': {ex.Message}", ex);
+            }
+            finally
+            {
+                sg?.Dispose();
+            }
         }
 
-        public SafeguardConnection SetSafeguardData(string token, SafeguardData safeguardData)
+        public SafeguardDevOpsConnection GetSafeguardConnection()
+        {
+            if (string.IsNullOrEmpty(_configDb.SafeguardAddress))
+                return new SafeguardDevOpsConnection();
+
+            return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? DefaultApiVersion, true);
+        }
+
+        public SafeguardDevOpsConnection SetSafeguardData(string token, SafeguardData safeguardData)
         {
             if (token == null)
                 throw new DevOpsException("Invalid authorization token.", HttpStatusCode.Unauthorized);
+
+            if (safeguardData.IgnoreSsl.HasValue && !safeguardData.IgnoreSsl.Value  && !_configDb.GetAllTrustedCertificates().Any())
+            {
+                throw LogAndException("Cannot ignore SSL before adding trusted certificates.");
+            }
 
             var safeguardConnection = ConnectAnonymous(safeguardData.ApplianceAddress,
                 safeguardData.ApiVersion ?? DefaultApiVersion, safeguardData.IgnoreSsl ?? false);
@@ -1276,7 +1309,7 @@ namespace OneIdentity.DevOps.Logic
             }
 
             _serviceConfiguration.Appliance = GetSafeguardAvailability(sg,
-                new SafeguardConnection()
+                new SafeguardDevOpsConnection()
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
                     IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value,
