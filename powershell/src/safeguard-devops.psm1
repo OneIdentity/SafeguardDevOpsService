@@ -996,7 +996,7 @@ certificates are initialized properly after a configuration change.
 This option will force restarting the Secrets Broker without confirmation.
 
 .EXAMPLE
-Clear-SgDevOpsAppliance
+Restart-SgDevOps
 #>
 function Restart-SgDevOps
 {

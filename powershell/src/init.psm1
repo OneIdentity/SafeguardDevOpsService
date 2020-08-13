@@ -31,7 +31,40 @@ function Get-SgDevOpsStatus
     Write-Host (Get-SgDevOpsPlugin | Format-Table | Out-String)
 }
 
+<#
+.SYNOPSIS
+An interactive command to initialize Secrets Broker and prepare it for use.
 
+.DESCRIPTION
+This cmdlet will associate Secrets Broker with a Safeguard appliance, configure
+trusted root certificates, configure a Safeguard client certificate, and
+initialize the A2A configuration in Safeguard that Secrets Broker will use.
+
+.PARAMETER ServiceAddress
+Network address (IP or DNS) of the Secrets Broker.  This value may also include
+the port information delimited with a colon (e.g. ssbdevops.example.com:12345).
+
+.PARAMETER ServicePort
+Port information for connecting to the Secrets Broker. (default: 443)
+
+.PARAMETER Appliance
+Network address (IP or DNS) of the Safeguard appliance.
+
+.PARAMETER Gui
+Display Safeguard login window in a browser. Supports 2FA.
+
+.PARAMETER ApplianceApiVersion
+API version for the Safeguard Appliance. (default: 3)
+
+.PARAMETER ServiceApiVersion
+API version for the Secrets Broker. (default: 1)
+
+.EXAMPLE
+Initialize-SgDevOps localhost:443
+
+.EXAMPLE
+Initialize-SgDevOps ssbdevops.example.com:12345 -Gui
+#>
 function Initialize-SgDevOps
 {
     [CmdletBinding()]
