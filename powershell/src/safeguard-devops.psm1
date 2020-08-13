@@ -499,7 +499,7 @@ the API.
 .DESCRIPTION
 Secrets Broker relies on Safeguard for authentication and authorization.  This
 cmdlet will authenticate the caller against the associated Safeguard appliance
-and use that to establish a login session for the Secret Broker.
+and use that to establish a login session for the .
 
 The other cmdlets in this module require that you first establish a login
 session using this cmdlet.
@@ -928,7 +928,24 @@ function Initialize-SgDevOpsAppliance
     }
 }
 
+<#
+.SYNOPSIS
+Clear this Secrets Broker's association with a Safeguard Appliance.
 
+.DESCRIPTION
+Associating a Secrets Broker with Safeguard allows it to be used for
+authentication. Secrets Broker can then be configured to use the Safeguard A2A
+API to synchronize secrets with target secret stores via plugins.
+
+Removing this configuration using this cmdlet will most likely break your
+Secrets Broker.  To completely reset, use Clear-SgDevOps instead.
+
+.PARAMETER Force
+This option will force clearing the association without confirmation.
+
+.EXAMPLE
+Clear-SgDevOpsAppliance
+#>
 function Clear-SgDevOpsAppliance
 {
     [CmdletBinding()]
@@ -967,6 +984,20 @@ function Clear-SgDevOpsAppliance
     }
 }
 
+<#
+.SYNOPSIS
+Request a restart of the Secrets Broker.
+
+.DESCRIPTION
+Restarting the Secrets Broker is sometimes necessary to ensure that plugins and
+certificates are initialized properly after a configuration change.
+
+.PARAMETER Force
+This option will force restarting the Secrets Broker without confirmation.
+
+.EXAMPLE
+Clear-SgDevOpsAppliance
+#>
 function Restart-SgDevOps
 {
     [CmdletBinding()]
@@ -1000,6 +1031,32 @@ function Restart-SgDevOps
     }
 }
 
+<#
+.SYNOPSIS
+Get the available cmdlets from the safeguard-devops module.
+
+.DESCRIPTION
+This cmdlet can be used to determine what cmdlets are available from safeguard-devops.
+To make it easier to find cmdlets you may specify up to three strings as matching criteria.
+
+.PARAMETER Criteria1
+A string to match against the name of the cmdlet.
+
+.PARAMETER Criteria2
+A string to match against the name of the cmdlet.
+
+.PARAMETER Criteria3
+A string to match against the name of the cmdlet.
+
+.EXAMPLE
+Get-SgDevOpsCommand
+
+.EXAMPLE
+Get-SgDevOpsCommand Get Account
+
+.EXAMPLE
+Get-SgDevOpsCommand plugin
+#>
 function Get-SgDevOpsCommand
 {
     [CmdletBinding()]
