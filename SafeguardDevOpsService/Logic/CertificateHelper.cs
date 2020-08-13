@@ -24,9 +24,6 @@ namespace OneIdentity.DevOps.Logic
         public static bool CertificateValidation(object sender, X509Certificate certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors, Serilog.ILogger logger, IConfigurationRepository configDb)
         {
-            if (configDb.IgnoreSsl ?? false)
-                return true;
-
             var trustedChain = configDb.GetTrustedChain();
             if (trustedChain.ChainPolicy.ExtraStore.Count == 0)
             {

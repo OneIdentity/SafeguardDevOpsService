@@ -21,7 +21,7 @@ namespace OneIdentity.DevOps.Data
         /// <summary>
         /// Safeguard appliance information
         /// </summary>
-        public SafeguardConnection Appliance { get; set; }
+        public SafeguardDevOpsConnection Appliance { get; set; }
 
         /// <summary>
         /// 

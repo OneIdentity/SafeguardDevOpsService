@@ -3,7 +3,7 @@
     /// <summary>
     /// Safeguard appliance connection information
     /// </summary>
-    public class SafeguardConnection : SafeguardData
+    public class SafeguardDevOpsConnection : SafeguardData
     {
         /// <summary>
         /// Safeguard appliance Id
