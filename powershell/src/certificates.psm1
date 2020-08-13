@@ -151,7 +151,7 @@ function Clear-SgDevOpsSslCertificate
 <#
 .SYNOPSIS
 Get the TLS client certificate that Secrets Broker uses to communicate with
-the Safeguard A2A APi.
+the Safeguard A2A API.
 
 .DESCRIPTION
 Secrets Broker uses a TLS client certificate to communicate with the Safeguard
@@ -176,7 +176,8 @@ function Get-SgDevOpsClientCertificate
 
 <#
 .SYNOPSIS
-Install a new TLS server certificate in the Secrets Broker service.
+Install a new TLS client certificate for Secrets Broker to use to communicate
+with the Safeguard A2A API.
 
 .DESCRIPTION
 Secrets Broker uses a TLS client certificate to communicate with the Safeguard
@@ -223,7 +224,7 @@ function Install-SgDevOpsClientCertificate
 <#
 .SYNOPSIS
 Remove the TLS client certificate that Secrets Broker uses to communicate with
-the Safeguard A2A APi.
+the Safeguard A2A API.
 
 .DESCRIPTION
 Secrets Broker uses a TLS client certificate to communicate with the Safeguard
@@ -246,6 +247,40 @@ function Clear-SgDevOpsClientCertificate
     Invoke-SgDevOpsMethod DELETE "Safeguard/ClientCertificate"
 }
 
+<#
+.SYNOPSIS
+Request that Secrets Broker create a new certificate signing request.
+
+.DESCRIPTION
+Secrets Broker uses certificates to secure its API and to connect to Safeguard
+A2A API.  The most secure way to install certificates is to have Secrets Broker
+generate a certificate signing request (CSR).  The public key pair is generated
+internally and the private key never leaves the box.
+
+The CSR returned by this cmdlet can be sent to a CA to be signed.  This can be
+a corporate CA that is only trusted on your corporate network.
+
+.PARAMETER CertificateType
+A string containing the type of CSR (ssl or client).
+
+.PARAMETER Subject
+A string containing the distinguished name of the subject of the CSR.
+
+.PARAMETER KeyLength
+An integer containing the key length (1024, 2048, 3072, 4096, default: 2048).
+
+.PARAMETER IpAddresses
+An array of strings containing IP addresses to use in subject alternative names.
+
+.PARAMETER DnsNames
+An array of strings containing DNS names to use in subject alternative names.
+
+.PARAMETER OutFile
+A string containing the location to save the CSR.
+
+.EXAMPLE
+New-SgDevOpsCsr Ssl "CN=ssbdevops.example.com,OU=PAM,O=InfoSec,S=UT,C=US" -KeyLength 3072 -IpAddresses "172.17.17.172" -DnsNames "ssbdevops.example.com","secretsbroker.example.com"
+#>
 function New-SgDevOpsCsr
 {
     [CmdletBinding()]
@@ -300,6 +335,27 @@ function New-SgDevOpsCsr
     Write-Host "`nCSR saved to '$OutFile'"
 }
 
+<#
+.SYNOPSIS
+Get the trusted CA certificate that Secrets Broker uses to validate
+communication with the Safeguard A2A API.
+
+.DESCRIPTION
+Secrets Broker uses a TLS client certificate to communicate with the Safeguard
+A2A API.  In order to determine whether Secrets Broker trusts the TLS server
+certificate presented by Safeguard A2A API, it checks against this list of
+trusted CA certificates.  This cmdlet returns the list of CA certificates
+currently trusted by Secrets Broker.
+
+.PARAMETER Thumbprint
+The thumbprint of a single trusted CA certificate to get.
+
+.EXAMPLE
+Get-SgDevOpsTrustedCertificate
+
+.EXAMPLE
+Get-SgDevOpsTrustedCertificate DBABE5E597BA4B9256A4CD91B8884058B718D936
+#>
 function Get-SgDevOpsTrustedCertificate
 {
     [CmdletBinding()]
@@ -321,6 +377,30 @@ function Get-SgDevOpsTrustedCertificate
     }
 }
 
+<#
+.SYNOPSIS
+Install a trusted CA certificate that Secrets Broker can use to validate
+communication with the Safeguard A2A API.
+
+.DESCRIPTION
+Secrets Broker uses a TLS client certificate to communicate with the Safeguard
+A2A API.  In order to determine whether Secrets Broker trusts the TLS server
+certificate presented by Safeguard A2A API, it checks against this list of
+trusted CA certificates.  This cmdlet allows you to install a new CA
+certificate in the list.
+
+This cmdlet can be used to upload a PEM encoded certificate file without a
+private key.
+
+.PARAMETER CertificateFile
+The path to a certificate file (PEM).
+
+.EXAMPLE
+Install-SgDevOpsTrustedCertificate C:\root.pem
+
+.EXAMPLE
+Install-SgDevOpsTrustedCertificate .\path\to\issuing-ca.crt
+#>
 function Install-SgDevOpsTrustedCertificate
 {
     [CmdletBinding()]
@@ -346,6 +426,22 @@ function Install-SgDevOpsTrustedCertificate
     }
 }
 
+<#
+.SYNOPSIS
+Synchronize all of the trusted CA certificates from Safeguard as trusted CA
+certificates in Secrets Broker to use to validate communication with the
+Safeguard A2A API.
+
+.DESCRIPTION
+Secrets Broker uses a TLS client certificate to communicate with the Safeguard
+A2A API.  In order to determine whether Secrets Broker trusts the TLS server
+certificate presented by Safeguard A2A API, it checks against this list of
+trusted CA certificates.  This cmdlet requests that Secrets Broker look up all
+of the trusted CA certificates from Safeguard and add them to its own list.
+
+.EXAMPLE
+Sync-SgDevOpsTrustedCertificate
+#>
 function Sync-SgDevOpsTrustedCertificate
 {
     [CmdletBinding()]
@@ -359,7 +455,24 @@ function Sync-SgDevOpsTrustedCertificate
     Invoke-SgDevOpsMethod POST "Safeguard/TrustedCertificates" -Parameters @{ importFromSafeguard = $true } -JsonBody "{}"
 }
 
+<#
+.SYNOPSIS
+Remove a trusted CA certificate that Secrets Broker can use to validate
+communication with the Safeguard A2A API.
 
+.DESCRIPTION
+Secrets Broker uses a TLS client certificate to communicate with the Safeguard
+A2A API.  In order to determine whether Secrets Broker trusts the TLS server
+certificate presented by Safeguard A2A API, it checks against this list of
+trusted CA certificates.  This cmdlet removes the specified trusted CA
+certificate from the list.
+
+.PARAMETER Thumbprint
+The thumbprint of a single trusted CA certificate to remove.
+
+.EXAMPLE
+Remove-SgDevOpsClientCertificate DBABE5E597BA4B9256A4CD91B8884058B718D936
+#>
 function Remove-SgDevOpsTrustedCertificate
 {
     [CmdletBinding()]
