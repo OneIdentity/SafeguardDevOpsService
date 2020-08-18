@@ -30,7 +30,7 @@ CompanyName = 'One Identity LLC'
 Copyright = '(c) 2020 One Identity LLC. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Scripting tools for interacting with the One Identity Safeguard DevOps Service.'
+Description = 'Scripting tools for interacting with the One Identity Safeguard Secrets Broker for DevOps.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '5.0'
@@ -85,8 +85,9 @@ FunctionsToExport = @(
 
      # safeguard-devops.psm1 -- handles login/logout and calling generic methods
      'Get-SgDevOpsApplianceStatus', 'Initialize-SgDevOpsAppliance', 'Clear-SgDevOpsAppliance',
-     'Connect-SgDevOps', 'Disconnect-SgDevOps', # <-- session init / deinit
+     'Connect-SgDevOps', 'Disconnect-SgDevOps',  'Restart-SgDevOps', # <-- session init / deinit
      'Invoke-SgDevOpsMethod', # <-- this is the function used to implement most of the others
+     'Get-SgDevOpsCommand',
 
      # init.psm1 -- handles full service initialization walkthrough UX
      'Get-SgDevOpsStatus', 'Initialize-SgDevOps',
@@ -106,7 +107,8 @@ FunctionsToExport = @(
      # plugins.psm1
      'Get-SgDevOpsPlugin', 'Install-SgDevOpsPlugin', 'Remove-SgDevOpsPlugin',
      'Get-SgDevOpsPluginVaultAccount', 'Set-SgDevOpsPluginVaultAccount',
-     'Get-SgDevOpsPluginSetting', 'Set-SgDevOpsPluginSetting'
+     'Get-SgDevOpsPluginSetting', 'Set-SgDevOpsPluginSetting',
+     'Get-SgDevOpsMappedAssetAccount', 'Add-SgDevOpsMappedAssetAccount', 'Remove-SgDevOpsMappedAssetAccount'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

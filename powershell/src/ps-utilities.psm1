@@ -156,7 +156,7 @@ function Use-CertificateFile
     }
 }
 # Helper function for identifying a particular asset account
-function Resolve-SgDevOpsAssetAccount
+function Resolve-SgDevOpsAvailableAccount
 {
     [CmdletBinding()]
     Param(
@@ -219,4 +219,39 @@ function Resolve-SgDevOpsAssetAccount
         throw "Found $($local:AssetAccount.Count) asset accounts matching asset='$Asset' and account='$Account'"
     }
     $local:AssetAccount
+}
+
+function Resolve-SgDevOpsRegisteredAccount
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [object]$Asset,
+        [Parameter(Mandatory=$true, Position=1)]
+        [object]$Account,
+        [Parameter(Mandatory=$false)]
+        [string]$Domain
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if ($Account -as [int])
+    {
+        $local:AccountId = $Account
+    }
+    else
+    {
+        $local:AvailableAccount = (Resolve-SgDevOpsAvailableAccount -Asset $Asset -Account $Account -Domain $Domain)
+        $local:AccountId = $local:AvailableAccount.Id
+    }
+
+    ## look up the registered account for the available account
+    $local:RegisteredAccount = (Invoke-SgDevOpsMethod GET "Safeguard/A2ARegistration/RetrievableAccounts/$($local:AccountId)")
+
+    if (-not $local:RegisteredAccount)
+    {
+        throw "Unable to find registered asset account matching asset='$Asset' and account='$Account'"
+    }
+    $local:RegisteredAccount
 }

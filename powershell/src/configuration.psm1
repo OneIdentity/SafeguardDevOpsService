@@ -59,7 +59,7 @@ function Clear-SgDevOpsConfiguration
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
     $local:Status = (Get-SgDevOpsApplianceStatus)
-    Write-Host -ForegroundColor Yellow "WARNING: The Safeguard DevOps Service configuration will be removed from $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
+    Write-Host -ForegroundColor Yellow "WARNING: The Secrets Broker configuration will be removed from $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
     if ($Force)
     {
         $local:Confirmed = $true
@@ -67,7 +67,7 @@ function Clear-SgDevOpsConfiguration
     else
     {
         Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
-        $local:Confirmed = (Get-Confirmation "Clear Safeguard DevOps Service Configuration" "Do you want to clear configuration from the Safeguard appliance?" `
+        $local:Confirmed = (Get-Confirmation "Clear Secrets Broker Configuration" "Do you want to clear configuration from the Safeguard appliance?" `
                                              "Clear configuration." "Cancels this operation.")
     }
 
@@ -75,7 +75,7 @@ function Clear-SgDevOpsConfiguration
     {
         Invoke-SgDevOpsMethod DELETE "Safeguard/Configuration" -Parameters @{ confirm = "yes" }
         Write-Host "Configuration has been cleared."
-        Write-Host "The DevOps service will restart, you must reinitialize using Initialize-SgDevOpsAppliance."
+        Write-Host "The Secrets Broker will restart, you must reinitialize using Initialize-SgDevOpsAppliance."
     }
     else
     {
@@ -112,9 +112,9 @@ function Register-SgDevOpsAssetAccount
     [CmdletBinding(DefaultParameterSetName="Attributes")]
     Param(
         [Parameter(ParameterSetName="Attributes", Mandatory=$true, Position=0)]
-        [object]$Asset,
+        [string]$Asset,
         [Parameter(ParameterSetName="Attributes", Mandatory=$true, Position=1)]
-        [object]$Account,
+        [string]$Account,
         [Parameter(ParameterSetName="Attributes", Mandatory=$false)]
         [string]$Domain,
         [Parameter(ParameterSetName="Objects", Mandatory=$true)]
@@ -128,25 +128,16 @@ function Register-SgDevOpsAssetAccount
     [object[]]$local:NewList = @()
     if ($PsCmdlet.ParameterSetName -eq "Attributes")
     {
-        $local:NewList += (Resolve-SgDevOpsAssetAccount $Asset $Account -Domain $Domain)
+        $local:NewList += (Resolve-SgDevOpsAvailableAccount $Asset $Account -Domain $Domain)
     }
     else
     {
         $AccountObjects | ForEach-Object {
-            $local:NewList += (Resolve-SgDevOpsAssetAccount -Account $_)
+            $local:NewList += (Resolve-SgDevOpsAvailableAccount -Account $_)
         }
     }
 
-    # add existing non-duplicate entries
-    (Get-SgDevOpsRegisteredAssetAccount) | ForEach-Object {
-        $local:Current = $_
-        if (-not ($local:NewList | Where-Object { $_.Id -eq $local:Current.AccountId }))
-        {
-            $local:NewList += $local:Current
-        }
-    }
-
-    Invoke-SgDevOpsMethod POST "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
+    Invoke-SgDevOpsMethod PUT "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
 }
 
 function Unregister-SgDevOpsAssetAccount
@@ -154,9 +145,9 @@ function Unregister-SgDevOpsAssetAccount
     [CmdletBinding(DefaultParameterSetName="Attributes")]
     Param(
         [Parameter(ParameterSetName="Attributes", Mandatory=$true, Position=0)]
-        [object]$Asset,
+        [string]$Asset,
         [Parameter(ParameterSetName="Attributes", Mandatory=$true, Position=1)]
-        [object]$Account,
+        [string]$Account,
         [Parameter(ParameterSetName="Attributes", Mandatory=$false)]
         [string]$Domain,
         [Parameter(ParameterSetName="Objects")]
@@ -166,28 +157,42 @@ function Unregister-SgDevOpsAssetAccount
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
+    $local:RegisteredAccounts = (Get-SgDevOpsRegisteredAssetAccount)
     [object[]]$local:RemoveList = @()
     if ($PsCmdlet.ParameterSetName -eq "Attributes")
     {
-        $local:RemoveList += (Resolve-SgDevOpsAssetAccount $Asset $Account -Domain $Domain)
+        if ($Domain)
+        {
+            $local:RemoveList += ($local:RegisteredAccounts | Where-Object { $_.SystemName -ieq $Asset -and $_.AccountName -ieq $Account -and $_.DomainName -ieq $Domain})
+        }
+        else
+        {
+            $local:RemoveList += ($local:RegisteredAccounts | Where-Object { $_.SystemName -ieq $Asset -and $_.AccountName -ieq $Account })
+        }
     }
     else
     {
         $AccountObjects | ForEach-Object {
-            $local:RemoveList += (Resolve-SgDevOpsAssetAccount -Account $_)
+            $local:Object = $_
+            if ($local:Object.AccountId)
+            {
+                $local:RemoveList += ($local:RegisteredAccounts | Where-Object { $_.AccountId -eq $local:Object.AccountId })
+            }
+            else
+            {
+                # try to match available asset accounts (they have an Id rather than an AccountId)
+                $local:RemoveList += ($local:RegisteredAccounts | Where-Object { $_.AccountId -eq $local:Object.Id })
+            }
         }
     }
 
-    # add everything but removed entries
-    [object[]]$local:NewList = @()
-    (Get-SgDevOpsRegisteredAssetAccount) | ForEach-Object {
-        $local:Current = $_
-        if (-not ($local:RemoveList | Where-Object { $_.Id -eq $local:Current.AccountId }))
-        {
-            $local:NewList += $local:Current
-        }
+    if (-not $local:RemoveList)
+    {
+        throw "Unable to find specified asset accounts to unregister."
     }
 
-    Invoke-SgDevOpsMethod POST "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
+    Invoke-SgDevOpsMethod DELETE "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:RemoveList
+
+    # return the current list
+    Get-SgDevOpsRegisteredAssetAccount
 }
