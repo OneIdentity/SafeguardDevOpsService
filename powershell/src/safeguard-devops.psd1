@@ -72,6 +72,7 @@ NestedModules = @(
      'sslhandling.psm1',
      'ps-utilities.psm1',
      # Public Modules
+     'help.psm1',
      'init.psm1',
      'certificates.psm1',
      'configuration.psm1',
@@ -87,6 +88,8 @@ FunctionsToExport = @(
      'Get-SgDevOpsApplianceStatus', 'Initialize-SgDevOpsAppliance', 'Clear-SgDevOpsAppliance',
      'Connect-SgDevOps', 'Disconnect-SgDevOps',  'Restart-SgDevOps', # <-- session init / deinit
      'Invoke-SgDevOpsMethod', # <-- this is the function used to implement most of the others
+
+     # help.psm1
      'Get-SgDevOpsCommand',
 
      # init.psm1 -- handles full service initialization walkthrough UX
