@@ -487,9 +487,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get accounts registered with Safeguard Secrets Broker for DevOps A2A registration.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
-        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
-        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access secrets,
+        /// monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps creates a special A2A registration
+        /// that contains registered accounts.  Each account that is registered with this A2A registration, will be monitored
         /// by Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint gets a list of accounts that have been registered with Safeguard Secrets Broker for DevOps A2A registration.
@@ -510,9 +510,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get Safeguard Secrets Broker for DevOps A2A registration account by Id.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
-        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
-        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access secrets,
+        /// monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps creates a special A2A registration
+        /// that contains registered accounts.  Each account that is registered with this A2A registration, will be monitored
         /// by Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint gets an account that has been registered with Safeguard Secrets Broker for DevOps A2A registration.
@@ -536,9 +536,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Register accounts with Safeguard Secrets Broker for DevOps A2A registration.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
-        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
-        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access secrets,
+        /// monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps creates a special A2A registration
+        /// that contains registered accounts.  Each account that is registered with this A2A registration, will be monitored
         /// by Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint registers one or more accounts with Safeguard Secrets Broker for DevOps A2A registration.
@@ -560,9 +560,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Unregister accounts with Safeguard Secrets Broker for DevOps A2A registration.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
-        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
-        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access secrets,
+        /// monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps creates a special A2A registration
+        /// that contains registered accounts.  Each account that is registered with this A2A registration, will be monitored
         /// by Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint unregisters one or more accounts with Safeguard Secrets Broker for DevOps A2A registration.

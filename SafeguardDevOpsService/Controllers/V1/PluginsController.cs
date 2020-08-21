@@ -33,10 +33,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get a list of all registered plugins.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin must be installed and configured individually.
         ///
-        /// This endpoint lists all of the plugins that have been install along with the specific configuration requirements.
+        /// This endpoint lists all of the plugins that have been installed along with the specific configuration parameters.
         /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -56,7 +56,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Upload a new plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin must be installed and configured individually.
         ///
         /// The plugin must be a zip compressed file that has been converted to a base64 string.&lt;br /&gt;
@@ -89,10 +89,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Upload a new plugin via multipart-form-data.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin must be installed and configured individually.
         ///
-        /// The plugin must be a zip compressed. Each plugin is installed into the \ProgramData\SafeguardDevOpsService\ExternalPlugins folder.
+        /// The plugin must be a zip compressed file. The plugin is installed into the \ProgramData\SafeguardDevOpsService\ExternalPlugins folder.
         /// </remarks>
         /// <param name="formFile">Zip compressed plugin file.</param>
         /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
@@ -118,7 +118,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get the configuration for a specific plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin must be installed and configured individually.
         ///
         /// This endpoint gets the configuration for a specific plugin by name.
@@ -142,7 +142,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Update the configuration for a plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin must be installed and configured individually.
         ///
         /// This endpoint sets the configuration for a specific plugin by name.
@@ -165,7 +165,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Delete the configuration for a specific plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin must be installed and configured individually.
         ///
         /// This endpoint removes the configuration for a specific plugin by name and unregisters the plugin from Safeguard Secrets Broker for DevOps.
@@ -191,10 +191,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get the list of accounts that are mapped to a vault plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
-        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will recognize that any password change for
-        /// the mapped account, should be pushed to the plugin.
+        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will detect a password change for
+        /// the mapped account and push the new credential to the plugin.
         ///
         /// This endpoint gets a list of accounts that have been mapped to the specified plugin.
         /// </remarks>
@@ -214,10 +214,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get an account that is mapped to a vault plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
-        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will recognize that any password change for
-        /// the mapped account, should be pushed to the plugin.
+        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will detect a password change for
+        /// the mapped account and push the new credential to the plugin.
         ///
         /// This endpoint gets an account that has been mapped to the specified plugin.
         /// </remarks>
@@ -239,10 +239,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Map a set of accounts to a vault plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
-        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will recognize that any password change for
-        /// the mapped account, should be pushed to the plugin.
+        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will detect a password change for
+        /// the mapped account and push the new credential to the plugin.
         ///
         /// This endpoint maps a list of accounts to the specified plugin.
         /// </remarks>
@@ -264,10 +264,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Remove a set of accounts or all accounts from a vault plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
-        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will recognize that any password change for
-        /// the mapped account, should be pushed to the plugin.
+        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will detect a password change for
+        /// the mapped account and push the new credential to the plugin.
         ///
         /// This endpoint removes a list of accounts from the specified plugin. If query param removeAll is set to true, the body will
         /// be ignored and all accounts that are mapped to the plugin will be removed.
@@ -297,10 +297,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Delete all of the mapped accounts.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Accounts must be mapped to each plugin so that the corresponding credential can be pushed to the third
-        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will recognize that any password change for
-        /// the mapped account, should be pushed to the plugin.
+        /// party vault. By mapping an account to a plugin, Safeguard Secrets Broker for DevOps monitor will detect a password change for
+        /// the mapped account and push the new credential to the plugin.
         ///
         /// This endpoint removes all of the mapped accounts from all of the registered plugin.
         /// 
@@ -326,7 +326,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get the vault account that is associated with a specific plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin usually has a credential that is used to authenticate to the third party vault. This credential
         /// must be stored in the Safeguard for Privileged Passwords appliance and fetched at the time when Safeguard Secrets Broker for DevOps needs
         /// to authenticate to the third party vault.
@@ -352,7 +352,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Map an account with the vault credential to a plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin usually has a credential that is used to authenticate to the third party vault. This credential
         /// must be stored in the Safeguard for Privileged Passwords appliance and fetched at the time when Safeguard Secrets Broker for DevOps needs
         /// to authenticate to the third party vault.
@@ -377,7 +377,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Remove a mapped vault credential account from a plugin.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credential information to a specific third
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin usually has a credential that is used to authenticate to the third party vault. This credential
         /// must be stored in the Safeguard for Privileged Passwords appliance and fetched at the time when Safeguard Secrets Broker for DevOps needs
         /// to authenticate to the third party vault.

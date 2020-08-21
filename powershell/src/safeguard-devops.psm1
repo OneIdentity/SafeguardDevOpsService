@@ -581,7 +581,7 @@ function Connect-SgDevOps
         $local:HttpSession = $null
         $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/v${ServiceApiVersion}/Safeguard/Logon"
         $ProgressPreference = "SilentlyContinue"
-        $local:Response = (Invoke-WebRequest -Method GET -Uri $local:Url -Headers @{
+        $local:Response = (Invoke-WebRequest -Method GET -UseBasicParsing -Uri $local:Url -Headers @{
                 "Accept" = "application/json";
                 "Content-type" = "application/json";
                 "Authorization" = "spp-token ${local:Token}"

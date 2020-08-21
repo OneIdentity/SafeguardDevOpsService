@@ -1,3 +1,37 @@
+<#
+.SYNOPSIS
+Generate and configure the Safeguard client configuration information that 
+the Secrets Broker will use.
+
+.DESCRIPTION
+Safeguard Secrets uses client certificate authentication and the A2A 
+service when accessing Safeguard to monitor account secret changes and 
+to pull secrets. It also proxies configuration requests to Safeguard 
+as the currently authenticated administrator user.
+
+This cmdlet will add or modify some configuration stored in 
+Safeguard.  The client certificate that will be used to create the A2A 
+user in Safeguard can be uploaded as part of the this cmdlet or it can 
+be uploaded separately in the Install-SgDevOpsClientCertificate cmdlet.
+If the certificate is installed separately, it does not need to be 
+included in this call.
+ 
+.PARAMETER CertificateFile
+The path to a certificate file (either PFX or PEM).
+
+.PARAMETER Password
+In the case of a PFX file including a private key, this parameter may be used
+to specify a password to decrypt the PFX file.
+
+.EXAMPLE
+Initialize-SgDevOpsConfiguration clientcert.pfx
+
+.EXAMPLE
+Initialize-SgDevOpsConfiguration C:\clientcert.pem
+
+.EXAMPLE
+Initialize-SgDevOpsConfiguration .\path\to\clientcert.crt
+#>
 function Initialize-SgDevOpsConfiguration
 {
     [CmdletBinding()]
@@ -35,6 +69,22 @@ function Initialize-SgDevOpsConfiguration
     }
 }
 
+<#
+.SYNOPSIS
+Get the Safeguard client configuration information that is being used by
+the Secrets Broker.
+
+.DESCRIPTION
+Safeguard Secrets uses client certificate authentication and the A2A 
+service when accessing Safeguard to monitor account secret changes and 
+to pull secrets. It also proxies configuration requests to Safeguard 
+as the currently authenticated administrator user.
+
+This cmdlet get the current configuration for the Secrets Broker.
+ 
+.EXAMPLE
+Get-SgDevOpsConfiguration
+#>
 function Get-SgDevOpsConfiguration
 {
     [CmdletBinding()]
@@ -47,6 +97,26 @@ function Get-SgDevOpsConfiguration
     Invoke-SgDevOpsMethod GET "Safeguard/Configuration"
 }
 
+<#
+.SYNOPSIS
+Delete the Safeguard client configuration being used by the Secrets Broker.
+
+.DESCRIPTION
+The Secrets Broker for DevOps uses client certificate authentication and 
+the A2A service to access Safeguard to monitor account secret changes 
+and to pull secrets. The Secrets Broker also proxies configuration 
+requests to Safeguard as the currently authenticated administrator user.
+ 
+This endpoint will remove all A2A credential account registrations, the A2A 
+registration and the A2A user from Safeguard. It will also remove the
+Secrets Broker configuration database and restart the service.
+ 
+.PARAMETER Force
+This option will force clearing the configuration without confirmation.
+
+.EXAMPLE
+Clear-SgDevOpsConfiguration
+#>
 function Clear-SgDevOpsConfiguration
 {
     [CmdletBinding()]
@@ -83,6 +153,24 @@ function Clear-SgDevOpsConfiguration
     }
 }
 
+<#
+.SYNOPSIS
+Get the available Safeguard asset accounts that can be registered with the
+Secrets Broker.
+
+.DESCRIPTION
+This cmdlet returns the asset accounts from the associated Safeguard appliance 
+that can be registered with the Secrets Broker. The registration occurs by 
+adding the available asset accounts as retrievable accounts to the A2A 
+registration associated with the Secrets Broker. Adding and removing asset 
+account registrations should be done using the Secrets Broker DevOps.
+
+(see Get-SgDevOpsRegisteredAssetAccount)
+(see Register-SgDevOpsAssetAccount)
+
+.EXAMPLE
+Get-SgDevOpsAvailableAssetAccount
+#>
 function Get-SgDevOpsAvailableAssetAccount
 {
     [CmdletBinding()]
@@ -95,6 +183,20 @@ function Get-SgDevOpsAvailableAssetAccount
     Invoke-SgDevOpsMethod GET "Safeguard/AvailableAccounts"
 }
 
+<#
+.SYNOPSIS
+Get accounts registered with the Secrets Broker A2A registration.
+
+.DESCRIPTION
+The Secrets Broker uses the Safeguard A2A service to access secrets, monitor 
+account secret changes and to pull secrets. The Secrets Broker creates a 
+special A2A registration that contains registered accounts. Each account that 
+is registered with this A2A registration, will be monitored by the 
+Secrets Broker.
+
+.EXAMPLE
+Get-SgDevOpsRegisteredAssetAccount
+#>
 function Get-SgDevOpsRegisteredAssetAccount
 {
     [CmdletBinding()]
@@ -107,6 +209,44 @@ function Get-SgDevOpsRegisteredAssetAccount
     Invoke-SgDevOpsMethod GET "Safeguard/A2ARegistration/RetrievableAccounts"
 }
 
+<#
+.SYNOPSIS
+Register accounts with the Secrets Broker A2A registration.
+
+.DESCRIPTION
+The Secrets Broker uses the Safeguard A2A service to access secrets, monitor 
+account secret changes and to pull secrets. The Secrets Broker creates a 
+special A2A registration that contains registered accounts. Each account that 
+is registered with this A2A registration, will be monitored by the 
+Secrets Broker.
+
+The Asset, Account and Domain parameters will be used to resolve an 
+asset-account that will be added to the A2A registration. If an array of
+asset-accounts is provided, the Asset, Account and Domain parameters 
+should omitted.
+
+An array of asset-accounts can be acquired from Get-SgDevOpsAvailableAssetAccount
+
+.PARAMETER Asset
+The name of an asset.
+
+.PARAMETER Account
+The name of an account.
+
+.PARAMETER Domain
+The name of a domain that the asset-account belong to.
+
+.PARAMETER AccountObjects
+An array of asset-account objects to register with the A2A registration. 
+(see Get-SgDevOpsAvailableAssetAccount).
+
+.EXAMPLE
+Register-SgDevOpsAssetAccount -Asset MyServer -Account MyAccount 
+
+.EXAMPLE
+Register-SgDevOpsAssetAccount -AccountObjects $MyAccounts
+
+#>
 function Register-SgDevOpsAssetAccount
 {
     [CmdletBinding(DefaultParameterSetName="Attributes")]
@@ -140,6 +280,44 @@ function Register-SgDevOpsAssetAccount
     Invoke-SgDevOpsMethod PUT "Safeguard/A2ARegistration/RetrievableAccounts" -Body $local:NewList
 }
 
+<#
+.SYNOPSIS
+Unregister accounts with the Secrets Broker A2A registration.
+
+.DESCRIPTION
+The Secrets Broker uses the Safeguard A2A service to access secrets, monitor 
+account secret changes and to pull secrets. The Secrets Broker creates a 
+special A2A registration that contains registered accounts. Each account that 
+is registered with this A2A registration, will be monitored by the 
+Secrets Broker.
+
+The Asset, Account and Domain parameters will be used to resolve an 
+asset-account that will be added to the A2A registration. If an array of
+asset-accounts is provided, the Asset, Account and Domain parameters 
+should omitted.  
+
+An array of asset-accounts can be acquired from Get-SgDevOpsRegisteredAssetAccount
+
+.PARAMETER Asset
+The name of an asset.
+
+.PARAMETER Account
+The name of an account.
+
+.PARAMETER Domain
+The name of a domain that the asset-account belong to.
+
+.PARAMETER AccountObjects
+An array of account objects to unregister with the A2A registration. 
+(see Get-SgDevOpsRegisteredAssetAccount).
+
+.EXAMPLE
+Unregister-SgDevOpsAssetAccount -Asset MyServer -Account MyAccount
+
+.EXAMPLE
+Unregister-SgDevOpsAssetAccount -AccountObjects $MyAccounts
+
+#>
 function Unregister-SgDevOpsAssetAccount
 {
     [CmdletBinding(DefaultParameterSetName="Attributes")]
