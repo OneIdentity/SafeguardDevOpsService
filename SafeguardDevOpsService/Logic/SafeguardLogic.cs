@@ -87,6 +87,22 @@ namespace OneIdentity.DevOps.Logic
 
         private bool FetchAndStoreSignatureCertificate(string token, SafeguardDevOpsConnection safeguardConnection)
         {
+            var signatureCert = FetchSignatureCertificate(token, safeguardConnection.ApplianceAddress);
+
+            if (signatureCert != null)
+            {
+                if (ValidateLogin(token, safeguardConnection, signatureCert))
+                {
+                    _configDb.SigningCertificate = signatureCert;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private string FetchSignatureCertificate(string token, string applianceAddress)
+        {
             // Chicken and egg problem here. Fetching and storing the signature certificate is the first
             //  thing that has to happen on a new system.  We can't check the SSL certificate unless a certificate
             //  chain has been provided.  However a certificate chain can't be provided until after login but
@@ -102,7 +118,7 @@ namespace OneIdentity.DevOps.Logic
             string result;
             using (var client = new HttpClient(handler))
             {
-                client.BaseAddress = new Uri($"https://{safeguardConnection.ApplianceAddress}");
+                client.BaseAddress = new Uri($"https://{applianceAddress}");
                 var response = client.GetAsync("RSTS/Saml2FedMetadata").Result;
                 response.EnsureSuccessStatusCode();
 
@@ -114,14 +130,13 @@ namespace OneIdentity.DevOps.Logic
                 var xml = new XmlDocument();
                 xml.LoadXml(result);
                 var certificates = xml.DocumentElement.GetElementsByTagName("X509Certificate");
-                if (certificates != null && certificates.Count > 0 && ValidateLogin(token, safeguardConnection, false, certificates.Item(0).InnerText))
+                if (certificates != null && certificates.Count > 0)
                 {
-                    _configDb.SigningCertificate = certificates.Item(0).InnerText;
-                    return true;
+                    return certificates.Item(0).InnerText;
                 }
             }
 
-            return false;
+            return null;
         }
 
         private SafeguardDevOpsConnection ConnectAnonymous(string safeguardAddress, int apiVersion, bool ignoreSsl)
@@ -498,15 +513,15 @@ namespace OneIdentity.DevOps.Logic
         public bool ValidateLogin(string token, bool tokenOnly = false)
         {
 
-            return ValidateLogin(token, new SafeguardDevOpsConnection()
+            return ValidateLogin(token, tokenOnly ? null : new SafeguardDevOpsConnection()
             {
                 ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion,
                 ApplianceAddress = _configDb.SafeguardAddress,
                 IgnoreSsl = _configDb.IgnoreSsl ?? false
-            }, tokenOnly);
+            });
         }
 
-        private bool ValidateLogin(string token, SafeguardDevOpsConnection safeguardConnection, bool tokenOnly = false, string tempKey = null)
+        private bool ValidateLogin(string token, SafeguardDevOpsConnection safeguardConnection = null, string tempKey = null)
         {
             if (token == null)
                 return false;
@@ -527,7 +542,7 @@ namespace OneIdentity.DevOps.Logic
                 var validToken = cert.GetRSAPublicKey()
                     .VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
-                if (validToken && !tokenOnly)
+                if (validToken && safeguardConnection != null)
                 {
                     return GetAndValidateUserPermissions(token, safeguardConnection);
                 }
@@ -817,6 +832,20 @@ namespace OneIdentity.DevOps.Logic
             if (token == null)
                 throw new DevOpsException("Invalid authorization token.", HttpStatusCode.Unauthorized);
 
+            if (_configDb.SafeguardAddress != null)
+            {
+                var signatureCert = FetchSignatureCertificate(token, _configDb.SafeguardAddress);
+                if (!ValidateLogin(token, null, signatureCert))
+                {
+                    if (_configDb.SafeguardAddress.Equals(safeguardData.ApplianceAddress))
+                    {
+                        throw new DevOpsException("Authorization Failed: Invalid token", HttpStatusCode.Unauthorized);
+                    }
+
+                    throw LogAndException("Invalid token. The previously configured Secrets Broker cannot be repurposed until the configuration is deleted.");
+                }
+            }
+
             if (safeguardData.IgnoreSsl.HasValue && !safeguardData.IgnoreSsl.Value  && !_configDb.GetAllTrustedCertificates().Any())
             {
                 throw LogAndException("Cannot ignore SSL before adding trusted certificates.");
@@ -833,7 +862,7 @@ namespace OneIdentity.DevOps.Logic
                 return safeguardConnection;
             }
 
-            throw new DevOpsException($"Invalid authorization token or SPP appliance {safeguardData.ApplianceAddress} is unavailable.");
+            throw LogAndException($"Invalid authorization token or SPP appliance {safeguardData.ApplianceAddress} is unavailable.");
         }
 
         public void DeleteSafeguardData()
