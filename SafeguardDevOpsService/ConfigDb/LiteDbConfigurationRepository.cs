@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using CredentialManagement;
 using LiteDB;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;
@@ -57,13 +59,70 @@ namespace OneIdentity.DevOps.ConfigDb
             var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
             Serilog.Log.Logger.Information($"Loading configuration database at {dbPath}.");
 
-            _configurationDb = new LiteDatabase(dbPath);
+            var passwd = GetPassword();
+            if (string.IsNullOrEmpty(passwd))
+            {
+                passwd = SavePassword(GeneratePassword());
+            }
+
+            var connectionString = $"Filename={dbPath};Password={passwd}";
+            _configurationDb = new LiteDatabase(connectionString);
             _disposed = false;
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
             _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
             _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
             _trustedCertificates = _configurationDb.GetCollection<TrustedCertificate>(TrustedCertificateTableName);
-        } 
+        }
+
+        private string GeneratePassword()
+        {
+            var random = new byte[24];
+            var rng = new RNGCryptoServiceProvider();
+            rng.GetNonZeroBytes(random);
+            return Convert.ToBase64String(random);
+        }
+
+        private string SavePassword(string password)
+        {
+            try
+            {
+                using (var cred = new Credential())
+                {
+                    cred.Password = password;
+                    cred.Target = WellKnownData.CredentialTarget;
+                    cred.Type = CredentialType.Generic;
+                    cred.PersistanceType = PersistanceType.LocalComputer;
+                    cred.Save();
+
+                    return password;
+                }
+            }
+            catch (Exception ex)
+            {
+                var msg = $"Failed to get the credential needed to open the database. {ex.Message}";
+                Serilog.Log.Logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+        }
+
+        private string GetPassword()
+        {
+            using (var cred = new Credential())
+            {
+                cred.Target = WellKnownData.CredentialTarget;
+                cred.Load();
+                return cred.Password;
+            }
+        }
+
+        private void DeletePassword()
+        {
+            using (var cred = new Credential())
+            {
+                cred.Target = WellKnownData.CredentialTarget;
+                cred.Delete();
+            }
+        }
 
         private string GetSimpleSetting(string name)
         {
@@ -467,6 +526,7 @@ namespace OneIdentity.DevOps.ConfigDb
             Dispose();
             var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
             File.Delete(dbPath);
+            DeletePassword();
             Serilog.Log.Logger.Information($"Dropped the database at {dbPath}.");
 
             InitializeDatabase();

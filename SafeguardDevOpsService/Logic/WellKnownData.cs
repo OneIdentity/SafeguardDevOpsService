@@ -11,6 +11,7 @@ namespace OneIdentity.DevOps.Logic
     {
         public const string AppSettings = "appsettings";
         public const string ServiceIdentifier = "svcid";
+        public const string CredentialTarget = "SSBfDbgn";
 
         public const string PluginInfoClassName = "PluginDescriptor";
 
