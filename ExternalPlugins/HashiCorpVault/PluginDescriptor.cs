@@ -71,7 +71,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
         public bool SetPassword(string asset, string account, string password)
         {
-            if (_vaultClient == null)
+            if (_configuration == null || _vaultClient == null)
             {
                 _logger.Error("No vault connection. Make sure that the plugin has been configured.");
                 return false;
