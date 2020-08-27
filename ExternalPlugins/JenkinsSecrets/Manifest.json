@@ -1,0 +1,5 @@
+{
+  "Name" : "JenkinsSecrets",
+	"Assembly" : "JenkinsSecrets.dll",
+	"Version" : "1.0"
+}
