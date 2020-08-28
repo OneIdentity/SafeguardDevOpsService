@@ -27,7 +27,7 @@ steps:
 
 - task: AzureKeyVault@1
   inputs:
-    azureSubscription: 'OneIdentity.Ops.SaaS.TeamFoundationServerInfrastructure (936da071-c8c3-4211-af97-ddacfbc5424c)'
+    azureSubscription: 'Azure.Infrastructure.CodeSigning'
     KeyVaultName: 'CodeSigningCertificates'
     SecretsFilter: '*'
   displayName: 'Get code signing certificate from Azure Key Vault'
