@@ -17,6 +17,7 @@ variables:
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
 
 steps:
 - task: NuGetToolInstaller@1
@@ -31,6 +32,7 @@ steps:
     KeyVaultName: 'CodeSigningCertificates'
     SecretsFilter: '*'
   displayName: 'Get code signing certificate from Azure Key Vault'
+  condition: and(succeeded(), eq(variables.isMain, true))
 
 - task: Bash@3
   inputs:
@@ -46,6 +48,7 @@ steps:
       Write-Verbose -Verbose $certpath
       [System.IO.File]::WriteAllBytes($certpath, $protectedCertificateBytes)
   displayName: 'Save code signing certificate to PFX file'
+  condition: and(succeeded(), eq(variables.isMain, true))
 
 - task: PowerShell@2
   inputs:
@@ -61,6 +64,16 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
   displayName: 'Build $(buildSolution)'
+  condition: and(succeeded(), eq(variables.isMain, true))
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:OutDir=$(Build.BinariesDirectory)\ /p:DevSign=false /p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+  displayName: 'Build $(buildSolution)'
+  condition: and(succeeded(), eq(variables.isMain, false))
 
 - task: VSBuild@1
   inputs:
