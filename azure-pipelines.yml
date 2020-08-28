@@ -32,10 +32,10 @@ steps:
     SecretsFilter: '*'
   displayName: 'Get code signing certificate from Azure Key Vault'
 
-  – task: Bash@3
-    inputs:
-      targetType: 'inline'
-      script: 'env | sort'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'env | sort'
 
 - powershell: |
       $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
