@@ -63,16 +63,15 @@ steps:
     msbuildArgs: '/p:OutDir=$(Build.BinariesDirectory)\ /p:DevSign=false /p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-  displayName: 'Build $(buildSolution)'
+  displayName: 'Build $(solution) with signing'
   condition: and(succeeded(), eq(variables.isMain, true))
 
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
-    msbuildArgs: '/p:OutDir=$(Build.BinariesDirectory)\ /p:DevSign=false /p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-  displayName: 'Build $(buildSolution)'
+  displayName: 'Build $(solution) no signing'
   condition: and(succeeded(), eq(variables.isMain, false))
 
 - task: VSBuild@1
@@ -81,6 +80,13 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
   displayName: 'Build $(setupproject)'
+
+- task: DeleteFiles@1
+  inputs:
+    SourceFolder: '$(Build.BinariesDirectory)'
+    Contents: '$(codeSigningCertFileName)'
+  condition: succeededOrFailed()
+  displayName: 'Delete code signing certificate files'  
 
 - task: CopyFiles@2
   inputs:
@@ -100,5 +106,5 @@ steps:
   inputs:
     pathToPublish: '$(Build.ArtifactStagingDirectory)' 
     artifactName: 'SafeguardDevOpsService' 
-  displayName: 'Public the artifacts'
+  displayName: 'Publishing the artifacts'
 
