@@ -110,7 +110,7 @@ steps:
 
 - task: GitHubRelease@1
   inputs:
-    gitHubConnection: 'github.com_bnicholesdell'
+    gitHubConnection: 'OneIdentity'
     repositoryName: 'OneIdentity/SafeguardDevOpsService'
     action: 'create'
     target: '$(Build.SourceVersion)'
