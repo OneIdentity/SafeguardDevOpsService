@@ -16,6 +16,8 @@ variables:
   pluginsdir: 'ExternalPlugins'
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
+  codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
 
 steps:
 - task: NuGetToolInstaller@1
@@ -23,6 +25,30 @@ steps:
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
+
+- task: AzureKeyVault@1
+  inputs:
+    azureSubscription: 'Azure.Infrastructure.CodeSigning'
+    KeyVaultName: 'CodeSigningCertificates'
+    SecretsFilter: '*'
+  displayName: 'Get code signing certificate from Azure Key Vault'
+  condition: and(succeeded(), eq(variables.isMain, true))
+
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'env | sort'
+
+- powershell: |
+      $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
+      $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
+      $certCollection.Import($kvSecretBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
+      $protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12,"$(OneIdentity-CodeSigningCertPassword)")
+      $certpath = '$(Build.BinariesDirectory)/$(codeSigningCertFileName)'
+      Write-Verbose -Verbose $certpath
+      [System.IO.File]::WriteAllBytes($certpath, $protectedCertificateBytes)
+  displayName: 'Save code signing certificate to PFX file'
+  condition: and(succeeded(), eq(variables.isMain, true))
 
 - task: PowerShell@2
   inputs:
@@ -34,29 +60,51 @@ steps:
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
+    msbuildArgs: '/p:OutDir=$(Build.BinariesDirectory)\ /p:DevSign=false /p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+  displayName: 'Build $(solution) with signing'
+  condition: and(succeeded(), eq(variables.isMain, true))
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+  displayName: 'Build $(solution) no signing'
+  condition: and(succeeded(), eq(variables.isMain, false))
 
 - task: VSBuild@1
   inputs:
     solution: '$(setupproject)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+  displayName: 'Build $(setupproject)'
+
+- task: DeleteFiles@1
+  inputs:
+    SourceFolder: '$(Build.BinariesDirectory)'
+    Contents: '$(codeSigningCertFileName)'
+  condition: succeededOrFailed()
+  displayName: 'Delete code signing certificate files'  
 
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)\$(setupprojectdir)'
     contents: '**\bin\**'
     targetFolder: $(Build.ArtifactStagingDirectory)
+  displayName: 'Copy files to staging folder'
 
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)\$(pluginsdir)\bin\$(buildConfiguration)'
     contents: '**'
     targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)
+  displayName: 'Copy plugins to staging folder'
 
 - task: PublishBuildArtifacts@1
   inputs:
     pathToPublish: '$(Build.ArtifactStagingDirectory)' 
     artifactName: 'SafeguardDevOpsService' 
+  displayName: 'Publishing the artifacts'
 
