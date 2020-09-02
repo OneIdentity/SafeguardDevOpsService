@@ -17,7 +17,7 @@ variables:
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
-  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/master')]
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/phase2')]
 
 steps:
 - task: NuGetToolInstaller@1
@@ -114,7 +114,13 @@ steps:
     repositoryName: 'OneIdentity/SafeguardDevOpsService'
     action: 'create'
     target: '$(Build.SourceVersion)'
-    tagSource: 'gitTag'
+    tagSource: 'manual'
+    tag: $(Build.BuildNumber)
     isDraft: true
     changeLogCompareToRelease: 'lastFullRelease'
     changeLogType: 'commitBased'
+    assets: |
+      $(Build.ArtifactStagingDirectory)/SafeguardDevOpsService/bin/Release/en-us/*.msi
+      $(Build.ArtifactStagingDirectory)/SafeguardDevOpsService/bin/Release/ExternalPlugins/*.zip
+  displayName: 'Creating and publishing a release to Github'
+  condition: and(succeeded(), eq(variables.isMain, true))
