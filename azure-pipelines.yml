@@ -4,7 +4,7 @@
 # https://aka.ms/yaml
 
 trigger:
-- phase2/*
+- phase2
 
 pool:
   vmImage: 'windows-latest'
