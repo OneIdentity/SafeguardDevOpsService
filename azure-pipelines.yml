@@ -120,7 +120,7 @@ steps:
     changeLogCompareToRelease: 'lastFullRelease'
     changeLogType: 'commitBased'
     assets: |
-      $(Build.ArtifactStagingDirectory)/SafeguardDevOpsService/bin/Release/en-us/*.msi
-      $(Build.ArtifactStagingDirectory)/SafeguardDevOpsService/bin/Release/ExternalPlugins/*.zip
+      $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\en-us\*.msi
+      $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)\*.zip
   displayName: 'Creating and publishing a release to Github'
   condition: and(succeeded(), eq(variables.isMain, true))
