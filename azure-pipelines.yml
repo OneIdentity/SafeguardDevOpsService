@@ -114,8 +114,8 @@ steps:
     repositoryName: 'OneIdentity/SafeguardDevOpsService'
     action: 'create'
     target: '$(Build.SourceVersion)'
-    tagSource: 'manual'
-    tag: $(Build.BuildNumber)
+    tagSource: 'userSpecifiedTag'
+    tag: '$(Build.BuildNumber)'
     isDraft: true
     changeLogCompareToRelease: 'lastFullRelease'
     changeLogType: 'commitBased'
