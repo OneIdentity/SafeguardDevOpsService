@@ -82,10 +82,6 @@ steps:
   displayName: 'Build $(setupproject) no signing'
   condition: and(succeeded(), eq(variables.isMain, false))
 
-- script: signtool.exe sign /v /f '$(Build.BinariesDirectory)/$(codeSigningCertFileName)' /p '$(OneIdentity-CodeSigningCertPassword)' '$(Build.SourcesDirectory)\$(setupprojectdir)\*.msi'
-  workingDirectory: '$(signingToolPath)'  
-  condition: and(succeeded(), eq(variables.isMain, true))
-
 - task: DeleteFiles@1
   inputs:
     SourceFolder: '$(Build.BinariesDirectory)'

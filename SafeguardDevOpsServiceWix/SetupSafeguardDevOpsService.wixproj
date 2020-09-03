@@ -73,6 +73,7 @@
     </CreateProperty>
   </Target>
   <Target Name="AfterBuild">
+    <Exec Condition="'$(SignFiles)'=='true'" Command="&quot;$(SignToolPath)&quot; sign /v /f &quot;$(CertificatePath)&quot;  /p &quot;$(CertificatePassword)&quot; &quot;$(ProjectDir)bin\$(Configuration)\en-us\*.msi&quot;"/>
   </Target>
   <PropertyGroup>
     <PreBuildEvent />
