@@ -39,6 +39,8 @@ steps:
     targetType: 'inline'
     script: 'env | sort'
 
+- script: signtool.exe
+
 - powershell: |
       $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
       $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
