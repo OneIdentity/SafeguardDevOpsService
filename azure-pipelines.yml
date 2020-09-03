@@ -77,6 +77,7 @@ steps:
 - task: VSBuild@1
   inputs:
     solution: '$(setupproject)'
+    msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
   displayName: 'Build $(setupproject)'
