@@ -18,6 +18,7 @@ variables:
   buildConfiguration: 'Release'
   codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
   isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/phase2')]
+  signingToolPath: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64'
 
 steps:
 - task: NuGetToolInstaller@1
@@ -60,19 +61,9 @@ steps:
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
-    msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-  displayName: 'Build $(solution) with signing'
-  condition: and(succeeded(), eq(variables.isMain, true))
-
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-  displayName: 'Build $(solution) no signing'
-  condition: and(succeeded(), eq(variables.isMain, false))
+  displayName: 'Build $(solution)'
 
 - task: VSBuild@1
   inputs:
@@ -80,7 +71,7 @@ steps:
     msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-  displayName: 'Build $(setupproject)'
+  displayName: 'Build $(setupproject) with signing'
   condition: and(succeeded(), eq(variables.isMain, true))
 
 - task: VSBuild@1
@@ -88,8 +79,12 @@ steps:
     solution: '$(setupproject)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
-  displayName: 'Build $(setupproject)'
+  displayName: 'Build $(setupproject) no signing'
   condition: and(succeeded(), eq(variables.isMain, false))
+
+- script: signtool.exe sign /v /f '$(Build.BinariesDirectory)/$(codeSigningCertFileName)' /p '$(OneIdentity-CodeSigningCertPassword)' '$(Build.SourcesDirectory)\$(setupprojectdir)\*.msi'
+  workingDirectory: '$(signingToolPath)'  
+  condition: and(succeeded(), eq(variables.isMain, true))
 
 - task: DeleteFiles@1
   inputs:
