@@ -146,6 +146,9 @@
             <Component Id="coreclr.dll" Guid="*">
                 <File Id="coreclr.dll" KeyPath="yes" Source="$(var.SourceDir)\coreclr.dll" />
             </Component>
+            <Component Id="CredentialManagement.dll" Guid="*">
+                <File Id="CredentialManagement.dll" KeyPath="yes" Source="$(var.SourceDir)\CredentialManagement.dll" />
+            </Component>
             <Component Id="dbgshim.dll" Guid="*">
                 <File Id="dbgshim.dll" KeyPath="yes" Source="$(var.SourceDir)\dbgshim.dll" />
             </Component>
@@ -1242,6 +1245,7 @@
             <ComponentRef Id="clretwrc.dll" />
             <ComponentRef Id="clrjit.dll" />
             <ComponentRef Id="coreclr.dll" />
+            <ComponentRef Id="CredentialManagement.dll" />
             <ComponentRef Id="dbgshim.dll" />
             <ComponentRef Id="DevOpsPluginCommon.dll" />
             <ComponentRef Id="DevOpsPluginCommon.pdb" />
