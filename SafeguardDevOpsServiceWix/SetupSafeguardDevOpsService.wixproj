@@ -20,6 +20,9 @@
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>SourceDir=bin\$(Configuration)\publish</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignToolPath>C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\signtool.exe</SignToolPath>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Component-generated.wxs" />
     <Compile Include="Product.wxs" />
@@ -57,7 +60,9 @@
     <Error Text="The WiX Toolset v3.11 (or newer) build tools must be installed to build this project. To download the WiX Toolset, see http://wixtoolset.org/releases/" />
   </Target>
   <Target Name="BeforeBuild">
-    <Exec Command="dotnet publish $(ProjectDir)\..\SafeguardDevOpsService\SafeguardDevOpsService.csproj -c $(Configuration) -r win-x64 -o $(ProjectDir)bin\$(Configuration)\Publish" />
+    <Exec Command="dotnet publish $(ProjectDir)\..\SafeguardDevOpsService\SafeguardDevOpsService.csproj -c $(Configuration) -o $(ProjectDir)bin\$(Configuration)\Publish" />
+    <Exec Condition="'$(SignFiles)'=='true'" Command="&quot;$(SignToolPath)&quot; sign /v /f &quot;$(CertificatePath)&quot;  /p &quot;$(CertificatePassword)&quot; &quot;$(ProjectDir)bin\$(Configuration)\Publish\SafeguardDevOpsService.dll&quot;"/>
+    <Exec Condition="'$(SignFiles)'=='true'" Command="&quot;$(SignToolPath)&quot; sign /v /f &quot;$(CertificatePath)&quot;  /p &quot;$(CertificatePassword)&quot; &quot;$(ProjectDir)bin\$(Configuration)\Publish\SafeguardDevOpsService.exe&quot;"/>
     <HeatDirectory SuppressAllWarnings="true" ToolPath="$(WixToolPath)" AutogenerateGuids="$(HarvestDirectoryAutogenerateGuids)" OutputFile="Component-generated.wxs" SuppressFragments="true" SuppressUniqueIds="true" Transforms="%(HarvestDirectory.Transforms)" Directory="$(ProjectDir)bin\$(Configuration)\Publish" ComponentGroupName="DevOps_CommonAssemblies" DirectoryRefId="INSTALLLOCATION" KeepEmptyDirectories="false" PreprocessorVariable="var.SourceDir" SuppressRootDirectory="true" SuppressRegistry="true">
     </HeatDirectory>
     <GetAssemblyIdentity AssemblyFiles="$(ProjectDir)bin\$(Configuration)\Publish\DevOpsPluginCommon.dll">

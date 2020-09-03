@@ -57,11 +57,11 @@
     </None>
   </ItemGroup>
 
-  <PropertyGroup>
+  <!--<PropertyGroup>
     <SignToolPath>C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\signtool.exe</SignToolPath>
   </PropertyGroup>
 
-  <Target Name="SignAssembly" AfterTargets="PostBuildEvent" Condition="'$(SignFiles)'=='true'">
+  <Target Name="SignAssembly" AfterTargets="PostBuildEvent">
     <Message
       Text="Signing assembly '$(TargetDir)$(TargetFileName)'"
       Importance="high"
@@ -69,5 +69,5 @@
     <Exec
       Command="&quot;$(SignToolPath)&quot; sign /v /f &quot;$(CertificatePath)&quot;  /p &quot;$(CertificatePassword)&quot; &quot;$(TargetDir)$(TargetFileName)&quot;"
     />
-  </Target>
+  </Target>-->
 </Project>
