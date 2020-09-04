@@ -29,6 +29,9 @@ function Get-SgDevOpsStatus
 
     Write-Host "---Plugins---"
     Write-Host (Get-SgDevOpsPlugin | Format-Table | Out-String)
+
+    Write-Host "---Monitor---"
+    Write-Host (Get-SgDevOpsMonitor | Format-Table | Out-String)
 }
 
 <#
