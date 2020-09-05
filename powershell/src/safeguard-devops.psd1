@@ -76,7 +76,8 @@ NestedModules = @(
      'init.psm1',
      'certificates.psm1',
      'configuration.psm1',
-     'plugins.psm1'
+     'plugins.psm1',
+     'monitor.psm1'
 )
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
@@ -112,6 +113,10 @@ FunctionsToExport = @(
      'Get-SgDevOpsPluginVaultAccount', 'Set-SgDevOpsPluginVaultAccount',
      'Get-SgDevOpsPluginSetting', 'Set-SgDevOpsPluginSetting',
      'Get-SgDevOpsMappedAssetAccount', 'Add-SgDevOpsMappedAssetAccount', 'Remove-SgDevOpsMappedAssetAccount'
+
+     # monitor.psm1
+     'Get-SgDevOpsMonitor', 'Enable-SgDevOpsMonitor', 'Disable-SgDevOpsMonitor'
+
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
