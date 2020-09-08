@@ -48,8 +48,11 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string WebSslCsrDataKey = "WebSslCertificateSigningRequestData";
         private const string WebSslCsrPrivateKeyDataKey = "WebSslCertificateSigningRequestPrivateKeyData";
 
+        private readonly bool _isLinux;
+
         public LiteDbConfigurationRepository()
         {
+            _isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
             InitializeDatabase();
         }
 
@@ -61,12 +64,13 @@ namespace OneIdentity.DevOps.ConfigDb
             Serilog.Log.Logger.Information($"Loading configuration database at {dbPath}.");
 
             var passwd = GetPassword();
-            if (string.IsNullOrEmpty(passwd))
+            if (string.IsNullOrEmpty(passwd) && !_isLinux)
             {
                 passwd = SavePassword(GeneratePassword());
             }
 
-            var connectionString = $"Filename={dbPath};Password={passwd}";
+            var connectionString = $"Filename={dbPath}";
+            connectionString += string.IsNullOrEmpty(passwd) ? "" : $";Password={passwd}";
             _configurationDb = new LiteDatabase(connectionString);
             _disposed = false;
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
@@ -85,11 +89,6 @@ namespace OneIdentity.DevOps.ConfigDb
 
         private string SavePassword(string password)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return password;
-            }
-
             try
             {
                 using (var cred = new Credential())
@@ -113,17 +112,9 @@ namespace OneIdentity.DevOps.ConfigDb
 
         private string GetPassword()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (_isLinux)
             {
-                var passwd = Environment.GetEnvironmentVariable(WellKnownData.CredentialEnvVar);
-                if (passwd == null)
-                {
-                    var msg = "Failed to get the credential needed to open the database.";
-                    Serilog.Log.Logger.Error(msg);
-                    throw new DevOpsException(msg);
-                }
-
-                return passwd;
+                return Environment.GetEnvironmentVariable(WellKnownData.CredentialEnvVar);
             }
 
             using (var cred = new Credential())
@@ -136,7 +127,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
         private void DeletePassword()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (_isLinux)
             {
                 return;
             }
