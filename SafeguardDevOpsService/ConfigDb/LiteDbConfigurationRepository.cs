@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using CredentialManagement;
@@ -84,6 +85,11 @@ namespace OneIdentity.DevOps.ConfigDb
 
         private string SavePassword(string password)
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return password;
+            }
+
             try
             {
                 using (var cred = new Credential())
@@ -107,6 +113,19 @@ namespace OneIdentity.DevOps.ConfigDb
 
         private string GetPassword()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                var passwd = Environment.GetEnvironmentVariable(WellKnownData.CredentialEnvVar);
+                if (passwd == null)
+                {
+                    var msg = "Failed to get the credential needed to open the database.";
+                    Serilog.Log.Logger.Error(msg);
+                    throw new DevOpsException(msg);
+                }
+
+                return passwd;
+            }
+
             using (var cred = new Credential())
             {
                 cred.Target = WellKnownData.CredentialTarget;
@@ -117,6 +136,11 @@ namespace OneIdentity.DevOps.ConfigDb
 
         private void DeletePassword()
         {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return;
+            }
+
             using (var cred = new Credential())
             {
                 cred.Target = WellKnownData.CredentialTarget;
