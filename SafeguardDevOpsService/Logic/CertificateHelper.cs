@@ -42,13 +42,13 @@ namespace OneIdentity.DevOps.Logic
                         return true;
                 }
 
-                logger.Debug($"Trusted chain element count = {trustedChain.ChainElements.Count}");
+                logger.Debug($"Trusted certificates count = {trustedChain.ChainPolicy.ExtraStore.Count}");
                 var i = 0;
-                foreach (var chainElement in trustedChain.ChainElements)
+                foreach (var trusted in trustedChain.ChainPolicy.ExtraStore)
                 {
-                    logger.Debug($"[{i}] - subject = {chainElement.Certificate.SubjectName}");
-                    logger.Debug($"[{i}] - issuer = {chainElement.Certificate.IssuerName}");
-                    logger.Debug($"[{i}] - thumbprint = {chainElement.Certificate.Thumbprint}");
+                    logger.Debug($"[{i}] - subject = {trusted.SubjectName}");
+                    logger.Debug($"[{i}] - issuer = {trusted.IssuerName}");
+                    logger.Debug($"[{i}] - thumbprint = {trusted.Thumbprint}");
                     i++;
                 }
 
@@ -56,10 +56,9 @@ namespace OneIdentity.DevOps.Logic
                 {
                     logger.Error("Failed SPP SSL certificate validation.");
                     var chainStatus = trustedChain.ChainStatus;
-                    i = 0;
-                    foreach (var status in chainStatus)
+                    for (i = 0; i < chainStatus.Length; i++)
                     {
-                        logger.Debug($"[{i}] - chain status = {status}");
+                        logger.Debug($"[{i}] - chain status = {chainStatus[i].StatusInformation}");
                     }
                     return false;
                 }
