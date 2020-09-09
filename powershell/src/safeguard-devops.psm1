@@ -586,6 +586,10 @@ function Enable-SgDevOpsTlsValidation
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Sg = (Invoke-SgDevOpsMethod GET Safeguard)
+    $local:Sg.IgnoreSsl = $false
+    Invoke-SgDevOpsMethod PUT Safeguard -Body $local:Sg
 }
 
 function Disable-SgDevOpsTlsValidation
@@ -596,6 +600,10 @@ function Disable-SgDevOpsTlsValidation
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Sg = (Invoke-SgDevOpsMethod GET Safeguard)
+    $local:Sg.IgnoreSsl = $true
+    Invoke-SgDevOpsMethod PUT Safeguard -Body $local:Sg
 }
 
 <#
@@ -907,7 +915,7 @@ Display Safeguard login window in a browser. Supports 2FA.
 Whether or not to store the Insecure flag in the Safeguard Appliance connection
 to ignore TLS server certificate validation. (IMPORTANT! This is not the same
 as the -Insecure option in other cmdlets--this is communications between Secrets
-Broker and Safeguard Appliance). It can be change later using the
+Broker and Safeguard Appliance). It can be changed later using the
 Enable-SgDevOpsTlsValidation cmdlet.
 
 .PARAMETER Force

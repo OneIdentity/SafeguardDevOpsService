@@ -58,7 +58,7 @@ Network address (IP or DNS) of the Safeguard appliance.
 Display Safeguard login window in a browser. Supports 2FA.
 
 .PARAMETER ApplianceApiVersion
-API version for the Safeguard Appliance. (default: 3)
+API version for the Safeguard appliance. (default: 3)
 
 .PARAMETER ServiceApiVersion
 API version for the Secrets Broker. (default: 1)
@@ -108,7 +108,7 @@ function Initialize-SgDevOps
     Write-Host "Press any key to continue or Ctrl-C to quit ..."
     Read-Host " "
 
-    Write-Host -ForegroundColor Yellow "Associating Secrets Broker to trust Safeguard appliance for authentication ..."
+    Write-Host -ForegroundColor Yellow "Associating Secrets Broker to trust Safeguard for authentication ..."
     Write-Host "Secrets Broker leverages Safeguard for authentication."
     Write-Host "  As connections are made you will be asked to validate TLS server certificates for Secrets Broker and Safeguard."
     Write-Host "  You may be asked for Appliance and login credentials to Safeguard."
@@ -208,6 +208,31 @@ function Initialize-SgDevOps
 
                 }
 
+                # Fix TLS
+                Write-Host -ForegroundColor Yellow "Fix TLS certificate validation with Safeguard ..."
+                if (-not (Get-SgDevOpsTlsValidation))
+                {
+                    Write-Host -ForegroundColor Magenta "TLS certificate validation is not enabled between Secrets Broker and Safeguard."
+                    Write-Host "Usually the easiest way to fix this is to synchronize trusted certificates from Safeguard to Secrets Broker."
+                    $local:Confirmed = (Get-Confirmation "Synchronize trusted certificates" "Would you like to synchronize trusted certificates now?" `
+                                                         "Synchronize." "Skip this step.")
+                    if ($local:Confirmed)
+                    {
+                        Sync-SgDevOpsTrustedCertificate
+                        Write-Host "Now you can try to enable TLS certificate validation between Secrets Broker and Safeguard."
+                        Write-Host "If for some reason this doesn't work you can go back by running Disable-SgDevOpsTlsValidation."
+                        $local:Confirmed = (Get-Confirmation "Enable TLS certificate validation" "Would you like to enable validation now?" `
+                                                             "Enable." "Skip this step.")
+                        if ($local:Confirmed)
+                        {
+                            Enable-SgDevOpsTlsValidation
+                        }
+                    }
+                }
+                else
+                {
+                    Write-Host "TLS certificate validation is already enabled."
+                }
             }
         }
     }
