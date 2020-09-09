@@ -99,6 +99,11 @@ function Initialize-SgDevOps
     Write-Host "   Safeguard must already trust the issuer of the certificate you want to upload"
     Write-Host "Optionally, you might also want to have the following:"
     Write-Host " - PFX or PKCS#12 file to install as TLS certificate for Secrets Broker"
+    Write-Host " - Asset and account names from Safeguard that you would like to use with Secrets Broker"
+    Write-Host " - ZIP files for one or more plugins that you would like Secrets Broker to use"
+    Write-Host "   Secrets Broker requires at least one plugin in order to push secrets"
+    Write-Host "   On Windows, no Secrets Broker plugins are installed by default."
+    Write-Host "   In Docker, only the HashiCorp plugin is installed by default."
     Write-Host ""
     Write-Host "Press any key to continue or Ctrl-C to quit ..."
     Read-Host " "
@@ -162,7 +167,7 @@ function Initialize-SgDevOps
             while ($local:Confirmed)
             {
                 $local:Confirmed = (Get-Confirmation "Configure TLS client certificate user" "Would you like to upload a PFX or PKCS#12 file now?" `
-                                                     "Configure certificate user." "Skip this step.")
+                                                     "Configure certificate user." "Do everything manually instead.")
                 if ($local:Confirmed)
                 {
                     try
@@ -180,7 +185,29 @@ function Initialize-SgDevOps
             if ($local:CertificateUser)
             {
                 Write-Host -ForegroundColor Yellow "Initializing configuration in Safeguard ..."
-                Initialize-SgDevOpsConfiguration
+                Initialize-SgDevOpsConfiguration # this will throw an exception if it fails, otherwise continue with optional steps below
+
+                # registered accounts
+                Write-Host -ForegroundColor Yellow "Configure registered accounts for Secrets Broker ..."
+                Write-Host "For security reasons, the asset accounts in Safeguard are not immediately made available to Secrets Broker."
+                Write-Host "The next step is to find Safeguard asset accounts that you would like to use with Secrets Broker."
+                $local:Confirmed = (Get-Confirmation "Configure registered accounts" "Would you like to configure registered accounts now?" `
+                                                     "Configure now." "Skip this step.")
+                if ($local:Confirmed)
+                {
+
+                }
+
+                # plugins
+                Write-Host -ForegroundColor Yellow "Install Secrets Broker plugins ..."
+                Write-Host "Secrets Broker needs plugins to push secrets."
+                $local:Confirmed = (Get-Confirmation "Install plugins" "Would you like to install plugins now?" `
+                                                     "Install now." "Skip this step.")
+                if ($local:Confirmed)
+                {
+
+                }
+
             }
         }
     }
