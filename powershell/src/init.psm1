@@ -1,3 +1,4 @@
+
 <#
 .SYNOPSIS
 Get Secrets Broker status summary.
@@ -90,16 +91,18 @@ function Initialize-SgDevOps
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
     Write-Host -ForegroundColor Yellow "Associating Secrets Broker to trust SPP appliance for authentication ..."
-    Initialize-SgDevOpsAppliance -ServiceAddress $ServiceAddress -ServicePort $ServicePort -ServiceApiVersion $ServiceApiVersion `
-                                 -Appliance $Appliance -ApplianceApiVersion $ApplianceApiVersion -Gui:$Gui -Insecure -Force:$Force
+    $local:Status = (Initialize-SgDevOpsAppliance -ServiceAddress $ServiceAddress -ServicePort $ServicePort -ServiceApiVersion $ServiceApiVersion `
+                                                  -Appliance $Appliance -ApplianceApiVersion $ApplianceApiVersion -Gui:$Gui -Insecure)
+    if ($local:Status)
+    {
+        Write-Host -ForegroundColor Yellow "Connecting to Secrets Broker using SPP user ..."
+        Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui -Insecure:$Insecure
 
-    Write-Host -ForegroundColor Yellow "Connecting to Secrets Broker using SPP user ..."
-    Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui -Insecure:$Insecure
+        # TODO: test whether insecure flag is necessary
+        #       if so, walk the user through fixing it
 
-    # TODO: test whether insecure flag is necessary
-    #       if so, walk the user through fixing it
+        Write-Host -ForegroundColor Yellow "Configuring Secrets Broker instance account in SPP ..."
 
-    Write-Host -ForegroundColor Yellow "Configuring Secrets Broker instance account in SPP ..."
-
-    # TODO: Configure SgDevOps user
+        # TODO: Configure SgDevOps user
+    }
 }

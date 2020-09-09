@@ -87,6 +87,7 @@ FunctionsToExport = @(
 
      # safeguard-devops.psm1 -- handles login/logout and calling generic methods
      'Get-SgDevOpsApplianceStatus', 'Initialize-SgDevOpsAppliance', 'Clear-SgDevOpsAppliance',
+     'Get-SgDevOpsTlsValidation', 'Enable-SgDevOpsTlsValidation', 'Disable-SgDevOpsTlsValidation',
      'Connect-SgDevOps', 'Disconnect-SgDevOps',  'Restart-SgDevOps', # <-- session init / deinit
      'Invoke-SgDevOpsMethod', # <-- this is the function used to implement most of the others
 
