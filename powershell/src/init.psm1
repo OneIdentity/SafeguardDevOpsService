@@ -103,17 +103,17 @@ function Initialize-SgDevOps
     Write-Host "Press any key to continue or Ctrl-C to quit ..."
     Read-Host " "
 
-    Write-Host -ForegroundColor Yellow "Associating Secrets Broker to trust SPP appliance for authentication ..."
+    Write-Host -ForegroundColor Yellow "Associating Secrets Broker to trust Safeguard appliance for authentication ..."
     Write-Host "Secrets Broker leverages Safeguard for authentication."
     Write-Host "  As connections are made you will be asked to validate TLS server certificates for Secrets Broker and Safeguard."
-    Write-Host "  You may be asked for ServiceAddress for Secrets Broker."
     Write-Host "  You may be asked for Appliance and login credentials to Safeguard."
+    Write-Host "  You may be asked for ServiceAddress for Secrets Broker."
     $local:Status = (Initialize-SgDevOpsAppliance -ServiceAddress $ServiceAddress -ServicePort $ServicePort -ServiceApiVersion $ServiceApiVersion `
                                                   -Appliance $Appliance -ApplianceApiVersion $ApplianceApiVersion -Gui:$Gui -Insecure)
     if ($local:Status)
     {
         Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
-        Write-Host -ForegroundColor Yellow "Connecting to Secrets Broker using SPP user ..."
+        Write-Host -ForegroundColor Yellow "Connecting to Secrets Broker using Safeguard user ..."
         try
         {
             Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui
@@ -146,7 +146,7 @@ function Initialize-SgDevOps
             }
             if ($local:Success)
             {
-                Write-Host -ForegroundColor Yellow "Reconnecting to Secrets Broker using SPP user ..."
+                Write-Host -ForegroundColor Yellow "Reconnecting to Secrets Broker using Safeguard user ..."
                 Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui
             }
         }
@@ -154,7 +154,7 @@ function Initialize-SgDevOps
         if ($SgDevOpsSession)
         {
             Write-Host "Secrets Broker needs to initialize some configuration in Safeguard in order to establish permanent communications."
-            Write-Host -ForegroundColor Yellow "Configuring Secrets Broker instance certificate user in SPP ..."
+            Write-Host -ForegroundColor Yellow "Configuring Secrets Broker instance certificate user in Safeguard ..."
             Write-Host "Secrets Broker uses a Safeguard certicate user for A2A communications."
             Write-Host "The easiest way to configure this is to upload a certificate with a private key now to continue with this wizard."
             Write-Host "Alternatively, you can use New-SgDevOpsCsr and Install-SgDevOpsClientCertificate to set everything up manually."
@@ -179,7 +179,7 @@ function Initialize-SgDevOps
             }
             if ($local:CertificateUser)
             {
-                Write-Host -ForegroundColor Yellow "Initializing configuration in SPP ..."
+                Write-Host -ForegroundColor Yellow "Initializing configuration in Safeguard ..."
                 Initialize-SgDevOpsConfiguration
             }
         }
