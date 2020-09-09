@@ -275,7 +275,7 @@ function Confirm-TlsCertificateInformation
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    Write-Host -ForegroundColor Yellow "Certificate information for $ServerName (${ServerAddress}:${ServerPort}):"
+    Write-Host -ForegroundColor Yellow "VALIDATE certificate information for $ServerName (${ServerAddress}:${ServerPort}):"
     $local:Certificate = (Get-TlsCertificateFromEndpoint $ServerAddress $ServerPort)
     Write-Host "Thumbprint: $($local:Certificate.Thumbprint)"
     Write-Host "-----BEGIN CERTIFICATE-----"
