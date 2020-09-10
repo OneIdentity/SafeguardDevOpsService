@@ -272,7 +272,7 @@ namespace OneIdentity.DevOps.ConfigDb
             {
                 ChainPolicy =
                 {
-                    VerificationFlags = X509VerificationFlags.IgnoreRootRevocationUnknown | X509VerificationFlags.IgnoreCertificateAuthorityRevocationUnknown,
+                    VerificationFlags = X509VerificationFlags.IgnoreRootRevocationUnknown | X509VerificationFlags.IgnoreCertificateAuthorityRevocationUnknown | X509VerificationFlags.AllowUnknownCertificateAuthority,
                     RevocationFlag = X509RevocationFlag.EntireChain,
                     RevocationMode = X509RevocationMode.NoCheck
                 }
