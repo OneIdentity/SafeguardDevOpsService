@@ -46,8 +46,8 @@ namespace OneIdentity.DevOps.Logic
                 var i = 0;
                 foreach (var trusted in trustedChain.ChainPolicy.ExtraStore)
                 {
-                    logger.Debug($"[{i}] - subject = {trusted.SubjectName}");
-                    logger.Debug($"[{i}] - issuer = {trusted.IssuerName}");
+                    logger.Debug($"[{i}] - subject = {trusted.SubjectName.Name}");
+                    logger.Debug($"[{i}] - issuer = {trusted.IssuerName.Name}");
                     logger.Debug($"[{i}] - thumbprint = {trusted.Thumbprint}");
                     i++;
                 }
@@ -59,6 +59,14 @@ namespace OneIdentity.DevOps.Logic
                     for (i = 0; i < chainStatus.Length; i++)
                     {
                         logger.Debug($"[{i}] - chain status = {chainStatus[i].StatusInformation}");
+                    }
+                    i = 0;
+                    foreach (var chainElement in trustedChain.ChainElements)
+                    {
+                        logger.Debug($"[{i}] - subject = {chainElement.Certificate.SubjectName.Name}");
+                        logger.Debug($"[{i}] - issuer = {chainElement.Certificate.IssuerName.Name}");
+                        logger.Debug($"[{i}] - thumbprint = {chainElement.Certificate.Thumbprint}");
+                        i++;
                     }
                     return false;
                 }
