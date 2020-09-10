@@ -223,11 +223,36 @@ function Initialize-SgDevOps
                 # plugins
                 Write-Host -ForegroundColor Yellow "Install Secrets Broker plugins ..."
                 Write-Host -ForegroundColor Cyan "Secrets Broker needs plugins to push secrets."
-                $local:Confirmed = (Get-Confirmation "Install plugins" "Would you like to install plugins now?" `
-                                                     "Install now." "Skip this step.")
-                if ($local:Confirmed)
+                $local:Plugins = (Get-SgDevOpsPlugin)
+                if ($local:Plugins)
                 {
-
+                    Write-Host -ForegroundColor Cyan "The following plugin(s) are already installed:"
+                    $local:Plugins.Name
+                }
+                else
+                {
+                    Write-Host -ForegroundColor Cyan "Currently there are no plugins installed."
+                }
+                $local:Confirmed = $true
+                $local:Success = $false
+                while ($local:Confirmed)
+                {
+                    if ($local:Success) { $local:Word = "another" } else { $local:Word = "a" }
+                    $local:Confirmed = (Get-Confirmation "Install plugins" "Would you like to install $($local:Word) plugin now?" `
+                                                         "Install now." "Skip this step.")
+                    if ($local:Confirmed)
+                    {
+                        try
+                        {
+                            Install-SgDevOpsPlugin
+                            $local:Status = $true
+                        }
+                        catch
+                        {
+                            Write-Host -ForegroundColor Magenta "Operation failed."
+                            Write-Host $_.Exception
+                        }
+                    }
                 }
                 Write-Host ""
                 Write-Host ""
@@ -273,6 +298,7 @@ function Initialize-SgDevOps
             Write-Host ""
             Write-Host ""
             Write-Host -ForegroundColor Yellow "End of initialization cmdlet."
+            Disconnect-SgDevOps
         }
     }
 }
