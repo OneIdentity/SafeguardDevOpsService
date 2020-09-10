@@ -185,9 +185,9 @@ SafeguardSecretsBroker-ps can do run:
 Please report anything you see from the output that is missing, and we will
 update this list.
 
-### ManagementShell
+### Informational
 
-- Get-SafeguardCommand
+- Get-SgDevOpsCommand
 
 ### Safeguard Secrets Broker
 
