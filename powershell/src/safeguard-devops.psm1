@@ -979,6 +979,8 @@ function Initialize-SgDevOpsAppliance
             {
                 $local:Confirmed = (Get-Confirmation "Initialize Secrets Broker" "Do you want to associate with a different Safeguard appliance?" `
                                                      "Initialize." "Cancels this operation.")
+                Write-Host ""
+                Write-Host ""
             }
         }
         else

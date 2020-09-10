@@ -91,44 +91,58 @@ function Initialize-SgDevOps
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
     Write-Host -ForegroundColor Yellow "Before you begin ..."
-    Write-Host "This cmdlet is works as a multi-step wizard to set up Secrets Broker to work with Safeguard."
-    Write-Host "In order to be successful using this cmdlet, you need the following:"
-    Write-Host " - Credentials for a user with administrative rights to create users and configure A2A in Safeguard"
-    Write-Host "   i.e. *User* and *Security Policy* permissions"
-    Write-Host " - PFX or PKCS#12 file to create a certificate user in Safeguard"
-    Write-Host "   Safeguard must already trust the issuer of the certificate you want to upload"
-    Write-Host "Optionally, you might also want to have the following:"
-    Write-Host " - PFX or PKCS#12 file to install as TLS certificate for Secrets Broker"
-    Write-Host " - Asset and account names from Safeguard that you would like to use with Secrets Broker"
-    Write-Host " - ZIP files for one or more plugins that you would like Secrets Broker to use"
-    Write-Host "   Secrets Broker requires at least one plugin in order to push secrets"
-    Write-Host "   On Windows, no Secrets Broker plugins are installed by default."
-    Write-Host "   In Docker, only the HashiCorp plugin is installed by default."
+    Write-Host -ForegroundColor Yellow "This cmdlet is works as a multi-step wizard to set up Secrets Broker to work with Safeguard."
+    Write-Host -ForegroundColor Yellow "In order to be successful using this cmdlet, you need the following:"
+    Write-Host -ForegroundColor Cyan " - Credentials for a user with administrative rights to create users and configure A2A in Safeguard"
+    Write-Host -ForegroundColor Cyan "   i.e. *User* and *Security Policy* permissions"
+    Write-Host -ForegroundColor Cyan " - PFX or PKCS#12 file to create a certificate user in Safeguard"
+    Write-Host -ForegroundColor Cyan "   Safeguard must already trust the issuer of the certificate you want to upload"
+    Write-Host -ForegroundColor Yellow "Optionally, you might also want to have the following:"
+    Write-Host -ForegroundColor Cyan " - PFX or PKCS#12 file to install as TLS certificate for Secrets Broker"
+    Write-Host -ForegroundColor Cyan " - Asset and account names from Safeguard that you would like to use with Secrets Broker"
+    Write-Host -ForegroundColor Cyan " - ZIP files for one or more plugins that you would like Secrets Broker to use"
+    Write-Host -ForegroundColor Cyan "   Secrets Broker requires at least one plugin in order to push secrets"
+    Write-Host -ForegroundColor Cyan "   On Windows, no Secrets Broker plugins are installed by default."
+    Write-Host -ForegroundColor Cyan "   In Docker, only the HashiCorp plugin is installed by default."
     Write-Host ""
     Write-Host "Press any key to continue or Ctrl-C to quit ..."
     Read-Host " "
 
     Write-Host -ForegroundColor Yellow "Associating Secrets Broker to trust Safeguard for authentication ..."
-    Write-Host "Secrets Broker leverages Safeguard for authentication."
-    Write-Host "  As connections are made you will be asked to validate TLS server certificates for Secrets Broker and Safeguard."
-    Write-Host "  You may be asked for Appliance and login credentials to Safeguard."
-    Write-Host "  You may be asked for ServiceAddress for Secrets Broker."
+    Write-Host -ForegroundColor Cyan "Secrets Broker leverages Safeguard for authentication."
+    Write-Host -ForegroundColor Cyan "  As connections are made you will be asked to validate TLS server certificates for Secrets Broker and Safeguard."
+    Write-Host -ForegroundColor Cyan "  You may be asked for Appliance for Safeguard."
+    Write-Host -ForegroundColor Cyan "  You may be asked for ServiceAddress for Secrets Broker. (You can specify port with colon, e.g. server:443)"
+    Write-Host -ForegroundColor Cyan "  You may be asked multiple times login credentials to Safeguard. (Use Connect-Safeguard to prevent this)"
+
+    if (-not $Appliance -and -not $SafeguardSession)
+    {
+        $Appliance = (Read-Host "Appliance") ## Getting this set in this parent cmdlet provides better UX
+    }
+    if (-not $ServiceAddress)
+    {
+        $ServiceAddress = (Read-Host "ServiceAddress") ## Getting this set in this parent cmdlet provides better UX
+    }
     $local:Status = (Initialize-SgDevOpsAppliance -ServiceAddress $ServiceAddress -ServicePort $ServicePort -ServiceApiVersion $ServiceApiVersion `
                                                   -Appliance $Appliance -ApplianceApiVersion $ApplianceApiVersion -Gui:$Gui -Insecure)
     if ($local:Status)
     {
+        Write-Host "Successfully associated Secrets Broker ($ServiceAddress) to Safeguard ($Appliance)."
+        Write-Host ""
+        Write-Host ""
         Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
         Write-Host -ForegroundColor Yellow "Connecting to Secrets Broker using Safeguard user ..."
         try
         {
+            Write-Host -ForegroundColor Cyan "This will be your connection for the rest of the steps in the wizard."
             Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui
         }
         catch
         {
             Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui -Insecure
             Write-Host -ForegroundColor Magenta "You are not using a trusted TLS server certificate in Secrets Broker."
-            Write-Host "You can fix this problem now by uploading a certificate with a private key."
-            Write-Host "Another option is to fix this later a CSR with New-SgDevOpsCsr and Install-SgDevOpsSslCertificate cmdlets."
+            Write-Host -ForegroundColor Cyan "You can fix this problem now by uploading a certificate with a private key."
+            Write-Host -ForegroundColor Cyan "Another option is to fix this later a CSR with New-SgDevOpsCsr and Install-SgDevOpsSslCertificate cmdlets."
             $local:Confirmed = $true
             while ($local:Confirmed)
             {
@@ -155,14 +169,16 @@ function Initialize-SgDevOps
                 Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui
             }
         }
+        Write-Host ""
+        Write-Host ""
 
         if ($SgDevOpsSession)
         {
-            Write-Host "Secrets Broker needs to initialize some configuration in Safeguard in order to establish permanent communications."
             Write-Host -ForegroundColor Yellow "Configuring Secrets Broker instance certificate user in Safeguard ..."
-            Write-Host "Secrets Broker uses a Safeguard certicate user for A2A communications."
-            Write-Host "The easiest way to configure this is to upload a certificate with a private key now to continue with this wizard."
-            Write-Host "Alternatively, you can use New-SgDevOpsCsr and Install-SgDevOpsClientCertificate to set everything up manually."
+            Write-Host -ForegroundColor Cyan "Secrets Broker needs to initialize some configuration in Safeguard in order to establish permanent communications."
+            Write-Host -ForegroundColor Cyan "Secrets Broker uses a Safeguard certicate user for A2A communications."
+            Write-Host -ForegroundColor Cyan "The easiest way to configure this is to upload a certificate with a private key now to continue with this wizard."
+            Write-Host -ForegroundColor Cyan "Alternatively, you can use New-SgDevOpsCsr and Install-SgDevOpsClientCertificate to set everything up manually."
             $local:Confirmed = $true
             while ($local:Confirmed)
             {
@@ -182,58 +198,81 @@ function Initialize-SgDevOps
                     }
                 }
             }
+            Write-Host ""
+            Write-Host ""
+
             if ($local:CertificateUser)
             {
                 Write-Host -ForegroundColor Yellow "Initializing configuration in Safeguard ..."
                 Initialize-SgDevOpsConfiguration # this will throw an exception if it fails, otherwise continue with optional steps below
+                Write-Host ""
 
                 # registered accounts
                 Write-Host -ForegroundColor Yellow "Configure registered accounts for Secrets Broker ..."
-                Write-Host "For security reasons, the asset accounts in Safeguard are not immediately made available to Secrets Broker."
-                Write-Host "The next step is to find Safeguard asset accounts that you would like to use with Secrets Broker."
+                Write-Host -ForegroundColor Cyan "For security reasons, the asset accounts in Safeguard are not immediately made available to Secrets Broker."
+                Write-Host -ForegroundColor Cyan "The next step is to find Safeguard asset accounts that you would like to use with Secrets Broker."
                 $local:Confirmed = (Get-Confirmation "Configure registered accounts" "Would you like to configure registered accounts now?" `
                                                      "Configure now." "Skip this step.")
                 if ($local:Confirmed)
                 {
 
                 }
+                Write-Host ""
+                Write-Host ""
 
                 # plugins
                 Write-Host -ForegroundColor Yellow "Install Secrets Broker plugins ..."
-                Write-Host "Secrets Broker needs plugins to push secrets."
+                Write-Host -ForegroundColor Cyan "Secrets Broker needs plugins to push secrets."
                 $local:Confirmed = (Get-Confirmation "Install plugins" "Would you like to install plugins now?" `
                                                      "Install now." "Skip this step.")
                 if ($local:Confirmed)
                 {
 
                 }
+                Write-Host ""
+                Write-Host ""
 
                 # Fix TLS
                 Write-Host -ForegroundColor Yellow "Fix TLS certificate validation with Safeguard ..."
                 if (-not (Get-SgDevOpsTlsValidation))
                 {
                     Write-Host -ForegroundColor Magenta "TLS certificate validation is not enabled between Secrets Broker and Safeguard."
-                    Write-Host "Usually the easiest way to fix this is to synchronize trusted certificates from Safeguard to Secrets Broker."
+                    Write-Host -ForegroundColor Cyan "Usually the easiest way to fix this is to synchronize trusted certificates from Safeguard to Secrets Broker."
                     $local:Confirmed = (Get-Confirmation "Synchronize trusted certificates" "Would you like to synchronize trusted certificates now?" `
                                                          "Synchronize." "Skip this step.")
                     if ($local:Confirmed)
                     {
                         Sync-SgDevOpsTrustedCertificate
-                        Write-Host "Now you can try to enable TLS certificate validation between Secrets Broker and Safeguard."
-                        Write-Host "If for some reason this doesn't work you can go back by running Disable-SgDevOpsTlsValidation."
+                        Write-Host -ForegroundColor Cyan "Now you can try to enable TLS certificate validation between Secrets Broker and Safeguard."
+                        Write-Host -ForegroundColor Cyan "If for some reason this doesn't work you can try later by setting up trusted certificates and calling Enable-SgDevOpsTlsValidation."
                         $local:Confirmed = (Get-Confirmation "Enable TLS certificate validation" "Would you like to enable validation now?" `
                                                              "Enable." "Skip this step.")
                         if ($local:Confirmed)
                         {
-                            Enable-SgDevOpsTlsValidation
+                            try
+                            {
+                                Enable-SgDevOpsTlsValidation
+                            }
+                            catch
+                            {
+                                Write-Host -ForegroundColor Magenta "Operation failed."
+                                Write-Host $_.Exception
+                            }
                         }
                     }
                 }
                 else
                 {
-                    Write-Host "TLS certificate validation is already enabled."
+                    Write-Host -ForegroundColor Yellow "TLS certificate validation is already enabled."
                 }
             }
+            else
+            {
+                Write-Host -ForegroundColor Cyan "Without a configured Certificate user you cannot configure the rest of Secrets Broker."
+            }
+            Write-Host ""
+            Write-Host ""
+            Write-Host -ForegroundColor Yellow "End of initialization cmdlet."
         }
     }
 }
