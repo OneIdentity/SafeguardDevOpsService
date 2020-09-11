@@ -17,6 +17,7 @@ variables:
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
+  isPrerelease: true
   isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/phase2')]
   signingToolPath: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64'
 
@@ -56,7 +57,7 @@ steps:
     targetType: filePath
     filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
     arguments: $(Build.SourcesDirectory) $(Build.BuildId)
-    ignoreLASTEXITCODE: true
+  displayName: 'Setting build version'
 
 - task: VSBuild@1
   inputs:
@@ -103,6 +104,13 @@ steps:
     targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsdir)
   displayName: 'Copy plugins to staging folder'
 
+- task: PowerShell@2
+  inputs:
+    targetType: filePath
+    filePath: $(System.DefaultWorkingDirectory)\powershell\install-forpipeline.ps1
+    arguments: $(Build.SourcesDirectory) $(VersionString)
+  displayName: 'Building the safeguard-devops Powershell module'
+
 - task: PublishBuildArtifacts@1
   inputs:
     pathToPublish: '$(Build.ArtifactStagingDirectory)'
@@ -117,7 +125,7 @@ steps:
     target: '$(Build.SourceVersion)'
     tagSource: 'userSpecifiedTag'
     tag: '$(Build.BuildNumber)'
-    isPreRelease: true
+    isPreRelease: $(isPrerelease)
     changeLogCompareToRelease: 'lastFullRelease'
     changeLogType: 'commitBased'
     assets: |

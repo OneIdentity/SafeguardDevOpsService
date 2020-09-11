@@ -18,7 +18,7 @@ using System.Text.RegularExpressions;
 namespace Ex
 {
 public class VersionNumberEditor {
-    public void SetVersionNumber(string buildId, string startingDir) {
+    public string SetVersionNumber(string buildId, string startingDir) {
         var major = 1; var minor = 0; var revision = 0; var build = 0;
 
         Console.WriteLine("BuildId=[{0}] startingDir=[{1}]", buildId, startingDir);
@@ -57,6 +57,7 @@ public class VersionNumberEditor {
             Console.WriteLine("*****");
             Console.Write(template);
             Console.WriteLine("*****");
+            return newVersion;
         }
     }
 }
@@ -65,4 +66,5 @@ public class VersionNumberEditor {
 }
 
 $local:VersEditor = (New-Object Ex.VersionNumberEditor)
-$local:VersEditor.SetVersionNumber($buildId, $StartingDir)
+$local:VersString = $local:VersEditor.SetVersionNumber($buildId, $StartingDir)
+Write-Output "##vso[task.setvariable variable=VersionString;]$($local:VersString)"
