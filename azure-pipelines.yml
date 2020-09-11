@@ -10,6 +10,9 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
+  semanticVersion: "1.0.0"
+  isPrerelease: ${{ true }}
+  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/phase2')]
   solution: '**/*.sln'
   setupprojectdir: 'SafeguardDevOpsServiceWix'
   setupproject: '**/$(setupprojectdir)/*.wixproj'
@@ -17,8 +20,6 @@ variables:
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
-  isPrerelease: ${{ true }}
-  isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/phase2')]
   signingToolPath: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64'
 
 steps:
@@ -51,7 +52,7 @@ steps:
   inputs:
     targetType: filePath
     filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
-    arguments: $(Build.SourcesDirectory) $(Build.BuildId)
+    arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
   displayName: 'Setting build version'
 
 - task: Bash@3
@@ -126,7 +127,7 @@ steps:
     target: '$(Build.SourceVersion)'
     tagSource: 'userSpecifiedTag'
     tag: '$(Build.BuildNumber)'
-    isPreRelease: $(isPrerelease)
+    isPreRelease: $[ variables.isPrerelease ]
     changeLogCompareToRelease: 'lastFullRelease'
     changeLogType: 'commitBased'
     assets: |

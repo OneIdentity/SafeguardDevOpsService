@@ -34,7 +34,7 @@ if ($ModuleDef["ModuleVersion"] -ne $BuildVersion)
     throw "Did not replace code version properly, ModuleVersion is '$($ModuleDef["ModuleVersion"])' BuildVersion is '$BuildVersion'"
 }
 
-Write-Host "Installing '$ModuleName $($ModuleDef["ModuleVersion"])' to '$TargetDir'"
+Write-Host "Installing '$ModuleName' v$($ModuleDef["ModuleVersion"]) to '$TargetDir'"
 $ModuleDir = (Join-Path $TargetDir $ModuleName)
 if (-not (Test-Path $ModuleDir))
 {
@@ -46,3 +46,5 @@ if (-not (Test-Path $VersionDir))
     New-Item -Path $VersionDir -ItemType Container -Force | Out-Null
 }
 Copy-Item -Recurse -Path (Join-Path $PSScriptRoot "src\*") -Destination $VersionDir
+
+Get-ChildItem -Recurse $ModuleDir
