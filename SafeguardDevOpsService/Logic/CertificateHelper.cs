@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -34,6 +36,16 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 var cert2 = new X509Certificate2(certificate);
+
+                var sans = GetSubjectAlternativeName(new X509Certificate2(certificate));
+                var safeguardAddress = configDb.SafeguardAddress;
+
+                if (!sans.Exists(x => x.Equals(safeguardAddress, StringComparison.InvariantCultureIgnoreCase) ||
+                                     (x.StartsWith("*") && safeguardAddress.Substring(safeguardAddress.IndexOf('.'))
+                                         .Equals(x.Substring(1), StringComparison.InvariantCultureIgnoreCase))))
+                {
+                    return false;
+                }
 
                 if (chain.ChainElements.Count <= 1)
                 {
@@ -220,5 +232,33 @@ namespace OneIdentity.DevOps.Logic
             return eku.EnhancedKeyUsages[oid] != null;
         }
 
+        private static List<string> GetSubjectAlternativeName(X509Certificate2 cert)
+        {
+            var result = new List<string>();
+
+
+            var subjectAlternativeName = cert.Extensions.Cast<X509Extension>()
+                .Where(n => n.Oid.Value== "2.5.29.17") //n.Oid.FriendlyName=="Subject Alternative Name")
+                .Select(n => new AsnEncodedData(n.Oid, n.RawData))
+                .Select(n => n.Format(true))
+                .FirstOrDefault();
+
+            if (subjectAlternativeName != null)
+            {
+                var alternativeNames = subjectAlternativeName.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+                foreach (var alternativeName in alternativeNames)
+                {
+                    var groups = Regex.Match(alternativeName, @"^(.*)=(.*)").Groups; // @"^DNS Name=(.*)").Groups;
+
+                    if (groups.Count > 0 && !String.IsNullOrEmpty(groups[2].Value))
+                    {
+                        result.Add(groups[2].Value);
+                    }
+                }
+            }
+
+            return result;
+        }
     }
 }
