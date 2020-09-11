@@ -57,8 +57,8 @@ public class VersionNumberEditor {
             Console.WriteLine("*****");
             Console.Write(template);
             Console.WriteLine("*****");
-            return newVersion;
         }
+        return "1.0.0.12345";
     }
 }
 }
