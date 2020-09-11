@@ -183,6 +183,36 @@ function Get-SgDevOpsAvailableAssetAccount
     Invoke-SgDevOpsMethod GET "Safeguard/AvailableAccounts"
 }
 
+<#
+.SYNOPSIS
+Search for the available Safeguard asset accounts that can be registered with the
+Secrets Broker.
+
+.DESCRIPTION
+This cmdlet returns the asset accounts from the associated Safeguard appliance
+that can be registered with the Secrets Broker. The registration occurs by
+adding the available asset accounts as retrievable accounts to the A2A
+registration associated with the Secrets Broker. Adding and removing asset
+account registrations should be done using the Secrets Broker DevOps.
+
+(see Get-SgDevOpsAvailableAssetAccount)
+(see Get-SgDevOpsRegisteredAssetAccount)
+(see Register-SgDevOpsAssetAccount)
+
+.PARAMETER Search
+A string to search for in the available asset account.
+
+.PARAMETER Query
+A string to pass as a filter in the query of the available asset accounts.
+Available operators: eq, ne, gt, ge, lt, le, and, or, not, contains, ieq,
+icontains, in [ {item1}, {item2}, etc], (). Use \ to escape quotes in strings.
+
+.EXAMPLE
+Find-SgDevOpsAvailableAssetAccount "gsmith"
+
+.EXAMPLE
+Find-SgDevOpsAvailableAssetAccount -Query "HasPassword eq true"
+#>
 function Find-SgDevOpsAvailableAssetAccount
 {
     [CmdletBinding(DefaultParameterSetName="Search")]
