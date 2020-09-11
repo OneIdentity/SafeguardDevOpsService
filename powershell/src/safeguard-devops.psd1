@@ -95,7 +95,7 @@ FunctionsToExport = @(
      'Get-SgDevOpsCommand',
 
      # init.psm1 -- handles full service initialization walkthrough UX
-     'Get-SgDevOpsStatus', 'Initialize-SgDevOps',
+     'Get-SgDevOpsStatus', 'Initialize-SgDevOps','Invoke-SgDevOpsRegisteredAccountSetup',
 
      # certificates.psm1 -- handles web server and client certificate setup
      'Get-SgDevOpsSslCertificate', 'Install-SgDevOpsSslCertificate', 'Clear-SgDevOpsSslCertificate',
@@ -106,7 +106,7 @@ FunctionsToExport = @(
 
      # configuration.psm1
      'Get-SgDevOpsConfiguration', 'Initialize-SgDevOpsConfiguration', 'Clear-SgDevOpsConfiguration',
-     'Get-SgDevOpsAvailableAssetAccount','Get-SgDevOpsRegisteredAssetAccount',
+     'Get-SgDevOpsAvailableAssetAccount','Find-SgDevOpsAvailableAssetAccount','Get-SgDevOpsRegisteredAssetAccount',
      'Register-SgDevOpsAssetAccount','Unregister-SgDevOpsAssetAccount',
 
      # plugins.psm1

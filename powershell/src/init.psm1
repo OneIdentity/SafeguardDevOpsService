@@ -1,3 +1,17 @@
+# Helper
+function Get-FileName
+{
+    Param(
+        [Parameter(Mandatory=$false, Position=0)]
+        [string]$InitialDirectory
+    )
+    [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+    $local:OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+    $local:OpenFileDialog.InitialDirectory = $InitialDirectory
+    $local:OpenFileDialog.Filter = "All files (*.*)| *.*"
+    $local:OpenFileDialog.ShowDialog() | Out-Null
+    $local:OpenFileDialog.Filename
+}
 
 <#
 .SYNOPSIS
@@ -211,11 +225,14 @@ function Initialize-SgDevOps
                 Write-Host -ForegroundColor Yellow "Configure registered accounts for Secrets Broker ..."
                 Write-Host -ForegroundColor Cyan "For security reasons, the asset accounts in Safeguard are not immediately made available to Secrets Broker."
                 Write-Host -ForegroundColor Cyan "The next step is to find Safeguard asset accounts that you would like to use with Secrets Broker."
-                $local:Confirmed = (Get-Confirmation "Configure registered accounts" "Would you like to configure registered accounts now?" `
+                $local:Confirmed = (Get-Confirmation "Configure registered asset accounts" "Would you like to configure registered asset accounts now?" `
                                                      "Configure now." "Skip this step.")
                 if ($local:Confirmed)
                 {
-
+                    Invoke-SgDevOpsRegisteredAccountSetup
+                    Write-Host ""
+                    Write-Host -ForegroundColor Cyan "You are still going to need to map these registered asset accounts to individual plugins."
+                    Write-Host -ForegroundColor Cyan "You can do this with Add-SgDevOpsMappedAssetAccount."
                 }
                 Write-Host ""
                 Write-Host ""
@@ -300,5 +317,84 @@ function Initialize-SgDevOps
             Write-Host -ForegroundColor Yellow "End of initialization cmdlet."
             Disconnect-SgDevOps
         }
+    }
+}
+
+
+function Invoke-SgDevOpsRegisteredAccountSetup
+{
+    [CmdletBinding()]
+    Param(
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    Import-Module -Name "$PSScriptRoot\ps-utilities.psm1" -Scope Local
+
+    Write-Host -ForegroundColor Cyan "Enter a search string to look for available asset accounts in Safeguard to register with Secrets Broker."
+    Write-Host -ForegroundColor Cyan "There are two types of search strings:"
+    Write-Host -ForegroundColor Cyan "  Query (q)  - Searches all text fields for the specified string"
+    Write-Host -ForegroundColor Cyan "  Filter (f) - Filters on specific fields using operators: eq, ne, gt, ge, lt, le, and, or, not, contains, ieq, icontains, in"
+    Write-Host -ForegroundColor Cyan "To specify a search string select the type by specify 'q' or 'f', followed by a ':' and then search string value."
+    Write-Host "For example:"
+    Write-Host "  Search String: q:oracle-adm  --  This searches all text fields for oracle-adm"
+    Write-Host "  Search String: f:SystemName eq 'fake.addr.com' and Name eq 'admin'  --  This filters for admin account on fake.addr.com"
+    Write-Host -ForegroundColor Cyan "Some properties that can be used in Filter are: Id, Name, DomainName, SystemId, SystemName, SystemNetworkAddress"
+    Write-Host ""
+    Write-Host ""
+    $local:Confirmed = $true
+    while ($local:Confirmed)
+    {
+        $local:AvailableAccounts = @()
+        $local:SearchString = (Read-Host "Search String")
+        $local:Pair = ($local:SearchString -split ":")
+        if ($local:Pair.Length -ne 2 -or ($local:Pair[0] -ne "q" -and $local:Pair[0] -ne "f"))
+        {
+            Write-Host -ForegroundColor Magenta "Invalid search string, must start with 'q:' or 'f:'"
+        }
+        elseif ($local:Pair[0] -eq "q")
+        {
+            try
+            {
+                $local:AvailableAccounts = (Find-SgDevOpsAvailableAssetAccount -SearchString $local:Pair[1])
+            }
+            catch
+            {
+                Write-Host -ForegroundColor Magenta "Operation failed."
+                Write-Host $_.Exception
+            }
+        }
+        elseif ($local:Pair[0] -eq "f")
+        {
+            try
+            {
+                $local:AvailableAccounts = (Find-SgDevOpsAvailableAssetAccount -QueryFilter $local:Pair[1])
+            }
+            catch
+            {
+                Write-Host -ForegroundColor Magenta "Operation failed."
+                Write-Host $_.Exception
+            }
+        }
+
+        if ($local:AvailableAccounts)
+        {
+            Write-Host "Found $($local:AvailableAccounts.Count) asset accounts:"
+            Write-Host ($local:AvailableAccounts | Format-Table | Out-String)
+            $local:Confirmed = (Get-Confirmation "Register Asset Accounts" "Would you like to register these with Secrets Broker?" `
+                                                 "Register." "Cancel.")
+            if ($local:Confirmed)
+            {
+                Register-SgDevOpsAssetAccount -AccountObjects $local:AvailableAccounts
+            }
+        }
+        else
+        {
+            Write-Host "No asset accounts found."
+        }
+
+        $local:Confirmed = (Get-Confirmation "Register Asset Accounts" "Would you like to continue finding and registering asset accounts?" `
+                                             "Continue." "Stop.")
     }
 }
