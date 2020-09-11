@@ -250,8 +250,6 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult<CertificateInfo> GetClientCertificate([FromServices] ISafeguardLogic safeguard)
         {
             var certificate = safeguard.GetCertificateInfo(CertificateType.A2AClient);
-            if (certificate == null)
-                return NotFound();
 
             return Ok(certificate);
         }
@@ -322,8 +320,6 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult<CertificateInfo> GetWebServerCertificate([FromServices] ISafeguardLogic safeguard)
         {
             var certificate = safeguard.GetCertificateInfo(CertificateType.WebSsl);
-            if (certificate == null)
-                return NotFound();
 
             return Ok(certificate);
         }

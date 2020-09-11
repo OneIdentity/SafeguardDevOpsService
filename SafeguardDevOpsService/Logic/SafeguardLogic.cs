@@ -571,7 +571,9 @@ namespace OneIdentity.DevOps.Logic
                 return result;
             }
 
-            return null;
+            var msg = $"{Enum.GetName(typeof(CertificateType), certificateType)} certificate not found.";
+            _logger.Error(msg);
+            throw new DevOpsException(msg, HttpStatusCode.NotFound);
         }
 
         public void InstallCertificate(CertificateInfo certificate, CertificateType certificateType)
