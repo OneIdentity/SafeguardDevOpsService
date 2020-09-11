@@ -212,6 +212,80 @@ function Resolve-ServiceAddressAndPort
         ServicePort = $ServicePort
     }
 }
+function Get-TlsCertificateFromEndpoint
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$ServerAddress,
+        [Parameter(Mandatory=$true, Position=1)]
+        [int]$ServerPort
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Certificate = $null
+    $local:TcpClient = New-Object -TypeName System.Net.Sockets.TcpClient
+    try
+    {
+        $local:TcpClient.Connect($ServerAddress, $ServerPort)
+        $local:TcpStream = $local:TcpClient.GetStream()
+
+        $local:Callback = { param($s, $c, $ch, $e) return $true }
+
+        $local:SslStream = New-Object -TypeName System.Net.Security.SslStream -ArgumentList @($local:TcpStream, $true, $local:Callback)
+        try {
+            $local:SslStream.AuthenticateAsClient('')
+            $local:Certificate = $local:SslStream.RemoteCertificate
+        } finally {
+            $local:SslStream.Dispose()
+        }
+    }
+    finally
+    {
+        $local:TcpClient.Dispose()
+    }
+
+    if ($local:Certificate)
+    {
+        if ($local:Certificate -isnot [System.Security.Cryptography.X509Certificates.X509Certificate2])
+        {
+            $local:Certificate = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2 -ArgumentList $Certificate
+        }
+        $local:Certificate
+    }
+    else
+    {
+        throw "Unable to get TLS server certificate information for ${ServerAddress}:${ServerPort}"
+    }
+}
+function Confirm-TlsCertificateInformation
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$ServerName,
+        [Parameter(Mandatory=$true, Position=1)]
+        [string]$ServerAddress,
+        [Parameter(Mandatory=$true, Position=2)]
+        [int]$ServerPort
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    Write-Host -ForegroundColor Yellow "VALIDATE certificate information for $ServerName (${ServerAddress}:${ServerPort}):"
+    $local:Certificate = (Get-TlsCertificateFromEndpoint $ServerAddress $ServerPort)
+    Write-Host "Thumbprint: $($local:Certificate.Thumbprint)"
+    Write-Host "-----BEGIN CERTIFICATE-----"
+    Write-Host ([System.Convert]::ToBase64String($Certificate.RawData) -replace ".{64}","`$0`n")
+    Write-Host "-----END CERTIFICATE-----"
+    (Get-Confirmation "Validate $ServerName Certificate" "Do you want to trust this connection to ${ServerName}?" `
+                      "Validate." "Cancels this operation.")
+    Write-Host ""
+    Write-Host ""
+}
 function Get-ApplianceToken
 {
     [CmdletBinding()]
@@ -412,6 +486,7 @@ function Invoke-Internal
     }
 }
 
+
 <#
 .SYNOPSIS
 Get the status of the Safeguard appliance associated with this Secrets Broker.
@@ -489,6 +564,46 @@ function Get-SgDevOpsApplianceStatus
             if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
         }
     }
+}
+
+function Get-SgDevOpsTlsValidation
+{
+    [CmdletBinding()]
+    Param(
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    (-not (Invoke-SgDevOpsMethod GET Safeguard).IgnoreSsl)
+}
+
+function Enable-SgDevOpsTlsValidation
+{
+    [CmdletBinding()]
+    Param(
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Sg = (Invoke-SgDevOpsMethod GET Safeguard)
+    $local:Sg.IgnoreSsl = $false
+    Invoke-SgDevOpsMethod PUT Safeguard -Body $local:Sg
+}
+
+function Disable-SgDevOpsTlsValidation
+{
+    [CmdletBinding()]
+    Param(
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    $local:Sg = (Invoke-SgDevOpsMethod GET Safeguard)
+    $local:Sg.IgnoreSsl = $true
+    Invoke-SgDevOpsMethod PUT Safeguard -Body $local:Sg
 }
 
 <#
@@ -797,11 +912,16 @@ Network address (IP or DNS) of the Safeguard appliance.
 Display Safeguard login window in a browser. Supports 2FA.
 
 .PARAMETER Insecure
-Whether or not to validate the Secrets Broker's TLS server certificate.
+Whether or not to store the Insecure flag in the Safeguard Appliance connection
+to ignore TLS server certificate validation. (IMPORTANT! This is not the same
+as the -Insecure option in other cmdlets--this is communications between Secrets
+Broker and Safeguard Appliance). It can be changed later using the
+Enable-SgDevOpsTlsValidation cmdlet.
 
 .PARAMETER Force
 This option will force Secrets Broker to associate with another Safeguard
-appliance even if it has already been associated.
+appliance even if it has already been associated.  This option wil also remove
+any other prompts that might occur.
 
 .PARAMETER ApplianceApiVersion
 API version for the Safeguard Appliance. (default: 3)
@@ -840,13 +960,34 @@ function Initialize-SgDevOpsAppliance
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    # Initial check to status is always done with Insecure flag... out of box Secrets Broker uses a self-signed certificate
     $local:Resolved = (Resolve-ServiceAddressAndPort $ServiceAddress $ServicePort)
     $ServiceAddress = $local:Resolved.ServiceAddress
     $ServicePort = $local:Resolved.ServicePort
+
     try
     {
+        # Initial check to status is always done with Insecure flag... out of box Secrets Broker uses a self-signed certificate
         $local:Status = (Get-SgDevOpsApplianceStatus $ServiceAddress $ServicePort -Insecure -ServiceApiVersion $ServiceApiVersion)
+        if ($local:Status.ApplianceId)
+        {
+            Write-Host -ForegroundColor Yellow "WARNING: This Secrets Broker is currently associated with $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
+            if ($Force)
+            {
+                $local:Confirmed = $true
+            }
+            else
+            {
+                $local:Confirmed = (Get-Confirmation "Initialize Secrets Broker" "Do you want to associate with a different Safeguard appliance?" `
+                                                     "Initialize." "Cancels this operation.")
+                Write-Host ""
+                Write-Host ""
+            }
+        }
+        else
+        {
+            # not associated yet
+            $local:Confirmed = $true
+        }
     }
     catch
     {
@@ -856,70 +997,63 @@ function Initialize-SgDevOpsAppliance
                                              "Initialize." "Cancels this operation.")
     }
 
-    if ($local:Status.ApplianceId)
-    {
-        Write-Host -ForegroundColor Yellow "WARNING: This Secrets Broker is currently associated with $($local:Status.ApplianceName) ($($local:Status.ApplianceAddress))."
-        if ($Force)
-        {
-            $local:Confirmed = $true
-        }
-        else
-        {
-            $local:Confirmed = (Get-Confirmation "Initialize Secrets Broker" "Do you want to associate with a different Safeguard appliance?" `
-                                                 "Initialize." "Cancels this operation.")
-        }
-    }
-    else
-    {
-        # not associated yet
-        $local:Confirmed = $true
-    }
-
     if ($local:Confirmed)
     {
-        if (-not $Appliance)
+        if ($Force -or (Confirm-TlsCertificateInformation "Secrets Broker" $ServiceAddress $ServicePort))
         {
-            if ($SafeguardSession -and $SafeguardSession.Appliance)
+            if (-not $Appliance)
             {
-                $Appliance = $SafeguardSession.Appliance
+                if ($SafeguardSession -and $SafeguardSession.Appliance)
+                {
+                    $Appliance = $SafeguardSession.Appliance
+                }
+                else
+                {
+                    $Appliance = (Read-Host "Appliance")
+                }
             }
-            else
+            if ($Force -or (Confirm-TlsCertificateInformation "Safeguard Appliance" $Appliance 443))
             {
-                $Appliance = (Read-Host "Appliance")
-            }
-        }
-        $local:Token = (Get-ApplianceToken $Appliance -Gui:$Gui -Insecure:$Insecure -ApplianceApiVersion $ApplianceApiVersion)
-        try
-        {
-            Edit-SslVersionSupport
-            if ($Insecure)
-            {
-                Disable-SslVerification
-                if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
-            }
+                $local:Token = (Get-ApplianceToken $Appliance -Gui:$Gui -Insecure:$Insecure -ApplianceApiVersion $ApplianceApiVersion)
+                try
+                {
+                    Edit-SslVersionSupport
+                    if ($Insecure)
+                    {
+                        Disable-SslVerification
+                        if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+                    }
 
-            $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/v${ServiceApiVersion}/Safeguard"
-            $local:Status = (Invoke-RestMethod -Method PUT -Uri $local:Url -Headers @{
-                                    "Accept" = "application/json";
-                                    "Content-type" = "application/json";
-                                    "Authorization" = "spp-token ${local:Token}"
-                                } -Body @"
+                    $local:Url = "https://${ServiceAddress}:${ServicePort}/service/devops/v${ServiceApiVersion}/Safeguard"
+                    $local:Status = (Invoke-RestMethod -Method PUT -Uri $local:Url -Headers @{
+                                            "Accept" = "application/json";
+                                            "Content-type" = "application/json";
+                                            "Authorization" = "spp-token ${local:Token}" } -Body @"
 {
     "ApplianceAddress": "$Appliance",
     "ApiVersion": "$ApplianceApiVersion",
     "IgnoreSsl": $(([string]([bool]$Insecure)).ToLower())
 }
 "@)
-            $local:Status
-
-        }
-        finally
-        {
-            if ($Insecure)
-            {
-                Enable-SslVerification
-                if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+                    $local:Status
+                }
+                finally
+                {
+                    if ($Insecure)
+                    {
+                        Enable-SslVerification
+                        if ($global:PSDefaultParameterValues) { $PSDefaultParameterValues = $global:PSDefaultParameterValues.Clone() }
+                    }
+                }
             }
+            else
+            {
+                Write-Host -ForegroundColor Yellow "Operation canceled."
+            }
+        }
+        else
+        {
+            Write-Host -ForegroundColor Yellow "Operation canceled."
         }
     }
     else
