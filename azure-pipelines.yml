@@ -36,11 +36,6 @@ steps:
   displayName: 'Get code signing certificate from Azure Key Vault'
   condition: and(succeeded(), eq(variables.isMain, true))
 
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: 'env | sort'
-
 - powershell: |
       $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
       $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
@@ -56,8 +51,14 @@ steps:
   inputs:
     targetType: filePath
     filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
-    arguments: $(Build.SourcesDirectory) $(Build.BuildId)
+    arguments: $(Build.SourcesDirectory) $(Build.BuildId) $(isPrerelease)
   displayName: 'Setting build version'
+
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'env | sort'
+  displayName: 'Display environment variables'
 
 - task: VSBuild@1
   inputs:

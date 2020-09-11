@@ -28,6 +28,8 @@ public class VersionNumberEditor {
         var allFiles = Directory.GetFiles(startingDir, "AssemblyInfo.tmpl", SearchOption.AllDirectories);
         var pattern = new Regex("AssemblyVersion\\(\"(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<revision>\\d+)\\.(?<build>\\d+)\"\\)");
 
+        string newVersion = "";
+
         foreach (var templateFile in allFiles) {
             Console.WriteLine("TemplateFile={0}", templateFile);
             var path = Path.GetDirectoryName(templateFile);
@@ -48,7 +50,7 @@ public class VersionNumberEditor {
 
             build = string.IsNullOrEmpty(buildId) ? build + 1 : Convert.ToInt32(buildId) % UInt16.MaxValue;
 
-            var newVersion = string.Format("{0}.{1}.{2}.{3}", major, minor, revision, build);
+            newVersion = string.Format("{0}.{1}.{2}.{3}", major, minor, revision, build);
             var template = File.ReadAllText(templateFile);
             template = template.Replace("<version>", newVersion);
 
@@ -58,7 +60,7 @@ public class VersionNumberEditor {
             Console.Write(template);
             Console.WriteLine("*****");
         }
-        return "1.0.0.12345";
+        return newVersion;
     }
 }
 }
