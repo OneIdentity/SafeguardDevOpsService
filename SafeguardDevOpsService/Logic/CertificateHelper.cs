@@ -42,9 +42,32 @@ namespace OneIdentity.DevOps.Logic
                         return true;
                 }
 
-                if (!configDb.GetTrustedChain().Build(new X509Certificate2(certificate)))
+                logger.Debug($"Trusted certificates count = {trustedChain.ChainPolicy.ExtraStore.Count}");
+                var i = 0;
+                foreach (var trusted in trustedChain.ChainPolicy.ExtraStore)
+                {
+                    logger.Debug($"[{i}] - subject = {trusted.SubjectName.Name}");
+                    logger.Debug($"[{i}] - issuer = {trusted.IssuerName.Name}");
+                    logger.Debug($"[{i}] - thumbprint = {trusted.Thumbprint}");
+                    i++;
+                }
+
+                if (!trustedChain.Build(new X509Certificate2(certificate)))
                 {
                     logger.Error("Failed SPP SSL certificate validation.");
+                    var chainStatus = trustedChain.ChainStatus;
+                    for (i = 0; i < chainStatus.Length; i++)
+                    {
+                        logger.Debug($"[{i}] - chain status = {chainStatus[i].StatusInformation}");
+                    }
+                    i = 0;
+                    foreach (var chainElement in trustedChain.ChainElements)
+                    {
+                        logger.Debug($"[{i}] - subject = {chainElement.Certificate.SubjectName.Name}");
+                        logger.Debug($"[{i}] - issuer = {chainElement.Certificate.IssuerName.Name}");
+                        logger.Debug($"[{i}] - thumbprint = {chainElement.Certificate.Thumbprint}");
+                        i++;
+                    }
                     return false;
                 }
             }
