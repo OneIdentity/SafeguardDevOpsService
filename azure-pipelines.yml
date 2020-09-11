@@ -51,7 +51,7 @@ steps:
   inputs:
     targetType: filePath
     filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
-    arguments: $(Build.SourcesDirectory) $(Build.BuildId) $(isPrerelease)
+    arguments: $(Build.SourcesDirectory) $(Build.BuildId)
   displayName: 'Setting build version'
 
 - task: Bash@3
@@ -109,7 +109,7 @@ steps:
   inputs:
     targetType: filePath
     filePath: $(System.DefaultWorkingDirectory)\powershell\install-forpipeline.ps1
-    arguments: $(Build.SourcesDirectory) $(VersionString)
+    arguments: $(Build.SourcesDirectory) $(VersionString) $(isPrerelease)
   displayName: 'Building the safeguard-devops Powershell module'
 
 - task: PublishBuildArtifacts@1
