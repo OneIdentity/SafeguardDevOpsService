@@ -21,11 +21,12 @@ Write-Host "TemplateVersion = $($local:TemplateVersion)"
 
 Write-Host "Searching for AssemblyInfo.cs files in '$StartingDir'"
 (Get-ChildItem -Recurse -Filter "AssemblyInfo.cs") | ForEach-Object {
-    Write-Host "Replacing version information in '$_'"
-    (Get-Content $_ -Raw).replace($local:TemplateVersion, $local:VersionString) | Set-Content $_
+    $local:Path = $_.FullName
+    Write-Host "Replacing version information in '$($local:Path)'"
+    (Get-Content $local:Path -Raw).replace($local:TemplateVersion, $local:VersionString) | Set-Content $local:Path
 
     Write-Output "*****"
-    Get-Content $_
+    Get-Content $local:Path
     Write-Output "*****"
 }
 
