@@ -566,6 +566,19 @@ function Get-SgDevOpsApplianceStatus
     }
 }
 
+<#
+.SYNOPSIS
+Get the current state of the Secrets Broker TLS certificate validation.
+
+.DESCRIPTION
+The Secrets Broker can be instructed to ignore TLS certificate validation
+when interacting with the Safeguard appliance.  This cmdlet gets the current
+state of the TLS certificate validation.
+
+.EXAMPLE
+Get-SgDevOpsTlsValidation
+
+#>
 function Get-SgDevOpsTlsValidation
 {
     [CmdletBinding()]
@@ -578,6 +591,19 @@ function Get-SgDevOpsTlsValidation
     (-not (Invoke-SgDevOpsMethod GET Safeguard).IgnoreSsl)
 }
 
+<#
+.SYNOPSIS
+Enables TLS certificate validation for the Secrets Broker.
+
+.DESCRIPTION
+The Secrets Broker can be instructed to ignore TLS certificate validation
+when interacting with the Safeguard appliance.  This cmdlet enables the Secrets
+Broker for TLS certificate validation.
+
+.EXAMPLE
+Enable-SgDevOpsTlsValidation
+
+#>
 function Enable-SgDevOpsTlsValidation
 {
     [CmdletBinding()]
@@ -592,6 +618,19 @@ function Enable-SgDevOpsTlsValidation
     Invoke-SgDevOpsMethod PUT Safeguard -Body $local:Sg
 }
 
+<#
+.SYNOPSIS
+Disables TLS certificate validation for the Secrets Broker.
+
+.DESCRIPTION
+The Secrets Broker can be instructed to ignore TLS certificate validation
+when interacting with the Safeguard appliance.  This cmdlet disables the Secrets
+Broker for TLS certificate validation.
+
+.EXAMPLE
+Disable-SgDevOpsTlsValidation
+
+#>
 function Disable-SgDevOpsTlsValidation
 {
     [CmdletBinding()]

@@ -321,6 +321,21 @@ function Initialize-SgDevOps
 }
 
 
+<#
+.SYNOPSIS
+An interactive command that finds specific asset accounts, based on queries,
+that should be registered with the Secrets Broker.  Once the asset accounts
+have been found, the command will allow the user to confirm whether the accounts
+should be registered.
+
+.DESCRIPTION
+This cmdlet will associate Secrets Broker with specific asset accounts in an
+interactive way.
+
+.EXAMPLE
+Invoke-SgDevOpsRegisteredAccountSetup
+
+#>
 function Invoke-SgDevOpsRegisteredAccountSetup
 {
     [CmdletBinding()]
