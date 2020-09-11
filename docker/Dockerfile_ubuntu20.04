@@ -4,7 +4,7 @@ MAINTAINER support@oneidentity.com
 RUN groupadd -r safeguard \
     && useradd -r -g safeguard -s /bin/bash safeguard \
     && mkdir -p /home/safeguard \
-    && /usr/bin/echo -e "{\n    \"HttpsPort\": "4443"\n}" > /home/safeguard/appsettings.json \
+    && /usr/bin/echo -e "{\n    \"HttpsPort\": \"4443\",\n    \"LogLevel\": \"Debug\"\n}" > /home/safeguard/appsettings.json \
     && chown -R safeguard:safeguard /home/safeguard \
     && chown -R safeguard:safeguard /usr/share
 
