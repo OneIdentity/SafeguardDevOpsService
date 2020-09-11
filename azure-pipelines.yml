@@ -17,7 +17,7 @@ variables:
   buildPlatform: 'x64'
   buildConfiguration: 'Release'
   codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
-  isPrerelease: true
+  isPrerelease: ${{ true }}
   isMain: $[eq(variables['Build.SourceBranch'], 'refs/heads/phase2')]
   signingToolPath: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64'
 
