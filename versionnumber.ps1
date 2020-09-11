@@ -4,7 +4,7 @@ Param(
     [string]$StartingDir,
     [Parameter(Mandatory=$true, Position=1)]
     [string]$SemanticVersion,
-    [Parameter(Mandatory=$true, Position=1)]
+    [Parameter(Mandatory=$true, Position=2)]
     [string]$BuildId
 )
 
