@@ -1027,7 +1027,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error($"Get available accounts failed: {ex.Message}");
+                throw LogAndException($"Get available accounts failed. {ex.Message}", ex);
             }
 
             return new List<SppAccount>();
