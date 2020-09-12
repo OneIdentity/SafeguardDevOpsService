@@ -170,3 +170,18 @@ jobs:
       targetType: 'inline'
       script: 'env | sort'
     displayName: 'Display environment variables'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'filePath'
+      filePath: '$(System.DefaultWorkingDirectory)/build-docker.sh'
+      arguments: alpine3.12 $(VersionString)
+    displayName: 'Building alpine docker image'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'filePath'
+      filePath: '$(System.DefaultWorkingDirectory)/build-docker.sh'
+      arguments: ubuntu20.04 $(VersionString)
+    displayName: 'Building ubuntu docker image'
+
