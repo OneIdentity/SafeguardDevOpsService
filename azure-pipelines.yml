@@ -161,7 +161,7 @@ jobs:
   - task: Bash@3
     inputs:
       targetType: 'filePath'
-      filePath: '$(System.DefaultWorkingDirectory)/versionnumber.ps1'
+      filePath: '$(System.DefaultWorkingDirectory)/versionnumber.sh'
       arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
     displayName: 'Setting build version'
 
