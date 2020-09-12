@@ -1,7 +1,7 @@
 [CmdletBinding()]
 Param(
     [Parameter(Mandatory=$true, Position=0)]
-    [string]$StartingDir,
+    [string]$SourceDir,
     [Parameter(Mandatory=$true, Position=1)]
     [string]$SemanticVersion,
     [Parameter(Mandatory=$true, Position=2)]
@@ -19,7 +19,7 @@ $local:TemplateVersion = "65534.65534.65534.65534"
 Write-Host "VersionString = $($local:VersionString)"
 Write-Host "TemplateVersion = $($local:TemplateVersion)"
 
-Write-Host "Searching for AssemblyInfo.cs files in '$StartingDir'"
+Write-Host "Searching for AssemblyInfo.cs files in '$SourceDir'"
 (Get-ChildItem -Recurse -Filter "AssemblyInfo.cs") | ForEach-Object {
     $local:Path = $_.FullName
     Write-Host "Replacing version information in '$($local:Path)'"
