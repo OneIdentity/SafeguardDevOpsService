@@ -185,3 +185,15 @@ jobs:
       arguments: ubuntu20.04 $(VersionString)
     displayName: 'Building ubuntu docker image'
 
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: |
+        docker login -u petrsnd -p "<get from vault>"
+        docker tag oneidentity/safeguard-secretsbroker:$(VersionString)-alpine3.12 oneidentity/safeguard-secretsbroker:latest
+        docker push oneidentity/safeguard-secretsbroker:$(VersionString)-alpine3.12
+        docker push oneidentity/safeguard-secretsbroker:$(VersionString)-ubuntu20.04
+        docker push oneidentity/safeguard-secretsbroker:latest
+        docker logout
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+    displayName: 'Publishing docker images'
