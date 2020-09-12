@@ -2,9 +2,7 @@
 trigger:
 - phase2
 
-pool:
-  vmImage: 'windows-latest'
-
+# Global Variables:
 #
 # semanticVersion.<generated build number> gets set in a variable called VersionString.
 #   VersionString is used to replace placeholders in assemblies and packages.
@@ -18,125 +16,150 @@ variables:
   semanticVersion: "1.0.0"
   isPrerelease: ${{ true }}
   isReleaseBranch: $[eq(variables['Build.SourceBranch'], 'refs/heads/phase2')]
-  solution: '**/*.sln'
-  setupProjectDir: 'SafeguardDevOpsServiceWix'
-  setupProject: '**/$(setupProjectDir)/*.wixproj'
-  pluginsDir: 'ExternalPlugins'
-  buildPlatform: 'x64'
-  buildConfiguration: 'Release'
-  codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
-  signingToolPath: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64'
 
-steps:
-- task: PowerShell@2
-  inputs:
-    targetType: filePath
-    filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
-    arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
-  displayName: 'Setting build version'
+jobs:
+- job:
+  displayName: "Windows Build"
+  pool:
+    vmImage: 'windows-latest'
 
-- task: NuGetToolInstaller@1
+  # Windows Build Variables:
+  variables:
+    solution: '**/*.sln'
+    setupProjectDir: 'SafeguardDevOpsServiceWix'
+    setupProject: '**/$(setupProjectDir)/*.wixproj'
+    pluginsDir: 'ExternalPlugins'
+    buildPlatform: 'x64'
+    buildConfiguration: 'Release'
+    codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
+    signingToolPath: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64'
 
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
+  steps:
+  - task: PowerShell@2
+    inputs:
+      targetType: filePath
+      filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
+      arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
+    displayName: 'Setting build version'
 
-- task: AzureKeyVault@1
-  inputs:
-    azureSubscription: 'Azure.Infrastructure.CodeSigning'
-    KeyVaultName: 'CodeSigningCertificates'
-    SecretsFilter: '*'
-  displayName: 'Get code signing certificate from Azure Key Vault'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+  - task: NuGetToolInstaller@1
 
-- powershell: |
-      $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
-      $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
-      $certCollection.Import($kvSecretBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
-      $protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12,"$(OneIdentity-CodeSigningCertPassword)")
-      $certpath = '$(Build.BinariesDirectory)/$(codeSigningCertFileName)'
-      Write-Verbose -Verbose $certpath
-      [System.IO.File]::WriteAllBytes($certpath, $protectedCertificateBytes)
-  displayName: 'Save code signing certificate to PFX file'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+  - task: NuGetCommand@2
+    inputs:
+      restoreSolution: '$(solution)'
 
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: 'env | sort'
-  displayName: 'Display environment variables'
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'Azure.Infrastructure.CodeSigning'
+      KeyVaultName: 'CodeSigningCertificates'
+      SecretsFilter: '*'
+    displayName: 'Get code signing certificate from Azure Key Vault'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-  displayName: 'Build $(solution)'
+  - powershell: |
+        $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
+        $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
+        $certCollection.Import($kvSecretBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
+        $protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12,"$(OneIdentity-CodeSigningCertPassword)")
+        $certpath = '$(Build.BinariesDirectory)/$(codeSigningCertFileName)'
+        Write-Verbose -Verbose $certpath
+        [System.IO.File]::WriteAllBytes($certpath, $protectedCertificateBytes)
+    displayName: 'Save code signing certificate to PFX file'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(setupProject)'
-    msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-  displayName: 'Build $(setupProject) with signing'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'env | sort'
+    displayName: 'Display environment variables'
 
-- task: VSBuild@1
-  inputs:
-    solution: '$(setupProject)'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-  displayName: 'Build $(setupProject) no signing'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, false))
+  - task: VSBuild@1
+    inputs:
+      solution: '$(solution)'
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
+    displayName: 'Build $(solution)'
 
-- task: DeleteFiles@1
-  inputs:
-    SourceFolder: '$(Build.BinariesDirectory)'
-    Contents: '$(codeSigningCertFileName)'
-  condition: succeededOrFailed()
-  displayName: 'Delete code signing certificate files'
+  - task: VSBuild@1
+    inputs:
+      solution: '$(setupProject)'
+      msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
+    displayName: 'Build $(setupProject) with signing'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
-- task: CopyFiles@2
-  inputs:
-    sourceFolder: '$(Build.SourcesDirectory)\$(setupProjectDir)'
-    contents: '**\bin\**'
-    targetFolder: $(Build.ArtifactStagingDirectory)
-  displayName: 'Copy files to staging folder'
+  - task: VSBuild@1
+    inputs:
+      solution: '$(setupProject)'
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
+    displayName: 'Build $(setupProject) no signing'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, false))
 
-- task: CopyFiles@2
-  inputs:
-    sourceFolder: '$(Build.SourcesDirectory)\$(pluginsDir)\bin\$(buildConfiguration)'
-    contents: '**'
-    targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)
-  displayName: 'Copy plugins to staging folder'
+  - task: DeleteFiles@1
+    inputs:
+      SourceFolder: '$(Build.BinariesDirectory)'
+      Contents: '$(codeSigningCertFileName)'
+    condition: succeededOrFailed()
+    displayName: 'Delete code signing certificate files'
 
-- task: PowerShell@2
-  inputs:
-    targetType: filePath
-    filePath: $(System.DefaultWorkingDirectory)\powershell\install-forpipeline.ps1
-    arguments: $(Build.SourcesDirectory) $(VersionString) $$(isPrerelease)
-  displayName: 'Building the safeguard-devops Powershell module'
+  - task: CopyFiles@2
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)\$(setupProjectDir)'
+      contents: '**\bin\**'
+      targetFolder: $(Build.ArtifactStagingDirectory)
+    displayName: 'Copy files to staging folder'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: 'SafeguardDevOpsService'
-  displayName: 'Publishing the artifacts'
+  - task: CopyFiles@2
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)\$(pluginsDir)\bin\$(buildConfiguration)'
+      contents: '**'
+      targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)
+    displayName: 'Copy plugins to staging folder'
 
-- task: GitHubRelease@1
-  inputs:
-    gitHubConnection: 'github.ReleaseServiceAccount'
-    repositoryName: 'OneIdentity/SafeguardDevOpsService'
-    action: 'create'
-    target: '$(Build.SourceVersion)'
-    tagSource: 'userSpecifiedTag'
-    tag: '$(Build.BuildNumber)'
-    isPreRelease: $[ variables.isPrerelease ]
-    changeLogCompareToRelease: 'lastFullRelease'
-    changeLogType: 'commitBased'
-    assets: |
-      $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\en-us\*.msi
-      $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)\*.zip
-  displayName: 'Creating and publishing a release to Github'
-  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+  - task: PowerShell@2
+    inputs:
+      targetType: filePath
+      filePath: $(System.DefaultWorkingDirectory)\powershell\install-forpipeline.ps1
+      arguments: $(Build.SourcesDirectory) $(VersionString) $$(isPrerelease)
+    displayName: 'Building Powershell module'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'SafeguardDevOpsService'
+    displayName: 'Publishing the artifacts'
+
+  - task: GitHubRelease@1
+    inputs:
+      gitHubConnection: 'github.com_bnicholesdell'
+      repositoryName: 'OneIdentity/SafeguardDevOpsService'
+      action: 'create'
+      target: '$(Build.SourceVersion)'
+      tagSource: 'userSpecifiedTag'
+      tag: '$(Build.BuildNumber)'
+      isPreRelease: $[ variables.isPrerelease ]
+      changeLogCompareToRelease: 'lastFullRelease'
+      changeLogType: 'commitBased'
+      assets: |
+        $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\en-us\*.msi
+        $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)\*.zip
+    displayName: 'Creating and publishing a release to Github'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - powershell: Publish-Module -Path $(Build.SourcesDirectory)\safeguard-devops -NuGetApiKey "<get from vault>" -Verbose -SkipAutomaticTags
+    displayName: 'Publish Powershell module to Powershell Gallery'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+- job:
+  displayName: "Linux (Docker) Build"
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'env | sort'
+    displayName: 'Display environment variables'
