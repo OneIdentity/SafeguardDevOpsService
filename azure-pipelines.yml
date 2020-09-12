@@ -13,13 +13,13 @@ trigger:
 # isReleaseBranch controls whether packages will be generated and published.
 #
 variables:
-  semanticVersion: "1.0.0"
+  semanticVersion: "0.9.0"
   isPrerelease: ${{ true }}
   isReleaseBranch: $[eq(variables['Build.SourceBranch'], 'refs/heads/phase2')]
 
 jobs:
 - job:
-  displayName: "Windows Build"
+  displayName: "Windows MSI and Plugin Build"
   pool:
     vmImage: 'windows-latest'
 
@@ -153,7 +153,7 @@ jobs:
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
 - job:
-  displayName: "Linux (Docker) Build"
+  displayName: "Linux Docker Build"
   pool:
     vmImage: 'ubuntu-latest'
 
