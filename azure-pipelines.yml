@@ -179,13 +179,13 @@ jobs:
       script: 'env | sort'
     displayName: 'Display environment variables'
 
-#  - task: AzureKeyVault@1
-#    inputs:
-#      azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
-#      KeyVaultName: 'SafeguardBuildSecrets'
-#      SecretsFilter: 'DockerHubAccessToken'
-#    displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
-#    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+      KeyVaultName: 'SafeguardBuildSecrets'
+      SecretsFilter: 'DockerHubAccessToken'
+    displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
   - task: Bash@3
     inputs:
