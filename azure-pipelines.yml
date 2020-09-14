@@ -67,6 +67,14 @@ jobs:
     displayName: 'Save code signing certificate to PFX file'
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'OneIdentity.RD.SBox.Safeguard'
+      KeyVaultName: 'SafeguardBuildSecrets'
+      SecretsFilter: 'PowerShellGalleryApiKey'
+    displayName: 'Get PowerShell Gallery API key from Sandbox Azure Key Vault'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
   - task: Bash@3
     inputs:
       targetType: 'inline'
@@ -148,7 +156,7 @@ jobs:
     displayName: 'Creating and publishing a release to Github'
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
-  - powershell: Publish-Module -Path $(Build.SourcesDirectory)\safeguard-devops -NuGetApiKey "<get from vault>" -Verbose -SkipAutomaticTags
+  - powershell: Publish-Module -Path $(Build.SourcesDirectory)\safeguard-devops -NuGetApiKey "$(PowerShellGalleryApiKey)" -Verbose -SkipAutomaticTags
     displayName: 'Publish Powershell module to Powershell Gallery'
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
@@ -171,6 +179,14 @@ jobs:
       script: 'env | sort'
     displayName: 'Display environment variables'
 
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'OneIdentity.RD.SBox.Safeguard'
+      KeyVaultName: 'SafeguardBuildSecrets'
+      SecretsFilter: 'DockerHubAccessToken'
+    displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
   - task: Bash@3
     inputs:
       targetType: 'filePath'
@@ -189,7 +205,7 @@ jobs:
     inputs:
       targetType: 'inline'
       script: |
-        docker login -u petrsnd -p "<get from vault>"
+        docker login -u petrsnd -p "$(DockerHubAccessToken)"
         docker tag oneidentity/safeguard-secretsbroker:$(VersionString)-alpine3.12 oneidentity/safeguard-secretsbroker:latest
         docker push oneidentity/safeguard-secretsbroker:$(VersionString)-alpine3.12
         docker push oneidentity/safeguard-secretsbroker:$(VersionString)-ubuntu20.04
