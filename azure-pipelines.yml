@@ -194,6 +194,7 @@ jobs:
       targetType: 'filePath'
       filePath: '$(System.DefaultWorkingDirectory)/build-docker.sh'
       arguments: alpine3.12 $(VersionString)
+      failOnStderr: true
     displayName: 'Building alpine docker image'
 
   - task: Bash@3
@@ -201,6 +202,7 @@ jobs:
       targetType: 'filePath'
       filePath: '$(System.DefaultWorkingDirectory)/build-docker.sh'
       arguments: ubuntu20.04 $(VersionString)
+      failOnStderr: true
     displayName: 'Building ubuntu docker image'
 
   - task: Bash@3
@@ -213,5 +215,6 @@ jobs:
         docker push oneidentity/safeguard-secretsbroker:$(VersionString)-ubuntu20.04
         docker push oneidentity/safeguard-secretsbroker:latest
         docker logout
+      failOnStderr: true
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
     displayName: 'Publishing docker images'
