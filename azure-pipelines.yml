@@ -87,7 +87,7 @@ steps:
     SourceFolder: '$(Build.BinariesDirectory)'
     Contents: '$(codeSigningCertFileName)'
   condition: succeededOrFailed()
-  displayName: 'Delete code signing certificate files'  
+  displayName: 'Delete code signing certificate files'
 
 - task: CopyFiles@2
   inputs:
@@ -105,13 +105,13 @@ steps:
 
 - task: PublishBuildArtifacts@1
   inputs:
-    pathToPublish: '$(Build.ArtifactStagingDirectory)' 
-    artifactName: 'SafeguardDevOpsService' 
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'SafeguardDevOpsService'
   displayName: 'Publishing the artifacts'
 
 - task: GitHubRelease@1
   inputs:
-    gitHubConnection: 'github.com_bnicholesdell'
+    gitHubConnection: 'github.ReleaseServiceAccount'
     repositoryName: 'OneIdentity/SafeguardDevOpsService'
     action: 'create'
     target: '$(Build.SourceVersion)'
