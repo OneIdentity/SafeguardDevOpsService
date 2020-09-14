@@ -671,9 +671,16 @@ namespace OneIdentity.DevOps.Logic
                 certSize = size.Value;
             if (subjectName != null)
             {
-                if (!subjectName.StartsWith("CN=", StringComparison.InvariantCultureIgnoreCase))
-                    subjectName = "CN={subjectName}";
-                certSubjectName = subjectName;
+                try
+                {
+                    subjectName = subjectName.Trim('"').Trim('\'');
+                    var validCnName = new X500DistinguishedName(subjectName);
+                    certSubjectName = validCnName.Name;
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndException("Invalid subject name.", ex);
+                }
             }
 
             using (RSA rsa = RSA.Create(certSize))
