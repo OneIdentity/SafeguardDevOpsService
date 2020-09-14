@@ -185,7 +185,7 @@ jobs:
     inputs:
       azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
       KeyVaultName: 'SafeguardBuildSecrets'
-      SecretsFilter: 'DockerHubAccessToken'
+      SecretsFilter: 'DockerHubAccessToken,DockerHubPassword'
     displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
@@ -232,7 +232,7 @@ jobs:
       script: |
         docker run --rm -t \
         -v `pwd`:/myvol \
-        -e DOCKER_USER='petrsnd' -e DOCKER_PASS='$(DockerHubAccessToken)' \
+        -e DOCKER_USER='petrsnd' -e DOCKER_PASS='$(DockerHubPassword)' \
         chko/docker-pushrm:1 --file /myvol/README.md \
         --short "Safeguard Secrets Broker for DevOps" --debug oneidentity/safeguard-devops
       failOnStderr: true
