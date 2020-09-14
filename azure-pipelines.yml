@@ -69,7 +69,7 @@ jobs:
 
   - task: AzureKeyVault@1
     inputs:
-      azureSubscription: 'OneIdentity.RD.SBox.Safeguard'
+      azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
       KeyVaultName: 'SafeguardBuildSecrets'
       SecretsFilter: 'PowerShellGalleryApiKey'
     displayName: 'Get PowerShell Gallery API key from Sandbox Azure Key Vault'
@@ -181,7 +181,7 @@ jobs:
 
 #  - task: AzureKeyVault@1
 #    inputs:
-#      azureSubscription: 'OneIdentity.RD.SBox.Safeguard'
+#      azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
 #      KeyVaultName: 'SafeguardBuildSecrets'
 #      SecretsFilter: 'DockerHubAccessToken'
 #    displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
