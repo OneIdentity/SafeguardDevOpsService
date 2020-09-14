@@ -210,10 +210,10 @@ jobs:
       targetType: 'inline'
       script: |
         docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
-        docker tag oneidentity/safeguard-secretsbroker:$(VersionString)-alpine3.12 oneidentity/safeguard-secretsbroker:latest
-        docker push oneidentity/safeguard-secretsbroker:$(VersionString)-alpine3.12
-        docker push oneidentity/safeguard-secretsbroker:$(VersionString)-ubuntu20.04
-        docker push oneidentity/safeguard-secretsbroker:latest
+        docker tag oneidentity/safeguard-devops:$(VersionString)-alpine3.12 oneidentity/safeguard-devops:latest
+        docker push oneidentity/safeguard-devops:$(VersionString)-alpine3.12
+        docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04
+        docker push oneidentity/safeguard-devops:latest
         docker logout
       failOnStderr: true
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
