@@ -141,7 +141,7 @@ jobs:
 
   - task: GitHubRelease@1
     inputs:
-      gitHubConnection: 'github.com_bnicholesdell'
+      gitHubConnection: 'github.OneIdentity'
       repositoryName: 'OneIdentity/SafeguardDevOpsService'
       action: 'create'
       target: '$(Build.SourceVersion)'
