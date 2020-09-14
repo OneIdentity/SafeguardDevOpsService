@@ -146,7 +146,8 @@ jobs:
       action: 'create'
       target: '$(Build.SourceVersion)'
       tagSource: 'userSpecifiedTag'
-      tag: '$(Build.BuildNumber)'
+      tag: '$(VersionString)'
+      title: '$(VersionString)'
       isPreRelease: $[ variables.isPrerelease ]
       changeLogCompareToRelease: 'lastFullRelease'
       changeLogType: 'commitBased'
