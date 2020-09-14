@@ -12,7 +12,7 @@
 RootModule = 'safeguard-devops.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.1.99999'
+ModuleVersion = '99999.99999.99999'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()

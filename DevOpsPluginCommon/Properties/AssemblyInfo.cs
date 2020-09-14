@@ -12,8 +12,8 @@ using System.Resources;
 [assembly: AssemblyTrademark("One Identity LLC (TM)")]
 [assembly: AssemblyCulture("")]
 
-// Version information
-[assembly: AssemblyVersion("1.0.0.5")]
-[assembly: AssemblyFileVersion("1.0.0.5")]
+// Version information -- replaced at build time
+[assembly: AssemblyVersion("65534.65534.65534.65534")]
+[assembly: AssemblyFileVersion("65534.65534.65534.65534")]
 [assembly: NeutralResourcesLanguageAttribute( "en-US" )]
 
