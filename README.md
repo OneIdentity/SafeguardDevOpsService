@@ -1,8 +1,6 @@
-<!--
-[![Build status](https://ci.appveyor.com/api/projects/status/wgd68b7qrwhc7oc3?svg=true)](https://ci.appveyor.com/project/petrsnd/safeguarddotnet)
-[![nuget](https://img.shields.io/nuget/v/OneIdentity.SafeguardDotNet.svg)](https://www.nuget.org/packages/OneIdentity.SafeguardDotNet/)
-[![GitHub](https://img.shields.io/github/license/OneIdentity/SafeguardDotNet.svg)](https://github.com/OneIdentity/SafeguardDotNet/blob/master/LICENSE)
--->
+[![GitHub](https://img.shields.io/github/v/release/OneIdentity/SafeguardDevOpsService)](https://github.com/OneIdentity/SafeguardDevOpsService/releases/)
+[![Docker Hub](https://img.shields.io/badge/docker-oneidentity%2Fsafeguard--devops-blue.svg)](https://hub.docker.com/r/oneidentity/safeguard-devops/)
+[![GitHub](https://img.shields.io/github/license/OneIdentity/SafeguardDevOpsService.svg)](https://github.com/OneIdentity/SafeguardDevOpsService/blob/master/LICENSE)
 
 # Safeguard Secrets Broker for DevOps
 
