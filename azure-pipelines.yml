@@ -16,7 +16,7 @@ trigger:
 variables:
   semanticVersion: "0.9.0"
   isPrerelease: ${{ true }}
-  isReleaseBranch: $[eq(variables['Build.SourceBranch'], 'refs/heads/phase2')]
+  isReleaseBranch: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/phase2'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
 
 jobs:
 - job:
@@ -234,6 +234,6 @@ jobs:
         -v `pwd`:/myvol \
         -e DOCKER_USER='petrsnd' -e DOCKER_PASS='$(DockerHubPassword)' \
         chko/docker-pushrm:1 --file /myvol/README.md \
-        --short "Safeguard Secrets Broker for DevOps" --debug oneidentity/safeguard-devops
+        --short "Safeguard Secrets Broker for DevOps" oneidentity/safeguard-devops
       failOnStderr: true
     displayName: 'Pushing README.md to Docker Hub'
