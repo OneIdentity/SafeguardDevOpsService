@@ -1,6 +1,7 @@
 # which branch should trigger a build
 trigger:
-- phase2
+  branches:
+    include: [ master, phase2, release-* ]
 
 # Global Variables:
 #
@@ -146,7 +147,7 @@ jobs:
       action: 'create'
       target: '$(Build.SourceVersion)'
       tagSource: 'userSpecifiedTag'
-      tag: '$(VersionString)'
+      tag: 'release-$(VersionString)'
       title: '$(VersionString)'
       isPreRelease: $[ variables.isPrerelease ]
       changeLogCompareToRelease: 'lastFullRelease'
