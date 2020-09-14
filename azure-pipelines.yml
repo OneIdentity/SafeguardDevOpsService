@@ -231,7 +231,7 @@ jobs:
       targetType: 'inline'
       script: |
         docker run --rm -t \
-        -v `pwd`:/my/vol \
+        -v `pwd`:/myvol \
         -e DOCKER_USER='petrsnd' -e DOCKER_PASS='$(DockerHubAccessToken)' \
         chko/docker-pushrm:1 --file /myvol/README.md \
         --short "Safeguard Secrets Broker for DevOps" --debug oneidentity/safeguard-devops
