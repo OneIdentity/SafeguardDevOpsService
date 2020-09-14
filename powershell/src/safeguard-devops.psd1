@@ -156,7 +156,7 @@ PrivateData = @{
          IconUri = 'https://raw.githubusercontent.com/OneIdentity/SafeguardDevOpsService/master/SafeguardLogo.ico'
 
          # List of external modules that this module is dependent upon.
-         ExternalModuleDependencies = $('safeguard-ps')
+         ExternalModuleDependencies = @('safeguard-ps')
 
          # Pre-release tag
          Prerelease = '-pre'
