@@ -234,7 +234,6 @@ jobs:
         -v `pwd`:/myvol \
         -e DOCKER_USER='petrsnd' -e DOCKER_PASS='$(DockerHubPassword)' \
         chko/docker-pushrm:1 --file /myvol/README.md \
-        --short "Safeguard Secrets Broker for DevOps" --debug oneidentity/safeguard-devops 2>&1
-        if [ $? -ne 0 ]; then >&2 echo "Failed to push readme -- error code: $?" fi
+        --short "Safeguard Secrets Broker for DevOps" --debug oneidentity/safeguard-devops 2>&1 || >&2 echo "Failed to push readme -- error code: $?"
       failOnStderr: true
     displayName: 'Pushing README.md to Docker Hub'
