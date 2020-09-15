@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
+     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
+
+  <Product Id="*" Name="SafeguardDevOpsService" Language="1033" Version="!(bind.fileVersion.DevOpsPluginCommon.dll)" Manufacturer="!(loc.CompanyName)" UpgradeCode="8a0194a6-6aed-441c-8130-a81b96490bd7">
+		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+    <MajorUpgrade AllowSameVersionUpgrades="yes" Schedule="afterInstallInitialize" DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes"  />
+
+    <Icon Id="safeguard.ico" SourceFile="$(var.ProjectDir)\..\SafeguardLogo.ico"/>
+
+    <Property Id="ARPPRODUCTICON">safeguard.icon</Property>
+    <Property Id="ARPURLINFOABOUT">https://github.com/OneIdentity/SafeguardDevOpsService</Property>
+    <!--<Property Id="ARPCOMMENTS" Value="$(var.ProductCopyright)" />-->
+    <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
+
+    <SetProperty Id="_INSTALL"   After="FindRelatedProducts" Value="1"><![CDATA[Installed="" AND REMOVE="" AND UPGRADINGPRODUCTCODE=""]]></SetProperty>
+    <SetProperty Id="_UNINSTALL" After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REMOVE="ALL" AND UPGRADINGPRODUCTCODE=""]]></SetProperty>
+    <SetProperty Id="_CHANGE"    After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="" AND REMOVE=""]]></SetProperty>
+    <SetProperty Id="_REPAIR"    After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="ALL" AND UPGRADINGPRODUCTCODE=""]]></SetProperty>
+    <SetProperty Id="_UPGRADE"   After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="" AND UPGRADINGPRODUCTCODE<>""]]></SetProperty>
+
+    <Condition Message="Installation requires Administrator privileges">
+      <![CDATA[Privileged]]>
+    </Condition>
+
+    <Condition Message="32 bit windows is not supported.">
+      VersionNT64
+    </Condition>
+
+    <UIRef Id="WixUI_Minimal" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.ProjectDir)\install-banner.bmp"/>
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.ProjectDir)\install-panel.bmp"/>
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.ProjectDir)\..\LICENSE.rtf"/>
+
+    <Feature Id="ProductFeature" Title="SafeguardDevOpsService" Level="1">
+			<ComponentGroupRef Id="DevOps_CommonAssemblies" />
+		</Feature>
+
+    <CustomAction Id="EXECUTE_INSTALL"
+                  Execute="commit"
+                  Impersonate="no"
+                  Return="check"
+                  FileKey="SafeguardDevOpsService.exe"
+                  ExeCommand="install" />
+    <CustomAction Id="EXECUTE_START"
+                  Execute="commit"
+                  Impersonate="no"
+                  Return="check"
+                  FileKey="SafeguardDevOpsService.exe"
+                  ExeCommand="start" />
+    <CustomAction Id="EXECUTE_STOP"
+                  Execute="immediate"
+                  Impersonate="no"
+                  Return="check"
+                  FileKey="SafeguardDevOpsService.exe"
+                  ExeCommand="stop" />
+    <CustomAction Id="EXECUTE_UNINSTALL"
+                  Execute="immediate"
+                  Impersonate="no"
+                  Return="check"
+                  FileKey="SafeguardDevOpsService.exe"
+                  ExeCommand="uninstall" />
+    <Property Id="ExecuteCommand">cmd.exe</Property>
+    <CustomAction Id="CLEANUP_DATA_ON_UNINSTALL"
+                  Property="ExecuteCommand"
+                  Execute="commit"
+                  Impersonate="no"
+                  Return="ignore"
+                  ExeCommand='/c rmdir "[ProgramFiles64Folder]!(loc.ProductNameFolder)" /s /q' />
+    <CustomAction Id="CLEANUP_EXT_DATA_ON_UNINSTALL"
+                  Property="ExecuteCommand"
+                  Execute="commit"
+                  Impersonate="no"
+                  Return="ignore"
+                  ExeCommand='/c rmdir "[CommonAppDataFolder]!(loc.ProductNameFolder)" /s /q' />
+
+    <InstallExecuteSequence>
+      <Custom Action="EXECUTE_STOP" After="CostFinalize">NOT _INSTALL</Custom>
+      <Custom Action="EXECUTE_UNINSTALL" After="EXECUTE_STOP">NOT _INSTALL</Custom>
+      <Custom Action="CLEANUP_DATA_ON_UNINSTALL" Before="InstallFinalize">_UNINSTALL</Custom>
+      <Custom Action="CLEANUP_EXT_DATA_ON_UNINSTALL" After="CLEANUP_DATA_ON_UNINSTALL">_UNINSTALL</Custom>
+      <Custom Action="EXECUTE_INSTALL" Before="InstallFinalize">NOT _UNINSTALL</Custom>
+      <Custom Action="EXECUTE_START" After="EXECUTE_INSTALL">NOT _UNINSTALL</Custom>
+    </InstallExecuteSequence>
+
+
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLLOCATION" Name="!(loc.ProductNameFolder)" />
+      </Directory>
+    </Directory>
+  </Fragment>
+
+</Wix>

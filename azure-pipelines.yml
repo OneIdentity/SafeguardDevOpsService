@@ -1,0 +1,240 @@
+# which branch should trigger a build
+trigger:
+  branches:
+    include: [ master, release-* ]
+
+# Global Variables:
+#
+# semanticVersion.<generated build number> gets set in a variable called VersionString.
+#   VersionString is used to replace placeholders in assemblies and packages.
+#
+# isPrerelease controls whether the release artifacts on GitHub and the Powershell module
+#   in the Powershell Gallery is marked as prerelease or not.
+#
+# isReleaseBranch controls whether packages will be generated and published.
+#
+variables:
+  semanticVersion: "0.9.0"
+  isPrerelease: ${{ true }}
+  isReleaseBranch: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
+
+jobs:
+- job:
+  displayName: "Windows MSI and Plugin Build"
+  pool:
+    vmImage: 'windows-latest'
+
+  # Windows Build Variables:
+  variables:
+    solution: '**/*.sln'
+    setupProjectDir: 'SafeguardDevOpsServiceWix'
+    setupProject: '**/$(setupProjectDir)/*.wixproj'
+    pluginsDir: 'ExternalPlugins'
+    buildPlatform: 'x64'
+    buildConfiguration: 'Release'
+    codeSigningCertFileName: 'OneIdentityCodeSigning.pfx'
+    signingToolPath: 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64'
+
+  steps:
+  - task: PowerShell@2
+    inputs:
+      targetType: filePath
+      filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
+      arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
+    displayName: 'Setting build version'
+
+  - task: NuGetToolInstaller@1
+
+  - task: NuGetCommand@2
+    inputs:
+      restoreSolution: '$(solution)'
+
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'Azure.Infrastructure.CodeSigning'
+      KeyVaultName: 'CodeSigningCertificates'
+      SecretsFilter: '*'
+    displayName: 'Get code signing certificate from Azure Key Vault'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - powershell: |
+        $kvSecretBytes = [System.Convert]::FromBase64String("$(OneIdentity-CodeSigning)")
+        $certCollection = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection
+        $certCollection.Import($kvSecretBytes,$null,[System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
+        $protectedCertificateBytes = $certCollection.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12,"$(OneIdentity-CodeSigningCertPassword)")
+        $certpath = '$(Build.BinariesDirectory)/$(codeSigningCertFileName)'
+        Write-Verbose -Verbose $certpath
+        [System.IO.File]::WriteAllBytes($certpath, $protectedCertificateBytes)
+    displayName: 'Save code signing certificate to PFX file'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+      KeyVaultName: 'SafeguardBuildSecrets'
+      SecretsFilter: 'PowerShellGalleryApiKey'
+    displayName: 'Get PowerShell Gallery API key from Sandbox Azure Key Vault'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'env | sort'
+    displayName: 'Display environment variables'
+
+  - task: VSBuild@1
+    inputs:
+      solution: '$(solution)'
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
+    displayName: 'Build $(solution)'
+
+  - task: VSBuild@1
+    inputs:
+      solution: '$(setupProject)'
+      msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
+    displayName: 'Build $(setupProject) with signing'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - task: VSBuild@1
+    inputs:
+      solution: '$(setupProject)'
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
+    displayName: 'Build $(setupProject) no signing'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, false))
+
+  - task: DeleteFiles@1
+    inputs:
+      SourceFolder: '$(Build.BinariesDirectory)'
+      Contents: '$(codeSigningCertFileName)'
+    condition: succeededOrFailed()
+    displayName: 'Delete code signing certificate files'
+
+  - task: CopyFiles@2
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)\$(setupProjectDir)'
+      contents: '**\bin\**'
+      targetFolder: $(Build.ArtifactStagingDirectory)
+    displayName: 'Copy files to staging folder'
+
+  - task: CopyFiles@2
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)\$(pluginsDir)\bin\$(buildConfiguration)'
+      contents: '**'
+      targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)
+    displayName: 'Copy plugins to staging folder'
+
+  - task: PowerShell@2
+    inputs:
+      targetType: filePath
+      filePath: $(System.DefaultWorkingDirectory)\powershell\install-forpipeline.ps1
+      arguments: $(Build.SourcesDirectory) $(VersionString) $$(isPrerelease)
+    displayName: 'Building Powershell module'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'SafeguardDevOpsService'
+    displayName: 'Publishing the artifacts'
+
+  - task: GitHubRelease@1
+    inputs:
+      gitHubConnection: 'github.ReleaseServiceAccount'
+      repositoryName: 'OneIdentity/SafeguardDevOpsService'
+      action: 'create'
+      target: '$(Build.SourceVersion)'
+      tagSource: 'userSpecifiedTag'
+      tag: 'release-$(VersionString)'
+      title: '$(VersionString)'
+      isPreRelease: $[ variables.isPrerelease ]
+      changeLogCompareToRelease: 'lastFullRelease'
+      changeLogType: 'commitBased'
+      assets: |
+        $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\en-us\*.msi
+        $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)\*.zip
+    displayName: 'Creating and publishing a release to Github'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - powershell: Publish-Module -Path $(Build.SourcesDirectory)\safeguard-devops -NuGetApiKey "$(PowerShellGalleryApiKey)" -Verbose -SkipAutomaticTags
+    displayName: 'Publish Powershell module to Powershell Gallery'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+- job:
+  displayName: "Linux Docker Build"
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: Bash@3
+    inputs:
+      targetType: 'filePath'
+      filePath: '$(System.DefaultWorkingDirectory)/versionnumber.sh'
+      arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
+    displayName: 'Setting build version'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'env | sort'
+    displayName: 'Display environment variables'
+
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+      KeyVaultName: 'SafeguardBuildSecrets'
+      SecretsFilter: 'DockerHubAccessToken,DockerHubPassword'
+    displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - task: Bash@3
+    inputs:
+      targetType: 'filePath'
+      filePath: '$(System.DefaultWorkingDirectory)/build-docker.sh'
+      arguments: alpine3.12 $(VersionString)
+      failOnStderr: true
+    displayName: 'Building alpine docker image'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'filePath'
+      filePath: '$(System.DefaultWorkingDirectory)/build-docker.sh'
+      arguments: ubuntu20.04 $(VersionString)
+      failOnStderr: true
+    displayName: 'Building ubuntu docker image'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: |
+        docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
+
+        docker tag oneidentity/safeguard-devops:$(VersionString)-alpine3.12 oneidentity/safeguard-devops:$(VersionString)-alpine
+        docker tag oneidentity/safeguard-devops:$(VersionString)-alpine3.12 oneidentity/safeguard-devops:latest
+        docker push oneidentity/safeguard-devops:$(VersionString)-alpine3.12
+        docker push oneidentity/safeguard-devops:$(VersionString)-alpine
+        docker push oneidentity/safeguard-devops:latest
+
+        docker tag oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04 oneidentity/safeguard-devops:$(VersionString)-ubuntu
+        docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04
+        docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu
+
+        docker logout
+      failOnStderr: true
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+    displayName: 'Pushing docker images to Docker Hub'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: |
+        docker run --rm -t \
+        -v `pwd`:/myvol \
+        -e DOCKER_USER='petrsnd' -e DOCKER_PASS='$(DockerHubPassword)' \
+        chko/docker-pushrm:1 --file /myvol/README.md \
+        --short "Safeguard Secrets Broker for DevOps" --debug oneidentity/safeguard-devops 2>&1 || >&2 echo "Failed to push readme -- error code: $?"
+      failOnStderr: true
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+    displayName: 'Pushing README.md to Docker Hub'

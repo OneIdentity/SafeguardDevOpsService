@@ -1,6 +1,6 @@
 ﻿using System.Security;
 
-namespace OneIdentity.SafeguardDevOpsService.Data
+namespace OneIdentity.DevOps.Data
 {
     internal class EventInfo
     {

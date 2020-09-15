@@ -1,7 +1,8 @@
 ﻿
 using System.Collections.Generic;
+#pragma warning disable 1591
 
-namespace OneIdentity.SafeguardDevOpsService.Data
+namespace OneIdentity.DevOps.Data
 {
     public class PluginConfiguration
     {

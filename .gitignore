@@ -3,6 +3,12 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# VS Code
+.vscode
+
+# Application-specific files
+Configuration.db
+
 # User-specific files
 *.suo
 *.user

@@ -2,36 +2,59 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
-    <RootNamespace>OneIdentity.SafeguardDevOpsService</RootNamespace>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>OneIdentity.DevOps</RootNamespace>
     <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
     <RunPostBuildEvent>Always</RunPostBuildEvent>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <PreserveCompilationContext>false</PreserveCompilationContext>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Platforms>x64</Platforms>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <DocumentationFile>bin\$(Configuration)\SafeguardDevOpsService.xml</DocumentationFile>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <DocumentationFile>bin\$(Configuration)\SafeguardDevOpsService.xml</DocumentationFile>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="4.9.4" />
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="5.0.0" />
-    <PackageReference Include="LiteDB" Version="4.1.4" />
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />
-    <PackageReference Include="OneIdentity.SafeguardDotNet" Version="2.10.0-dev-257" />
-    <PackageReference Include="Serilog.Extensions.Autofac.DependencyInjection" Version="1.2.1" />
+    <PackageReference Include="Autofac" Version="5.2.0" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="AutofacSerilogIntegration" Version="3.0.0" />
+    <PackageReference Include="CredentialManagement.Standard" Version="1.0.4" />
+    <PackageReference Include="LiteDB" Version="5.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.6" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.6" />
+    <PackageReference Include="OneIdentity.SafeguardDotNet" Version="6.7.0-dev-322" />
+    <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
+    <PackageReference Include="Serilog.Extensions.Autofac.DependencyInjection" Version="2.1.0" />
     <PackageReference Include="Serilog.Sinks.ColoredConsole" Version="3.0.1" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.0.0-rc3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.5.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="5.5.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="5.5.1" />
     <PackageReference Include="Topshelf" Version="4.2.1" />
     <PackageReference Include="Topshelf.Serilog" Version="4.2.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\DevOpsPluginCommon\DevOpsPluginCommon.csproj" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /i /d /y $(SolutionDir)\ExternalPlugins\Libs\*.dll $(ProjectDir)$(OutDir)&#xD;&#xA;" />
-  </Target>
+  <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">
+    <None Update="_appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>
