@@ -236,4 +236,5 @@ jobs:
         chko/docker-pushrm:1 --file /myvol/README.md \
         --short "Safeguard Secrets Broker for DevOps" --debug oneidentity/safeguard-devops 2>&1 || >&2 echo "Failed to push readme -- error code: $?"
       failOnStderr: true
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
     displayName: 'Pushing README.md to Docker Hub'
