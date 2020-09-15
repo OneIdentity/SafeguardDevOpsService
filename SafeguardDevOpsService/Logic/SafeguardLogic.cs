@@ -1085,9 +1085,9 @@ namespace OneIdentity.DevOps.Logic
             if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
             {
-                var msg = "A2A registration not configured";
+                var msg = "A2A registration not configured. Skipping...";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                return;
             }
 
             using var sg = Connect();

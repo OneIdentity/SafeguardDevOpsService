@@ -149,11 +149,11 @@ function Initialize-SgDevOps
         try
         {
             Write-Host -ForegroundColor Cyan "This will be your connection for the rest of the steps in the wizard."
-            Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui
+            Connect-SgDevOps -Insecure -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui
         }
         catch
         {
-            Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui -Insecure
+            Connect-SgDevOps -Insecure -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui -Insecure
             Write-Host -ForegroundColor Magenta "You are not using a trusted TLS server certificate in Secrets Broker."
             Write-Host -ForegroundColor Cyan "You can fix this problem now by uploading a certificate with a private key."
             Write-Host -ForegroundColor Cyan "Another option is to fix this later a CSR with New-SgDevOpsCsr and Install-SgDevOpsSslCertificate cmdlets."
@@ -180,7 +180,7 @@ function Initialize-SgDevOps
             if ($local:Success)
             {
                 Write-Host -ForegroundColor Yellow "Reconnecting to Secrets Broker using Safeguard user ..."
-                Connect-SgDevOps -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui
+                Connect-SgDevOps -Insecure -ServiceAddress $ServiceAddress -ServicePort $ServicePort -Gui:$Gui
             }
         }
         Write-Host ""
