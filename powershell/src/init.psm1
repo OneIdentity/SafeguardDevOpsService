@@ -190,7 +190,7 @@ function Initialize-SgDevOps
         {
             Write-Host -ForegroundColor Yellow "Configuring Secrets Broker instance certificate user in Safeguard ..."
             Write-Host -ForegroundColor Cyan "Secrets Broker needs to initialize some configuration in Safeguard in order to establish permanent communications."
-            Write-Host -ForegroundColor Cyan "Secrets Broker uses a Safeguard certicate user for A2A communications."
+            Write-Host -ForegroundColor Cyan "Secrets Broker uses a Safeguard certificate user for A2A communications."
             Write-Host -ForegroundColor Cyan "The easiest way to configure this is to upload a certificate with a private key now to continue with this wizard."
             Write-Host -ForegroundColor Cyan "Alternatively, you can use New-SgDevOpsCsr and Install-SgDevOpsClientCertificate to set everything up manually."
             $local:Confirmed = $true
