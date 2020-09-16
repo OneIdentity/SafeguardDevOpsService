@@ -236,7 +236,10 @@ function Get-TlsCertificateFromEndpoint
 
         $local:SslStream = New-Object -TypeName System.Net.Security.SslStream -ArgumentList @($local:TcpStream, $true, $local:Callback)
         try {
-            $local:SslStream.AuthenticateAsClient('')
+            $local:AllowedProtocols = ([System.Security.Authentication.SslProtocols]::Tls11 `
+                                            -bor [System.Security.Authentication.SslProtocols]::Tls12 `
+                                            -bor [System.Security.Authentication.SslProtocols]::Tls13)
+            $local:SslStream.AuthenticateAsClient('', $null, $local:AllowedProtocols, $false)
             $local:Certificate = $local:SslStream.RemoteCertificate
         } finally {
             $local:SslStream.Dispose()
