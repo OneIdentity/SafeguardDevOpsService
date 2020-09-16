@@ -149,7 +149,7 @@ jobs:
       tagSource: 'userSpecifiedTag'
       tag: 'release-$(VersionString)'
       title: '$(VersionString)'
-      isPreRelease: $[ variables.isPrerelease ]
+      isPreRelease: $(isPrerelease)
       changeLogCompareToRelease: 'lastFullRelease'
       changeLogType: 'commitBased'
       assets: |
