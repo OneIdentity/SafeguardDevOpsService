@@ -585,7 +585,7 @@ namespace OneIdentity.DevOps.Logic
                 cert = certificate.Passphrase == null
                     ? new X509Certificate2(certificateBytes)
                     : new X509Certificate2(certificateBytes, certificate.Passphrase);
-                _logger.Debug($"Parsed certificate for installation: subject={cert.SubjectName}, thumbprint={cert.Thumbprint}");
+                _logger.Debug($"Parsed certificate for installation: subject={cert.SubjectName.Name}, thumbprint={cert.Thumbprint}");
             }
             catch (Exception ex)
             {
