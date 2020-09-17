@@ -8,6 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
+using Serilog.Core;
 
 
 namespace OneIdentity.DevOps.Logic
@@ -37,13 +38,13 @@ namespace OneIdentity.DevOps.Logic
             {
                 var cert2 = new X509Certificate2(certificate);
 
-                var sans = GetSubjectAlternativeName(new X509Certificate2(certificate));
+                var sans = GetSubjectAlternativeName(new X509Certificate2(certificate), logger);
                 var safeguardAddress = configDb.SafeguardAddress;
-
                 if (!sans.Exists(x => x.Equals(safeguardAddress, StringComparison.InvariantCultureIgnoreCase) ||
-                                     (x.StartsWith("*") && safeguardAddress.Substring(safeguardAddress.IndexOf('.'))
-                                         .Equals(x.Substring(1), StringComparison.InvariantCultureIgnoreCase))))
+                                      (x.StartsWith("*") && safeguardAddress.Substring(safeguardAddress.IndexOf('.'))
+                                          .Equals(x.Substring(1), StringComparison.InvariantCultureIgnoreCase))))
                 {
+                    logger.Debug("Failed to find a matching subject alternative name.");
                     return false;
                 }
 
@@ -255,10 +256,9 @@ namespace OneIdentity.DevOps.Logic
             return eku.EnhancedKeyUsages[oid] != null;
         }
 
-        private static List<string> GetSubjectAlternativeName(X509Certificate2 cert)
+        private static List<string> GetSubjectAlternativeName(X509Certificate2 cert, Serilog.ILogger logger)
         {
             var result = new List<string>();
-
 
             var subjectAlternativeName = cert.Extensions.Cast<X509Extension>()
                 .Where(n => n.Oid.Value== "2.5.29.17") //n.Oid.FriendlyName=="Subject Alternative Name")
@@ -266,13 +266,15 @@ namespace OneIdentity.DevOps.Logic
                 .Select(n => n.Format(true))
                 .FirstOrDefault();
 
+
             if (subjectAlternativeName != null)
             {
-                var alternativeNames = subjectAlternativeName.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+                var alternativeNames = subjectAlternativeName.Split(new[] { "\r\n", "\r", "\n", "," }, StringSplitOptions.RemoveEmptyEntries);
 
                 foreach (var alternativeName in alternativeNames)
                 {
-                    var groups = Regex.Match(alternativeName, @"^(.*)=(.*)").Groups; // @"^DNS Name=(.*)").Groups;
+                    logger.Debug($"Found subject alternative name: {alternativeName}");
+                    var groups = Regex.Match(alternativeName, @"^(.*)[=,:](.*)").Groups; // @"^DNS Name=(.*)").Groups;
 
                     if (groups.Count > 0 && !String.IsNullOrEmpty(groups[2].Value))
                     {
