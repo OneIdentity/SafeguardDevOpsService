@@ -33,6 +33,12 @@ function Get-SgDevOpsStatus
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
+    if (-not $SgDevOpsSession)
+    {
+        Write-Host -ForegroundColor Magenta "Run Connect-SgDevOps to initialize a session."
+        throw "This cmdlet requires a connect session with the Secrets Broker"
+    }
+
     Import-Module -Name "$PSScriptRoot\configuration.psm1" -Scope Local
     Import-Module -Name "$PSScriptRoot\plugins.psm1" -Scope Local
 
