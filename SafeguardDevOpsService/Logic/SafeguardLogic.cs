@@ -147,7 +147,7 @@ namespace OneIdentity.DevOps.Logic
                 var safeguardConnection = new SafeguardDevOpsConnection
                 {
                     ApplianceAddress = safeguardAddress,
-                    IgnoreSsl = ignoreSsl,
+                    IgnoreSsl = _configDb.IgnoreSsl,
                     ApiVersion = apiVersion
                 };
         
