@@ -147,7 +147,7 @@ namespace OneIdentity.DevOps.Logic
                 var safeguardConnection = new SafeguardDevOpsConnection
                 {
                     ApplianceAddress = safeguardAddress,
-                    IgnoreSsl = _configDb.IgnoreSsl,
+                    IgnoreSsl = _configDb.IgnoreSsl ?? ignoreSsl,
                     ApiVersion = apiVersion
                 };
         
@@ -215,10 +215,16 @@ namespace OneIdentity.DevOps.Logic
 
                 return valid;
             }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to get the user information: {ex.Message}", ex);
+            }
             finally
             {
                 sg?.Dispose();
             }
+
+            return false;
         }
 
         private void CreateA2AUser(ISafeguardConnection sg)
