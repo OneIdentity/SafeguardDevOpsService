@@ -38,7 +38,9 @@ namespace OneIdentity.DevOps
             Log.Logger.Information($"Configuration file location: {Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json");
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile($"{Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json",
-                    optional: true, reloadOnChange: true).Build();
+                    optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
             var httpsPort = configuration["HttpsPort"] ?? "443";
             var logLevel = configuration["LogLevel"];
 
