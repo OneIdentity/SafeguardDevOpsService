@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
@@ -58,6 +59,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="400">Bad request.</response>
         /// <response code="401">Invalid authorization token.</response>
         [UnhandledExceptionError]
+        [SafeguardSessionHandler]
         [HttpPut]
         public ActionResult<SafeguardDevOpsConnection> SetSafeguard([FromServices] ISafeguardLogic safeguard,
             [FromBody] SafeguardData safeguardData)
@@ -89,6 +91,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="204">Success.</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete]
         public ActionResult DeleteSafeguard([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
@@ -112,6 +115,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("Configuration")]
         public ActionResult<ServiceConfiguration> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
@@ -144,6 +148,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("Configuration")]
         public ActionResult<ServiceConfiguration> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, CertificateInfo certFile = null)
@@ -175,6 +180,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="204">No Content.</response>
         /// <response code="400">Bad request.</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete("Configuration")]
         public ActionResult DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
@@ -201,6 +207,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="400">Bad Request.</response>
         /// <response code="401">Unauthorized.</response>
         [SafeguardTokenAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("Logon")]
         public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
@@ -245,6 +252,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success.</response>
         /// <response code="404">Not found.</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("ClientCertificate")]
         public ActionResult<CertificateInfo> GetClientCertificate([FromServices] ISafeguardLogic safeguard)
@@ -272,6 +280,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("ClientCertificate")]
         public ActionResult InstallClientCertificate([FromServices] ISafeguardLogic safeguard, CertificateInfo certInfo)
@@ -293,6 +302,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="204">No Content.</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete("ClientCertificate")]
         public ActionResult RemoveClientCertificate([FromServices] ISafeguardLogic safeguard)
@@ -315,6 +325,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("WebServerCertificate")]
         public ActionResult<CertificateInfo> GetWebServerCertificate([FromServices] ISafeguardLogic safeguard)
@@ -345,6 +356,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("WebServerCertificate")]
         public ActionResult InstallWebServerCertificate([FromServices] ISafeguardLogic safeguard, [FromBody] CertificateInfo certInfo, [FromQuery] bool restart = true)
@@ -375,6 +387,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="204">No Content</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete("WebServerCertificate")]
         public ActionResult RemoveWebServerCertificate([FromServices] ISafeguardLogic safeguard, [FromQuery] bool restart = true)
@@ -409,6 +422,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("CSR")]
         public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size, 
@@ -441,6 +455,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("AvailableAccounts")]
         public ActionResult<IEnumerable<SppAccount>> GetAvailableAccounts([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null, 
@@ -465,6 +480,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="400">Bad Request</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("A2ARegistration")]
         public ActionResult<A2ARegistration> GetA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromQuery] string registrationType = "Account")
@@ -493,6 +509,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("A2ARegistration/RetrievableAccounts")]
         public ActionResult<IEnumerable<A2ARetrievableAccount>> GetRetrievableAccounts([FromServices] ISafeguardLogic safeguard)
@@ -517,6 +534,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("A2ARegistration/RetrievableAccounts/{accountId}")]
         public ActionResult<A2ARetrievableAccount> GetRetrievableAccountById([FromServices] ISafeguardLogic safeguard, [FromRoute] int accountId)
@@ -543,6 +561,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPut("A2ARegistration/RetrievableAccounts")]
         public ActionResult<IEnumerable<A2ARetrievableAccount>> AddRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<SppAccount> accounts)
@@ -567,6 +586,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="204">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete("A2ARegistration/RetrievableAccounts")]
         public ActionResult RemoveRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<A2ARetrievableAccount> accounts)
@@ -607,6 +627,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </remarks>
         /// <response code="200">Success</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("TrustedCertificates")]
         public ActionResult<IEnumerable<CertificateInfo>> GetTrustedCertificates([FromServices] ISafeguardLogic safeguard)
@@ -629,6 +650,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("TrustedCertificates/{thumbprint}")]
         public ActionResult<CertificateInfo> GetTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromRoute] string thumbprint)
@@ -653,6 +675,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("TrustedCertificates")]
         public ActionResult<IEnumerable<CertificateInfo>> AddTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromBody] CertificateInfo certificate, [FromQuery] bool importFromSafeguard)
@@ -685,6 +708,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="204">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete("TrustedCertificates/{thumbprint}")]
         public ActionResult DeleteTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromRoute] string thumbprint)
@@ -709,6 +733,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="204">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete("TrustedCertificates")]
         public ActionResult DeleteAllTrustedCertificate([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
