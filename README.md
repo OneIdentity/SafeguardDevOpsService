@@ -116,6 +116,43 @@ Enter `spp-token <paste token>` as the value and click the Authorize button and 
 1. Navigate to and call: `GET /service/devops/Safeguard/Logon`
     - At this point the swagger page is logged into the Safeguard Secrets Broker for DevOps and will remain logged in until the page is refreshed, closed or `POST /service/devops/Safeguard/Logoff` is called.
 
+### From Docker Image
+
+A Docker image for Safeguard Secrets Broker for Devops is built and made available on dockerhub as oneidentity/safeguard-devops (<https://hub.docker.com/r/oneidentity/safeguard-devops>). This image can be downloaded and deployed on a Linux system.
+
+1. The following command will download and deploy the docker image of the Secrets Broker.
+
+    ```Command
+    $ docker run -it -p 443:4443 --cap-add NET_ADMIN oneidentity/safeguard-devops
+    ```
+
+    The safeguard-devops docker image binds the server to port 4443 internally. The -p 443:4443 parameter maps the internal port to 443 externally. To map the internal port to a different external port, replace the value 443 with externally available port.
+
+    The --cap-add NET_ADMIN parameter is necessary of the internal port is being mapped to an external privileged port (port less than 1024).
+
+1. There are certain environment variables that can be set at the time the docker image deployed to control the debug level and database encryption. For security reasons, these environment variables should be provided to the docker environment using a heredoc to create an ephemeral file. The following is an example of how to set the environment variables.
+
+    ```Command
+    $ sudo docker run -it -p 443:4443 --cap-add NET_ADMIN --env-file <(cat <<EOF
+      SSBfDbgn=thisisapasswordformyencrypteddatabase
+      EOF
+      ) oneidentity/safeguard-devops
+    ```
+
+1. To update the docker image
+
+    ```Command
+    $ sudo docker pull oneidentity/safeguard-devops
+    ```
+
+### Environment Variables
+
+Initialization of the Secrets Broker on Windows or as a Docker image can be controled by specifying certain environment variables. These environment variables can be passed nto the initializtion of the Secrets Broker in one of two ways depending on the operating system. For Windows, the environment variables are set through a file called 'appsettings.json'. To change the variables on windows, navigate to the installed location of the Secrets Broker and rename the '_appsettings.json' to 'appsettings.json'. Then edit the settings file and change the corresponding variable. To change the variables in a Docker environment, the variables need to be set on the command line and passed into the image. The following describes the available environment variables:
+
+- LogLevel - Information(Default for Windows), Debug(Default for Docker), Error, Warning, Fatal and Verbose
+- SSBfDbgn - The encryption password for encrypting the Secrets Broker database on disk. This is only available for docker. The Windows database is always encrypted.
+- Port - Secrets Broker listen port. The docker environment should be left at the default of 4443. The windows port can be changed by updating the appsettings.json file.
+
 ## Configuring Safeguard Secrets Broker for DevOps
 
 1. There are two different certificates that Safeguard Secrets Broker for DevOps needs in order to function properly.
