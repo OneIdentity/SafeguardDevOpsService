@@ -10,7 +10,12 @@ namespace OneIdentity.DevOps.Attributes
     {
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            var sppToken = GetSppToken(context);
+            var sppToken = AttributeHelper.GetSppToken(context.HttpContext);
+            if (sppToken == null)
+            {
+                context.Result = new DevOpsUnauthorizedResult("Authorization Failed: Invalid or missing SPP token");
+                return;
+            }
 
             var service = (ISafeguardLogic)context.HttpContext.RequestServices.GetService(typeof(ISafeguardLogic));
             if (!service.ValidateLogin(sppToken))

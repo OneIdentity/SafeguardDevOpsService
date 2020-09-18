@@ -10,7 +10,12 @@ namespace OneIdentity.DevOps.Attributes
     {
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            var sessionKey = GetSessonKey(context);
+            var sessionKey = AttributeHelper.GetSessionKey(context.HttpContext);
+            if (sessionKey == null)
+            {
+                context.Result = new DevOpsUnauthorizedResult("Authorization Failed: Missing session key");
+                return;
+            }
             var managementConnection = AuthorizedCache.Instance.Find(sessionKey);
             if (managementConnection == null)
             {
@@ -18,7 +23,7 @@ namespace OneIdentity.DevOps.Attributes
                 return;
             }
 
-            var sppToken = GetSppToken(context);
+            var sppToken = AttributeHelper.GetSppToken(context.HttpContext);
             if (sppToken == null || !managementConnection.AccessToken.ToInsecureString().Equals(sppToken))
             {
                 context.Result = new DevOpsUnauthorizedResult("Authorization Failed: Invalid or missing SPP token");
