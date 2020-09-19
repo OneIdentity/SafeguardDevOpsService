@@ -133,7 +133,7 @@ A Docker image for Safeguard Secrets Broker for Devops is built and made availab
 1. There are certain environment variables that can be set at the time the docker image deployed to control the debug level and database encryption. For security reasons, these environment variables should be provided to the docker environment using a heredoc to create an ephemeral file. The following is an example of how to set the environment variables.
 
     ```Command
-    $ sudo docker run -it -p 443:4443 --cap-add NET_ADMIN --env-file <(cat <<EOF
+    $ docker run -it -p 443:4443 --cap-add NET_ADMIN --env-file <(cat <<EOF
       SSBfDbgn=thisisapasswordformyencrypteddatabase
       EOF
       ) oneidentity/safeguard-devops
