@@ -142,7 +142,7 @@ A Docker image for Safeguard Secrets Broker for Devops is built and made availab
 1. To update the docker image
 
     ```Command
-    $ sudo docker pull oneidentity/safeguard-devops
+    $ docker pull oneidentity/safeguard-devops
     ```
 
 ### Environment Variables
