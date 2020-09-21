@@ -134,7 +134,7 @@ A Docker image for Safeguard Secrets Broker for Devops is built and made availab
 
     ```Command
     $ docker run -it -p 443:4443 --cap-add NET_ADMIN --env-file <(cat <<EOF
-      SSBfDbgn=thisisapasswordformyencrypteddatabase
+      SSBEncPasswd=thisisapasswordformyencrypteddatabase
       EOF
       ) oneidentity/safeguard-devops
     ```
@@ -150,7 +150,7 @@ A Docker image for Safeguard Secrets Broker for Devops is built and made availab
 Initialization of the Secrets Broker on Windows or as a Docker image can be controled by specifying certain environment variables. These environment variables can be passed nto the initializtion of the Secrets Broker in one of two ways depending on the operating system. For Windows, the environment variables are set through a file called 'appsettings.json'. To change the variables on windows, navigate to the installed location of the Secrets Broker and rename the '_appsettings.json' to 'appsettings.json'. Then edit the settings file and change the corresponding variable. To change the variables in a Docker environment, the variables need to be set on the command line and passed into the image. The following describes the available environment variables:
 
 - LogLevel - Information(Default for Windows), Debug(Default for Docker), Error, Warning, Fatal and Verbose
-- SSBfDbgn - The encryption password for encrypting the Secrets Broker database on disk. This is only available for docker. The Windows database is always encrypted.
+- SSBEncPasswd - The encryption password for encrypting the Secrets Broker database on disk. This is only available for docker. The Windows database is always encrypted.
 - Port - Secrets Broker listen port. The docker environment should be left at the default of 4443. The windows port can be changed by updating the appsettings.json file.
 
 ## Configuring Safeguard Secrets Broker for DevOps

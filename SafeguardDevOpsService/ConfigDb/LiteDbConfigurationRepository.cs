@@ -69,6 +69,11 @@ namespace OneIdentity.DevOps.ConfigDb
                 passwd = SavePassword(GeneratePassword());
             }
 
+            if (!string.IsNullOrEmpty(passwd))
+            {
+                Serilog.Log.Logger.Information("The database is encrypted.");
+            }
+
             var connectionString = $"Filename={dbPath}";
             connectionString += string.IsNullOrEmpty(passwd) ? "" : $";Password={passwd}";
             _configurationDb = new LiteDatabase(connectionString);
