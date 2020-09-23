@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
-using Serilog.Core;
 
 
 namespace OneIdentity.DevOps.Logic
@@ -153,32 +151,32 @@ namespace OneIdentity.DevOps.Logic
                     // key agreement is used in diffe-hellman ciphers, key encipherment is used in traditional ssl handshake key exchange
                     if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) && !HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment))
                     {
-                        logger.Error("Must have key usage for key agreement or key encipherment.");
+                        logger.Error("Web SSL Certificate is missing key agreement and key encipherment for key usage.");
                         return false;
                     }
                     // require server authentication EKU
                     if (!HasEku(sslCertificate, "1.3.6.1.5.5.7.3.1"))
                     {
-                        logger.Error("Must have extended key usage for server authentication.");
+                        logger.Error("Web SSL Certificate is missing server authentication for enhanced key usage.");
                         return false;
                     }
                     break;
                 case CertificateType.A2AClient:
                     if (sslCertificate.HasPrivateKey == false)
                     {
-                        logger.Error("No private key found.");
+                        logger.Error("The A2A client certificate is missing the private key found.");
                         return false;
                     }
                     // key agreement is used in diffe-hellman ciphers, key encipherment is used in traditional ssl handshake key exchange
                     if (!HasUsage(sslCertificate, X509KeyUsageFlags.KeyAgreement) && !HasUsage(sslCertificate, X509KeyUsageFlags.KeyEncipherment))
                     {
-                        logger.Error("Must have key usage for key agreement or key encipherment.");
+                        logger.Error("The A2A client certificate is missing key agreement and key encipherment for key usage.");
                         return false;
                     }
                     // require server authentication EKU
                     if (!HasEku(sslCertificate, "1.3.6.1.5.5.7.3.2"))
                     {
-                        logger.Error("Must have extended key usage for client authentication.");
+                        logger.Error("The A2A client certificate is missing client authentication for enhanced key usage.");
                         return false;
                     }
                     break;
