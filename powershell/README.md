@@ -157,13 +157,16 @@ appliance by creating a A2A certificate user and A2A registration in Safeguard.
 Find and register available Safeguard accounts with the Secrets Broker A2A registration.
 Use Find-SgDevOpsAvailableAssetAccount or Get-SgDevOpsAvailableAssetAccount to discover
 the account that should be registered with the Secrets Broker. See the documentation for
-each of these cmdlets for filtering and searching options.
+each of these cmdlets for filtering and searching options. Another option is to use the
+Invoke-SgDevOpsRegisteredAccountSetup cmdlet. This cmdlet will allow you to search for
+a specific set of accounts and register them at the same time.
 
 ```Powershell
-> Get-SgDevOpsAvailableAssetAccount
+> Invoke-SgDevOpsRegisteredAccountSetup
 ```
 
-** Repeat this cmdlet for each account that should be registerd with the Secrets Broker.
+[NOTE] The following cmdlet should be used for registering a single account when the asset
+name and account name are known.
 
 ```Powershell
 > Register-SgDevOpsAssetAccount
