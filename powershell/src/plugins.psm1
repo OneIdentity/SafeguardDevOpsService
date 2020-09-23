@@ -87,7 +87,16 @@ function Install-SgDevOpsPlugin
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    $local:Bytes = [System.IO.File]::ReadAllBytes($PluginZipFile)
+    try
+    {
+        $local:Bytes = [System.IO.File]::ReadAllBytes($PluginZipFile)
+    }
+    catch
+    {
+        Write-Host -ForegroundColor Magenta "Invalid plugin zip file or file not found."
+        Write-Host "You must provide the full path to a valid plugin zip file."
+        throw "Invalid plugin zip file"
+    }
 
     $local:Base64PluginData = [System.Convert]::ToBase64String($local:Bytes)
     Invoke-SgDevOpsMethod POST "Plugins" -Parameters @{ restart = [bool]$Restart } -Body @{
