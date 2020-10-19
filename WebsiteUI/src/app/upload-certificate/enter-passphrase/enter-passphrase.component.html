@@ -1,0 +1,13 @@
+<div mat-dialog-title>
+  <h1>Enter Certificate Passphrase</h1>
+  <div class="details">{{fileName}}</div>
+</div>
+<div mat-dialog-content>
+  <mat-form-field appearance="outline">
+    <mat-label>Passphrase</mat-label>
+    <input matInput type="text" [(ngModel)]="passphrase" name="passphrase" cdkFocusInitial (keyup)="handleKeyUp($event)">
+  </mat-form-field>
+</div>
+<div mat-dialog-actions align="end">
+  <button mat-flat-button (click)="submit()" color="primary" [disabled]="!passphrase">OK</button>
+</div>

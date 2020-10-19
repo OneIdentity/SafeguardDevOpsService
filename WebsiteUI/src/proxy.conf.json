@@ -1,0 +1,10 @@
+{
+  "/service/devops": {
+    "target": "https://10.6.167.116",
+    "secure": false
+  },
+  "/service/core": {
+    "target": "https://10.6.167.17",
+    "secure": false
+  }
+}

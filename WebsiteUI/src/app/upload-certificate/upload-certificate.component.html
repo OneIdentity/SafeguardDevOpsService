@@ -1,0 +1,35 @@
+<h1 mat-dialog-title>Add Certificate</h1>
+<div mat-dialog-content>
+  <p>This certificate will be used to authenticate Safeguard's Application to Application service with Secrets Broker.</p>
+  <p>Upload your own certificate or create a certificate service request (CSR).</p>
+
+  <div class="show-more-link" (click)="showCsr = !showCsr">
+    <span>Create CSR</span>
+    <mat-icon aria-label="Show More" *ngIf="!showCsr && false">expand_more</mat-icon>
+    <mat-icon aria-label="Show Less" *ngIf="showCsr && false">expand_less</mat-icon>
+  </div>
+
+  <div class="csr-container" *ngIf="showCsr">
+    <mat-form-field appearance="outline">
+      <mat-label>Subject Name</mat-label>
+      <input matInput type="text" [(ngModel)]="subjectName" name="subjectName">
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>DNS Subject Alternative Names</mat-label>
+      <textarea matInput matTextareaAutosize [(ngModel)]="dnsSubjectAlternativeNames" name="dnsSubjectAlternativeNames"></textarea>
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>IP Subject Alternative Names</mat-label>
+      <textarea matInput matTextareaAutosize [(ngModel)]="ipSubjectAlternativeNames" name="ipSubjectAlternativeNames"></textarea>
+    </mat-form-field>
+    <div>
+      <a class="custom-link" (click)="createCSR($event, 'copy')" href="">Copy CSR</a><span class="divider">|</span><a class="custom-link" (click)="createCSR($event, 'download')" href="">Download CSR</a> 
+    </div>
+  </div>
+</div>
+<div mat-dialog-actions align="end">
+  <div class="upload-button">
+    <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".cer,.crt,.der,.pfx,.p12,.pem" />
+    <button mat-flat-button cdkFocusInitial (click)="browse()" color="primary">Upload Certificate</button>
+  </div>
+</div>
