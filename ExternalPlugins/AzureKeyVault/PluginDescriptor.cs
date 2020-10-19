@@ -20,6 +20,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
         private const string VaultUriName = "vaultUri";
 
         public string Name => "AzureKeyVault";
+        public string DisplayName => "Azure Key Vault";
         public string Description => "This is the Azure Key Vault plugin for updating passwords";
 
         public Dictionary<string,string> GetPluginInitialConfiguration()

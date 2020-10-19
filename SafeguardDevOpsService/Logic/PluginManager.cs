@@ -245,6 +245,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     
                     var name = plugin.Name;
+                    var displayName = plugin.DisplayName;
                     var description = plugin.Description;
                     plugin.SetLogger(_logger);
 
@@ -272,6 +273,7 @@ namespace OneIdentity.DevOps.Logic
                             pluginInfo = new Plugin
                             {
                                 Name = name,
+                                DisplayName = displayName,
                                 Description = description,
                                 Configuration = pluginInstance.GetPluginInitialConfiguration(),
                                 Version = pluginVersion

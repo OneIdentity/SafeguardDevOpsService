@@ -1136,6 +1136,7 @@ namespace OneIdentity.DevOps.Logic
                         var result = sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
                         _configDb.DeleteAccountMappings();
                         _serviceConfiguration.UserName = null;
+                        _serviceConfiguration.UserDisplayName = null;
                         _serviceConfiguration.IdentityProviderName = null;
                         _serviceConfiguration.AdminRoles = null;
                     }
@@ -1338,6 +1339,7 @@ namespace OneIdentity.DevOps.Logic
         {
             _serviceConfiguration.IdentityProviderName = null;
             _serviceConfiguration.UserName = null;
+            _serviceConfiguration.UserDisplayName = null;
             _serviceConfiguration.AdminRoles = null;
             _serviceConfiguration.A2ARegistrationName = null;
             _serviceConfiguration.A2AVaultRegistrationName = null;
@@ -1349,6 +1351,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 _serviceConfiguration.IdentityProviderName = a2aUser.IdentityProviderName;
                 _serviceConfiguration.UserName = a2aUser.UserName;
+                _serviceConfiguration.UserDisplayName = a2aUser.DisplayName;
                 _serviceConfiguration.AdminRoles = a2aUser.AdminRoles;
             }
 

@@ -15,6 +15,11 @@ namespace OneIdentity.DevOps.Data
         public string Name { get; set; }
 
         /// <summary>
+        /// Display name of the plugin
+        /// </summary>
+        public string DisplayName { get; set; }
+
+        /// <summary>
         /// Description of the plugin
         /// </summary>
         public string Description { get; set; }
