@@ -23,6 +23,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
         private const string UserName = "username";
 
         public string Name => "JenkinsSecrets";
+        public string DisplayName => "Jenkins Secrets";
         public string Description => "This is the Jenkins Secrets plugin for updating passwords";
 
         HttpClientHandler _handler = new HttpClientHandler

@@ -6,6 +6,7 @@ namespace OneIdentity.DevOps.Common
     public interface ILoadablePlugin
     {
         string Name { get; }
+        string DisplayName { get; }
         string Description { get; }
         Dictionary<string, string> GetPluginInitialConfiguration();
         void SetPluginConfiguration(Dictionary<string, string> configuration);
