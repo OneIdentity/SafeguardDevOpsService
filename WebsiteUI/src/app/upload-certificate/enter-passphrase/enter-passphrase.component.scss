@@ -1,0 +1,13 @@
+@import '../../../colors.scss';
+
+.details {
+  color: $black-9;
+  font-size: .7em;
+  font-weight: 400;
+  margin-top: -20px;
+}
+
+.mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+}
