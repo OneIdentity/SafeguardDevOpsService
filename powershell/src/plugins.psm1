@@ -486,17 +486,17 @@ function Remove-SgDevOpsMappedAssetAccount
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
     if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
 
-    $local:MappedAccounts = (Get-SgDevOpsRegisteredAssetAccount)
+    $local:MappedAccounts = (Get-SgDevOpsMappedAssetAccount $PluginName)
     [object[]]$local:RemoveList = @()
     if ($PsCmdlet.ParameterSetName -eq "Attributes")
     {
         if ($Domain)
         {
-            $local:RemoveList += ($local:MappedAccounts | Where-Object { $_.SystemName -ieq $Asset -and $_.AccountName -ieq $Account -and $_.DomainName -ieq $Domain})
+            $local:RemoveList += ($local:MappedAccounts | Where-Object { $_.AssetName -ieq $Asset -and $_.AccountName -ieq $Account -and $_.DomainName -ieq $Domain})
         }
         else
         {
-            $local:RemoveList += ($local:MappedAccounts | Where-Object { $_.SystemName -ieq $Asset -and $_.AccountName -ieq $Account })
+            $local:RemoveList += ($local:MappedAccounts | Where-Object { $_.AssetName -ieq $Asset -and $_.AccountName -ieq $Account })
         }
     }
     else

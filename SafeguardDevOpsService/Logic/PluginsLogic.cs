@@ -275,7 +275,7 @@ namespace OneIdentity.DevOps.Logic
             foreach (var account in mappings)
             {
                 // Skip any mapping that doesn't have the matching vault name.
-                if (!account.VaultName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                if (account.VaultName == null || !account.VaultName.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                     continue;
 
                 try
