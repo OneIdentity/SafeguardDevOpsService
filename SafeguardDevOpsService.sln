@@ -26,8 +26,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmsTextEmail", "ExternalPlu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JenkinsSecrets", "ExternalPlugins\JenkinsSecrets\JenkinsSecrets.csproj", "{B4702447-110E-4560-86E6-15B328EB4BB2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebsiteUI", "WebsiteUI\WebsiteUI.csproj", "{E8B0AB41-1A97-49E0-8CE7-00FD23E9A9AD}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -82,14 +80,6 @@ Global
 		{B4702447-110E-4560-86E6-15B328EB4BB2}.Release|Any CPU.ActiveCfg = Release|x64
 		{B4702447-110E-4560-86E6-15B328EB4BB2}.Release|x64.ActiveCfg = Release|x64
 		{B4702447-110E-4560-86E6-15B328EB4BB2}.Release|x64.Build.0 = Release|x64
-		{E8B0AB41-1A97-49E0-8CE7-00FD23E9A9AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E8B0AB41-1A97-49E0-8CE7-00FD23E9A9AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E8B0AB41-1A97-49E0-8CE7-00FD23E9A9AD}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{E8B0AB41-1A97-49E0-8CE7-00FD23E9A9AD}.Debug|x64.Build.0 = Debug|Any CPU
-		{E8B0AB41-1A97-49E0-8CE7-00FD23E9A9AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E8B0AB41-1A97-49E0-8CE7-00FD23E9A9AD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E8B0AB41-1A97-49E0-8CE7-00FD23E9A9AD}.Release|x64.ActiveCfg = Release|Any CPU
-		{E8B0AB41-1A97-49E0-8CE7-00FD23E9A9AD}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
