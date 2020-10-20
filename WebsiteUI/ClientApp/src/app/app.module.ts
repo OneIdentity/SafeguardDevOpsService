@@ -18,12 +18,13 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatTableModule } from '@angular/material/table';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { UploadCertificateComponent } from './upload-certificate/upload-certificate.component';
-import { StaticInfoService } from './static-info.service';
 import { DevOpsServiceClient } from './service-client.service';
 import { EnterPassphraseComponent } from './upload-certificate/enter-passphrase/enter-passphrase.component';
-import { ConfiguredPluginComponent } from './main/configured-plugin/configured-plugin.component';
 import { SelectAccountsComponent } from './select-accounts/select-accounts.component';
 
 @NgModule({
@@ -33,7 +34,6 @@ import { SelectAccountsComponent } from './select-accounts/select-accounts.compo
     MainComponent,
     UploadCertificateComponent,
     EnterPassphraseComponent,
-    ConfiguredPluginComponent,
     SelectAccountsComponent
   ],
   imports: [
@@ -50,12 +50,15 @@ import { SelectAccountsComponent } from './select-accounts/select-accounts.compo
     MatDialogModule,
     MatExpansionModule,
     MatIconModule,
-    MatSidenavModule
+    MatSidenavModule,
+    MatTableModule,
+    MatCheckboxModule,
+    MatSnackBarModule
   ],
   entryComponents: [
     UploadCertificateComponent
   ],
-  providers: [ DevOpsServiceClient, StaticInfoService, { provide: Window, useValue: window } ],
+  providers: [ DevOpsServiceClient, { provide: Window, useValue: window } ],
   bootstrap: [ AppComponent ]
 })
 export class AppModule { }

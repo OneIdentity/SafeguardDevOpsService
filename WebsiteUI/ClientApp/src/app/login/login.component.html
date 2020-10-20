@@ -1,0 +1,12 @@
+
+<div class="main-container">
+  <mat-card>
+    <div><img class="center" src="/assets/SafeguardLogo.png" width="100" height="100"/></div>
+    <div class="info-text">Let's get started by connecting your Safeguard Appliance.</div>
+    <mat-form-field class="center" appearance="outline">
+      <mat-label>Appliance Address</mat-label>
+      <input matInput type="text" [(ngModel)]="applianceAddress" name="applianceAddress" (keyup)="handleKeyUp($event)">
+    </mat-form-field>
+    <button mat-flat-button color="primary" (click)="connect()" [disabled]="!applianceAddress">Connect</button>
+  </mat-card>
+</div>

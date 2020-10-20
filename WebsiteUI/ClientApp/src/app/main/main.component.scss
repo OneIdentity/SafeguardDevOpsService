@@ -1,12 +1,30 @@
 @import '../../colors.scss';
+
 :host {
   height: 100%;
+}
+
+mat-drawer-container {
+  height: 100%;
+}
+
+.main-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+}
+
+.svg-container {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  z-index: -1;
 }
 
 .info-container {
   display: flex;
   margin: 50px;
-  width: 100%;
 
   .info-column {
     margin: 0 20px;
@@ -49,39 +67,49 @@
   padding: 25px;
   margin-left: 280px;
   margin-right: 50px;
-
-  .header {
-    font-size: 1.3em;
-    margin-bottom: 15px;
-  }
-
-  .plugin-button {
-    border-color: $iris-blue;
-    background-color: #ffffff;
-    color: $iris-blue;
-    font-weight: 400;
-    margin-right: 10px;
-    margin-bottom: 10px;
-  }
 }
 
 .plugin-container.unconfigured {
   border: 2px dashed $black-9; 
   color: $black-6;
+  display: flex;
+
+  .header {
+    width: 175px;
+    font-size: 1.5em;
+    font-weight: 400;
+    margin-right: 20px;
+  }
 
   .plugin-button-container {
     display: flex;
+
+    .plugin-button {
+      border-color: $iris-blue;
+      background-color: #ffffff;
+      color: $iris-blue;
+      font-weight: 400;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
   }
 }
 
 .plugin-container.configured {
   border: 1px solid;
-  background-color: #ffffff;
   margin-bottom: 20px;
-  border-color: purple;
+  border-color: $maui-sunset;
+  cursor: pointer;
 
   .header {
-    color: purple;
+    color: $maui-sunset;
+    font-size: 2em;
+    font-weight: 300;
+    margin-bottom: 10px;
+  }
+
+  .edit-text {
+    color: $iris-blue;
   }
 
   .accounts-container {
@@ -90,30 +118,22 @@
     color: $black-9;
 
     .count {
-      font-size: 2.5em;
+      font-size: 3em;
+      font-weight: 400;
       color: $black-6;
       padding: 10px 8px 0 0;
     }
   }
 }
 
-.plugin-container.configured:nth-child(2n) {
-  border-color: orange;
+.plugin-container.configured:nth-child(2) {
+  border-color: $corbin-orange;
   .header {
-    color: orange;
+    color: $corbin-orange;
   }
 }
 
-.arrow {
-  stroke: $corbin-orange;
-  color: $corbin-orange;
-  fill: none;
-}
-marker.arrow {
-  fill: $corbin-orange;
-}
-
-.arrow-unconfigured {
+path.arrow-unconfigured {
   stroke: $black-9;
   color: $black-9;
   fill: none;
@@ -122,15 +142,27 @@ marker.arrow-unconfigured {
   fill: $black-9;
 }
 
-.arrow:nth-child(2n) {
+path.arrow {
+  fill: none;
+  stroke: $corbin-orange;
+  color: $corbin-orange;
+}
+marker.arrow1 {
+  fill: $corbin-orange;
+}
+
+path.arrow:nth-child(2) {
   stroke: $maui-sunset;
   color: $maui-sunset;
 }
-marker.arrow:nth-child(2n) {
+marker.arrow2 {
   fill: $maui-sunset;
 }
 
-.arrow-marker:nth-child(3n) {
+path.arrow:nth-child(3) {
   stroke: $tiki-sunrise;
   color: $tiki-sunrise;
+}
+marker.arrow3 {
+  fill: $tiki-sunrise;
 }

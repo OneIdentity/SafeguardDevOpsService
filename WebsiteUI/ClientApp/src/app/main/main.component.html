@@ -1,0 +1,90 @@
+<mat-drawer-container>
+  <div class="main-container">
+
+    <mat-card class="info-container">
+      <img src="/assets/SafeguardLogo.png" width="80" height="80"/>
+      <div class="info-column">
+        <div class="info-label">Appliance</div>
+        <div>{{ApplianceAddress}}</div>
+        <p></p>
+        <div *ngIf="DevOpsInstanceId">
+          <div class="info-label">Dev Ops ID</div>
+          <div>{{DevOpsInstanceId}}</div>
+        </div>
+      </div>
+      <div class="vertical-line"></div>
+      <div class="loading-container" *ngIf="isLoading">
+          <img class="spinner" src="/assets/busy-black.gif" />
+      </div>
+      <div class="info-column" *ngIf="Thumbprint">
+        <div>Linked Safeguard Objects</div>
+        <p></p>
+        <div class="info-label">User Account</div>
+        <div>{{UserName}}</div>
+        <p></p>
+        <div class="info-label">Appliance to Appliance Registrations</div>
+        <div>{{A2ARegistrationName}}</div>
+        <div>{{A2AVaultRegistrationName}}</div>
+      </div>
+      <div class="info-column" *ngIf="!isLoading">
+        <div class="info-label">Client Certificate</div>
+        <div *ngIf="!Thumbprint"><a class="custom-link" (click)="addClientCertificate($event)" href="">Add Certificate</a></div>
+        <div *ngIf="Thumbprint">
+          <mat-icon class="green-icon">check_circle</mat-icon>
+          <a class="custom-link" (click)="viewClientCertificate($event)" href="">Certificate</a>
+        </div>
+      </div>
+    </mat-card>
+
+    <ng-container *ngFor="let plugin of plugins">
+      <div class="plugin-container configured" (click)="editConfiguration(plugin)">
+        <div class="accounts-container">
+          <div class="count">{{plugin.Accounts.length}}</div>
+          <div><div>Managed</div><div *ngIf="plugin.Accounts.length == 1">Account</div><div *ngIf="plugin.Accounts.length != 1">Accounts</div></div>
+        </div>
+        <div class="header">{{plugin.DisplayName}}</div>
+        <div class="edit-text">Edit Configuration</div>
+      </div>
+    </ng-container>
+
+    <div class="plugin-container unconfigured" *ngIf="plugins.length > 0" #unconfigured>
+      <div class="header">What would you like to plug-in?</div>
+      <div class="plugin-button-container">
+        <ng-container *ngFor="let plugin of plugins">
+          <ng-container *ngIf="!plugin.IsConfigured && plugin.IsUploadCustom">
+            <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".zip" />
+            <button mat-stroked-button class="plugin-button" (click)="uploadPlugin(plugin)">
+              {{plugin.DisplayName}}
+            </button>
+          </ng-container>
+          <button *ngIf="!plugin.IsConfigured && !plugin.IsUploadCustom" mat-stroked-button class="plugin-button" (click)="editConfiguration(plugin)">
+            {{plugin.DisplayName}}
+          </button>
+        </ng-container>
+      </div>
+    </div>
+    
+    <div class="svg-container">
+      <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+        <defs>
+          <marker id="markerBlack9" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow-unconfigured">
+            <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
+          </marker>
+          <marker id="markerCorbinOrange" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow1">
+            <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
+          </marker>
+          <marker id="markerMauiSunset" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow2">
+            <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
+          </marker>
+        </defs>
+        <g fill="none" stroke-width="2" id="svgGroup">
+        </g>
+      </svg>
+    </div>
+
+  </div>
+
+  <mat-drawer mode="over" position="end" #drawer autosize>
+    <app-select-accounts *ngIf="editPluginService.getEdit()"></app-select-accounts>
+  </mat-drawer>
+</mat-drawer-container>

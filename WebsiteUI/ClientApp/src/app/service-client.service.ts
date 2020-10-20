@@ -1,18 +1,20 @@
 import { HttpClient } from '@angular/common/http';
-import { ServiceClientHelper as SCH } from './service-client-helper';
-import { catchError } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
 import { Injectable } from '@angular/core';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 
 export class DevOpsServiceClient {
 
   BASE = '/service/devops/v1/';
+  applianceAddress: string;
 
   constructor(
     private http: HttpClient,
-    private window: Window) {
+    private window: Window,
+    private authService: AuthService) {
   }
 
   private authHeader(additionalHeaders?: any): any {
@@ -21,24 +23,29 @@ export class DevOpsServiceClient {
     if (!additionalHeaders) {
       return { headers: header };
     } else {
-      const arr = [header];
-      arr.push(additionalHeaders);
-      return { headers: arr };
+      const allHeaders = Object.assign(header, additionalHeaders);
+      return { headers: allHeaders };
     }
   }
 
-  getUserToken(applianceAddress: string, accessToken: string): Observable<any> {
-    const url = 'https://' + applianceAddress + '/service/core/v3/Token/LoginResponse';
-
-    return this.http.post(url, { StsAccessToken: accessToken })
-      .pipe(catchError(SCH.error('DevOpsServiceClient', 'getSafeguard')));
+  private error<T>(method: string) {
+    return (error): Observable<T> => {
+      if (error.status === 401) {
+        alert(error);
+        this.authService.login(this.applianceAddress);
+      }
+      console.log(`[DevOpsServiceClient.${method}]: ${error.message}`);
+      return throwError(error);
+    };
   }
 
   getSafeguard(): Observable<any> {
     const url = this.BASE + 'Safeguard';
 
     return this.http.get(url)
-      .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'getSafeguard')));
+      .pipe(
+        tap((data: any) => this.applianceAddress = data.ApplianceAddress),
+        catchError(this.error<any>('getSafeguard')));
   }
 
   putSafeguard(applianceAddress: string): Observable<any> {
@@ -49,12 +56,12 @@ export class DevOpsServiceClient {
       IgnoreSsl: true
     };
     return this.http.put(url, payload, this.authHeader())
-      .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'putSafeguard')));
+      .pipe(catchError(this.error<any>('putSafeguard')));
   }
 
   logon(): Observable<any> {
     return this.http.get(this.BASE + 'Safeguard/Logon', this.authHeader())
-      .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'logon')));
+      .pipe(catchError(this.error<any>('logon')));
   }
 
   getCSR(certType: string, subjectName?: string, dnsSubjectAlternativeNames?: string, ipSubjectAlternativeNames?: string): Observable<any> {
@@ -71,14 +78,14 @@ export class DevOpsServiceClient {
     }
 
     const options = Object.assign({ responseType: 'text' }, this.authHeader());
-    console.log(options);
+
     return this.http.get(url, options)
-      .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'getCSR')));
+      .pipe(catchError(this.error<any>('getCSR')));
   }
 
   getConfiguration(): Observable<any> {
     return this.http.get(this.BASE + 'Safeguard/Configuration', this.authHeader())
-      .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'getConfiguration')));
+      .pipe(catchError(this.error<any>('getConfiguration')));
   }
 
   postConfiguration(base64CertificateData?: string, passphrase?: string): Observable<any> {
@@ -88,26 +95,56 @@ export class DevOpsServiceClient {
       Passphrase: passphrase
     };
     return this.http.post(url, payload, this.authHeader())
-      .pipe(catchError(SCH.error('DevOpsServiceClient', 'postConfiguration')));
+      .pipe(catchError(this.error('postConfiguration')));
   }
 
-  getPlugins(): Observable<any[]> {
+  getPlugins(): Observable<any> {
     return this.http.get(this.BASE + 'Plugins', this.authHeader())
-      .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'getPlugins')));
+      .pipe(catchError(this.error<any>('getPlugins')));
+  }
+
+  postPluginFile(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('formFile', file);
+    formData.append('type', file.type);
+
+    const options = Object.assign({ responseType: 'text' }, this.authHeader());
+
+    return this.http.post(this.BASE + 'Plugins/File', formData, options)
+      .pipe(catchError(this.error<any>('postPluginFile')));
+  }
+
+  postPlugin(base64PluginData: string): Observable<any> {
+    const payload = {
+      Base64PluginData: base64PluginData
+    };
+    return this.http.post(this.BASE + 'Plugins', payload, this.authHeader())
+      .pipe(catchError(this.error<any>('postPlugin')));
   }
 
   getPluginAccounts(name: string): Observable<any[]> {
     return this.http.get(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Accounts', this.authHeader())
-      .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'getPluginAccounts')));
+      .pipe(catchError(this.error<any>('getPluginAccounts')));
   }
 
   putPluginAccounts(name: string, accounts: any[]): Observable<any[]> {
     return this.http.put(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Accounts', accounts, this.authHeader())
-      .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'putPluginAccounts')));
+      .pipe(catchError(this.error<any>('putPluginAccounts')));
   }
 
   putPluginConfiguration(name: string, config: any): Observable<any> {
     return this.http.put(this.BASE + 'Plugins/' + encodeURIComponent(name), config, this.authHeader())
-    .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'putPluginConfiguration')));
+    .pipe(catchError(this.error<any>('putPluginConfiguration')));
+  }
+
+  getAvailableAccounts(filter?: string): Observable<any[]> {
+    let url = this.BASE + 'Safeguard/AvailableAccounts';
+
+    if (filter?.length > 0) {
+      url += '?filter=' + encodeURIComponent(filter);
+    }
+
+    return this.http.get(url, this.authHeader())
+      .pipe(catchError(this.error<any>('getAvailableAccounts')));
   }
 }

@@ -34,6 +34,7 @@
     <PackageReference Include="CredentialManagement.Standard" Version="1.0.4" />
     <PackageReference Include="LiteDB" Version="5.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.6" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.9" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.6" />
     <PackageReference Include="OneIdentity.SafeguardDotNet" Version="6.7.0-dev-322" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />

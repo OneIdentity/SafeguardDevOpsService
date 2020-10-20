@@ -1,16 +1,18 @@
 import { Component, OnInit, ViewChild, ElementRef, Renderer2 } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
-import { switchMap, map, concatAll, tap, distinctUntilChanged, debounceTime } from 'rxjs/operators';
+import { switchMap, map, concatAll, tap, distinctUntilChanged, debounceTime, finalize } from 'rxjs/operators';
 import { of, Observable, fromEvent } from 'rxjs';
-import { StaticInfoService } from '../static-info.service';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { UploadCertificateComponent } from '../upload-certificate/upload-certificate.component';
 import { EnterPassphraseComponent } from '../upload-certificate/enter-passphrase/enter-passphrase.component';
-import { VaultPlugin } from '../plugin.type';
 import * as $ from 'jquery';
 import { ViewportScroller } from '@angular/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { EditPluginService } from '../edit-plugin.service';
+import { MatDrawer } from '@angular/material/sidenav';
+import { AuthService } from '../auth.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @UntilDestroy()
 @Component({
@@ -21,14 +23,16 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class MainComponent implements OnInit {
 
   constructor(
-    public staticInfoService: StaticInfoService,
     private window: Window,
     private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
     private router: Router,
     private renderer: Renderer2,
     private elementRef: ElementRef,
-    private scroller: ViewportScroller
+    private scroller: ViewportScroller,
+    public editPluginService: EditPluginService,
+    private authService: AuthService,
+    private snackBar: MatSnackBar
   ) { }
 
   UserName: string;
@@ -37,22 +41,26 @@ export class MainComponent implements OnInit {
   A2AVaultRegistrationName: string;
   Thumbprint: string;
   DevOpsInstanceId: string;
+  ApplianceAddress: string;
 
   plugins = [];
   isLoading: boolean;
 
+  @ViewChild('drawer', { static: false }) drawer: MatDrawer;
+
+  @ViewChild('fileSelectInputDialog', { static: false }) fileSelectInputDialog: ElementRef;
+
   @ViewChild('unconfigured', { static: false }) set contentUnconfigured(content: ElementRef) {
     if (content && !this.isLoading) {
-      console.log('after change');
       this.setArrows();
     }
   }
 
   ngOnInit(): void {
     this.isLoading = true;
-    this.staticInfoService.ApplianceAddress =  this.window.sessionStorage.getItem('ApplianceAddress');
+    this.ApplianceAddress =  this.window.sessionStorage.getItem('ApplianceAddress');
 
-    if (!this.staticInfoService.ApplianceAddress) {
+    if (!this.ApplianceAddress) {
       this.router.navigate(['/login']);
     } else {
       this.loginToDevOpsService()
@@ -78,39 +86,25 @@ export class MainComponent implements OnInit {
       distinctUntilChanged()
     ).subscribe(() => {
       console.log('scroll');
-      //this.setArrows();
     });
   }
 
   private calculateArrow(A: HTMLElement, B: HTMLElement, index: number, totalArrows: number): string {
-    const rectA = A.getBoundingClientRect();
-    const rectB = B.getBoundingClientRect();
-
-    console.log(rectA.x + ' ' + rectA.y + ' ' + rectA.height);
-    console.log(rectB);
-    console.log(window.scrollY);
-
     const posA = {
-      x: A.offsetLeft + 60 - index * 15,
-      // x: rectA.left + 60 - index * 15,
+      x: A.offsetLeft + 150 - index * 15,
       y: A.offsetTop + A.offsetHeight - 20 + this.window.scrollY
-      // y: rectA.y + rectA.top + this.window.scrollY + 15
     };
 
     const posB = {
       x: B.offsetLeft - 50,
       y: B.offsetTop + B.offsetHeight / 2 - 20
-      // y: rectB.y / 2 + this.window.scrollY
     };
 
     return `M ${posA.x},${posA.y} V ${posB.y} a 3,3 0 0 0 3 3 H ${posB.x}`;
   }
 
   private setArrows(): void {
-    const colors = [{ name: 'CorbinOrange', value: '#F4770B' },
-      { name: 'MauiSunset', value: '#802981' },
-      { name: 'TikiSunrise', value: '#F0DF3F' },
-      { name: 'AzaleaPink', value: '#F10C8A' }];
+    const colors = [ 'CorbinOrange', 'MauiSunset', 'TikiSunrise', 'AzaleaPink' ];
 
     try {
       const configured = $('.configured');
@@ -131,10 +125,10 @@ export class MainComponent implements OnInit {
         pathEl.setAttribute('d', dStr);
 
         const isUnconfigured = index === total - 1;
-        const color =  isUnconfigured ? { name: 'Black9', value: '#999' } :  colors[index % colors.length];
+        const color =  isUnconfigured ? 'Black9' :  colors[index % colors.length];
 
         pathEl.setAttribute('class', isUnconfigured ? 'arrow-unconfigured' : 'arrow');
-        pathEl.setAttribute('marker-end', `url(#marker${color.name}`);
+        pathEl.setAttribute('marker-end', `url(#marker${color})`);
 
         this.renderer.appendChild(pathGroup, pathEl);
       });
@@ -142,8 +136,7 @@ export class MainComponent implements OnInit {
   }
 
   initializeConfig(config: any): void {
-    this.staticInfoService.ApplianceAddress =  config.Appliance.ApplianceAddress;
-
+    this.ApplianceAddress =  config.Appliance.ApplianceAddress;
     this.DevOpsInstanceId = config.Appliance.DevOpsInstanceId;
     this.UserName = config.UserName;
     this.IdentityProviderName = config.IdentityProviderName;
@@ -172,7 +165,7 @@ export class MainComponent implements OnInit {
       // Flatten array so each plugin is emitted individually
       concatAll(),
       // Get the plugin accounts
-      switchMap((plugin) => {
+      switchMap((plugin: any) => {
         return this.serviceClient.getPluginAccounts(plugin.Name).pipe(
           map(accounts => {
             plugin.Accounts = accounts;
@@ -180,7 +173,7 @@ export class MainComponent implements OnInit {
           })
         );
       }),
-      tap((plugin) => {
+      tap((plugin: any) => {
         const knownPlugin = knownPlugins.find(p => p[0] === plugin.Name);
         if (knownPlugin) {
           plugin.DisplayName = knownPlugin[1];
@@ -203,30 +196,18 @@ export class MainComponent implements OnInit {
     );
   }
 
-  getUserToken(): Observable<any> {
-    const userToken = this.window.sessionStorage.getItem('UserToken');
-
-    if (!userToken) {
-      const accessToken = this.window.sessionStorage.getItem('AccessToken');
-      const applianceAddress = this.staticInfoService.ApplianceAddress;
-
-      return this.serviceClient.getUserToken(applianceAddress, accessToken);
-    } else {
-      return of({ Status: 'Success', UserToken: userToken });
-    }
-  }
-
   loginToDevOpsService(): Observable<any> {
-    return this.getUserToken()
+    return this.authService.getUserToken(this.ApplianceAddress)
       .pipe(
         switchMap((userTokenData) => {
           if (userTokenData?.Status === 'Success') {
-            this.window.sessionStorage.setItem('UserToken', userTokenData.UserToken);
-            this.window.sessionStorage.removeItem('AccessToken');
-
-            if (!this.staticInfoService.InstanceId) {
-              return this.serviceClient.putSafeguard(this.staticInfoService.ApplianceAddress);
-            }
+            return this.serviceClient.getSafeguard();
+          }
+          return of();
+        }),
+        switchMap((safeguardData) => {
+          if (!safeguardData.ApplianceAddress) {
+            return this.serviceClient.putSafeguard(this.ApplianceAddress);
           }
           return of(undefined);
         }),
@@ -272,6 +253,43 @@ export class MainComponent implements OnInit {
     ).subscribe(config => {
       this.initializeConfig(config);
     });
+  }
+
+  editConfiguration(plugin: any): void {
+    this.editPluginService.setEdit(plugin);
+    this.drawer.open();
+  }
+
+  uploadPlugin(): void {
+    const e: HTMLElement = this.fileSelectInputDialog.nativeElement;
+    e.click();
+  }
+
+  onChangeFile(files: FileList): void {
+    if (!files[0]) {
+      return;
+    }
+
+    const fileSelected = files[0];
+
+    this.serviceClient.postPluginFile(fileSelected).pipe(
+      finalize(() => {
+        // Clear the selection
+        const input = this.fileSelectInputDialog.nativeElement as HTMLInputElement;
+        input.value = null;
+      })
+    ).subscribe(
+      (x: any) => {
+        if (typeof x === 'string') {
+          this.snackBar.open(x, 'OK', { duration: 10000 });
+        } else {
+          x.IsConfigured = false;
+          x.Accounts = [];
+          x.DisplayName = x.Name;
+          this.plugins.push(x);
+          console.log('plugin added');
+        }
+      });
   }
 }
 
