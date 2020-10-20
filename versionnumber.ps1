@@ -15,7 +15,7 @@ $local:BuildNumber = ($BuildId % 65535) # max value for version part on Windows 
 Write-Host "BuildNumber = $($local:BuildNumber)"
 
 $local:VersionString = "${SemanticVersion}.$($local:BuildNumber)"
-$local:TemplateVersion = "65534.65534.65534.65534"
+$local:TemplateVersion = "255.255.65534.65534"
 Write-Host "VersionString = $($local:VersionString)"
 Write-Host "TemplateVersion = $($local:TemplateVersion)"
 
