@@ -1,0 +1,53 @@
+// Primary Colors
+$iris-blue: #05AADB;
+$iris-tint: #82D5ED;
+$iris-shade: #02556D;
+$iris-pastel: #D6EFF6;
+$white: #FFF;
+$asher-gray: #F2F2F2;
+$gunmetal: #333;
+$aspen-green: #618F3E;
+
+$black-6: #666;
+$black-9: #999;
+$black-b: #B2B2B2;
+$black-c: #CCC;
+
+$corbin-orange: #F4770B;
+$maui-sunset: #802981;
+$tiki-sunrise: #F0DF3F;
+$azalea-pink: #F10C8A;
+
+/// Material Design Palettes 
+$iris-blue-palette: (
+  50: #E1F5FB,
+  100: #B4E6F4,
+  200: #82D5ED,
+  300: #50C4E6,
+  400: #2BB7E0,
+  500: #05AADB,
+  600: #04A3D7,
+  700: #0499D2,
+  800: #0390CD,
+  900: #017FC4,
+  A100: #ECF8FF,
+  A200: #B9E3FF,
+  A400: #86CFFF,
+  A700: #6DC5FF,
+  contrast: (
+    50: #FBE7E1,
+    100: #F4C3B4,
+    200: #ED9B82,
+    300: #E67350,
+    400: #E0552B,
+    500: #fff,
+    600: #fff,
+    700: #fff,
+    800: #fff,
+    900: #fff,
+    A100: #FFEDEC,
+    A200: #FFBDB9,
+    A400: #FF8D86,
+    A700: #FF756D,
+  )
+);

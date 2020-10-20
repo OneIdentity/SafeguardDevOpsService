@@ -1,0 +1,33 @@
+@import '../../colors.scss';
+
+.custom-link {
+  text-decoration: none;
+  color: $iris-blue;
+}
+
+.csr-container {
+  display: flex;
+  flex-direction: column;
+  margin-left: 20px;
+  margin-top: 10px;
+}
+
+.show-more-link{
+  display: inline-block;
+  color: $iris-blue;
+  cursor: pointer;
+
+  mat-icon {
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+}
+
+.upload-button {
+  float: right;
+}
+
+.divider {
+  color: $black-c;
+  padding: 0 10px;
+}

@@ -1,0 +1,50 @@
+@import '../../colors.scss';
+
+.root-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+table {
+  width: 100%;
+}
+
+.detail-row {
+  font-size: .85em;
+  color: $black-9;
+}
+
+.main-container {
+  background-color: $asher-gray;
+  padding: 20px;
+  width: 600px;
+  flex: 1;
+  overflow: auto;
+}
+
+.search-container {
+  mat-form-field {
+    margin-right: 10px;
+  }
+}
+
+.header {
+  background-color: $black-6;
+  color: #ffffff;
+  display: flex;
+
+  .spacer {
+    flex: 1;
+  }
+}
+
+.selection-footer {
+  background-color: $black-6;
+  color: $iris-tint;
+  display: flex;
+
+  .spacer {
+    flex: 1;
+  }
+}
