@@ -1,0 +1,66 @@
+<div class="root-container">
+  <mat-toolbar class="header">
+    <span>Select Account</span>
+    <div class="spacer"></div>
+    <button mat-icon-button (click)="close([])"><mat-icon>close</mat-icon></button>
+  </mat-toolbar>
+
+  <div class="main-container">
+    <h3>What do you want to access?</h3>
+
+    <div class="search-container">
+      <mat-form-field appearance="outline">
+        <mat-label>Asset</mat-label>
+        <input matInput type="text" #assetSearch [(ngModel)]="assetSearchVal">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Account</mat-label>
+        <input matInput type="text" #accountSearch [(ngModel)]="accountSearchVal">
+      </mat-form-field>
+    </div>
+    <div>
+      <table mat-table [dataSource]="accounts">
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef>
+            <mat-checkbox (change)="$event ? masterToggle() : null"
+                          [checked]="selection.hasValue() && isAllSelected()"
+                          [indeterminate]="selection.hasValue() && !isAllSelected()">
+            </mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let row">
+            <mat-checkbox (click)="$event.stopPropagation()"
+                          (change)="$event ? selection.toggle(row) : null"
+                          [checked]="selection.isSelected(row)">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="asset">
+          <th mat-header-cell *matHeaderCellDef>Asset</th>
+          <td mat-cell *matCellDef="let element">
+            <span>{{element.SystemName}}</span>
+            <div class="detail-row">{{element.SystemNetworkAddress}}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="account">
+          <th mat-header-cell *matHeaderCellDef>Account</th>
+          <td mat-cell *matCellDef="let element">
+            <span>{{element.Name}}</span>
+            <div class="detail-row">{{element.DomainName}}</div>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+  </div>
+
+  <mat-toolbar class="selection-footer" *ngIf="this.selection.selected.length > 0">
+    <span *ngIf="this.selection.selected.length == 1">{{this.selection.selected.length}} Item Selected</span>
+    <span *ngIf="this.selection.selected.length > 1">{{this.selection.selected.length}} Items Selected</span>
+    <div class="spacer"></div>
+    <button mat-flat-button color="primary" (click)="close(this.selection.selected)">Select</button>
+  </mat-toolbar>
+</div>

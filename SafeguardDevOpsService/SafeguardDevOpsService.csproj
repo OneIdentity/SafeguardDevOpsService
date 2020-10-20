@@ -28,6 +28,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ClientApp\dist\**" />
+    <EmbeddedResource Remove="ClientApp\dist\**" />
+    <None Remove="ClientApp\dist\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="ClientApp\node_modules\**" />
+    <EmbeddedResource Remove="ClientApp\node_modules\**" />
+    <None Remove="ClientApp\node_modules\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Autofac" Version="5.2.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="AutofacSerilogIntegration" Version="3.0.0" />
@@ -57,5 +69,11 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec WorkingDirectory="$(ProjectDir)ClientApp" Command="npm install" ContinueOnError="WarnAndContinue"/>
+    <Exec WorkingDirectory="$(ProjectDir)ClientApp" Command="npm run build -- --prod" />
+    <Exec WorkingDirectory="$(ProjectDir)ClientApp" Command="xcopy dist $(TargetDir)dist /S /I /Y" />
+  </Target>
 
 </Project>

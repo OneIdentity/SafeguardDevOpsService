@@ -1,0 +1,168 @@
+@import '../../colors.scss';
+
+:host {
+  height: 100%;
+}
+
+mat-drawer-container {
+  height: 100%;
+}
+
+.main-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+}
+
+.svg-container {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  z-index: -1;
+}
+
+.info-container {
+  display: flex;
+  margin: 50px;
+
+  .info-column {
+    margin: 0 20px;
+  }
+  
+  .info-label {
+    font-size: .85em;
+    color: $black-9;
+  }
+  
+  .vertical-line {
+    border-right: 1px solid $black-c;
+  }
+  
+  .custom-link {
+    text-decoration: none;
+    color: $iris-blue;
+  }
+  
+  .green-icon {
+    color: $aspen-green;
+    font-size: 16px;
+  }
+  
+  .loading-container{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  
+    .spinner {
+      display: block;
+      margin: 20px auto 0px auto;
+    }
+  }
+}
+
+.plugin-container {
+  border-radius: 8px;
+  padding: 25px;
+  margin-left: 280px;
+  margin-right: 50px;
+}
+
+.plugin-container.unconfigured {
+  border: 2px dashed $black-9; 
+  color: $black-6;
+  display: flex;
+
+  .header {
+    width: 175px;
+    font-size: 1.5em;
+    font-weight: 400;
+    margin-right: 20px;
+  }
+
+  .plugin-button-container {
+    display: flex;
+
+    .plugin-button {
+      border-color: $iris-blue;
+      background-color: #ffffff;
+      color: $iris-blue;
+      font-weight: 400;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+  }
+}
+
+.plugin-container.configured {
+  border: 1px solid;
+  margin-bottom: 20px;
+  border-color: $maui-sunset;
+  cursor: pointer;
+
+  .header {
+    color: $maui-sunset;
+    font-size: 2em;
+    font-weight: 300;
+    margin-bottom: 10px;
+  }
+
+  .edit-text {
+    color: $iris-blue;
+  }
+
+  .accounts-container {
+    float: right;
+    display: flex;
+    color: $black-9;
+
+    .count {
+      font-size: 3em;
+      font-weight: 400;
+      color: $black-6;
+      padding: 10px 8px 0 0;
+    }
+  }
+}
+
+.plugin-container.configured:nth-child(2) {
+  border-color: $corbin-orange;
+  .header {
+    color: $corbin-orange;
+  }
+}
+
+path.arrow-unconfigured {
+  stroke: $black-9;
+  color: $black-9;
+  fill: none;
+}
+marker.arrow-unconfigured {
+  fill: $black-9;
+}
+
+path.arrow {
+  fill: none;
+  stroke: $corbin-orange;
+  color: $corbin-orange;
+}
+marker.arrow1 {
+  fill: $corbin-orange;
+}
+
+path.arrow:nth-child(2) {
+  stroke: $maui-sunset;
+  color: $maui-sunset;
+}
+marker.arrow2 {
+  fill: $maui-sunset;
+}
+
+path.arrow:nth-child(3) {
+  stroke: $tiki-sunrise;
+  color: $tiki-sunrise;
+}
+marker.arrow3 {
+  fill: $tiki-sunrise;
+}

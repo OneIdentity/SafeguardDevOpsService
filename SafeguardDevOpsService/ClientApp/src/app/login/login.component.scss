@@ -1,0 +1,18 @@
+.main-container {
+  display: flex;
+  justify-content: center;
+}
+
+mat-card {
+  padding: 50px;
+  margin: 50px;
+}
+
+.center {
+  display: block;
+  margin: 0px auto;
+}
+
+.info-text {
+  margin: 20px 0;
+}
