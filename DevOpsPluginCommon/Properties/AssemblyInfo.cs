@@ -13,7 +13,7 @@ using System.Resources;
 [assembly: AssemblyCulture("")]
 
 // Version information -- replaced at build time
-[assembly: AssemblyVersion("65534.65534.65534.65534")]
-[assembly: AssemblyFileVersion("65534.65534.65534.65534")]
+[assembly: AssemblyVersion("255.255.65534.65534")]
+[assembly: AssemblyFileVersion("255.255.65534.65534")]
 [assembly: NeutralResourcesLanguageAttribute( "en-US" )]
 
