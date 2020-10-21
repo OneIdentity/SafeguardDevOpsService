@@ -43,5 +43,10 @@ namespace OneIdentity.DevOps.Data
         /// Plugin version
         /// </summary>
         public string Version { get; set; }
+
+        /// <summary>
+        /// Mapped accounts count
+        /// </summary>
+        public int MappedAccountsCount { get; set; }
     }
 }
