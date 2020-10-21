@@ -96,7 +96,7 @@ namespace OneIdentity.DevOps
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
-                configuration.RootPath = Path.Combine(AppContext.BaseDirectory, "dist");
+                configuration.RootPath = Path.Combine(AppContext.BaseDirectory, "ClientApp/dist");
             });
         }
 
