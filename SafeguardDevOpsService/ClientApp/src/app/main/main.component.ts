@@ -207,6 +207,10 @@ export class MainComponent implements OnInit {
       );
   }
 
+  nukeClientCertificate(): void {
+    this.serviceClient.deleteClientCertificate().subscribe();
+  }
+
   addClientCertificate(e: Event): void {
     e.preventDefault();
 
