@@ -26,6 +26,7 @@ import { UploadCertificateComponent } from './upload-certificate/upload-certific
 import { DevOpsServiceClient } from './service-client.service';
 import { EnterPassphraseComponent } from './upload-certificate/enter-passphrase/enter-passphrase.component';
 import { SelectAccountsComponent } from './select-accounts/select-accounts.component';
+import { EditPluginComponent } from './edit-plugin/edit-plugin.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +35,8 @@ import { SelectAccountsComponent } from './select-accounts/select-accounts.compo
     MainComponent,
     UploadCertificateComponent,
     EnterPassphraseComponent,
-    SelectAccountsComponent
+    SelectAccountsComponent,
+    EditPluginComponent
   ],
   imports: [
     BrowserModule,

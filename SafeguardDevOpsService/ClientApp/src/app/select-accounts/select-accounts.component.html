@@ -2,7 +2,7 @@
   <mat-toolbar class="header">
     <span>Select Account</span>
     <div class="spacer"></div>
-    <button mat-icon-button (click)="close([])"><mat-icon>close</mat-icon></button>
+    <button mat-icon-button (click)="close()"><mat-icon>close</mat-icon></button>
   </mat-toolbar>
 
   <div class="main-container">
@@ -61,6 +61,6 @@
     <span *ngIf="this.selection.selected.length == 1">{{this.selection.selected.length}} Item Selected</span>
     <span *ngIf="this.selection.selected.length > 1">{{this.selection.selected.length}} Items Selected</span>
     <div class="spacer"></div>
-    <button mat-flat-button color="primary" (click)="close(this.selection.selected)">Select</button>
+    <button mat-flat-button color="primary" (click)="selectAccounts()">Select</button>
   </mat-toolbar>
 </div>
