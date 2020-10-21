@@ -575,8 +575,8 @@
             <Component Id="mscordaccore.dll" Guid="*">
                 <File Id="mscordaccore.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore.dll" />
             </Component>
-            <Component Id="mscordaccore_amd64_amd64_4.700.20.20201.dll" Guid="*">
-                <File Id="mscordaccore_amd64_amd64_4.700.20.20201.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.20.20201.dll" />
+            <Component Id="mscordaccore_amd64_amd64_4.700.20.47201.dll" Guid="*">
+                <File Id="mscordaccore_amd64_amd64_4.700.20.47201.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.20.47201.dll" />
             </Component>
             <Component Id="mscordbi.dll" Guid="*">
                 <File Id="mscordbi.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordbi.dll" />
@@ -1193,20 +1193,6 @@
             <Component Id="_appsettings.json" Guid="*">
                 <File Id="_appsettings.json" KeyPath="yes" Source="$(var.SourceDir)\_appsettings.json" />
             </Component>
-            <Directory Id="runtimes" Name="runtimes">
-                <Directory Id="win" Name="win">
-                    <Directory Id="lib" Name="lib">
-                        <Directory Id="netstandard2.0" Name="netstandard2.0">
-                            <Component Id="System.ServiceProcess.ServiceController.dll_1" Guid="*">
-                                <File Id="System.ServiceProcess.ServiceController.dll_1" KeyPath="yes" Source="$(var.SourceDir)\runtimes\win\lib\netstandard2.0\System.ServiceProcess.ServiceController.dll" />
-                            </Component>
-                            <Component Id="System.Threading.AccessControl.dll_1" Guid="*">
-                                <File Id="System.Threading.AccessControl.dll_1" KeyPath="yes" Source="$(var.SourceDir)\runtimes\win\lib\netstandard2.0\System.Threading.AccessControl.dll" />
-                            </Component>
-                        </Directory>
-                    </Directory>
-                </Directory>
-            </Directory>
         </DirectoryRef>
     </Fragment>
     <Fragment>
@@ -1402,7 +1388,7 @@
             <ComponentRef Id="Microsoft.Win32.Registry.dll" />
             <ComponentRef Id="Microsoft.Win32.SystemEvents.dll" />
             <ComponentRef Id="mscordaccore.dll" />
-            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.20.20201.dll" />
+            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.20.47201.dll" />
             <ComponentRef Id="mscordbi.dll" />
             <ComponentRef Id="mscorlib.dll" />
             <ComponentRef Id="mscorrc.debug.dll" />
@@ -1608,8 +1594,6 @@
             <ComponentRef Id="ucrtbase.dll" />
             <ComponentRef Id="WindowsBase.dll" />
             <ComponentRef Id="_appsettings.json" />
-            <ComponentRef Id="System.ServiceProcess.ServiceController.dll_1" />
-            <ComponentRef Id="System.Threading.AccessControl.dll_1" />
         </ComponentGroup>
     </Fragment>
 </Wix>

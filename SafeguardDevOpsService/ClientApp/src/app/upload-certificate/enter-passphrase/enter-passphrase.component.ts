@@ -9,7 +9,8 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 export class EnterPassphraseComponent implements OnInit {
 
   fileName: string;
-  passphrase: string;
+  passphrase: string = "";
+  reEnterPassphrase: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -18,6 +19,7 @@ export class EnterPassphraseComponent implements OnInit {
 
   ngOnInit(): void {
     this.fileName = this.data.fileName;
+    this.reEnterPassphrase = this.data?.badPassphrase ?? false;
   }
 
   submit(): void {

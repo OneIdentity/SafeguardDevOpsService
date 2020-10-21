@@ -3,7 +3,8 @@
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
      xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
 
-  <Product Id="*" Name="SafeguardDevOpsService" Language="1033" Version="!(bind.fileVersion.DevOpsPluginCommon.dll)" Manufacturer="!(loc.CompanyName)" UpgradeCode="8a0194a6-6aed-441c-8130-a81b96490bd7">
+  <Product Id="*" Name="SafeguardDevOpsService" Language="1033" Version="!(bind.fileVersion.DevOpsPluginCommon.dll)" 
+           Manufacturer="!(loc.CompanyName)" UpgradeCode="8a0194a6-6aed-441c-8130-a81b96490bd7">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
 
     <MajorUpgrade AllowSameVersionUpgrades="yes" Schedule="afterInstallInitialize" DowngradeErrorMessage="A newer version of [ProductName] is already installed." />

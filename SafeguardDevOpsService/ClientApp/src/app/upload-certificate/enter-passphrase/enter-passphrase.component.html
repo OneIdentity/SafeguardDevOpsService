@@ -6,8 +6,10 @@
   <mat-form-field appearance="outline">
     <mat-label>Passphrase</mat-label>
     <input matInput type="text" [(ngModel)]="passphrase" name="passphrase" cdkFocusInitial (keyup)="handleKeyUp($event)">
+    <mat-hint class='bad-password' *ngIf='reEnterPassphrase'>The entered passphrase was not correct. Please try again.</mat-hint>
   </mat-form-field>
 </div>
 <div mat-dialog-actions align="end">
+  <button mat-flat-button (click)="submit()" color="primary" [disabled]="passphrase.length > 0">No Passphrase</button>
   <button mat-flat-button (click)="submit()" color="primary" [disabled]="!passphrase">OK</button>
 </div>
