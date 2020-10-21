@@ -10,8 +10,10 @@
 .mat-dialog-content {
   display: flex;
   flex-direction: column;
+  min-height: 100px;
 }
 
 .mat-hint.bad-password {
   color: $phoenix-red;
+  font-size: 12px;
 }

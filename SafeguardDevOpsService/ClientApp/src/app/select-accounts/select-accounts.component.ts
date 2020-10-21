@@ -34,6 +34,8 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
       untilDestroyed(this),
       switchMap((data) => {
         if (data.mode === EditPluginMode.Accounts) {
+          console.log('edit accounts');
+          console.log(data.plugin.Accounts);
           this.pluginAccounts.splice(0);
           this.pluginAccounts.push(...data.plugin.Accounts);
 

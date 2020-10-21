@@ -5,7 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { MainComponent } from './main/main.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule, BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
@@ -22,12 +22,16 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatChipsModule } from '@angular/material/chips';
 
 import { UploadCertificateComponent } from './upload-certificate/upload-certificate.component';
 import { DevOpsServiceClient } from './service-client.service';
 import { EnterPassphraseComponent } from './upload-certificate/enter-passphrase/enter-passphrase.component';
 import { SelectAccountsComponent } from './select-accounts/select-accounts.component';
 import { EditPluginComponent } from './edit-plugin/edit-plugin.component';
+import { CreateCsrComponent } from './create-csr/create-csr.component';
+import { ViewCertificateComponent } from './view-certificate/view-certificate.component';
+import { SaveCsrComponent } from './save-csr/save-csr.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +41,11 @@ import { EditPluginComponent } from './edit-plugin/edit-plugin.component';
     UploadCertificateComponent,
     EnterPassphraseComponent,
     SelectAccountsComponent,
-    EditPluginComponent
+    EditPluginComponent,
+    EditPluginComponent,
+    CreateCsrComponent,
+    ViewCertificateComponent,
+    SaveCsrComponent
   ],
   imports: [
     BrowserModule,
@@ -58,6 +66,8 @@ import { EditPluginComponent } from './edit-plugin/edit-plugin.component';
     MatCheckboxModule,
     MatSnackBarModule,
     MatAutocompleteModule,
+    MatChipsModule,
+    NoopAnimationsModule,
   ],
   entryComponents: [
     UploadCertificateComponent
