@@ -132,9 +132,22 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('putPluginAccounts')));
   }
 
+  deletePluginAccounts(name: string, accounts: any[]): Observable<any[]> {
+    const options = Object.assign({ body: accounts }, this.authHeader());
+
+    return this.http.request('delete', this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Accounts', options)
+      .pipe(catchError(this.error<any>('putPluginAccounts')));
+  }
+
   putPluginConfiguration(name: string, config: any): Observable<any> {
-    return this.http.put(this.BASE + 'Plugins/' + encodeURIComponent(name), config, this.authHeader())
+    const payload = { Configuration: config };
+    return this.http.put(this.BASE + 'Plugins/' + encodeURIComponent(name), payload, this.authHeader())
     .pipe(catchError(this.error<any>('putPluginConfiguration')));
+  }
+
+  deletePluginConfiguration(name: string): Observable<any> {
+    return this.http.delete(this.BASE + 'Plugins/' + encodeURIComponent(name), this.authHeader())
+    .pipe(catchError(this.error<any>('deletePluginConfiguration')));
   }
 
   getAvailableAccounts(filter?: string): Observable<any[]> {
@@ -146,5 +159,15 @@ export class DevOpsServiceClient {
 
     return this.http.get(url, this.authHeader())
       .pipe(catchError(this.error<any>('getAvailableAccounts')));
+  }
+
+  getRetrievableAccounts(): Observable<any[]> {
+    return this.http.get(this.BASE + 'Safeguard/A2ARegistration/RetrievableAccounts', this.authHeader())
+      .pipe(catchError(this.error<any>('getRetrievableAccounts')));
+  }
+
+  putRetrievableAccounts(accounts: any[]): Observable<any[]> {
+    return this.http.put(this.BASE + 'Safeguard/A2ARegistration/RetrievableAccounts', accounts, this.authHeader())
+      .pipe(catchError(this.error<any>('putPluginAccounts')));
   }
 }

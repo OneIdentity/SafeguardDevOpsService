@@ -1,8 +1,8 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
 import { SelectionModel } from '@angular/cdk/collections';
-import { EditPluginService } from '../edit-plugin.service';
-import { fromEvent, Observable } from 'rxjs';
+import { EditPluginService, EditPluginMode } from '../edit-plugin.service';
+import { fromEvent, Observable, of } from 'rxjs';
 import { distinctUntilChanged, debounceTime, switchMap, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
@@ -26,11 +26,32 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
   selection = new SelectionModel(true, []);
   assetSearchVal: string;
   accountSearchVal: string;
+  pluginAccounts = [];
 
   ngOnInit(): void {
-    this.serviceClient.getAvailableAccounts().subscribe(
-      (data) => {
+    // TODO: loading icon
+    this.editPluginService.notifyEvent$.pipe(
+      untilDestroyed(this),
+      switchMap((data) => {
+        if (data.mode === EditPluginMode.Accounts) {
+          console.log('edit accounts');
+          console.log(data.plugin.Accounts);
+          this.pluginAccounts.splice(0);
+          this.pluginAccounts.push(...data.plugin.Accounts);
+
+          return  this.serviceClient.getAvailableAccounts();
+        }
+        return of();
+      })
+    ).subscribe(
+      (data: any[]) => {
         this.accounts = data;
+        this.pluginAccounts.forEach(account => {
+          const indx = data.findIndex(x => x.Id === account.Id);
+          if (indx > -1) {
+            this.accounts.splice(indx, 1);
+          }
+        });
       }
     );
   }
@@ -79,7 +100,16 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
         this.accounts.forEach(row => this.selection.select(row));
   }
 
-  close(accounts: any[]): void {
-    this.editPluginService.closeAccounts(accounts);
+  close(): void {
+    this.editPluginService.closeAccounts();
+  }
+
+  selectAccounts(): void {
+    this.selection.selected.forEach(sel => {
+      if (this.pluginAccounts.indexOf(x => x.Id === sel.Id) === -1) {
+        this.pluginAccounts.push(sel);
+      }
+    });
+    this.editPluginService.closeAccounts(this.pluginAccounts);
   }
 }

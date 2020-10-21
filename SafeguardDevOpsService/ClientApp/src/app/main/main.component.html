@@ -37,7 +37,7 @@
     </mat-card>
 
     <ng-container *ngFor="let plugin of plugins">
-      <div class="plugin-container configured" (click)="editConfiguration(plugin)">
+      <div class="plugin-container configured" (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup">
         <div class="accounts-container">
           <div class="count">{{plugin.Accounts.length}}</div>
           <div><div>Managed</div><div *ngIf="plugin.Accounts.length == 1">Account</div><div *ngIf="plugin.Accounts.length != 1">Accounts</div></div>
@@ -51,13 +51,13 @@
       <div class="header">What would you like to plug-in?</div>
       <div class="plugin-button-container">
         <ng-container *ngFor="let plugin of plugins">
-          <ng-container *ngIf="!plugin.IsConfigured && plugin.IsUploadCustom">
+          <ng-container *ngIf="!plugin.IsConfigurationSetup && plugin.IsUploadCustom">
             <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".zip" />
             <button mat-stroked-button class="plugin-button" (click)="uploadPlugin(plugin)">
               {{plugin.DisplayName}}
             </button>
           </ng-container>
-          <button *ngIf="!plugin.IsConfigured && !plugin.IsUploadCustom" mat-stroked-button class="plugin-button" (click)="editConfiguration(plugin)">
+          <button *ngIf="!plugin.IsConfigurationSetup && !plugin.IsUploadCustom" mat-stroked-button class="plugin-button" (click)="editPlugin(plugin)">
             {{plugin.DisplayName}}
           </button>
         </ng-container>
@@ -76,6 +76,12 @@
           <marker id="markerMauiSunset" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow2">
             <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
           </marker>
+          <marker id="markerTikiSunrise" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow3">
+            <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
+          </marker>
+          <marker id="markerAzaleaPink" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow4">
+            <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
+          </marker>
         </defs>
         <g fill="none" stroke-width="2" id="svgGroup">
         </g>
@@ -84,7 +90,8 @@
 
   </div>
 
-  <mat-drawer mode="over" position="end" #drawer autosize>
-    <app-select-accounts *ngIf="editPluginService.getEdit()"></app-select-accounts>
+  <mat-drawer mode="over" position="end" disableClose="true" autosize #drawer>
+    <app-edit-plugin *ngIf="openDrawerProperties"></app-edit-plugin>
+    <app-select-accounts *ngIf="openDrawerAccounts"></app-select-accounts>
   </mat-drawer>
 </mat-drawer-container>

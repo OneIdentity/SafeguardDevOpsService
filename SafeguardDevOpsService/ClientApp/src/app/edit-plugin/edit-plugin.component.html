@@ -1,0 +1,83 @@
+<div class="root-container">
+    <mat-toolbar class="header">
+      <span>Connection Settings</span>
+      <div class="spacer"></div>
+      <button mat-icon-button (click)="close()"><mat-icon>close</mat-icon></button>
+    </mat-toolbar>
+  
+    <div class="main-container">
+      <mat-card>
+        <h2>Basic Info</h2>
+        <div class="info-label">Name</div>
+        <div>{{plugin?.DisplayName}}</div>
+        <div class="info-label">({{plugin?.Name}})</div>
+        <p></p>
+        <div>
+          <div class="info-label">Description</div>
+          <div>{{plugin?.Description}}</div>
+        </div>
+      </mat-card>
+
+      <mat-card>
+        <h2>Configuration</h2>
+        <div class="field-container">
+          <mat-form-field appearance="outline">
+            <mat-label>Vault's Account in Safeguard</mat-label>
+            <input matInput type="text" [(ngModel)]="vaultAccount" name="vaultAccount">
+          </mat-form-field>
+          <div class="field-text">This account will be used by Secrets Broker to pull new passwords from Safeguard</div>
+        </div>
+        <div class="info-label">Plugin Details</div>
+        <ng-container *ngFor="let config of configs">
+          <div class="field-container">
+            <mat-form-field appearance="outline">
+              <mat-label>{{config.key}}</mat-label>
+              <input matInput type="text" [(ngModel)]="config.value" name="configvalue" [disabled]="isSaving">
+            </mat-form-field>
+          </div>
+        </ng-container>
+      </mat-card>
+
+      <mat-card>
+        <h2>Managed Accounts</h2>
+        <div class="sub-title">They will have their passwords pushed to the vault.</div>
+        <div>
+          <table mat-table [dataSource]="plugin.Accounts">
+            <ng-container matColumnDef="asset">
+              <td mat-cell *matCellDef="let element">
+                <span>{{element.SystemName}}</span>
+                <div class="detail-row">{{element.SystemNetworkAddress}}</div>
+              </td>
+            </ng-container>
+    
+            <ng-container matColumnDef="account">
+              <td mat-cell *matCellDef="let element">
+                <span>{{element.Name}}</span>
+                <div class="detail-row">{{element.DomainName}}</div>
+              </td>
+            </ng-container>
+    
+            <ng-container matColumnDef="delete">
+              <td mat-cell *matCellDef="let row">
+                <button mat-icon-button (click)="removeAccount($event, row)" color="primary" [disabled]="isSaving"><mat-icon>delete</mat-icon></button>
+              </td>
+            </ng-container>
+
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+        <button mat-button color="primary" (click)="selectAccounts()" [disabled]="isSaving"><mat-icon>add</mat-icon>Select Accounts</button>
+      </mat-card>
+
+      <div *ngIf="error" class="error"><mat-icon>error</mat-icon>{{error}}</div>
+      <div class="busy" *ngIf="isSaving">
+          <img class="spinner" src="/assets/busy-black.gif" /><span>Saving...</span>
+      </div>
+    </div>
+  
+    <mat-toolbar class="selection-footer">
+      <button mat-button (click)="delete()" [disabled]="isSaving">Delete Connection</button>
+      <div class="spacer"></div>
+      <button mat-flat-button color="primary" (click)="save()" [disabled]="isSaving">Save</button>
+    </mat-toolbar>
+  </div>
