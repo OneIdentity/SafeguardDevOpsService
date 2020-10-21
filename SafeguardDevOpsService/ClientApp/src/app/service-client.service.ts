@@ -139,6 +139,21 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('putPluginAccounts')));
   }
 
+  getPluginVaultAccount(name: string): Observable<any> {
+    return this.http.get(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/VaultAccount', this.authHeader())
+      .pipe(catchError(this.error<any>('getPluginVaultAccount')));
+  }
+
+  deletePluginVaultAccount(name: string): Observable<any> {
+    return this.http.delete(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/VaultAccount', this.authHeader())
+      .pipe(catchError(this.error<any>('deletePluginVaultAccount')));
+  }
+
+  putPluginVaultAccount(name: string, account: any): Observable<any> {
+    return this.http.put(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/VaultAccount', account, this.authHeader())
+      .pipe(catchError(this.error<any>('putPluginVaultAccount')));
+  }
+
   putPluginConfiguration(name: string, config: any): Observable<any> {
     const payload = { Configuration: config };
     return this.http.put(this.BASE + 'Plugins/' + encodeURIComponent(name), payload, this.authHeader())

@@ -37,6 +37,24 @@ table {
   }
 }
 
+.error-field {
+  color: $phoenix-red;
+  font-size: .85em;
+  margin-top: -15px;;
+}
+
+.sub-title-2 {
+  font-size: 1.2em;
+  color: $black-9;
+  margin: 15px 0 10px 0;
+}
+
+.multiline-auto-complete-options {
+	height: auto !important;
+	line-height: normal !important;
+	padding: 8px 16px !important;
+}
+
 .field-container {
   display: flex;
 

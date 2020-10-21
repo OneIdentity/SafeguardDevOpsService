@@ -5,6 +5,7 @@ import { ServiceClientHelper as SCH } from '../service-client-helper';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { finalize, switchMap, tap } from 'rxjs/operators';
 import { of, forkJoin } from 'rxjs';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 @Component({
   selector: 'app-edit-plugin',
@@ -22,10 +23,17 @@ export class EditPluginComponent implements OnInit {
 
   plugin: any;
   configs = [];
-  vaultAccount: string;
   error: any;
   isSaving = false;
   displayedColumns: string[] = ['asset', 'account', 'delete'];
+
+  // Vault account
+  vaultAccount: any;
+  vaultAccountStr: string;
+  vAccountInvalid = false;
+  allVAccounts = [];
+  validVAccounts = [];
+  loadingVAccounts: boolean;
 
   ngOnInit(): void {
     this.editPluginService.notifyEvent$.pipe(
@@ -39,8 +47,31 @@ export class EditPluginComponent implements OnInit {
           Object.keys(this.plugin.Configuration).forEach(key => {
             this.configs.push({ key, value: this.plugin.Configuration[key] });
           });
+
+          this.serviceClient.getPluginVaultAccount(this.plugin.Name).pipe(
+            untilDestroyed(this)
+          ).subscribe(
+            (vAcct) => {
+              console.log(vAcct);
+              this.vaultAccount = {
+                Id: vAcct.AccountId,
+                Name: vAcct.AccountName,
+                System: vAcct.DomainName ?? (vAcct.SystemName ?? vAcct.SystemNetworkAddress)
+              };
+              this.vaultAccountStr = `${this.vaultAccount.Name} (${this.vaultAccount.System})`;
+            });
         }
       });
+
+    this.loadingVAccounts = true;
+    this.serviceClient.getAvailableAccounts().pipe(
+      untilDestroyed(this)
+    ).subscribe(
+      (data) => {
+        this.allVAccounts = data;
+        this.loadingVAccounts = false;
+      }
+    );
   }
 
   selectAccounts(): void {
@@ -105,7 +136,11 @@ export class EditPluginComponent implements OnInit {
 
     const obs2 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
 
-    forkJoin([obs1, obs2]).pipe(
+    const obs3 = this.vaultAccount ?
+      this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.vaultAccount) :
+      this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
+
+    forkJoin([obs1, obs2, obs3]).pipe(
       untilDestroyed(this)
     ).subscribe(
       (data) => {
@@ -118,5 +153,60 @@ export class EditPluginComponent implements OnInit {
         this.error = SCH.parseError(error);
       }
     );
+  }
+
+  //
+  // Vault account auto complete
+  //
+  getVAccountText(option: any): string {
+    if (!option) {
+      return '';
+    }
+    if (typeof option === 'string') {
+      return option;
+    }
+    return `${option.Name} (${option.System})`;
+  }
+
+  selectVAccount(event: any): void {
+    this.vaultAccount = event.option.value;
+    this.vAccountInvalid = false;
+  }
+
+  showVAccounts(name?: string): void {
+    this.validVAccounts = [];
+
+    const accts = this.allVAccounts.filter(a => a.Name.includes(name));
+    accts.forEach(a => {
+      if (!this.validVAccounts.some(v => v.Id === a.Id)) {
+        this.validVAccounts.push({
+          Id: a.Id,
+          Name: a.Name,
+          System: a.DomainName ?? (a.SystemName ?? a.SystemNetworkAddress)
+        });
+      }
+    });
+
+    this.validVAccounts = this.validVAccounts
+      .sort((n1, n2) => {
+        if (n1.Name > n2.Name) {
+          return 1;
+        } else if (n1.Name < n2.Name) {
+          return -1;
+        } else {
+          return 0;
+        }
+      });
+  }
+
+  changeVAccounts(name?: any): void {
+    this.showVAccounts(name);
+
+    const invalid = !this.loadingVAccounts && this.validVAccounts && name ? !this.validVAccounts.some(a => a.Name === name) : false;
+    this.vAccountInvalid = invalid;
+
+    if (!name) {
+      this.vaultAccount = null;
+    }
   }
 }
