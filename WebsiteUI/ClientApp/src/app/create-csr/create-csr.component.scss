@@ -1,0 +1,51 @@
+@import '../../colors.scss';
+
+.csr-container {
+  display: flex;
+  flex-direction: column;
+  margin-left: 20px;
+  margin-top: 10px;
+  min-width: 400px;
+}
+
+.buttons {
+  display: inline-block;
+
+  .back-button {
+    display: inline-block;
+    text-align: left;
+  }
+
+  .create-csr-button {
+    display: inline-block;
+    text-align: right;
+  }
+}
+
+.mat-dialog-actions {
+  display: inline-block;
+
+  &[align='end'] {
+    text-align: right;
+    width: 75%
+  }
+
+  &[align='left'] {
+    text-align: left;
+    width: 25%;
+  }
+}
+
+:host ::ng-deep .text-with-chips > .mat-form-field-wrapper {
+  padding-bottom: 10px;
+}
+
+:host ::ng-deep .subject-entry > .mat-form-field-wrapper {
+  padding-bottom: 0;
+}
+
+.subject-alt-chip-list {
+  margin-bottom: 20px;
+}
+
+

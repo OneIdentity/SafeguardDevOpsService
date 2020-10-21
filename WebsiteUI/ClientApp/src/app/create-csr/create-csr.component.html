@@ -1,0 +1,66 @@
+<div class="csr-container">
+  <h1>Certificate Signing Request (CSR)</h1>
+
+  <mat-form-field appearance="outline">
+     <mat-label>Subject Name</mat-label>
+     <input cdkFocusInitial matInput type="text" [(ngModel)]="subjectName" name="subjectName">
+  </mat-form-field>
+
+   <mat-form-field appearance="outline" class="text-with-chips">
+      <mat-label><span >Subject Alternative Names (DNS)</span></mat-label>
+      <input matInput autocomplete='off' name="AltDns" [(ngModel)]="dnsSubjectAlternativeNames" (keydown)="addSubjectAlt('name',$event)"
+         (blur)="addSubjectAlt('name')"/>
+   </mat-form-field>
+   <div class='subject-alt-chip-list' *ngIf='csr.DnsNames?.length'>
+      <mat-chip-list>
+         <ng-container *ngFor='let altname of csr.DnsNames'>
+            <mat-chip (removed)='removeSubjectAlt("name",altname)'>
+               {{altname}}
+               <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+         </ng-container>
+         <mat-chip *ngIf='csr.DnsNames?.length > 1' (removed)='removeSubjectAlt("name","",true)'>
+            Clear List
+            <mat-icon matChipRemove>cancel</mat-icon>
+         </mat-chip>
+      </mat-chip-list>
+   </div>
+
+   <mat-form-field appearance="outline" class="text-with-chips">
+      <mat-label><span >Subject Alternative Names (IP Address)</span></mat-label>
+      <input matInput autocomplete='off' name="AltIp" [(ngModel)]="ipSubjectAlternativeNames" (keydown)="addSubjectAlt('ip',$event)"
+         (blur)="addSubjectAlt('ip')"/>
+   </mat-form-field>
+   <div class='subject-alt-chip-list' *ngIf='csr.IpAddresses?.length'>
+      <mat-chip-list>
+         <ng-container *ngFor='let altname of csr.IpAddresses'>
+            <mat-chip (removed)='removeSubjectAlt("ip",altname)'>
+               {{altname}}
+               <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+         </ng-container>
+         <mat-chip *ngIf='csr.IpAddresses?.length > 1' (removed)='removeSubjectAlt("ip","",true)'>
+            Clear List
+            <mat-icon matChipRemove>cancel</mat-icon>
+         </mat-chip>
+      </mat-chip-list>
+   </div>
+
+ <mat-form-field appearance="outline">
+    <mat-label>Key Size</mat-label>
+    <select matNativeControl name="keySize" [(value)]='keySize'>
+       <option value='1024'>1024</option>
+       <option value='2048'>2048</option>
+       <option value='4096'>4096</option>
+    </select>
+ </mat-form-field>
+</div>
+
+<div mat-dialog-actions align="left" class='buttons'>
+  <button mat-button (click)="goBack()" color="primary">&lt; &nbsp; Back</button>
+</div>
+
+<div mat-dialog-actions align="end" class='buttons'>
+  <button mat-flat-button (click)="createCSR()" color="primary">Create CSR</button>
+</div>
+

@@ -2,7 +2,6 @@ import { Component, OnInit, ElementRef, ViewChild, Inject } from '@angular/core'
 import { DevOpsServiceClient } from '../service-client.service';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { EnterPassphraseComponent } from './enter-passphrase/enter-passphrase.component';
 import * as $ from 'jquery';
 
 @Component({

@@ -6,9 +6,15 @@
    </ng-container>
 
   <div class="show-more-link" (click)="showCsr = !showCsr">
-    <span>Create Certificate Signing Request (CSR)</span>
+    <span *ngIf="!showCsr">Create Certificate Signing Request (CSR)</span>
+    <span *ngIf="showCsr">Hide Certificate Signing Request (CSR)</span>
     <mat-icon aria-label="Show More" *ngIf="!showCsr && false">expand_more</mat-icon>
     <mat-icon aria-label="Show Less" *ngIf="showCsr && false">expand_less</mat-icon>
+  </div>
+
+  <div *ngIf="!showCsr && certificateType=='Client'">
+     <p></p>
+     <p> A client certificate must be uploaded before Secrets Broker will work.</p>
   </div>
 
   <div class="csr-container" *ngIf="showCsr">

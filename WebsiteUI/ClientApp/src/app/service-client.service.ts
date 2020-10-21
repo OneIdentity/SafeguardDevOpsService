@@ -64,7 +64,7 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('logon')));
   }
 
-  getCSR(certType: string, subjectName?: string, dnsSubjectAlternativeNames?: string, ipSubjectAlternativeNames?: string): Observable<any> {
+  getCSR(certType: string, subjectName?: string, dnsSubjectAlternativeNames?: string, ipSubjectAlternativeNames?: string, keySize?: number): Observable<any> {
     let url = this.BASE + 'Safeguard/CSR?certType=' + certType;
 
     if (subjectName) {
@@ -75,6 +75,9 @@ export class DevOpsServiceClient {
     }
     if (ipSubjectAlternativeNames) {
       url +=  '&sanIp=' + encodeURIComponent(ipSubjectAlternativeNames);
+    }
+    if (keySize) {
+      url +=  '&size=' + encodeURIComponent(keySize.toString());
     }
 
     const options = Object.assign({ responseType: 'text' }, this.authHeader());

@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { UploadCertificateComponent } from '../upload-certificate/upload-certificate.component';
 import { EnterPassphraseComponent } from '../upload-certificate/enter-passphrase/enter-passphrase.component';
+import { CreateCsrComponent } from '../create-csr/create-csr.component';
 import * as $ from 'jquery';
 import { ViewportScroller } from '@angular/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -219,6 +220,20 @@ export class MainComponent implements OnInit {
 
   nukeClientCertificate(): void {
     this.serviceClient.deleteClientCertificate().subscribe();
+  }
+
+  createCSR(certificateType: string) {
+    const dialogRef = this.dialog.open(CreateCsrComponent, {
+      // disableClose: true
+      data: {certificateType: certificateType}
+    });
+
+    dialogRef.afterClosed().subscribe(
+      result => {
+        if (result) {
+        }
+      }
+    );
   }
 
   addClientCertificate(e: Event): void {

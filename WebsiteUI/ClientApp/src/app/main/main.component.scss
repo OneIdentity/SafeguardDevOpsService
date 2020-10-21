@@ -28,6 +28,24 @@ mat-drawer-container {
 
   .info-column {
     margin: 0 20px;
+
+    .no-client-certificate {
+      .bold {
+        font-weight: bold;
+      }
+      .buttons {
+        div {
+          width: 50%;
+          display: inline-block;
+        }
+        .left {
+          text-align: left;
+        }
+        .right {
+          text-align: right;
+        }
+      }
+    }
   }
   
   .info-label {

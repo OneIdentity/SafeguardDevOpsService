@@ -28,8 +28,27 @@
         <div>{{A2AVaultRegistrationName}}</div>
       </div>
       <div class="info-column" *ngIf="!isLoading">
+        <div *ngIf="!Thumbprint" class='no-client-certificate'>
+           <p class='bold'>Before we begin you must upload a Client Certificate</p>
+           <p>Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A
+              service in Safeguard for Privileged Passwords. The most secure way to create this certificate
+              is using a certificate signing request (CSR).</p>
+           <p></p>
+           <p>This can be either a PFX formatted certificate that includes the private key and a passphrase
+              for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that
+              was issued based on a generated CSR.</p>
+
+           <div class='buttons'>
+              <div class='left'>
+                <button mat-button (click)="createCSR('Client')" color="primary">Create a Certificate Signing Request (CSR)</button>
+              </div>
+              <div class='right'>
+                <button mat-flat-button cdkFocusInitial (click)="addClientCertificate($event)" color="primary">Upload Certificate</button>
+              </div>
+           </div>
+        </div>
+
         <div class="info-label">Client Certificate</div>
-        <div *ngIf="!Thumbprint"><a class="custom-link" (click)="addClientCertificate($event)" href="">Add Certificate</a></div>
         <div *ngIf="Thumbprint">
           <mat-icon class="green-icon">check_circle</mat-icon>
           <a class="custom-link" (click)="viewClientCertificate($event)" href="">Certificate</a>
