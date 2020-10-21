@@ -155,11 +155,11 @@ export class DevOpsServiceClient {
       Passphrase: passphrase
     };
     return this.http.post(url, payload, this.authHeader())
-      .pipe(catchError(SCH.error('DevOpsServiceClient', 'postClientCertificate')));
+      .pipe(catchError(this.error<any>('postClientCertificate')));
   }
 
   deleteClientCertificate(): Observable<any> {
     return this.http.delete(this.BASE + 'Safeguard/ClientCertificate', this.authHeader())
-    .pipe(catchError(SCH.error<any>('DevOpsServiceClient', 'deleteClientCertificate')));
+      .pipe(catchError(this.error<any>('deleteClientCertificate')));
   }
 }

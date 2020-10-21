@@ -1,10 +1,12 @@
-<h1 mat-dialog-title>Add Certificate</h1>
-<div mat-dialog-content>
-  <p>This certificate will be used to authenticate Safeguard's Application to Application service with Secrets Broker.</p>
-  <p>Upload your own certificate or create a certificate service request (CSR).</p>
+<h1 mat-dialog-title>Add {{certificateType}} Certificate</h1>
+<div class='dialog-content' mat-dialog-content>
+   <ng-container *ngIf='certificateType=="Client"'>
+      <p>Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords. The most secure way to create this certificate is using a certificate signing request (CSR).</p>
+      <p>This can be either a PFX formatted certificate that includes the private key and a passphrase for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.</p>
+   </ng-container>
 
   <div class="show-more-link" (click)="showCsr = !showCsr">
-    <span>Create CSR</span>
+    <span>Create Certificate Signing Request (CSR)</span>
     <mat-icon aria-label="Show More" *ngIf="!showCsr && false">expand_more</mat-icon>
     <mat-icon aria-label="Show Less" *ngIf="showCsr && false">expand_less</mat-icon>
   </div>
@@ -22,6 +24,15 @@
       <mat-label>IP Subject Alternative Names</mat-label>
       <textarea matInput matTextareaAutosize [(ngModel)]="ipSubjectAlternativeNames" name="ipSubjectAlternativeNames"></textarea>
     </mat-form-field>
+
+    <mat-form-field appearance="outline">
+       <mat-label>Key Size</mat-label>
+       <select matNativeControl name="keySize" [(value)]='keySize'>
+          <option value='1024'>1024</option>
+          <option value='2048'>2048</option>
+          <option value='4096'>4096</option>
+       </select>
+    </mat-form-field>
     <div>
       <a class="custom-link" (click)="createCSR($event, 'copy')" href="">Copy CSR</a><span class="divider">|</span><a class="custom-link" (click)="createCSR($event, 'download')" href="">Download CSR</a> 
     </div>
@@ -29,7 +40,6 @@
 </div>
 <div mat-dialog-actions align="end">
   <div class="upload-button">
-    <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".cer,.crt,.der,.pfx,.p12,.pem" />
     <button mat-flat-button cdkFocusInitial (click)="browse()" color="primary">Upload Certificate</button>
   </div>
 </div>

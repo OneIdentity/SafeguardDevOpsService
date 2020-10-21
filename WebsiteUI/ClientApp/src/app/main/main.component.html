@@ -11,6 +11,7 @@
           <div class="info-label">Dev Ops ID</div>
           <div>{{DevOpsInstanceId}}</div>
         </div>
+      <button (click)='nukeClientCertificate()'>nuke cert</button>
       </div>
       <div class="vertical-line"></div>
       <div class="loading-container" *ngIf="isLoading">
