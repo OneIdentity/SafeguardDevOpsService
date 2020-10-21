@@ -163,7 +163,7 @@ jobs:
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
 - job:
-  displayName: "Linux Docker Build"
+  displayName: "Linux Docker Alpine Build"
   pool:
     vmImage: 'ubuntu-latest'
 
@@ -199,14 +199,6 @@ jobs:
 
   - task: Bash@3
     inputs:
-      targetType: 'filePath'
-      filePath: '$(System.DefaultWorkingDirectory)/build-docker.sh'
-      arguments: ubuntu20.04 $(VersionString)
-      failOnStderr: true
-    displayName: 'Building ubuntu docker image'
-
-  - task: Bash@3
-    inputs:
       targetType: 'inline'
       script: |
         docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
@@ -217,14 +209,10 @@ jobs:
         docker push oneidentity/safeguard-devops:$(VersionString)-alpine
         docker push oneidentity/safeguard-devops:latest
 
-        docker tag oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04 oneidentity/safeguard-devops:$(VersionString)-ubuntu
-        docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04
-        docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu
-
         docker logout
       failOnStderr: true
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-    displayName: 'Pushing docker images to Docker Hub'
+    displayName: 'Pushing docker Alpine image to Docker Hub'
 
   - task: Bash@3
     inputs:
@@ -238,3 +226,67 @@ jobs:
       failOnStderr: true
     condition: and(succeeded(), eq(variables.isReleaseBranch, true))
     displayName: 'Pushing README.md to Docker Hub'
+
+- job:
+  displayName: "Linux Docker Ubuntu Build"
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: Bash@3
+    inputs:
+      targetType: 'filePath'
+      filePath: '$(System.DefaultWorkingDirectory)/versionnumber.sh'
+      arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
+    displayName: 'Setting build version'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'env | sort'
+    displayName: 'Display environment variables'
+
+  - task: AzureKeyVault@1
+    inputs:
+      azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+      KeyVaultName: 'SafeguardBuildSecrets'
+      SecretsFilter: 'DockerHubAccessToken,DockerHubPassword'
+    displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - task: Bash@3
+    inputs:
+      targetType: 'filePath'
+      filePath: '$(System.DefaultWorkingDirectory)/build-docker.sh'
+      arguments: ubuntu20.04 $(VersionString)
+      failOnStderr: true
+    displayName: 'Building ubuntu docker image'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: |
+        docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
+
+        docker tag oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04 oneidentity/safeguard-devops:$(VersionString)-ubuntu
+        docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04
+        docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu
+
+        docker logout
+      failOnStderr: true
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+    displayName: 'Pushing docker ubuntu image to Docker Hub'
+
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: |
+        docker run --rm -t \
+        -v `pwd`:/myvol \
+        -e DOCKER_USER='petrsnd' -e DOCKER_PASS='$(DockerHubPassword)' \
+        chko/docker-pushrm:1 --file /myvol/README.md \
+        --short "Safeguard Secrets Broker for DevOps" --debug oneidentity/safeguard-devops 2>&1 || >&2 echo "Failed to push readme -- error code: $?"
+      failOnStderr: true
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+    displayName: 'Pushing README.md to Docker Hub'
+
