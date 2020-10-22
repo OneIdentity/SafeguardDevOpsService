@@ -3,7 +3,7 @@ import { EditPluginService, EditPluginMode } from '../edit-plugin.service';
 import { DevOpsServiceClient } from '../service-client.service';
 import { ServiceClientHelper as SCH } from '../service-client-helper';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { finalize, switchMap, tap } from 'rxjs/operators';
+import { finalize, switchMap, tap, take, takeLast, map, last, filter } from 'rxjs/operators';
 import { of, forkJoin } from 'rxjs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
@@ -34,33 +34,43 @@ export class EditPluginComponent implements OnInit {
   allVAccounts = [];
   validVAccounts = [];
   loadingVAccounts: boolean;
+  subscription: any;
 
   ngOnInit(): void {
+    let done = false;
     this.editPluginService.notifyEvent$.pipe(
-      untilDestroyed(this)
-    ).subscribe(
-      (data) => {
-        if (data.mode === EditPluginMode.Properties) {
-          this.plugin = data.plugin;
+      filter((data) => data.mode === EditPluginMode.Properties),
+      tap((data: any) => {
+        this.plugin = data.plugin;
 
-          this.configs.splice(0);
-          Object.keys(this.plugin.Configuration).forEach(key => {
-            this.configs.push({ key, value: this.plugin.Configuration[key] });
-          });
-
-          this.serviceClient.getPluginVaultAccount(this.plugin.Name).pipe(
-            untilDestroyed(this)
-          ).subscribe(
-            (vAcct) => {
-              console.log(vAcct);
-              this.vaultAccount = {
-                Id: vAcct.AccountId,
-                Name: vAcct.AccountName,
-                System: vAcct.DomainName ?? (vAcct.SystemName ?? vAcct.SystemNetworkAddress)
-              };
-              this.vaultAccountStr = `${this.vaultAccount.Name} (${this.vaultAccount.System})`;
-            });
+        this.configs.splice(0);
+        Object.keys(this.plugin.Configuration).forEach(key => {
+          this.configs.push({ key, value: this.plugin.Configuration[key] });
+        });
+      }),
+      switchMap(() => {
+        return this.serviceClient.getPluginAccounts(this.plugin.Name).pipe(
+          map((accounts) => {
+            this.mapRetrievableToAvailableAccount(accounts);
+            this.plugin.Accounts = accounts;
+            return this.plugin;
+          })
+        );
+      }),
+      switchMap(() => {
+        return this.serviceClient.getPluginVaultAccount(this.plugin.Name);
+      }),
+      tap((vAcct) => {
+        if (vAcct) {
+          this.vaultAccount = {
+            Id: vAcct.AccountId,
+            Name: vAcct.AccountName,
+            System: vAcct.DomainName ?? (vAcct.SystemName ?? vAcct.SystemNetworkAddress)
+          };
+          this.vaultAccountStr = `${this.vaultAccount.Name} (${this.vaultAccount.System})`;
         }
+      })).subscribe(() => {
+        done = true;
       });
 
     this.loadingVAccounts = true;
@@ -72,6 +82,15 @@ export class EditPluginComponent implements OnInit {
         this.loadingVAccounts = false;
       }
     );
+  }
+
+  mapRetrievableToAvailableAccount(accounts: any[]): void {
+    accounts.forEach(a => {
+      a.Id = a.AccountId;
+      a.Name = a.AccountName;
+      a.SystemName = a.AssetName;
+      a.SystemNetworkAddress = a.NetworkAddress;
+    });
   }
 
   selectAccounts(): void {

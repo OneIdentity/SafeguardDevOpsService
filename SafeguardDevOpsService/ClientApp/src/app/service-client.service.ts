@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { catchError, tap } from 'rxjs/operators';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
 
@@ -31,7 +31,6 @@ export class DevOpsServiceClient {
   private error<T>(method: string) {
     return (error): Observable<T> => {
       if (error.status === 401) {
-        alert(error);
         this.authService.login(this.applianceAddress);
       }
       console.log(`[DevOpsServiceClient.${method}]: ${error.message}`);
@@ -64,7 +63,17 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('logon')));
   }
 
-  getCSR(certType: string, subjectName?: string, dnsSubjectAlternativeNames?: string, ipSubjectAlternativeNames?: string, keySize?: number): Observable<any> {
+  logout(): Observable<any> {
+    return this.http.get(this.BASE + 'Safeguard/Logoff', this.authHeader())
+      .pipe(catchError(this.error<any>('logout')));
+  }
+
+  restart(): Observable<any> {
+    return this.http.post(this.BASE + 'Safeguard/Restart', '', this.authHeader())
+      .pipe(catchError(this.error<any>('restart')));
+  }
+
+  getCSR(certType: string, subjectName?: string, dnsSubjectAlternativeNames?: string, ipSubjectAlternativeNames?: string): Observable<any> {
     let url = this.BASE + 'Safeguard/CSR?certType=' + certType;
 
     if (subjectName) {
@@ -84,6 +93,11 @@ export class DevOpsServiceClient {
 
     return this.http.get(url, options)
       .pipe(catchError(this.error<any>('getCSR')));
+  }
+
+  deleteConfiguration(): Observable<any> {
+    return this.http.delete(this.BASE + 'Safeguard/Configuration?confirm=yes', this.authHeader())
+      .pipe(catchError(this.error<any>('delete')));
   }
 
   getConfiguration(): Observable<any> {
@@ -144,7 +158,8 @@ export class DevOpsServiceClient {
 
   getPluginVaultAccount(name: string): Observable<any> {
     return this.http.get(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/VaultAccount', this.authHeader())
-      .pipe(catchError(this.error<any>('getPluginVaultAccount')));
+      // Ignore 404 Not Found, when there is no vault account
+      .pipe(catchError((err) => err.status === 404 ? of(undefined) : this.error<any>('getPluginVaultAccount')));
   }
 
   deletePluginVaultAccount(name: string): Observable<any> {
@@ -202,5 +217,15 @@ export class DevOpsServiceClient {
   putRetrievableAccounts(accounts: any[]): Observable<any[]> {
     return this.http.put(this.BASE + 'Safeguard/A2ARegistration/RetrievableAccounts', accounts, this.authHeader())
       .pipe(catchError(this.error<any>('putPluginAccounts')));
+  }
+
+  getMonitor(): Observable<any> {
+    return this.http.get(this.BASE + 'Monitor', this.authHeader())
+      .pipe(catchError(this.error<any>('getMonitor')));
+  }
+
+  postMonitor(enabled: boolean): Observable<any> {
+    return this.http.post(this.BASE + 'Monitor', { Enabled: enabled}, this.authHeader())
+      .pipe(catchError(this.error<any>('putMonitor')));
   }
 }
