@@ -23,6 +23,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatMenuModule } from '@angular/material/menu';
 
 import { UploadCertificateComponent } from './upload-certificate/upload-certificate.component';
 import { DevOpsServiceClient } from './service-client.service';
@@ -68,6 +69,7 @@ import { SaveCsrComponent } from './save-csr/save-csr.component';
     MatAutocompleteModule,
     MatChipsModule,
     NoopAnimationsModule,
+    MatMenuModule
   ],
   entryComponents: [
     UploadCertificateComponent

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ReplaySubject } from 'rxjs';
+import { ReplaySubject, Subject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 
@@ -28,7 +28,6 @@ export class EditPluginService {
       plugin: null,
       mode: EditPluginMode.None
     });
-    this.notifyEventSource.complete();
   }
 
   closeProperties(plugin?: any): void {
@@ -36,13 +35,10 @@ export class EditPluginService {
       plugin: plugin ? Object.assign(this.plugin, plugin) : this.originalPlugin,
       mode: EditPluginMode.None
     });
-    this.notifyEventSource.complete();
   }
 
   openAccounts(accounts: any[]): void {
     this.plugin.Accounts = accounts;
-    console.log('open accounts');
-    console.log(this.plugin.Accounts);
     this.notifyEventSource.next({
       plugin: this.plugin,
       mode: EditPluginMode.Accounts
