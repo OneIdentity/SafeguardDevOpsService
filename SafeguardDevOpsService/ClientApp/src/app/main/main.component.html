@@ -24,7 +24,6 @@
             </div>
           </div>
         </div>
-      <button (click)='nukeClientCertificate()'>nuke cert</button>
         <button mat-flat-button class="monitoring-button start-monitoring" *ngIf="!isMonitoring && isMonitoringAvailable" (click)="updateMonitoring(true)">Start Monitoring</button>
         <button mat-flat-button class="monitoring-button stop-monitoring" *ngIf="isMonitoring && isMonitoringAvailable" (click)="updateMonitoring(false)">Stop Monitoring</button>
       </div>
@@ -64,12 +63,32 @@
            </div>
         </div>
 
-        <div class="info-label">Client Certificate</div>
-        <div *ngIf="Thumbprint">
-          <mat-icon class="green-icon">check_circle</mat-icon>
-          <a class="custom-link" (click)="viewClientCertificate($event)" href="">Certificate</a>
-        </div>
-      </div>
+        <ng-container *ngIf='Thumbprint'>
+           <div class="info-label">Client Certificate</div>
+           <div *ngIf="Thumbprint">
+             <mat-icon class="green-icon">check_circle</mat-icon>
+             <button mat-button class="custom-link" (click)="viewCertificate($event)">View Details</button>
+           </div>
+
+           <div class="info-label">Web Server Certificate</div>
+           <div *ngIf="!webServerCertAdded">
+              <button mat-button class='custom-link' (click)='addWebServerCertificate($event)' color='primary'>Add Certificate</button>
+           </div>
+           <div *ngIf="webServerCertAdded">
+             <mat-icon class="green-icon">check_circle</mat-icon>
+             <button mat-button class="custom-link" (click)="viewCertificate($event,'Web Server')">View Details</button>
+           </div>
+
+           <div class="info-label">Trusted Certificates</div>
+           <div *ngIf="!trustedCertsAdded">
+              <button mat-button class='custom-link' (click)='addTrustedCertificate($event)' color='primary'>Add Certificate</button>
+           </div>
+           <div *ngIf="trustedCertsAdded">
+             <mat-icon class="green-icon">check_circle</mat-icon>
+             <button mat-button class="custom-link" (click)="viewCertificate($event,'Trusted')">View Details</button>
+           </div>
+        </ng-container>
+         </div>
     </mat-card>
 
     <ng-container *ngFor="let plugin of plugins">

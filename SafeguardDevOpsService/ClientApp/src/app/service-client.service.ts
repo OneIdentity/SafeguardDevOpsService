@@ -199,6 +199,11 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('getRetrievableAccounts')));
   }
 
+  getClientCertificate(): Observable<any> {
+    return this.http.get(this.BASE + 'Safeguard/ClientCertificate', this.authHeader())
+      .pipe(catchError(this.error<any>('getClientCertificate')));
+  }
+
   postClientCertificate(base64CertificateData: string, passphrase?:string): Observable<any> {
     const url = this.BASE + 'Safeguard/ClientCertificate';
     const payload = {

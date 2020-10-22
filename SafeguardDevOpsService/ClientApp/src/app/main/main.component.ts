@@ -7,6 +7,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { UploadCertificateComponent } from '../upload-certificate/upload-certificate.component';
 import { EnterPassphraseComponent } from '../upload-certificate/enter-passphrase/enter-passphrase.component';
 import { CreateCsrComponent } from '../create-csr/create-csr.component';
+import { ViewCertificateComponent } from '../view-certificate/view-certificate.component';
 import * as $ from 'jquery';
 import { ViewportScroller } from '@angular/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -51,6 +52,9 @@ export class MainComponent implements OnInit {
   isLoading: boolean;
   openDrawerProperties: boolean;
   openDrawerAccounts: boolean;
+
+  webServerCertAdded: boolean = false;
+  trustedCertsAdded: boolean = false;
 
   isMonitoring: boolean;
   isMonitoringAvailable: boolean;
@@ -198,10 +202,6 @@ export class MainComponent implements OnInit {
         }),
         switchMap(() => this.serviceClient.logon())
       );
-  }
-
-  nukeClientCertificate(): void {
-    this.serviceClient.deleteClientCertificate().subscribe();
   }
 
   createCSR(certificateType: string) {
@@ -373,6 +373,24 @@ export class MainComponent implements OnInit {
     this.serviceClient.deleteConfiguration().pipe(
       untilDestroyed(this)
     ).subscribe();
+  }
+
+  viewCertificate(e: Event, certType:string = 'Client'): void {
+    if (certType == 'Client') {
+      const dialogRef = this.dialog.open(ViewCertificateComponent, {
+        // disableClose: true
+        data: {certificateType: 'Client'}
+      });
+    } else {
+      alert('Viewing ' + certType + ' Certificate details coming soon!');
+    }
+  }
+
+  addWebServerCertificate(e: Event): void {
+    alert('Coming Soon!');
+  }
+  addTrustedCertificate(e: Event): void {
+    alert('Coming Soon!');
   }
 }
 
