@@ -23,6 +23,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
+    private dialogRef: MatDialogRef<ViewCertificateComponent>
   ){}
 
   ngOnInit(): void {
@@ -69,7 +70,11 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
 
   removeCertificate(): void {
     if (this.certificateType == 'Client' && confirm('Deleting this certificate will break things. Press "OK" to continue.')) {
-      this.serviceClient.deleteClientCertificate().subscribe();
+      this.serviceClient.deleteClientCertificate().subscribe(
+        result => {
+          this.dialogRef.close({removed:true});
+        }
+      );
     }
   }
 }
