@@ -5,7 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { MainComponent } from './main/main.component';
-import { NoopAnimationsModule, BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
@@ -21,15 +21,11 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTableModule } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatChipsModule } from '@angular/material/chips';
 
 import { UploadCertificateComponent } from './upload-certificate/upload-certificate.component';
 import { DevOpsServiceClient } from './service-client.service';
 import { EnterPassphraseComponent } from './upload-certificate/enter-passphrase/enter-passphrase.component';
 import { SelectAccountsComponent } from './select-accounts/select-accounts.component';
-import { CreateCsrComponent } from './create-csr/create-csr.component';
-import { ViewCertificateComponent } from './view-certificate/view-certificate.component';
-import { SaveCsrComponent } from './save-csr/save-csr.component';
 
 @NgModule({
   declarations: [
@@ -38,10 +34,7 @@ import { SaveCsrComponent } from './save-csr/save-csr.component';
     MainComponent,
     UploadCertificateComponent,
     EnterPassphraseComponent,
-    SelectAccountsComponent,
-    CreateCsrComponent,
-    ViewCertificateComponent,
-    SaveCsrComponent
+    SelectAccountsComponent
   ],
   imports: [
     BrowserModule,
@@ -60,9 +53,7 @@ import { SaveCsrComponent } from './save-csr/save-csr.component';
     MatSidenavModule,
     MatTableModule,
     MatCheckboxModule,
-    MatSnackBarModule,
-    MatChipsModule,
-    NoopAnimationsModule,
+    MatSnackBarModule
   ],
   entryComponents: [
     UploadCertificateComponent
