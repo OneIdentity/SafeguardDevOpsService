@@ -1,1 +1,36 @@
-<p>view-certificate works!</p>
+<h1 mat-dialog-title>{{certificateType}} Certificate Details</h1>
+<div class='dialog-content' mat-dialog-content>
+   <mat-spinner diameter="20" *ngIf="!certificateLoaded" color="accent"></mat-spinner>
+   <div class='certificate-container' *ngIf='certificateLoaded'>
+      <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Subject Name</mat-label>
+            <input matInput cdkInitialFocus type="text" [(ngModel)]="retrievedCert.Subject" readonly>
+          </mat-form-field>
+      </div>
+
+      <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Issued By</mat-label>
+            <input matInput type="text" [(ngModel)]="retrievedCert.IssuedBy" readonly>
+          </mat-form-field>
+      </div>
+
+      <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Valid From</mat-label>
+            <input matInput type="text" [(ngModel)]="retrievedCert.LocalizedValidFrom" readonly>
+          </mat-form-field>
+      </div>
+
+      <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Thumbprint</mat-label>
+            <input matInput type="text" [(ngModel)]="retrievedCert.Thumbprint" readonly>
+          </mat-form-field>
+      </div>
+   </div>
+</div>
+<div>
+   <button mat-button color='primary' (click)="removeCertificate()">Remove Certificate</button>
+</div>

@@ -22,7 +22,6 @@
               <div class="info-label">Dev Ops ID</div>
               <div>{{DevOpsInstanceId}}</div>
             </div>
-      <button (click)='nukeClientCertificate()'>nuke cert</button>
           </div>
         </div>
         <button mat-flat-button class="monitoring-button start-monitoring" *ngIf="!isMonitoring && isMonitoringAvailable" (click)="updateMonitoring(true)">Start Monitoring</button>
@@ -67,7 +66,25 @@
         <div class="info-label">Client Certificate</div>
         <div *ngIf="Thumbprint">
           <mat-icon class="green-icon">check_circle</mat-icon>
-          <a class="custom-link" (click)="viewClientCertificate($event)" href="">Certificate</a>
+          <button mat-button class="custom-link" (click)="viewCertificate($event)">View Details</button>
+        </div>
+
+        <div class="info-label">Web Server Certificate</div>
+        <div *ngIf="!webServerCertAdded">
+           <button mat-button class='custom-link' (click)='addWebServerCertificate($event)' color='primary'>Add Certificate</button>
+        </div>
+        <div *ngIf="webServerCertAdded">
+          <mat-icon class="green-icon">check_circle</mat-icon>
+          <button mat-button class="custom-link" (click)="viewCertificate($event,'Web Server')">View Details</button>
+        </div>
+
+        <div class="info-label">Trusted Certificates</div>
+        <div *ngIf="!trustedCertsAdded">
+           <button mat-button class='custom-link' (click)='addTrustedCertificate($event)' color='primary'>Add Certificate</button>
+        </div>
+        <div *ngIf="trustedCertsAdded">
+          <mat-icon class="green-icon">check_circle</mat-icon>
+          <button mat-button class="custom-link" (click)="viewCertificate($event,'Trusted')">View Details</button>
         </div>
       </div>
     </mat-card>
