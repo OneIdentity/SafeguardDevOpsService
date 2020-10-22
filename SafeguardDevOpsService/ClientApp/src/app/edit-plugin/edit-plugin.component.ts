@@ -23,7 +23,6 @@ export class EditPluginComponent implements OnInit {
 
   plugin: any;
   configs = [];
-  vaultAccount: string;
   error: any;
   isSaving = false;
   displayedColumns: string[] = ['asset', 'account', 'delete'];
