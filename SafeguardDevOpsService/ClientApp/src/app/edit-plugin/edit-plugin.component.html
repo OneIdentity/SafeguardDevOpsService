@@ -7,7 +7,11 @@
   
     <div class="main-container">
       <mat-card>
-        <h2>Basic Info</h2>
+        <div class="basic-info-header">
+            <h2>Basic Info</h2>
+            <div class="spacer"></div>
+            <div class="sub-title">Version {{plugin?.Version}}</div>
+        </div>
         <div class="info-label">Name</div>
         <div>{{plugin?.DisplayName}}</div>
         <div class="info-label">({{plugin?.Name}})</div>
@@ -23,7 +27,7 @@
         <div class="field-container">
           <mat-form-field appearance="outline">
             <mat-label>Vault's Account in Safeguard</mat-label>
-            <input matInput type="text" [(ngModel)]="vaultAccountStr" name="vaultAccount" [matAutocomplete]="auto" 
+            <input matInput type="text" [(ngModel)]="plugin.VaultAccountDisplayName" name="vaultAccount" [matAutocomplete]="auto" 
               [disabled]="isSaving || loadingVAccounts" (input)="changeVAccounts($event.target.value)" (mousedown)="showVAccounts($event.target.value)">
             <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="selectVAccount($event)" [displayWith]="getVAccountText">
               <mat-option *ngFor="let ds of validVAccounts" [value]="ds" class="multiline-auto-complete-options">

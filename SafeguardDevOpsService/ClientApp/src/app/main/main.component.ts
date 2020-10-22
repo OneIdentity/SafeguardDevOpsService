@@ -58,7 +58,9 @@ export class MainComponent implements OnInit {
 
   @ViewChild('unconfigured', { static: false }) set contentUnconfigured(content: ElementRef) {
     if (content && !this.isLoading) {
-      this.setArrows();
+      setTimeout(() => {
+        this.setArrows();
+      }, 500);
     }
   }
 
@@ -170,7 +172,6 @@ export class MainComponent implements OnInit {
       // Flatten array so each plugin is emitted individually
       concatAll(),
       tap((plugin: any) => {
-        plugin.Accounts = [];
         plugin.IsConfigurationSetup = true;
         this.plugins.push(plugin);
       })
