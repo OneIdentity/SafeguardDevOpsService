@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "WebsiteUI": {
+    "SafeguardDevOpsService": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -31,7 +31,7 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": [ "node_modules/jquery/dist/jquery.min.js"]
+            "scripts": [ "node_modules/jquery/dist/jquery.min.js" ]
           },
           "configurations": {
             "production": {
@@ -67,20 +67,20 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "WebsiteUI:build",
+            "browserTarget": "SafeguardDevOpsService:build",
             "proxyConfig": "src/proxy.conf.json",
             "ssl": true
           },
           "configurations": {
             "production": {
-              "browserTarget": "WebsiteUI:build:production"
+              "browserTarget": "SafeguardDevOpsService:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "WebsiteUI:build"
+            "browserTarget": "SafeguardDevOpsService:build"
           }
         },
         "test": {
@@ -117,15 +117,16 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "WebsiteUI:serve"
+            "devServerTarget": "SafeguardDevOpsService:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "WebsiteUI:serve:production"
+              "devServerTarget": "SafeguardDevOpsService:serve:production"
             }
           }
         }
       }
-    }},
-  "defaultProject": "WebsiteUI"
+    }
+  },
+  "defaultProject": "SafeguardDevOpsService"
 }

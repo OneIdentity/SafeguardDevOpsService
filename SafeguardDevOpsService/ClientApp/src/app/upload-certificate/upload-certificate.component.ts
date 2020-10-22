@@ -1,8 +1,8 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, Inject } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { EnterPassphraseComponent } from './enter-passphrase/enter-passphrase.component';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import * as $ from 'jquery';
 
 @Component({
   selector: 'app-upload-certificate',
@@ -10,19 +10,23 @@ import { EnterPassphraseComponent } from './enter-passphrase/enter-passphrase.co
   styleUrls: ['./upload-certificate.component.scss']
 })
 export class UploadCertificateComponent implements OnInit {
-  @ViewChild('fileSelectInputDialog', { static: false }) fileSelectInputDialog: ElementRef;
 
   subjectName: string;
   dnsSubjectAlternativeNames: string;
   ipSubjectAlternativeNames: string;
+  keySize: number = 2048;
   showCsr: boolean;
+  certificateType: string = '';
 
   constructor(
+    @Inject(MAT_DIALOG_DATA) public data: any,
     private serviceClient: DevOpsServiceClient,
     private clipboard: Clipboard,
+    private dialog: MatDialog,
     private dialogRef: MatDialogRef<UploadCertificateComponent>) { }
 
   ngOnInit(): void {
+    this.certificateType = this.data?.certificateType ?? '';
   }
 
   createCSR(e: any, action: string): void {
@@ -64,28 +68,39 @@ export class UploadCertificateComponent implements OnInit {
   }
 
   browse(): void {
-    const e: HTMLElement = this.fileSelectInputDialog.nativeElement;
-    e.click();
+    var fileInput = $('<input class="requestedCertInput" type="file" accept=".cer,.crt,.der,.pfx,.p12,.pem" />');
+
+    fileInput.on('change',() => {
+      const fileSelected = fileInput.prop('files')[0];
+      
+      if (!fileSelected) {
+        return;
+      }
+
+      const fileReader = new FileReader();
+      fileReader.onloadend = (e) => {
+        let arrayBufferToString = (buffer) => {
+          var binary = '';
+          var bytes = new Uint8Array( buffer );
+          var len = bytes.byteLength;
+          for (var i = 0; i < len; i++) {
+            binary += String.fromCharCode( bytes[ i ] );
+          }
+          return binary;
+        };
+
+        var pkcs12Der = arrayBufferToString(fileReader.result);
+        let cert:string = btoa(pkcs12Der);
+        this.dialogRef.close({
+          fileType: fileSelected.type,
+          fileContents: cert,
+          fileName: fileSelected.name
+        });
+      };
+      fileReader.readAsArrayBuffer(fileSelected);
+    });
+    $(".requestedCertInput").append(fileInput);
+    fileInput.trigger("click");
   }
 
-  onChangeFile(files: FileList): void {
-    if (!files[0]) {
-      return;
-    }
-
-    const fileSelected = files[0];
-
-    const reader = new FileReader();
-    reader.onloadend = (e) => {
-      const matches = reader.result.toString().match(/^(data.*base64,)(.*)$/);
-
-      this.dialogRef.close({
-        fileType: fileSelected.type,
-        fileContents: matches[2],
-        fileName: fileSelected.name
-      });
-    };
-
-    reader.readAsDataURL(fileSelected);
-  }
 }

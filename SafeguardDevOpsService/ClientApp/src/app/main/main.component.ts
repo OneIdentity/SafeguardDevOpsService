@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { UploadCertificateComponent } from '../upload-certificate/upload-certificate.component';
 import { EnterPassphraseComponent } from '../upload-certificate/enter-passphrase/enter-passphrase.component';
+import { CreateCsrComponent } from '../create-csr/create-csr.component';
 import * as $ from 'jquery';
 import { ViewportScroller } from '@angular/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,6 +23,8 @@ import { until } from 'selenium-webdriver';
   styleUrls: ['./main.component.scss']
 })
 export class MainComponent implements OnInit {
+
+  private snackBarDuration: number = 5000;
 
   constructor(
     private window: Window,
@@ -197,16 +200,38 @@ export class MainComponent implements OnInit {
       );
   }
 
+  nukeClientCertificate(): void {
+    this.serviceClient.deleteClientCertificate().subscribe();
+  }
+
+  createCSR(certificateType: string) {
+    const dialogRef = this.dialog.open(CreateCsrComponent, {
+      // disableClose: true
+      data: {certificateType: certificateType}
+    });
+
+    dialogRef.afterClosed().subscribe(
+      result => {
+        if (result) {
+        }
+      }
+    );
+  }
+
   addClientCertificate(e: Event): void {
+    let certificateFileName: string = '';
     e.preventDefault();
 
     const dialogRef = this.dialog.open(UploadCertificateComponent, {
       // disableClose: true
+      data: {certificateType: 'Client'}
     });
 
     dialogRef.afterClosed().pipe(
       switchMap(
         (fileData) => {
+          certificateFileName = fileData.fileName;
+
           if (fileData?.fileType !== 'application/x-pkcs12') {
             return of([fileData]);
           }
@@ -217,7 +242,8 @@ export class MainComponent implements OnInit {
 
           return ref.afterClosed().pipe(
             // Emit fileData as well as passphrase
-            map(passphraseData => [fileData, passphraseData])
+            // if passphraseData == undefined then they canceled the dialog
+            map(passphraseData => (passphraseData == undefined) ? [] : [fileData, passphraseData])
           );
         }
       ),
@@ -232,11 +258,19 @@ export class MainComponent implements OnInit {
           return this.serviceClient.postConfiguration(fileContents, passphrase);
         }
       )
-    ).subscribe(config => {
-      this.initializeConfig(config);
-    });
+    ).subscribe(
+      config => {
+        this.initializeConfig(config);
+      },
+      error => {
+        if (error.error?.Message?.includes('specified network password is not correct')) {
+          // bad password, have another try?
+          // it's all we get
+          this.snackBar.open('The password for the certificate in ' + certificateFileName + ' was not correct.', 'Dismiss', {duration: this.snackBarDuration});
+        }
+      });
   }
-
+  
   editPlugin(plugin: any): void {
     this.editPluginService.openProperties(plugin);
     this.openDrawerProperties = true;
