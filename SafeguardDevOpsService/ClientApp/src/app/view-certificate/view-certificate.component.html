@@ -5,7 +5,7 @@
       <div>
           <mat-form-field appearance="outline">
             <mat-label>Subject Name</mat-label>
-            <input matInput cdkInitialFocus type="text" [(ngModel)]="retrievedCert.Subject" readonly>
+            <input matInput #subject type="text" [(ngModel)]="retrievedCert.Subject" readonly>
           </mat-form-field>
       </div>
 
@@ -19,7 +19,7 @@
       <div>
           <mat-form-field appearance="outline">
             <mat-label>Valid From</mat-label>
-            <input matInput type="text" [(ngModel)]="retrievedCert.LocalizedValidFrom" readonly>
+            <input matInput type="text" [(ngModel)]="LocalizedValidFrom" readonly>
           </mat-form-field>
       </div>
 
@@ -31,6 +31,6 @@
       </div>
    </div>
 </div>
-<div>
+<div mat-dialog-actions align='start'>
    <button mat-button color='primary' (click)="removeCertificate()">Remove Certificate</button>
 </div>

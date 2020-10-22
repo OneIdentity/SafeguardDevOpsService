@@ -1,6 +1,7 @@
-import { Component, OnInit, ElementRef, ViewChild, Inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, Inject } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatInput } from '@angular/material/input';
 import * as $ from 'jquery';
 import * as moment from 'moment-timezone';
 
@@ -9,9 +10,12 @@ import * as moment from 'moment-timezone';
   templateUrl: './view-certificate.component.html',
   styleUrls: ['./view-certificate.component.scss']
 })
-export class ViewCertificateComponent implements OnInit {
+export class ViewCertificateComponent implements OnInit, AfterViewInit {
+  @ViewChild('subject', {static:false}) firstField: ElementRef;
+
   certificateType: string = '';
   certificateLoaded: boolean = false;
+  LocalizedValidFrom: string = '';
   retrievedCert = {
   }
 
@@ -22,17 +26,45 @@ export class ViewCertificateComponent implements OnInit {
   ){}
 
   ngOnInit(): void {
+    var sub = null;
     this.certificateType = this.data?.certificateType ?? '';
-    this.serviceClient.getClientCertificate().subscribe(
-      cert => {
-        this.retrievedCert = cert;
-        this.retrievedCert.LocalizedValidFrom = moment(cert.NotBefore).format('LLL (Z)') + ' - ' + moment(cert.NotAfter).format('LLL (Z)');
-        this.certificateLoaded = true;
-      },
-      error => {
-        var foo = error;
-      }
-    );
+    switch (this.certificateType) {
+      case 'Client':
+        sub = this.serviceClient.getClientCertificate();
+        break;
+      case 'Web':
+        sub = null;
+        break;
+      case 'Trusted': 
+        sub = null
+        break;
+    }
+    if (sub) {
+      sub.subscribe(
+        cert => {
+          this.retrievedCert = cert;
+          this.LocalizedValidFrom = moment(cert.NotBefore).format('LLL (Z)') + ' - ' + moment(cert.NotAfter).format('LLL (Z)');
+          this.certificateLoaded = true;
+        },
+        error => {
+          var foo = error;
+        }
+      );
+    }
+  }
+
+  fieldFocus() {
+    if (this.firstField) {
+      this.firstField.nativeElement.focus();
+      this.firstField.nativeElement.setSelectionRange(0,0);
+    } else {
+      setTimeout(() => {
+        this.fieldFocus();
+      }, 0);
+    }
+  }
+  ngAfterViewInit(): void {
+    this.fieldFocus();
   }
 
   removeCertificate(): void {
