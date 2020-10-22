@@ -1,7 +1,7 @@
 import { Component, OnInit, ElementRef, ViewChild, Inject } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
-import { Clipboard } from '@angular/cdk/clipboard';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { CreateCsrComponent } from '../create-csr/create-csr.component';
 import * as $ from 'jquery';
 
 @Component({
@@ -11,60 +11,16 @@ import * as $ from 'jquery';
 })
 export class UploadCertificateComponent implements OnInit {
 
-  subjectName: string;
-  dnsSubjectAlternativeNames: string;
-  ipSubjectAlternativeNames: string;
-  keySize: number = 2048;
-  showCsr: boolean;
   certificateType: string = '';
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     private serviceClient: DevOpsServiceClient,
-    private clipboard: Clipboard,
     private dialog: MatDialog,
     private dialogRef: MatDialogRef<UploadCertificateComponent>) { }
 
   ngOnInit(): void {
     this.certificateType = this.data?.certificateType ?? '';
-  }
-
-  createCSR(e: any, action: string): void {
-    e.preventDefault();
-
-    this.serviceClient.getCSR('A2AClient', this.subjectName, this.dnsSubjectAlternativeNames, this.ipSubjectAlternativeNames)
-      .subscribe(
-        (csr) => {
-          if (action === 'download') {
-            this.downloadString(csr);
-          } else if (action === 'copy') {
-            this.copyToClipboard(csr);
-          }
-        });
-  }
-
-  private downloadString(str: string): void {
-    const blob = new Blob([str], {type: 'text/plain'});
-
-    const link = document.createElement('a');
-    link.download = 'CSR.txt';
-    link.href = window.URL.createObjectURL(blob);
-    link.click();
-  }
-
-  private copyToClipboard(str: string): void {
-    const pending = this.clipboard.beginCopy(str);
-
-    let remainingAttempts = 3;
-    const attempt = () => {
-      const result = pending.copy();
-      if (!result && --remainingAttempts) {
-        setTimeout(attempt);
-      } else {
-        pending.destroy();
-      }
-    };
-    attempt();
   }
 
   browse(): void {
@@ -101,6 +57,20 @@ export class UploadCertificateComponent implements OnInit {
     });
     $(".requestedCertInput").append(fileInput);
     fileInput.trigger("click");
+  }
+
+  createCSR(certificateType: string) {
+    const dialogRef = this.dialog.open(CreateCsrComponent, {
+      // disableClose: true
+      data: {certificateType: certificateType}
+    });
+
+    dialogRef.afterClosed().subscribe(
+      result => {
+        if (result) {
+        }
+      }
+    );
   }
 
 }

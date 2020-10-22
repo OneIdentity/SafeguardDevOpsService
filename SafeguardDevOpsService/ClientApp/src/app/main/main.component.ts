@@ -261,6 +261,7 @@ export class MainComponent implements OnInit {
     ).subscribe(
       config => {
         this.initializeConfig(config);
+        this.initializePlugins();
       },
       error => {
         if (error.error?.Message?.includes('specified network password is not correct')) {
@@ -381,6 +382,14 @@ export class MainComponent implements OnInit {
         // disableClose: true
         data: {certificateType: 'Client'}
       });
+
+      dialogRef.afterClosed().subscribe(
+        result => {
+          if (result && result["removed"]) {
+            window.location.reload();
+          }
+        }
+      );       
     } else {
       alert('Viewing ' + certType + ' Certificate details coming soon!');
     }
