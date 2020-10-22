@@ -30,22 +30,14 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     // TODO: loading icon
-    this.editPluginService.notifyEvent$.pipe(
-      untilDestroyed(this),
-      switchMap((data) => {
-        if (data.mode === EditPluginMode.Accounts) {
-          console.log('edit accounts');
-          console.log(data.plugin.Accounts);
-          this.pluginAccounts.splice(0);
-          this.pluginAccounts.push(...data.plugin.Accounts);
 
-          return this.serviceClient.getAvailableAccounts();
-        }
-        return of();
-      })
+    this.pluginAccounts = this.editPluginService.plugin.Accounts;
+
+    this.editPluginService.getAvailableAccounts().pipe(
+      untilDestroyed(this)
     ).subscribe(
       (data: any[]) => {
-        this.accounts = data;
+        this.accounts = [...data];
         this.pluginAccounts.forEach(account => {
           const indx = data.findIndex(x => x.Id === account.Id);
           if (indx > -1) {
@@ -65,7 +57,7 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
         untilDestroyed(this),
         debounceTime(400),
         distinctUntilChanged(),
-        switchMap(() => this.doSearch)
+        switchMap(() => this.doSearch())
       ).subscribe(
         (data) => {
           this.accounts = data;

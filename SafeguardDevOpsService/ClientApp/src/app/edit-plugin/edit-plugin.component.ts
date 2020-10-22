@@ -28,8 +28,6 @@ export class EditPluginComponent implements OnInit {
   displayedColumns: string[] = ['asset', 'account', 'delete'];
 
   // Vault account
-  vaultAccount: any;
-  vaultAccountStr: string;
   vAccountInvalid = false;
   allVAccounts = [];
   validVAccounts = [];
@@ -37,44 +35,15 @@ export class EditPluginComponent implements OnInit {
   subscription: any;
 
   ngOnInit(): void {
-    let done = false;
-    this.editPluginService.notifyEvent$.pipe(
-      filter((data) => data.mode === EditPluginMode.Properties),
-      tap((data: any) => {
-        this.plugin = data.plugin;
+    this.plugin = this.editPluginService.plugin;
 
-        this.configs.splice(0);
-        Object.keys(this.plugin.Configuration).forEach(key => {
-          this.configs.push({ key, value: this.plugin.Configuration[key] });
-        });
-      }),
-      switchMap(() => {
-        return this.serviceClient.getPluginAccounts(this.plugin.Name).pipe(
-          map((accounts) => {
-            this.mapRetrievableToAvailableAccount(accounts);
-            this.plugin.Accounts = accounts;
-            return this.plugin;
-          })
-        );
-      }),
-      switchMap(() => {
-        return this.serviceClient.getPluginVaultAccount(this.plugin.Name);
-      }),
-      tap((vAcct) => {
-        if (vAcct) {
-          this.vaultAccount = {
-            Id: vAcct.AccountId,
-            Name: vAcct.AccountName,
-            System: vAcct.DomainName ?? (vAcct.SystemName ?? vAcct.SystemNetworkAddress)
-          };
-          this.vaultAccountStr = `${this.vaultAccount.Name} (${this.vaultAccount.System})`;
-        }
-      })).subscribe(() => {
-        done = true;
-      });
+    this.configs.splice(0);
+    Object.keys(this.plugin.Configuration).forEach(key => {
+      this.configs.push({ key, value: this.plugin.Configuration[key] });
+    });
 
     this.loadingVAccounts = true;
-    this.serviceClient.getAvailableAccounts().pipe(
+    this.editPluginService.getAvailableAccounts().pipe(
       untilDestroyed(this)
     ).subscribe(
       (data) => {
@@ -82,15 +51,6 @@ export class EditPluginComponent implements OnInit {
         this.loadingVAccounts = false;
       }
     );
-  }
-
-  mapRetrievableToAvailableAccount(accounts: any[]): void {
-    accounts.forEach(a => {
-      a.Id = a.AccountId;
-      a.Name = a.AccountName;
-      a.SystemName = a.AssetName;
-      a.SystemNetworkAddress = a.NetworkAddress;
-    });
   }
 
   selectAccounts(): void {
@@ -155,8 +115,8 @@ export class EditPluginComponent implements OnInit {
 
     const obs2 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
 
-    const obs3 = this.vaultAccount ?
-      this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.vaultAccount) :
+    const obs3 = this.plugin.VaultAccount ?
+      this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.plugin.VaultAccount) :
       this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
 
     forkJoin([obs1, obs2, obs3]).pipe(
@@ -165,6 +125,7 @@ export class EditPluginComponent implements OnInit {
       (data) => {
         this.plugin = data[1];
         this.plugin.Accounts =  data[0];
+        this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
 
         this.editPluginService.closeProperties(this.plugin);
       },
@@ -188,7 +149,7 @@ export class EditPluginComponent implements OnInit {
   }
 
   selectVAccount(event: any): void {
-    this.vaultAccount = event.option.value;
+    this.plugin.VaultAccount = event.option.value;
     this.vAccountInvalid = false;
   }
 
@@ -225,7 +186,7 @@ export class EditPluginComponent implements OnInit {
     this.vAccountInvalid = invalid;
 
     if (!name) {
-      this.vaultAccount = null;
+      this.plugin.VaultAccount = null;
     }
   }
 }
