@@ -22,6 +22,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatMenuModule } from '@angular/material/menu';
 
 import { UploadCertificateComponent } from './upload-certificate/upload-certificate.component';
 import { DevOpsServiceClient } from './service-client.service';
@@ -58,6 +59,7 @@ import { EditPluginComponent } from './edit-plugin/edit-plugin.component';
     MatCheckboxModule,
     MatSnackBarModule,
     MatAutocompleteModule,
+    MatMenuModule
   ],
   entryComponents: [
     UploadCertificateComponent

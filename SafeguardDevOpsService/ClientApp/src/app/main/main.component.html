@@ -1,17 +1,33 @@
 <mat-drawer-container>
+  <div class="app-header">
+    <span>Safeguard Secrets Broker For DevOps</span>
+    <span class="spacer"></span>
+    <button mat-icon-button [matMenuTriggerFor]="settingsMenu"><mat-icon>settings</mat-icon></button>
+    <mat-menu #settingsMenu="matMenu">
+      <button mat-menu-item (click)="logout()"><mat-icon>login</mat-icon>Log Out</button>
+      <button mat-menu-item (click)="restart()"><mat-icon>refresh</mat-icon>Restart Secrets Broker</button>
+      <button mat-menu-item (click)="deleteConfig()"><mat-icon>delete</mat-icon>Disconnect Current Appliance</button>
+    </mat-menu>
+  </div>
   <div class="main-container">
-
     <mat-card class="info-container">
-      <img src="/assets/SafeguardLogo.png" width="80" height="80"/>
       <div class="info-column">
-        <div class="info-label">Appliance</div>
-        <div>{{ApplianceAddress}}</div>
-        <p></p>
-        <div *ngIf="DevOpsInstanceId">
-          <div class="info-label">Dev Ops ID</div>
-          <div>{{DevOpsInstanceId}}</div>
+        <div class="general-info-container">
+          <img src="/assets/SafeguardLogo.png" width="80" height="80"/>
+          <div class="general-info">
+            <div class="info-label">Appliance</div>
+            <div>{{ApplianceAddress}}</div>
+            <p></p>
+            <div *ngIf="DevOpsInstanceId">
+              <div class="info-label">Dev Ops ID</div>
+              <div>{{DevOpsInstanceId}}</div>
+            </div>
+          </div>
         </div>
+        <button mat-flat-button class="monitoring-button start-monitoring" *ngIf="!isMonitoring && isMonitoringAvailable" (click)="updateMonitoring(true)">Start Monitoring</button>
+        <button mat-flat-button class="monitoring-button stop-monitoring" *ngIf="isMonitoring && isMonitoringAvailable" (click)="updateMonitoring(false)">Stop Monitoring</button>
       </div>
+
       <div class="vertical-line"></div>
       <div class="loading-container" *ngIf="isLoading">
           <img class="spinner" src="/assets/busy-black.gif" />
@@ -39,8 +55,8 @@
     <ng-container *ngFor="let plugin of plugins">
       <div class="plugin-container configured" (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup">
         <div class="accounts-container">
-          <div class="count">{{plugin.Accounts.length}}</div>
-          <div><div>Managed</div><div *ngIf="plugin.Accounts.length == 1">Account</div><div *ngIf="plugin.Accounts.length != 1">Accounts</div></div>
+          <div class="count">{{plugin.MappedAccountsCount}}</div>
+          <div><div>Managed</div><div *ngIf="plugin.MappedAccountsCount == 1">Account</div><div *ngIf="plugin.MappedAccountsCount != 1">Accounts</div></div>
         </div>
         <div class="header">{{plugin.DisplayName}}</div>
         <div class="edit-text">Edit Configuration</div>
@@ -71,16 +87,16 @@
             <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
           </marker>
           <marker id="markerCorbinOrange" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow1">
-            <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
+            <path d="M 0 0 a 10,15 90,1,0 0,30 z" />
           </marker>
           <marker id="markerMauiSunset" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow2">
-            <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
+            <path d="M 0 0 a 10,15 90,1,0 0,30 z" />
           </marker>
           <marker id="markerTikiSunrise" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow3">
-            <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
+            <path d="M 0 0 a 10,15 90,1,0 0,30 z" />
           </marker>
           <marker id="markerAzaleaPink" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow4">
-            <path d="M 0 0 a 10,15 90,1,0 0,30 z m 0 10 h 15 v 2 h -15 m 0 8 h 15 v 2 h -15" />
+            <path d="M 0 0 a 10,15 90,1,0 0,30 z" />
           </marker>
         </defs>
         <g fill="none" stroke-width="2" id="svgGroup">
