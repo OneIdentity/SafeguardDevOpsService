@@ -73,7 +73,7 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('restart')));
   }
 
-  getCSR(certType: string, subjectName?: string, dnsSubjectAlternativeNames?: string, ipSubjectAlternativeNames?: string): Observable<any> {
+  getCSR(certType: string, subjectName?: string, dnsSubjectAlternativeNames?: string, ipSubjectAlternativeNames?: string, keySize?: any): Observable<any> {
     let url = this.BASE + 'Safeguard/CSR?certType=' + certType;
 
     if (subjectName) {

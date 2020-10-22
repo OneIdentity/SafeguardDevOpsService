@@ -76,7 +76,6 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="5.5.1" />
     <PackageReference Include="Topshelf" Version="4.2.1" />
     <PackageReference Include="Topshelf.Serilog" Version="4.2.1" />
-    <PackageReference Include="WiX" Version="3.11.2" />
   </ItemGroup>
 
   <ItemGroup>
