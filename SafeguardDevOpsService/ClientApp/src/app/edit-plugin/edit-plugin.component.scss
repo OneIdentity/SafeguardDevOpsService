@@ -11,6 +11,11 @@
   color: $black-9;
 }
 
+.basic-info-header {
+  display: flex;
+  align-items: baseline;
+}
+
 .sub-title {
   color: $black-9;
 }
@@ -91,10 +96,10 @@ table {
   background-color: $black-6;
   color: #fff;
   display: flex;
+}
 
-  .spacer {
-    flex: 1;
-  }
+.spacer {
+  flex: 1;
 }
 
 .selection-footer {

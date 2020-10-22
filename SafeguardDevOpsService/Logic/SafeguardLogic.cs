@@ -148,6 +148,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     ApplianceAddress = safeguardAddress,
                     IgnoreSsl = _configDb.IgnoreSsl ?? ignoreSsl,
+                    PendingRemoval = _configDb.PendingRemoval ?? false,
                     ApiVersion = apiVersion
                 };
         
@@ -523,7 +524,8 @@ namespace OneIdentity.DevOps.Logic
             {
                 ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion,
                 ApplianceAddress = _configDb.SafeguardAddress,
-                IgnoreSsl = _configDb.IgnoreSsl ?? false
+                IgnoreSsl = _configDb.IgnoreSsl ?? false,
+                PendingRemoval = _configDb.PendingRemoval ?? false
             });
         }
 
@@ -818,6 +820,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
                     IgnoreSsl = _configDb.IgnoreSsl,
+                    PendingRemoval = _configDb.PendingRemoval,
                     ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion
                 };
         
@@ -871,9 +874,17 @@ namespace OneIdentity.DevOps.Logic
 
             if (safeguardConnection != null && FetchAndStoreSignatureCertificate(token, safeguardConnection))
             {
+                // if the address is the same then set the PendingRemove to whatever the user specified. If the addresses
+                //  are different, then a change was just made and the new state for PendingRemoval should be false.
+                _configDb.PendingRemoval = _configDb.SafeguardAddress == safeguardData.ApplianceAddress ? safeguardData.PendingRemoval : false;
                 _configDb.SafeguardAddress = safeguardData.ApplianceAddress;
                 _configDb.ApiVersion = safeguardData.ApiVersion ?? DefaultApiVersion;
                 _configDb.IgnoreSsl = safeguardData.IgnoreSsl ?? false;
+
+                safeguardConnection.ApplianceAddress = _configDb.SafeguardAddress;
+                safeguardConnection.ApiVersion = _configDb.ApiVersion;
+                safeguardConnection.IgnoreSsl = _configDb.IgnoreSsl;
+                safeguardConnection.PendingRemoval = _configDb.PendingRemoval;
                 return safeguardConnection;
             }
 
@@ -1360,6 +1371,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
                     IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value,
+                    PendingRemoval = _configDb.PendingRemoval != null && _configDb.PendingRemoval.Value,
                     ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion
                 });
 
