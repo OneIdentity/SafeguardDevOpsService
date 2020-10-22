@@ -3,64 +3,111 @@
 
   <mat-form-field appearance="outline">
      <mat-label>Subject Name</mat-label>
-     <input cdkFocusInitial matInput type="text" [(ngModel)]="subjectName" name="subjectName">
+     <input cdkFocusInitial matInput #subject type="text" placeholder='CN=' [pattern]='CertValidSubjectCharsRegex' [(ngModel)]="subjectName" name="subjectName">
   </mat-form-field>
 
-   <mat-form-field appearance="outline" class="text-with-chips">
-      <mat-label><span >Subject Alternative Names (DNS)</span></mat-label>
-      <input matInput autocomplete='off' name="AltDns" [(ngModel)]="dnsSubjectAlternativeNames" (keydown)="addSubjectAlt('name',$event)"
-         (blur)="addSubjectAlt('name')"/>
-   </mat-form-field>
-   <div class='subject-alt-chip-list' *ngIf='csr.DnsNames?.length'>
-      <mat-chip-list>
-         <ng-container *ngFor='let altname of csr.DnsNames'>
-            <mat-chip (removed)='removeSubjectAlt("name",altname)'>
-               {{altname}}
+  <div *ngIf='showDistinguishedNameBuilder' class="dn-builder-container">
+     <h1>Distinguished Name Builder</h1>
+
+     <mat-form-field appearance="outline">
+        <mat-label>Fully Qualified Domain Name</mat-label>
+        <input matInput type="text" id='FullyQualifiedDomainName' [(ngModel)]="dnBuilder.FullyQualifiedDomainName" name="FullyQualifiedDomainName" [required]='true' [pattern]="CertValidCharsRegex" (keyup)='buildDn()' (change)='buildDn()'>
+     </mat-form-field>
+
+     <mat-form-field appearance="outline">
+        <mat-label>Department</mat-label>
+        <input cdkFocusInitial matInput type="text" [(ngModel)]="dnBuilder.Department" name="Department" [pattern]="CertValidCharsRegex" (keyup)='buildDn()' (change)='buildDn()'>
+     </mat-form-field>
+
+     <mat-form-field appearance="outline">
+        <mat-label>Organization</mat-label>
+        <input cdkFocusInitial matInput type="text" [(ngModel)]="dnBuilder.Organization" name="Organization" [pattern]="CertValidCharsRegex" (keyup)='buildDn()' (change)='buildDn()'>
+     </mat-form-field>
+
+     <mat-form-field appearance="outline">
+        <mat-label>City / Locality</mat-label>
+        <input cdkFocusInitial matInput type="text" [(ngModel)]="dnBuilder.City" name="City" [pattern]="CertValidCharsRegex" (keyup)='buildDn()' (change)='buildDn()'>
+     </mat-form-field>
+
+     <mat-form-field appearance="outline">
+        <mat-label>State / County / Region</mat-label>
+        <input cdkFocusInitial matInput type="text" [(ngModel)]="dnBuilder.State" name="State" [pattern]="CertValidCharsRegex" (keyup)='buildDn()' (change)='buildDn()'>
+     </mat-form-field>
+
+    <mat-form-field appearance="outline">
+       <mat-label>Country</mat-label>
+       <select matNativeControl name="Country" [(ngModel)]="dnBuilder.Country" (ngModelChange)="buildDn($event)">
+         <option value=''>Select a Country</option>
+         <option *ngFor='let country of countryCodes' [value]='country.Code'>{{country.Name}}</option>
+       </select>
+    </mat-form-field>
+
+    <div class='dn-builder-actions'>
+       <button mat-button color='primary' (click)='cancelDNBuilder()'>Cancel</button>
+       <button mat-flat-button color='primary' (click)='useDNBuilder(false)'>Save Distinguished Name</button>
+    </div>
+  </div>
+
+  <ng-container *ngIf='!showDistinguishedNameBuilder'>
+     <button mat-button class='dn-builder-toggle' color='primary' (click)='useDNBuilder(true)'>Use Distinguished Name Builder</button>
+
+      <mat-form-field appearance="outline" class="text-with-chips">
+         <mat-label><span >Subject Alternative Names (DNS)</span></mat-label>
+         <input matInput autocomplete='off' name="AltDns" [(ngModel)]="dnsSubjectAlternativeNames" (keydown)="addSubjectAlt('name',$event)"
+            (blur)="addSubjectAlt('name')"/>
+      </mat-form-field>
+      <div class='subject-alt-chip-list' *ngIf='csr.DnsNames?.length'>
+         <mat-chip-list>
+            <ng-container *ngFor='let altname of csr.DnsNames'>
+               <mat-chip (removed)='removeSubjectAlt("name",altname)'>
+                  {{altname}}
+                  <mat-icon matChipRemove>cancel</mat-icon>
+               </mat-chip>
+            </ng-container>
+            <mat-chip *ngIf='csr.DnsNames?.length > 1' (removed)='removeSubjectAlt("name","",true)'>
+               Clear List
                <mat-icon matChipRemove>cancel</mat-icon>
             </mat-chip>
-         </ng-container>
-         <mat-chip *ngIf='csr.DnsNames?.length > 1' (removed)='removeSubjectAlt("name","",true)'>
-            Clear List
-            <mat-icon matChipRemove>cancel</mat-icon>
-         </mat-chip>
-      </mat-chip-list>
-   </div>
+         </mat-chip-list>
+      </div>
 
-   <mat-form-field appearance="outline" class="text-with-chips">
-      <mat-label><span >Subject Alternative Names (IP Address)</span></mat-label>
-      <input matInput autocomplete='off' name="AltIp" [(ngModel)]="ipSubjectAlternativeNames" (keydown)="addSubjectAlt('ip',$event)"
-         (blur)="addSubjectAlt('ip')"/>
-   </mat-form-field>
-   <div class='subject-alt-chip-list' *ngIf='csr.IpAddresses?.length'>
-      <mat-chip-list>
-         <ng-container *ngFor='let altname of csr.IpAddresses'>
-            <mat-chip (removed)='removeSubjectAlt("ip",altname)'>
-               {{altname}}
+      <mat-form-field appearance="outline" class="text-with-chips">
+         <mat-label><span >Subject Alternative Names (IP Address)</span></mat-label>
+         <input matInput autocomplete='off' name="AltIp" [(ngModel)]="ipSubjectAlternativeNames" (keydown)="addSubjectAlt('ip',$event)"
+            (blur)="addSubjectAlt('ip')"/>
+      </mat-form-field>
+      <div class='subject-alt-chip-list' *ngIf='csr.IpAddresses?.length'>
+         <mat-chip-list>
+            <ng-container *ngFor='let altname of csr.IpAddresses'>
+               <mat-chip (removed)='removeSubjectAlt("ip",altname)'>
+                  {{altname}}
+                  <mat-icon matChipRemove>cancel</mat-icon>
+               </mat-chip>
+            </ng-container>
+            <mat-chip *ngIf='csr.IpAddresses?.length > 1' (removed)='removeSubjectAlt("ip","",true)'>
+               Clear List
                <mat-icon matChipRemove>cancel</mat-icon>
             </mat-chip>
-         </ng-container>
-         <mat-chip *ngIf='csr.IpAddresses?.length > 1' (removed)='removeSubjectAlt("ip","",true)'>
-            Clear List
-            <mat-icon matChipRemove>cancel</mat-icon>
-         </mat-chip>
-      </mat-chip-list>
+         </mat-chip-list>
+      </div>
+
+    <mat-form-field appearance="outline">
+       <mat-label>Key Size</mat-label>
+       <select matNativeControl name="keySize" [(value)]='keySize'>
+          <option value='1024'>1024</option>
+          <option value='2048'>2048</option>
+          <option value='4096'>4096</option>
+       </select>
+    </mat-form-field>
+  </ng-container>
+</div>
+
+<div *ngIf='!showDistinguishedNameBuilder'>
+   <div mat-dialog-actions align="left" class='buttons'>
+     <button mat-button (click)="goBack()" color="primary">&lt; &nbsp; Back</button>
    </div>
 
- <mat-form-field appearance="outline">
-    <mat-label>Key Size</mat-label>
-    <select matNativeControl name="keySize" [(value)]='keySize'>
-       <option value='1024'>1024</option>
-       <option value='2048'>2048</option>
-       <option value='4096'>4096</option>
-    </select>
- </mat-form-field>
+   <div mat-dialog-actions align="end" class='buttons'>
+     <button mat-flat-button (click)="createCSR()" color="primary">Create CSR</button>
+   </div>
 </div>
-
-<div mat-dialog-actions align="left" class='buttons'>
-  <button mat-button (click)="goBack()" color="primary">&lt; &nbsp; Back</button>
-</div>
-
-<div mat-dialog-actions align="end" class='buttons'>
-  <button mat-flat-button (click)="createCSR()" color="primary">Create CSR</button>
-</div>
-

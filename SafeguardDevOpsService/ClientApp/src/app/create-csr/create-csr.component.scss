@@ -8,6 +8,23 @@
   min-width: 400px;
 }
 
+.dn-builder-container {
+  display: flex;
+  flex-direction: column;
+  margin-left: -44px;
+  margin-right: -24px;
+  background-color: #d3ebf2;
+  padding: 20px;
+}
+
+.dn-builder-toggle {
+  text-align: left;
+}
+
+.dn-builder-actions {
+  text-align: right;
+}
+
 .buttons {
   display: inline-block;
 
