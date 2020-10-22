@@ -4,6 +4,21 @@
   height: 100%;
 }
 
+.app-header {
+  height: 64px;
+  background-color: $iris-blue;
+  color: #ffffff;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 1.4em;
+}
+
+.spacer {
+  flex: 1;
+}
+
 mat-drawer-container {
   height: 100%;
 }
@@ -29,7 +44,29 @@ mat-drawer-container {
   .info-column {
     margin: 0 20px;
   }
-  
+
+  .general-info-container {
+    display: flex;
+
+    .general-info {
+      margin-left: 20px;
+    }
+  }
+
+  .monitoring-button {
+    color: #ffffff;
+    margin-top: 20px;
+    width: 100%;
+  }
+
+  .start-monitoring {
+    background-color: $aspen-green;
+  }
+
+  .stop-monitoring {
+    background-color: $phoenix-red;
+  }
+
   .info-label {
     font-size: .85em;
     color: $black-9;
@@ -47,6 +84,7 @@ mat-drawer-container {
   .green-icon {
     color: $aspen-green;
     font-size: 16px;
+    vertical-align: middle;
   }
   
   .loading-container{

@@ -13,6 +13,7 @@ import { EditPluginService, EditPluginMode } from '../edit-plugin.service';
 import { MatDrawer } from '@angular/material/sidenav';
 import { AuthService } from '../auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { until } from 'selenium-webdriver';
 
 @UntilDestroy()
 @Component({
@@ -48,6 +49,9 @@ export class MainComponent implements OnInit {
   openDrawerProperties: boolean;
   openDrawerAccounts: boolean;
 
+  isMonitoring: boolean;
+  isMonitoringAvailable: boolean;
+
   @ViewChild('drawer', { static: false }) drawer: MatDrawer;
 
   @ViewChild('fileSelectInputDialog', { static: false }) fileSelectInputDialog: ElementRef;
@@ -77,8 +81,12 @@ export class MainComponent implements OnInit {
               return of({});
             }
           }),
+          switchMap(() => this.serviceClient.getMonitor()),
           finalize(() => this.isLoading = false)
-        ).subscribe(() => {
+        ).subscribe((isMonitor) => {
+          // Monitoring available when we have plugins and a client certificate
+          this.isMonitoringAvailable = this.plugins.length > 0 && this.Thumbprint?.length > 0;
+          this.isMonitoring = isMonitor.Enabled;
         });
     }
 
@@ -92,13 +100,16 @@ export class MainComponent implements OnInit {
   }
 
   private calculateArrow(A: HTMLElement, B: HTMLElement, index: number, totalArrows: number): string {
+    const isUnconfigured = index === totalArrows - 1;
+
     const posA = {
       x: A.offsetLeft + 150 - index * 15,
-      y: A.offsetTop + A.offsetHeight - 20 + this.window.scrollY
+      y: A.offsetTop + A.offsetHeight - 15 + this.window.scrollY
     };
 
+    const markerOffset = this.isMonitoring && !isUnconfigured ? 22 : 50;
     const posB = {
-      x: B.offsetLeft - 50,
+      x: B.offsetLeft - markerOffset,
       y: B.offsetTop + B.offsetHeight / 2 - 20
     };
 
@@ -127,9 +138,9 @@ export class MainComponent implements OnInit {
         pathEl.setAttribute('d', dStr);
 
         const isUnconfigured = index === total - 1;
-        const color =  isUnconfigured ? 'Black9' :  colors[index % colors.length];
+        const color =  isUnconfigured || !this.isMonitoring ? 'Black9' :  colors[index % colors.length];
 
-        pathEl.setAttribute('class', isUnconfigured ? 'arrow-unconfigured' : 'arrow');
+        pathEl.setAttribute('class', isUnconfigured || !this.isMonitoring ? 'arrow-unconfigured' : 'arrow');
         pathEl.setAttribute('marker-end', `url(#marker${color})`);
 
         this.renderer.appendChild(pathGroup, pathEl);
@@ -160,30 +171,8 @@ export class MainComponent implements OnInit {
       concatAll(),
       tap((plugin: any) => {
         plugin.Accounts = [];
+        plugin.IsConfigurationSetup = true;
         this.plugins.push(plugin);
-      }),
-      // Get the plugin accounts
-      switchMap((plugin: any) => {
-        return this.serviceClient.getPluginAccounts(plugin.Name).pipe(
-          map(accounts => {
-            plugin.Accounts = accounts;
-            plugin.Accounts.forEach(a => {
-              a.Id = a.AccountId;
-              a.Name = a.AccountName;
-              a.SystemName = a.AssetName;
-              a.SystemNetworkAddress = a.NetworkAddress;
-            });
-            return plugin;
-          })
-        );
-      }),
-      tap((plugin: any) => {
-        const p = this.plugins.find(x => x.Name === plugin.Name);
-        if (p) {
-          Object.assign(p, plugin);
-        }
-        // TODO: Consider a plugin configured if any accounts are set?
-        plugin.IsConfigurationSetup = plugin.Accounts.length > 0;
       })
     );
   }
@@ -311,12 +300,44 @@ export class MainComponent implements OnInit {
         if (typeof x === 'string') {
           this.snackBar.open(x, 'OK', { duration: 10000 });
         } else {
+          this.snackBar.dismiss();
           x.IsConfigurationSetup = false;
           x.Accounts = [];
           x.DisplayName = x.Name;
           this.plugins.push(x);
         }
       });
+  }
+
+  updateMonitoring(enabled: boolean): void {
+    this.serviceClient.postMonitor(enabled).pipe(
+      untilDestroyed(this)
+    ).subscribe(() => {
+      this.isMonitoring = enabled;
+      this.setArrows();
+    });
+  }
+
+  logout(): void {
+    this.serviceClient.logout().pipe(
+      untilDestroyed(this)
+    ).subscribe(() => {
+      this.router.navigate(['/login']);
+    });
+  }
+
+  restart(): void {
+    // TODO: check when service is back up?
+    this.serviceClient.restart().pipe(
+      untilDestroyed(this)
+    ).subscribe();
+  }
+
+  deleteConfig(): void {
+    // TODO: confirm
+    this.serviceClient.deleteConfiguration().pipe(
+      untilDestroyed(this)
+    ).subscribe();
   }
 }
 
