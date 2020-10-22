@@ -5,43 +5,13 @@
       <p>This can be either a PFX formatted certificate that includes the private key and a passphrase for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.</p>
    </ng-container>
 
-  <div class="show-more-link" (click)="showCsr = !showCsr">
-    <span *ngIf="!showCsr">Create Certificate Signing Request (CSR)</span>
-    <span *ngIf="showCsr">Hide Certificate Signing Request (CSR)</span>
-    <mat-icon aria-label="Show More" *ngIf="!showCsr && false">expand_more</mat-icon>
-    <mat-icon aria-label="Show Less" *ngIf="showCsr && false">expand_less</mat-icon>
+   <div class="show-more-link">
+    <button mat-button (click)="createCSR(certificateType)" color="primary">Create a Certificate Signing Request (CSR)</button>
   </div>
 
-  <div *ngIf="!showCsr && certificateType=='Client'">
+  <div *ngIf="certificateType=='Client'">
      <p></p>
      <p> A client certificate must be uploaded before Secrets Broker will work.</p>
-  </div>
-
-  <div class="csr-container" *ngIf="showCsr">
-    <mat-form-field appearance="outline">
-      <mat-label>Subject Name</mat-label>
-      <input matInput type="text" [(ngModel)]="subjectName" name="subjectName">
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>DNS Subject Alternative Names</mat-label>
-      <textarea matInput matTextareaAutosize [(ngModel)]="dnsSubjectAlternativeNames" name="dnsSubjectAlternativeNames"></textarea>
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>IP Subject Alternative Names</mat-label>
-      <textarea matInput matTextareaAutosize [(ngModel)]="ipSubjectAlternativeNames" name="ipSubjectAlternativeNames"></textarea>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-       <mat-label>Key Size</mat-label>
-       <select matNativeControl name="keySize" [(value)]='keySize'>
-          <option value='1024'>1024</option>
-          <option value='2048'>2048</option>
-          <option value='4096'>4096</option>
-       </select>
-    </mat-form-field>
-    <div>
-      <a class="custom-link" (click)="createCSR($event, 'copy')" href="">Copy CSR</a><span class="divider">|</span><a class="custom-link" (click)="createCSR($event, 'download')" href="">Download CSR</a> 
-    </div>
   </div>
 </div>
 <div mat-dialog-actions align="end">
