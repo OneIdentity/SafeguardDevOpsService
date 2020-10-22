@@ -33,6 +33,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string SafeguardAddressKey = "SafeguardAddress";
         private const string ApiVersionKey = "ApiVersion";
         private const string IgnoreSslKey = "IgnoreSsl";
+        private const string PendingRemovalKey = "PendingRemoval";
         private const string A2aUserIdKey = "A2aUserId";
         private const string A2aRegistrationIdKey = "A2aRegistrationId";
         private const string A2aVaultRegistrationIdKey = "A2aVaultRegistrationId";
@@ -346,6 +347,22 @@ namespace OneIdentity.DevOps.ConfigDb
                 }
             }
             set => SetSimpleSetting(IgnoreSslKey, value.ToString());
+        }
+
+        public bool? PendingRemoval
+        {
+            get
+            {
+                try
+                {
+                    return bool.Parse(GetSimpleSetting(PendingRemovalKey));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            set => SetSimpleSetting(PendingRemovalKey, value.ToString());
         }
 
         public int? A2aUserId
