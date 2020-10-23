@@ -2,7 +2,7 @@
   <div class="app-header">
     <span>Safeguard Secrets Broker For DevOps</span>
     <span class="spacer"></span>
-    <button mat-icon-button [matMenuTriggerFor]="settingsMenu"><mat-icon>settings</mat-icon></button>
+    <button mat-icon-button [matMenuTriggerFor]="settingsMenu"  *ngIf="Thumbprint"><mat-icon>settings</mat-icon></button>
     <mat-menu #settingsMenu="matMenu">
       <button mat-menu-item (click)="logout()"><mat-icon>login</mat-icon>Log Out</button>
       <button mat-menu-item (click)="restart()"><mat-icon>refresh</mat-icon>Restart Secrets Broker</button>
@@ -33,10 +33,11 @@
           <img class="spinner" src="/assets/busy-black.gif" />
       </div>
       <div class="info-column" *ngIf="Thumbprint">
-        <div>Linked Safeguard Objects</div>
+        <div><b>Linked Safeguard Objects</b></div>
         <p></p>
         <div class="info-label">User Account</div>
-        <div>{{UserName}}</div>
+        <div>{{UserDisplayName}}</div>
+        <div class="info-label">({{UserName}})</div>
         <p></p>
         <div class="info-label">Appliance to Appliance Registrations</div>
         <div>{{A2ARegistrationName}}</div>

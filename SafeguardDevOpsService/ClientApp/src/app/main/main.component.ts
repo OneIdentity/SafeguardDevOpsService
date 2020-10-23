@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, Renderer2 } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
-import { switchMap, map, concatAll, tap, distinctUntilChanged, debounceTime, finalize, catchError } from 'rxjs/operators';
+import { switchMap, map, concatAll, tap, distinctUntilChanged, debounceTime, finalize, catchError, filter } from 'rxjs/operators';
 import { of, Observable, fromEvent, forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -16,6 +16,7 @@ import { MatDrawer } from '@angular/material/sidenav';
 import { AuthService } from '../auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { EditTrustedCertificatesComponent } from '../edit-trusted-certificates/edit-trusted-certificates.component';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 @UntilDestroy()
 @Component({
@@ -41,6 +42,7 @@ export class MainComponent implements OnInit {
   ) { }
 
   UserName: string;
+  UserDisplayName: string;
   IdentityProviderName: string;
   A2ARegistrationName: string;
   A2AVaultRegistrationName: string;
@@ -216,6 +218,7 @@ export class MainComponent implements OnInit {
     this.ApplianceAddress =  config.Appliance.ApplianceAddress;
     this.DevOpsInstanceId = config.Appliance.DevOpsInstanceId;
     this.UserName = config.UserName;
+    this.UserDisplayName = config.UserDisplayName;
     this.IdentityProviderName = config.IdentityProviderName;
     this.A2ARegistrationName = config.A2ARegistrationName;
     this.A2AVaultRegistrationName = config.A2AVaultRegistrationName;
@@ -413,10 +416,16 @@ export class MainComponent implements OnInit {
   }
 
   deleteConfig(): void {
-    // TODO: confirm
-    this.serviceClient.deleteConfiguration().pipe(
-      untilDestroyed(this)
-    ).subscribe();
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: { title: 'Delete Configuration', message: 'This removes all configuration for Safeguard Secrets Broker for DevOps. Click "OK" to continue.' }
+    });
+
+    dialogRef.afterClosed().pipe(
+      filter((dlgResult) => dlgResult.result === 'OK'),
+      switchMap(() => this.serviceClient.putPendingRemoval())
+    ).subscribe(() => {
+      this.router.navigate(['/login']);
+    });
   }
 
   viewCertificate(e: Event, certType: string = 'Client'): void {

@@ -57,13 +57,24 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('putSafeguard')));
   }
 
+  putPendingRemoval(): Observable<any> {
+    const url = this.BASE + 'Safeguard';
+    const payload = {
+      ApplianceAddress: this.applianceAddress,
+      IgnoreSsl: true,
+      PendingRemoval: true
+    };
+    return this.http.put(url, payload, this.authHeader())
+      .pipe(catchError(this.error<any>('putSafeguard')));
+  }
+
   putSafeguardUseSsl(useSsl: boolean): Observable<any> {
     const url = this.BASE + 'Safeguard';
     const payload = {
       IgnoreSsl: !useSsl
     };
     return this.http.put(url, payload, this.authHeader())
-      .pipe(catchError(this.error<any>('putSafeguard')));
+      .pipe(catchError(this.error<any>('putSafeguardUseSsl')));
   }
 
   logon(): Observable<any> {
@@ -103,9 +114,14 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('getCSR')));
   }
 
+  deleteSafeguard(): Observable<any> {
+    return this.http.delete(this.BASE + 'Safeguard/?confirm=yes', this.authHeader())
+      .pipe(catchError(this.error<any>('deleteSafeguard')));
+  }
+
   deleteConfiguration(): Observable<any> {
     return this.http.delete(this.BASE + 'Safeguard/Configuration?confirm=yes', this.authHeader())
-      .pipe(catchError(this.error<any>('delete')));
+      .pipe(catchError(this.error<any>('deleteConfiguration')));
   }
 
   getConfiguration(): Observable<any> {
