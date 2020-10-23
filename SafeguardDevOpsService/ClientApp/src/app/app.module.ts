@@ -24,6 +24,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
+import {MatListModule} from '@angular/material/list';
 
 import { UploadCertificateComponent } from './upload-certificate/upload-certificate.component';
 import { DevOpsServiceClient } from './service-client.service';
@@ -33,6 +34,8 @@ import { EditPluginComponent } from './edit-plugin/edit-plugin.component';
 import { CreateCsrComponent } from './create-csr/create-csr.component';
 import { ViewCertificateComponent } from './view-certificate/view-certificate.component';
 import { SaveCsrComponent } from './save-csr/save-csr.component';
+import { EditTrustedCertificatesComponent } from './edit-trusted-certificates/edit-trusted-certificates.component';
+import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
 
 @NgModule({
   declarations: [
@@ -43,10 +46,11 @@ import { SaveCsrComponent } from './save-csr/save-csr.component';
     EnterPassphraseComponent,
     SelectAccountsComponent,
     EditPluginComponent,
-    EditPluginComponent,
     CreateCsrComponent,
     ViewCertificateComponent,
-    SaveCsrComponent
+    SaveCsrComponent,
+    EditTrustedCertificatesComponent,
+    ConfirmDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -69,7 +73,8 @@ import { SaveCsrComponent } from './save-csr/save-csr.component';
     MatAutocompleteModule,
     MatChipsModule,
     NoopAnimationsModule,
-    MatMenuModule
+    MatMenuModule,
+    MatListModule
   ],
   entryComponents: [
     UploadCertificateComponent

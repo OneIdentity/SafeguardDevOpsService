@@ -6,6 +6,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { finalize, switchMap, tap, take, takeLast, map, last, filter } from 'rxjs/operators';
 import { of, forkJoin } from 'rxjs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-edit-plugin',
@@ -18,7 +20,8 @@ export class EditPluginComponent implements OnInit {
 
   constructor(
     private editPluginService: EditPluginService,
-    private serviceClient: DevOpsServiceClient
+    private serviceClient: DevOpsServiceClient,
+    private dialog: MatDialog
     ) { }
 
   plugin: any;
@@ -54,6 +57,9 @@ export class EditPluginComponent implements OnInit {
   }
 
   selectAccounts(): void {
+    // Save the current configuration first
+    this.mapConfiguration();
+
     this.editPluginService.openAccounts(this.plugin.Accounts);
   }
 
@@ -76,21 +82,29 @@ export class EditPluginComponent implements OnInit {
   }
 
   delete(): void {
-    // TODO: put up a confirmation dialog
-    this.serviceClient.deletePluginConfiguration(this.plugin.Name).pipe(
-      untilDestroyed(this)
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: { title: 'Delete Plugin', message: 'This removes the configuration for a specific plugin and unregisters the plugin from Safeguard Secrets Broker for DevOps. However, this does not remove the plugin from the ExternalPlugins folder. The plugin files must be manually removed from the ExternalPlugins folder once Safeguard Secrets Broker for DevOps has been stopped. Click "OK" to continue.' }
+    });
+
+    dialogRef.afterClosed().pipe(
+      filter((dlgResult) => dlgResult.result === 'OK'),
+      switchMap(() => this.serviceClient.deletePluginConfiguration(this.plugin.Name))
     ).subscribe(
       () => this.editPluginService.deletePlugin()
     );
+  }
+
+  private mapConfiguration(): void {
+    this.configs.forEach(config => {
+      this.plugin.Configuration[config.key] = config.value;
+    });
   }
 
   save(): void {
     this.error = null;
     this.isSaving = true;
 
-    this.configs.forEach(config => {
-      this.plugin.Configuration[config.key] = config.value;
-    });
+    this.mapConfiguration();
 
     // Make sure the accounts have AccountId, which PUT Plugin/Accounts expects
     this.plugin.Accounts.forEach(x => x.AccountId = x.Id);
@@ -109,8 +123,8 @@ export class EditPluginComponent implements OnInit {
           return of({});
         }
       }),
-      switchMap(() => this.serviceClient.putRetrievableAccounts(this.plugin.Accounts)),
-      switchMap(() => this.serviceClient.putPluginAccounts(this.plugin.Name, this.plugin.Accounts))
+      switchMap(() => this.plugin.Accounts.length > 0 ? this.serviceClient.putRetrievableAccounts(this.plugin.Accounts) : of({})),
+      switchMap(() => this.plugin.Accounts.length > 0 ? this.serviceClient.putPluginAccounts(this.plugin.Name, this.plugin.Accounts) : of([]))
     );
 
     const obs2 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);

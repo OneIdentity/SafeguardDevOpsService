@@ -47,15 +47,34 @@ export class DevOpsServiceClient {
         catchError(this.error<any>('getSafeguard')));
   }
 
-  putSafeguard(applianceAddress: string): Observable<any> {
+  putSafeguardAppliance(applianceAddress: string): Observable<any> {
     const url = this.BASE + 'Safeguard';
     const payload = {
       ApplianceAddress: applianceAddress,
-      ApiVersion: 3,
       IgnoreSsl: true
     };
     return this.http.put(url, payload, this.authHeader())
       .pipe(catchError(this.error<any>('putSafeguard')));
+  }
+
+  putPendingRemoval(): Observable<any> {
+    const url = this.BASE + 'Safeguard';
+    const payload = {
+      ApplianceAddress: this.applianceAddress,
+      IgnoreSsl: true,
+      PendingRemoval: true
+    };
+    return this.http.put(url, payload, this.authHeader())
+      .pipe(catchError(this.error<any>('putSafeguard')));
+  }
+
+  putSafeguardUseSsl(useSsl: boolean): Observable<any> {
+    const url = this.BASE + 'Safeguard';
+    const payload = {
+      IgnoreSsl: !useSsl
+    };
+    return this.http.put(url, payload, this.authHeader())
+      .pipe(catchError(this.error<any>('putSafeguardUseSsl')));
   }
 
   logon(): Observable<any> {
@@ -95,9 +114,14 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('getCSR')));
   }
 
+  deleteSafeguard(): Observable<any> {
+    return this.http.delete(this.BASE + 'Safeguard/?confirm=yes', this.authHeader())
+      .pipe(catchError(this.error<any>('deleteSafeguard')));
+  }
+
   deleteConfiguration(): Observable<any> {
     return this.http.delete(this.BASE + 'Safeguard/Configuration?confirm=yes', this.authHeader())
-      .pipe(catchError(this.error<any>('delete')));
+      .pipe(catchError(this.error<any>('deleteConfiguration')));
   }
 
   getConfiguration(): Observable<any> {
@@ -219,6 +243,26 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('deleteClientCertificate')));
   }
 
+  getWebServerCertificate(): Observable<any> {
+    return this.http.get(this.BASE + 'Safeguard/WebServerCertificate', this.authHeader())
+      .pipe(catchError(this.error<any>('getWebServerCertificate')));
+  }
+
+  postWebServerCertificate(base64CertificateData: string, passphrase?: string): Observable<any> {
+    const url = this.BASE + 'Safeguard/WebServerCertificate';
+    const payload = {
+      Base64CertificateData: base64CertificateData,
+      Passphrase: passphrase
+    };
+    return this.http.post(url, payload, this.authHeader())
+      .pipe(catchError(this.error<any>('postWebServerCertificate')));
+  }
+
+  deleteWebServerCertificate(): Observable<any> {
+    return this.http.delete(this.BASE + 'Safeguard/WebServerCertificate', this.authHeader())
+      .pipe(catchError(this.error<any>('deleteWebServerCertificate')));
+  }
+
   putRetrievableAccounts(accounts: any[]): Observable<any[]> {
     return this.http.put(this.BASE + 'Safeguard/A2ARegistration/RetrievableAccounts', accounts, this.authHeader())
       .pipe(catchError(this.error<any>('putPluginAccounts')));
@@ -232,5 +276,32 @@ export class DevOpsServiceClient {
   postMonitor(enabled: boolean): Observable<any> {
     return this.http.post(this.BASE + 'Monitor', { Enabled: enabled}, this.authHeader())
       .pipe(catchError(this.error<any>('putMonitor')));
+  }
+
+  getTrustedCertificates(): Observable<any[]> {
+    return this.http.get(this.BASE + 'Safeguard/TrustedCertificates', this.authHeader())
+      .pipe(catchError(this.error<any>('getTrustedCertificates')));
+  }
+
+  postTrustedCertificates(importFromSafeguard: boolean, certificateBase64Data?: string, passphrase?: string): Observable<any[]> {
+    let url = this.BASE + 'Safeguard/TrustedCertificates';
+    let payload = {};
+
+    if (importFromSafeguard) {
+      url += '?importFromSafeguard=true';
+    } else {
+      payload = {
+        Base64CertificateData: certificateBase64Data,
+        Passphrase: passphrase
+      };
+    }
+
+    return this.http.post(url, payload, this.authHeader())
+      .pipe(catchError(this.error<any>('postTrustedCertificates')));
+  }
+
+  deleteTrustedCertificate(thumbprint: string): Observable<any> {
+    return this.http.delete(this.BASE + 'Safeguard/TrustedCertificates' + encodeURIComponent(thumbprint), this.authHeader())
+      .pipe(catchError(this.error<any>('deleteTrustedCertificate')));
   }
 }

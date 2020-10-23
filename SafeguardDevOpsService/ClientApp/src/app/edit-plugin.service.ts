@@ -35,7 +35,6 @@ export class EditPluginService {
     this.plugin.Accounts = [];
     this.plugin.VaultAccount = null;
     this.plugin.VaultAccountDisplayName = '';
-
     this.initializePluginAccounts();
 
     this.notifyEventSource.next({
