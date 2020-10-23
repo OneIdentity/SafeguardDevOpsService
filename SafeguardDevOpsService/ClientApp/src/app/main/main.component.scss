@@ -153,11 +153,9 @@ mat-drawer-container {
 .plugin-container.configured {
   border: 1px solid;
   margin-bottom: 20px;
-  border-color: $maui-sunset;
   cursor: pointer;
 
   .header {
-    color: $maui-sunset;
     font-size: 2em;
     font-weight: 300;
     margin-bottom: 10px;
@@ -185,6 +183,24 @@ mat-drawer-container {
   border-color: $corbin-orange;
   .header {
     color: $corbin-orange;
+  }
+}
+.plugin-container.configured:nth-child(3) {
+  border-color: $maui-sunset;
+  .header {
+    color: $maui-sunset;
+  }
+}
+.plugin-container.configured:nth-child(4) {
+  border-color: $tiki-sunrise;
+  .header {
+    color: $tiki-sunrise;
+  }
+}
+.plugin-container.configured:nth-child(5) {
+  border-color: $azalea-pink;
+  .header {
+    color: $azalea-pink;
   }
 }
 
@@ -226,6 +242,6 @@ path.arrow:nth-child(4) {
   stroke: $azalea-pink;
   color: $azalea-pink;
 }
-marker.arrow3 {
+marker.arrow4 {
   fill: $azalea-pink;
 }

@@ -1,0 +1,37 @@
+@import '../../colors.scss';
+
+.actions {
+  display: flex;
+  align-items: baseline;
+  overflow: hidden;
+  margin-bottom: 10px;
+
+  .upload-button {
+    margin-right: 10px;
+  }
+}
+
+.spacer {
+  flex: 1;
+}
+
+.no-certs-msg {
+  margin-top: 30px;
+}
+
+.cert-info {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  display:block;
+  width:100%;
+  min-width:1px;
+}
+
+mat-list-option {
+  border-top: 1px solid $black-c;
+}
+
+mat-list-option:last-of-type {
+  border-bottom: 1px solid $black-c;
+}

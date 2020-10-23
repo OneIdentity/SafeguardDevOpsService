@@ -1,0 +1,26 @@
+<h1 mat-dialog-title>Trusted Certificates</h1>
+<div mat-dialog-content>
+  <div class="actions">
+    <div class="upload-button">
+      <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".cer,.crt,.der,.pfx,.p12,.pem" />
+      <button mat-stroked-button (click)="browse()" color="primary">Upload</button>
+    </div>
+    <button mat-flat-button (click)="import()" color="primary" cdkFocusInitial>Import from Safeguard</button>
+    <div class="spacer"></div>
+    <mat-checkbox [(ngModel)]="useSsl" (disabled)="trustedCertificates.length == 0" (change)="updateUseSsl()">Use SSL</mat-checkbox>
+  </div>
+  <div *ngIf="trustedCertificates.length == 0" class="no-certs-msg">
+    <span>
+    Once Safeguard Secrets Broker for DevOps has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be established.
+    Establishing a trusted connection requires that trusted certificates be added to the service.
+    </span>
+  </div>
+  <div *ngIf="trustedCertificates.length > 0">
+    <mat-selection-list [multiple]="false" #certificates>
+      <mat-list-option *ngFor="let cert of trustedCertificates" [value]="cert">
+        <span class="cert-info">{{cert.Subject}}</span>
+      </mat-list-option>
+    </mat-selection-list>
+  </div>
+</div>
+

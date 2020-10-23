@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, Renderer2 } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
 import { switchMap, map, concatAll, tap, distinctUntilChanged, debounceTime, finalize, catchError } from 'rxjs/operators';
-import { of, Observable, fromEvent } from 'rxjs';
+import { of, Observable, fromEvent, forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { UploadCertificateComponent } from '../upload-certificate/upload-certificate.component';
@@ -15,7 +15,7 @@ import { EditPluginService, EditPluginMode } from '../edit-plugin.service';
 import { MatDrawer } from '@angular/material/sidenav';
 import { AuthService } from '../auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { until } from 'selenium-webdriver';
+import { EditTrustedCertificatesComponent } from '../edit-trusted-certificates/edit-trusted-certificates.component';
 
 @UntilDestroy()
 @Component({
@@ -56,6 +56,9 @@ export class MainComponent implements OnInit {
   webServerCertAdded: boolean = false;
   trustedCertsAdded: boolean = false;
 
+  config: any;
+  trustedCertificates = [];
+
   isMonitoring: boolean;
   isMonitoringAvailable: boolean;
 
@@ -75,7 +78,7 @@ export class MainComponent implements OnInit {
     this.isLoading = true;
     this.ApplianceAddress =  this.window.sessionStorage.getItem('ApplianceAddress');
 
-    if (!this.ApplianceAddress) {
+    if (!this.ApplianceAddress || this.ApplianceAddress === 'null') {
       this.router.navigate(['/login']);
     } else {
       this.loginToDevOpsService()
@@ -83,19 +86,16 @@ export class MainComponent implements OnInit {
           untilDestroyed(this),
           switchMap(() => this.serviceClient.getConfiguration()),
           tap((config) => this.initializeConfig(config)),
-          switchMap((config) => {
-            if (config.Thumbprint) {
-              return this.initializePlugins();
-            } else {
-              return of({});
-            }
-          }),
-          switchMap(() => this.serviceClient.getMonitor()),
+          switchMap(() => forkJoin([
+            this.initializeMonitoring(),
+            this.initializeTrustedCertificates(),
+            this.initializeWebServerCertificate(),
+            this.initializePlugins()
+          ])),
           finalize(() => this.isLoading = false)
-        ).subscribe((isMonitor) => {
-          // Monitoring available when we have plugins and a client certificate
-          this.isMonitoringAvailable = this.plugins.length > 0 && this.Thumbprint?.length > 0;
-          this.isMonitoring = isMonitor.Enabled;
+        ).subscribe(() => {
+          // Monitoring available when we have plugins and an account for at least one plugin
+          this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
         });
     }
 
@@ -106,6 +106,61 @@ export class MainComponent implements OnInit {
     ).subscribe(() => {
       console.log('scroll');
     });
+  }
+
+  private initializeWebServerCertificate(): Observable<any> {
+    if (!this.Thumbprint) {
+      return of({});
+    }
+    return this.serviceClient.getWebServerCertificate().pipe(
+      tap((cert) => {
+        if (cert && cert.Subject !== 'CN=DevOpsServiceServerSSL') {
+          this.webServerCertAdded = true;
+        }
+      }));
+  }
+
+  private initializePlugins(): Observable<any> {
+    if (!this.Thumbprint) {
+      return of({});
+    }
+
+    this.plugins.splice(0);
+    const custom = {
+      DisplayName: 'Upload Custom Plugin',
+      IsUploadCustom: true,
+      Accounts: []
+    };
+    this.plugins.push(custom);
+
+    return this.serviceClient.getPlugins().pipe(
+      tap((plugins: any[]) => {
+        plugins.forEach(plugin => {
+          plugin.IsConfigurationSetup = true;
+          this.plugins.push(plugin);
+        });
+      }));
+  }
+
+  private initializeMonitoring(): Observable<any> {
+    if (!this.Thumbprint) {
+      return of({});
+    }
+    return this.serviceClient.getMonitor().pipe(
+      tap((status) => {
+        this.isMonitoring = status.Enabled;
+      }));
+  }
+
+  private initializeTrustedCertificates(): Observable<any> {
+    if (!this.Thumbprint) {
+      return of({});
+    }
+    return this.serviceClient.getTrustedCertificates().pipe(
+      tap((trustedCerts) => {
+        this.trustedCertificates = trustedCerts;
+        this.trustedCertsAdded = this.trustedCertificates?.length > 0;
+      }));
   }
 
   private calculateArrow(A: HTMLElement, B: HTMLElement, index: number, totalArrows: number): string {
@@ -119,7 +174,7 @@ export class MainComponent implements OnInit {
     const markerOffset = this.isMonitoring && !isUnconfigured ? 22 : 50;
     const posB = {
       x: B.offsetLeft - markerOffset,
-      y: B.offsetTop + B.offsetHeight / 2 - 20
+      y: B.offsetTop + B.offsetHeight / 2 - 5
     };
 
     return `M ${posA.x},${posA.y} V ${posB.y} a 3,3 0 0 0 3 3 H ${posB.x}`;
@@ -167,24 +222,6 @@ export class MainComponent implements OnInit {
     this.Thumbprint = config.Thumbprint;
   }
 
-  initializePlugins(): Observable<any> {
-    const custom = {
-      DisplayName: 'Upload Custom Plugin',
-      IsUploadCustom: true,
-      Accounts: []
-    };
-    this.plugins.push(custom);
-
-    return this.serviceClient.getPlugins().pipe(
-      // Flatten array so each plugin is emitted individually
-      concatAll(),
-      tap((plugin: any) => {
-        plugin.IsConfigurationSetup = true;
-        this.plugins.push(plugin);
-      })
-    );
-  }
-
   loginToDevOpsService(): Observable<any> {
     return this.authService.getUserToken(this.ApplianceAddress)
       .pipe(
@@ -196,7 +233,7 @@ export class MainComponent implements OnInit {
         }),
         switchMap((safeguardData) => {
           if (!safeguardData.ApplianceAddress) {
-            return this.serviceClient.putSafeguard(this.ApplianceAddress);
+            return this.serviceClient.putSafeguardAppliance(this.ApplianceAddress);
           }
           return of(undefined);
         }),
@@ -218,13 +255,12 @@ export class MainComponent implements OnInit {
     );
   }
 
-  addClientCertificate(e: Event): void {
+  addCertificate(e: Event, certificateType: string): void {
     let certificateFileName: string = '';
     e.preventDefault();
 
     const dialogRef = this.dialog.open(UploadCertificateComponent, {
-      // disableClose: true
-      data: {certificateType: 'Client'}
+      data: { certificateType }
     });
 
     dialogRef.afterClosed().pipe(
@@ -243,7 +279,7 @@ export class MainComponent implements OnInit {
           return ref.afterClosed().pipe(
             // Emit fileData as well as passphrase
             // if passphraseData == undefined then they canceled the dialog
-            map(passphraseData => (passphraseData == undefined) ? [] : [fileData, passphraseData])
+            map(passphraseData => (passphraseData === undefined) ? [] : [fileData, passphraseData])
           );
         }
       ),
@@ -255,13 +291,19 @@ export class MainComponent implements OnInit {
           }
 
           const passphrase = resultArray.length > 1 ? resultArray[1] : '';
-          return this.serviceClient.postConfiguration(fileContents, passphrase);
+          return certificateType === 'Client' ?
+            this.serviceClient.postConfiguration(fileContents, passphrase) :
+            this.serviceClient.postWebServerCertificate(fileContents, passphrase);
         }
       )
     ).subscribe(
       config => {
-        this.initializeConfig(config);
-        this.initializePlugins();
+        if (certificateType === 'Client') {
+          this.initializeConfig(config);
+          this.initializePlugins();
+        } else {
+          this.webServerCertAdded = true;
+        }
       },
       error => {
         if (error.error?.Message?.includes('specified network password is not correct')) {
@@ -271,7 +313,7 @@ export class MainComponent implements OnInit {
         }
       });
   }
-  
+
   editPlugin(plugin: any): void {
     this.editPluginService.openProperties(plugin);
     this.openDrawerProperties = true;
@@ -304,6 +346,8 @@ export class MainComponent implements OnInit {
             } else {
               this.plugins.splice(indx, 1);
             }
+            // Monitoring available when we have plugins and an account for at least one plugin
+            this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
           }
         }
         break;
@@ -331,18 +375,17 @@ export class MainComponent implements OnInit {
         const input = this.fileSelectInputDialog.nativeElement as HTMLInputElement;
         input.value = null;
       })
-    ).subscribe(
-      (x: any) => {
-        if (typeof x === 'string') {
-          this.snackBar.open(x, 'OK', { duration: 10000 });
-        } else {
+    ).subscribe((x: any) => {
+      if (typeof x === 'string') {
+        this.snackBar.open(x, 'OK', { duration: 10000 });
+      } else {
+        // This is a hack: if you call too quickly after uploading plugin, it returns zero
+        setTimeout(() => {
+          this.initializePlugins().subscribe();
           this.snackBar.dismiss();
-          x.IsConfigurationSetup = false;
-          x.Accounts = [];
-          x.DisplayName = x.Name;
-          this.plugins.push(x);
-        }
-      });
+        }, 2000);
+      }
+    });
   }
 
   updateMonitoring(enabled: boolean): void {
@@ -376,30 +419,34 @@ export class MainComponent implements OnInit {
     ).subscribe();
   }
 
-  viewCertificate(e: Event, certType:string = 'Client'): void {
-    if (certType == 'Client') {
-      const dialogRef = this.dialog.open(ViewCertificateComponent, {
-        // disableClose: true
-        data: {certificateType: 'Client'}
-      });
+  viewCertificate(e: Event, certType: string = 'Client'): void {
+    const dialogRef = this.dialog.open(ViewCertificateComponent, {
+      data: { certificateType: certType }
+    });
 
-      dialogRef.afterClosed().subscribe(
-        result => {
-          if (result && result["removed"]) {
+    dialogRef.afterClosed().subscribe(
+      result => {
+        if (result && result['removed']) {
+          if (certType === 'Client') {
             window.location.reload();
+          } else {
+            this.webServerCertAdded = false;
           }
         }
-      );       
-    } else {
-      alert('Viewing ' + certType + ' Certificate details coming soon!');
-    }
+      }
+    );
   }
 
-  addWebServerCertificate(e: Event): void {
-    alert('Coming Soon!');
-  }
-  addTrustedCertificate(e: Event): void {
-    alert('Coming Soon!');
+  viewTrustedCertificates(e: Event): void {
+    e.preventDefault();
+
+    const dialogRef = this.dialog.open(EditTrustedCertificatesComponent, {
+      width: '500px',
+      minHeight: '500px',
+      data: { trustedCertificates: this.trustedCertificates }
+    });
+
+    dialogRef.afterClosed().subscribe();
   }
 }
 

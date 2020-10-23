@@ -4,6 +4,8 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { MatInput } from '@angular/material/input';
 import * as $ from 'jquery';
 import * as moment from 'moment-timezone';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { filter, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-view-certificate',
@@ -16,6 +18,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
   certificateType: string = '';
   certificateLoaded: boolean = false;
   LocalizedValidFrom: string = '';
+  typeDisplay = '';
   retrievedCert = {
   }
 
@@ -32,12 +35,11 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
     switch (this.certificateType) {
       case 'Client':
         sub = this.serviceClient.getClientCertificate();
+        this.typeDisplay = 'Client';
         break;
-      case 'Web':
-        sub = null;
-        break;
-      case 'Trusted': 
-        sub = null
+      case 'WebServer':
+        sub = this.serviceClient.getWebServerCertificate();
+        this.typeDisplay = 'Web Server';
         break;
     }
     if (sub) {
@@ -69,10 +71,28 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
   }
 
   removeCertificate(): void {
-    if (this.certificateType == 'Client' && confirm('Deleting this certificate will break things. Press "OK" to continue.')) {
-      this.serviceClient.deleteClientCertificate().subscribe(
-        result => {
-          this.dialogRef.close({removed:true});
+    let dlgData;
+
+    if (this.certificateType === 'Client') {
+      dlgData = { title: 'Delete Client Certificate', message: 'Deleting this certificate will break things. Press "OK" to continue.' };
+    } else if (this.certificateType === 'WebServer') {
+      dlgData = { title: 'Delete Web Server Certificate',
+        message: 'This will remove the current web server certificate and will generate a new self-signed certificate to take its place. Press "OK" to continue.' };
+    }
+
+    if (dlgData) {
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        data: dlgData
+      });
+
+      dialogRef.afterClosed().pipe(
+        filter((dlgResult) => dlgResult.result === 'OK'),
+        switchMap(() => this.certificateType === 'Client' ?
+          this.serviceClient.deleteClientCertificate() :
+          this.serviceClient.deleteWebServerCertificate() )
+      ).subscribe(
+        () => {
+          this.dialogRef.close({ removed: true });
         }
       );
     }
