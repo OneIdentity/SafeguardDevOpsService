@@ -207,11 +207,15 @@ export class DevOpsServiceClient {
     .pipe(catchError(this.error<any>('deletePluginConfiguration')));
   }
 
-  getAvailableAccounts(filter?: string): Observable<any[]> {
+  getAvailableAccounts(filter?: string, orderby?: string): Observable<any[]> {
     let url = this.BASE + 'Safeguard/AvailableAccounts';
 
     if (filter?.length > 0) {
       url += '?filter=' + encodeURIComponent(filter);
+    }
+    if (orderby?.length > 0) {
+      url += (filter?.length > 0) ? '&' : '?' +
+        'orderby=' + encodeURIComponent(orderby);
     }
 
     return this.http.get(url, this.authHeader())

@@ -30,9 +30,9 @@
 
       <div class="vertical-line"></div>
       <div class="loading-container" *ngIf="isLoading">
-          <img class="spinner" src="/assets/busy-black.gif" />
+          <mat-spinner color="accent" diameter="30"></mat-spinner>
       </div>
-      <div class="info-column" *ngIf="Thumbprint">
+      <div class="info-column" *ngIf="Thumbprint && !isLoading">
         <div><b>Linked Safeguard Objects</b></div>
         <p></p>
         <div class="info-label">User Account</div>
@@ -68,25 +68,25 @@
            <div class="info-label">Client Certificate</div>
            <div *ngIf="Thumbprint">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="custom-link" (click)="viewCertificate($event, 'Client')">View Details</button>
+             <button mat-button class="link-button" color="primary" (click)="viewCertificate($event, 'Client')">View Details</button>
            </div>
 
            <div class="info-label">Web Server Certificate</div>
            <div *ngIf="!webServerCertAdded">
-              <button mat-button class='custom-link' (click)="addCertificate($event, 'WebServer')" color='primary'>Add Certificate</button>
+              <button mat-button class="link-button" (click)="addCertificate($event, 'WebServer')" color='primary'>Add Certificate</button>
            </div>
            <div *ngIf="webServerCertAdded">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="custom-link" (click)="viewCertificate($event,'WebServer')">View Details</button>
+             <button mat-button class="link-button" (click)="viewCertificate($event,'WebServer')">View Details</button>
            </div>
 
            <div class="info-label">Trusted Certificates</div>
            <div *ngIf="!trustedCertsAdded">
-              <button mat-button class='custom-link' (click)='viewTrustedCertificates($event)' color='primary'>Add Certificate</button>
+              <button mat-button class="link-button" (click)='viewTrustedCertificates($event)' color='primary'>Add Certificate</button>
            </div>
            <div *ngIf="trustedCertsAdded">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="custom-link" (click)="viewTrustedCertificates($event)">View Details</button>
+             <button mat-button class="link-button" color="primary" (click)="viewTrustedCertificates($event)">View Details</button>
            </div>
         </ng-container>
          </div>
@@ -147,7 +147,8 @@
   </div>
 
   <mat-drawer mode="over" position="end" disableClose="true" autosize #drawer>
-    <app-edit-plugin *ngIf="openDrawerProperties"></app-edit-plugin>
-    <app-select-accounts *ngIf="openDrawerAccounts"></app-select-accounts>
+    <app-edit-plugin *ngIf="openDrawer=='properties'"></app-edit-plugin>
+    <app-select-accounts *ngIf="openDrawer=='accounts'" [selectVaultAccount]="false"></app-select-accounts>
+    <app-select-accounts *ngIf="openDrawer=='vaultaccount'" [selectVaultAccount]="true"></app-select-accounts>
   </mat-drawer>
 </mat-drawer-container>

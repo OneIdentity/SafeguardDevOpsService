@@ -47,3 +47,11 @@ body {
   font-family: "Source Sans Pro","Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
   background-color: $asher-gray;
 }
+
+.link-button.mat-button {
+  padding: 0;
+}
+
+.link-button.mat-button .mat-button-focus-overlay {
+  background-color: transparent;
+}
