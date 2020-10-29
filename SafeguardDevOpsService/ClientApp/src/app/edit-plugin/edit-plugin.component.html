@@ -22,23 +22,19 @@
         </div>
       </mat-card>
 
-      <mat-card>
+      <mat-card *ngIf="!plugin.LoadingPluginAccounts">
         <h2>Configuration</h2>
         <div class="field-container">
-          <mat-form-field appearance="outline">
-            <mat-label>Vault's Account in Safeguard</mat-label>
-            <input matInput type="text" [(ngModel)]="plugin.VaultAccountDisplayName" name="vaultAccount" [matAutocomplete]="auto" 
-              [disabled]="isSaving || loadingVAccounts" (input)="changeVAccounts($event.target.value)" (mousedown)="showVAccounts($event.target.value)">
-            <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="selectVAccount($event)" [displayWith]="getVAccountText">
-              <mat-option *ngFor="let ds of validVAccounts" [value]="ds" class="multiline-auto-complete-options">
-                <div>{{ds.Name}}</div><div class="info-label">{{ds.System}}</div>
-              </mat-option>
-            </mat-autocomplete>
-            <mat-spinner matSuffix diameter="20" *ngIf="loadingVAccounts" color="accent"></mat-spinner>
-          </mat-form-field>
+          <div class="vault-account">
+            <div class="inline-div">
+              <div class="info-label">Vault's Account in Safeguard</div>
+              <div>{{plugin?.VaultAccountDisplayName}}</div>
+              <button mat-button class="link-button" color="primary" (click)="selectVaultAccount()" [disabled]="plugin?.LoadingAvailableAccounts" *ngIf="!plugin?.VaultAccountDisplayName">Select Account</button>
+            </div>
+            <button mat-icon-button *ngIf="plugin?.VaultAccountDisplayName" matTooltip="Remove Vault Account" (click)="removeVaultAccount()" class="remove-vault-button"><mat-icon>close</mat-icon></button>
+          </div>
           <div class="field-text">This account will be used by Secrets Broker to pull new passwords from Safeguard</div>
         </div>
-        <div *ngIf="vAccountInvalid" class="error-field">Invalid Vault Account</div>
         <div class="sub-title-2">Plugin Details</div>
         <ng-container *ngFor="let config of configs">
           <div class="field-container">
@@ -50,8 +46,8 @@
         </ng-container>
       </mat-card>
 
-      <mat-card>
-        <h2>Managed Accounts</h2>
+      <mat-card *ngIf="!plugin.LoadingPluginAccounts">
+        <h2 class="link-button">Managed Accounts</h2>
         <div class="sub-title">They will have their passwords pushed to the vault.</div>
         <div>
           <table mat-table [dataSource]="plugin.Accounts">
@@ -78,18 +74,19 @@
             <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
           </table>
         </div>
-        <button mat-button color="primary" (click)="selectAccounts()" [disabled]="isSaving"><mat-icon>add</mat-icon>Select Accounts</button>
+        <button mat-button color="primary" (click)="selectAccounts()" [disabled]="isSaving || plugin?.LoadingAvailableAccounts" class="link-button"><mat-icon>add</mat-icon>Select Accounts</button>
       </mat-card>
 
       <div *ngIf="error" class="error"><mat-icon>error</mat-icon>{{error}}</div>
-      <div class="busy" *ngIf="isSaving">
-          <img class="spinner" src="/assets/busy-black.gif" /><span>Saving...</span>
+      <div class="busy" *ngIf="plugin.LoadingPluginAccounts">
+        <mat-spinner color="primary" diameter="30"></mat-spinner>
       </div>
     </div>
   
     <mat-toolbar class="selection-footer">
-      <button mat-button (click)="delete()" [disabled]="isSaving">Delete Connection</button>
+      <button mat-button (click)="delete()" [disabled]="isSaving || plugin.LoadingPluginAccounts" class="link-button">Delete Connection</button>
       <div class="spacer"></div>
-      <button mat-flat-button color="primary" (click)="save()" [disabled]="isSaving">Save</button>
+      <mat-spinner color="accent" diameter="20" *ngIf="isSaving"></mat-spinner>
+      <button mat-flat-button color="primary" (click)="save()" [disabled]="isSaving || plugin.LoadingPluginAccounts"><span *ngIf="!isSaving">Save</span><span *ngIf="isSaving">Saving...</span></button>
     </mat-toolbar>
   </div>

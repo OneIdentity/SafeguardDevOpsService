@@ -3,7 +3,7 @@ import { DevOpsServiceClient } from '../service-client.service';
 import { switchMap, map, concatAll, tap, distinctUntilChanged, debounceTime, finalize, catchError, filter } from 'rxjs/operators';
 import { of, Observable, fromEvent, forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { UploadCertificateComponent } from '../upload-certificate/upload-certificate.component';
 import { EnterPassphraseComponent } from '../upload-certificate/enter-passphrase/enter-passphrase.component';
 import { CreateCsrComponent } from '../create-csr/create-csr.component';
@@ -34,8 +34,6 @@ export class MainComponent implements OnInit {
     private dialog: MatDialog,
     private router: Router,
     private renderer: Renderer2,
-    private elementRef: ElementRef,
-    private scroller: ViewportScroller,
     public editPluginService: EditPluginService,
     private authService: AuthService,
     private snackBar: MatSnackBar
@@ -52,8 +50,7 @@ export class MainComponent implements OnInit {
 
   plugins = [];
   isLoading: boolean;
-  openDrawerProperties: boolean;
-  openDrawerAccounts: boolean;
+  openDrawer: string;
 
   webServerCertAdded: boolean = false;
   trustedCertsAdded: boolean = false;
@@ -100,14 +97,6 @@ export class MainComponent implements OnInit {
           this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
         });
     }
-
-    fromEvent(window, 'scroll').pipe(
-      untilDestroyed(this),
-      debounceTime(50),
-      distinctUntilChanged()
-    ).subscribe(() => {
-      console.log('scroll');
-    });
   }
 
   private initializeWebServerCertificate(): Observable<any> {
@@ -319,29 +308,32 @@ export class MainComponent implements OnInit {
 
   editPlugin(plugin: any): void {
     this.editPluginService.openProperties(plugin);
-    this.openDrawerProperties = true;
+    this.openDrawer = 'properties';
     this.drawer.open();
 
     this.editPluginService.notifyEvent$.subscribe((data) => {
       switch (data.mode) {
-        case EditPluginMode.Accounts: {
+        case EditPluginMode.Accounts:
           this.drawer.close();
-          this.openDrawerProperties = false;
-          this.openDrawerAccounts = true;
+          this.openDrawer = 'accounts';
           this.drawer.open();
-        }
-        break;
-        case EditPluginMode.Properties: {
+          break;
+
+        case EditPluginMode.VaultAccount:
           this.drawer.close();
-          this.openDrawerProperties = true;
-          this.openDrawerAccounts = false;
+          this.openDrawer = 'vaultaccount';
           this.drawer.open();
-        }
-        break;
-        case EditPluginMode.None: {
+          break;
+
+        case EditPluginMode.Properties:
           this.drawer.close();
-          this.openDrawerProperties = false;
-          this.openDrawerAccounts = false;
+          this.openDrawer = 'properties';
+          this.drawer.open();
+          break;
+
+        case EditPluginMode.None:
+          this.drawer.close();
+          this.openDrawer = '';
           const indx = this.plugins.findIndex(x => x.Name === plugin.Name);
           if (indx > -1) {
             if (data.plugin) {
@@ -352,8 +344,7 @@ export class MainComponent implements OnInit {
             // Monitoring available when we have plugins and an account for at least one plugin
             this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
           }
-        }
-        break;
+          break;
       }
     });
   }
@@ -409,20 +400,51 @@ export class MainComponent implements OnInit {
   }
 
   restart(): void {
-    // TODO: check when service is back up?
-    this.serviceClient.restart().pipe(
-      untilDestroyed(this)
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Restart Service',
+        message: '<p>Are you sure you want to restart the Safeguard Secrets Broker for DevOps service?</p?>'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(
+      filter((dlgResult: any) => dlgResult.result === 'OK'),
+      tap(() => {
+        this.snackBar.open('Restarting Safeguard Secrets Broker for DevOps service...');
+        // Show overlay to disable clicking on anything
+        this.drawer.open();
+      }),
+      switchMap(() => this.serviceClient.restart()),
+      switchMap(() => this.serviceClient.logon()),
+      finalize(() => {
+        this.snackBar.open('Safeguard Secrets Broker for DevOps service restarted.', null, { duration: this.snackBarDuration });
+        // Hide overlay
+        this.drawer.close();
+      })
     ).subscribe();
   }
 
   deleteConfig(): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: { title: 'Delete Configuration', message: 'This removes all configuration for Safeguard Secrets Broker for DevOps. Click "OK" to continue.' }
+      data: {
+        title: 'Delete Configuration',
+        message: '<p>Are you sure you want to remove all configuration for Safeguard Secrets Broker for DevOps?</p?>' +
+          '<p>This removes all A2A credential retrievals, the A2A registration and the A2A user from Safeguard for Privileged Passwords.</p>' +
+          '<p>It will also remove Safeguard Secrets Broker for DevOps configuration database and restart the DevOps service</p>'
+      }
     });
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult.result === 'OK'),
-      switchMap(() => this.serviceClient.putPendingRemoval())
+      tap(() => {
+        this.snackBar.open('Deleting configuration...');
+        // Show overlay to disable clicking on anything
+        this.drawer.open();
+      }),
+      switchMap(() => this.serviceClient.deleteConfiguration()),
+      switchMap(() => this.serviceClient.logon()),
+      switchMap(() => this.serviceClient.deleteSafeguard()),
+      finalize(() => this.drawer.close())
     ).subscribe(() => {
       this.router.navigate(['/login']);
     });
@@ -458,4 +480,3 @@ export class MainComponent implements OnInit {
     dialogRef.afterClosed().subscribe();
   }
 }
-

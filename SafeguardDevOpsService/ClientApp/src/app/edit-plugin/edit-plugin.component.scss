@@ -54,14 +54,9 @@ table {
   margin: 15px 0 10px 0;
 }
 
-.multiline-auto-complete-options {
-	height: auto !important;
-	line-height: normal !important;
-	padding: 8px 16px !important;
-}
-
 .field-container {
   display: flex;
+  align-items: center;
 
   mat-form-field {
     flex: 1;
@@ -72,7 +67,20 @@ table {
     width: 40%;
     padding-left: 15px;
     font-size: .9em;
-  }  
+  }
+
+  .vault-account {
+    flex: 1;
+  }
+
+  .inline-div {
+    display: inline-block;
+  }
+
+  .remove-vault-button mat-icon {
+    color: $black-9;
+    font-size: 16px
+  }
 }
 
 .error {
@@ -86,9 +94,8 @@ table {
 }
 
 .busy {
-  margin: 10px;
-  .spinner {
-    margin-right: 5px;
+  mat-spinner {
+    margin: auto;
   }
 }
 
@@ -110,5 +117,9 @@ table {
 
   .spacer {
     flex: 1;
+  }
+
+  mat-spinner {
+    margin-right: 15px;
   }
 }
