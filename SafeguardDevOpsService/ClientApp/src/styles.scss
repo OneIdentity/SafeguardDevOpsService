@@ -55,6 +55,10 @@ body {
 .link-button.mat-button {
   padding: 0;
 }
+
+.link-button.mat-button .mat-button-focus-overlay {
+  background-color: transparent;
+}
  
 .link-button.mat-button.mat-button-focus-overlay {
   background-color: transparent !important;

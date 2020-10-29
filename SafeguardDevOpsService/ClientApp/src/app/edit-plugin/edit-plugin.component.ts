@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { EditPluginService, EditPluginMode } from '../edit-plugin.service';
+import { EditPluginService } from '../edit-plugin.service';
 import { DevOpsServiceClient } from '../service-client.service';
 import { ServiceClientHelper as SCH } from '../service-client-helper';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { finalize, switchMap, tap, take, takeLast, map, last, filter } from 'rxjs/operators';
+import { switchMap, filter, tap } from 'rxjs/operators';
 import { of, forkJoin } from 'rxjs';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-edit-plugin',
@@ -21,7 +21,8 @@ export class EditPluginComponent implements OnInit {
   constructor(
     private editPluginService: EditPluginService,
     private serviceClient: DevOpsServiceClient,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
     ) { }
 
   plugin: any;
@@ -29,13 +30,6 @@ export class EditPluginComponent implements OnInit {
   error: any;
   isSaving = false;
   displayedColumns: string[] = ['asset', 'account', 'delete'];
-
-  // Vault account
-  vAccountInvalid = false;
-  allVAccounts = [];
-  validVAccounts = [];
-  loadingVAccounts: boolean;
-  subscription: any;
 
   ngOnInit(): void {
     this.plugin = this.editPluginService.plugin;
@@ -45,15 +39,19 @@ export class EditPluginComponent implements OnInit {
       this.configs.push({ key, value: this.plugin.Configuration[key] });
     });
 
-    this.loadingVAccounts = true;
-    this.editPluginService.getAvailableAccounts().pipe(
-      untilDestroyed(this)
-    ).subscribe(
-      (data) => {
-        this.allVAccounts = data;
-        this.loadingVAccounts = false;
-      }
-    );
+    this.plugin.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(this.plugin.VaultAccount);
+  }
+
+  selectVaultAccount(): void {
+    // Save the current configuration first
+    this.mapConfiguration();
+
+    this.editPluginService.openVaultAccount();
+  }
+
+  removeVaultAccount(): void {
+    this.plugin.VaultAccount = null;
+    this.plugin.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(this.plugin.VaultAccount);
   }
 
   selectAccounts(): void {
@@ -83,14 +81,33 @@ export class EditPluginComponent implements OnInit {
 
   delete(): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: { title: 'Delete Plugin', message: 'This removes the configuration for a specific plugin and unregisters the plugin from Safeguard Secrets Broker for DevOps. However, this does not remove the plugin from the ExternalPlugins folder. The plugin files must be manually removed from the ExternalPlugins folder once Safeguard Secrets Broker for DevOps has been stopped. Click "OK" to continue.' }
+      data: {
+        title: 'Delete Plugin',
+        message:
+          '<p>Are you sure you want to remove the configuration for this plugin and unregister the plugin from Safeguard Secrets Broker for DevOps?</p>' +
+          '<p>This does not remove the plugin from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder.</p>' +
+          '<p>The plugin files must be manually removed from the ExternalPlugins folder once Safeguard Secrets Broker for DevOps has been stopped.</p>',
+        confirmText: 'Delete Plugin'
+      }
     });
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult.result === 'OK'),
+      tap(() => {
+        this.editPluginService.deletePlugin();
+        this.snackBar.open('Deleting plugin...');
+      }),
       switchMap(() => this.serviceClient.deletePluginConfiguration(this.plugin.Name))
     ).subscribe(
-      () => this.editPluginService.deletePlugin()
+      () => {
+        this.snackBar.dismiss();
+        this.dialog.open(ConfirmDialogComponent, {
+          data: {
+            title: 'Next Steps',
+            message: 'The plugin files must be manually removed from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder once Safeguard Secrets Broker for DevOps has been stopped.',
+            showCancel: false
+        }});
+      }
     );
   }
 
@@ -123,8 +140,10 @@ export class EditPluginComponent implements OnInit {
           return of({});
         }
       }),
-      switchMap(() => this.plugin.Accounts.length > 0 ? this.serviceClient.putRetrievableAccounts(this.plugin.Accounts) : of({})),
-      switchMap(() => this.plugin.Accounts.length > 0 ? this.serviceClient.putPluginAccounts(this.plugin.Name, this.plugin.Accounts) : of([]))
+      switchMap(() => this.plugin.Accounts.length > 0 ?
+        this.serviceClient.putRetrievableAccounts(this.plugin.Accounts) : of({})),
+      switchMap(() => this.plugin.Accounts.length > 0 ?
+        this.serviceClient.putPluginAccounts(this.plugin.Name, this.plugin.Accounts) : of([]))
     );
 
     const obs2 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
@@ -147,60 +166,5 @@ export class EditPluginComponent implements OnInit {
         this.error = SCH.parseError(error);
       }
     );
-  }
-
-  //
-  // Vault account auto complete
-  //
-  getVAccountText(option: any): string {
-    if (!option) {
-      return '';
-    }
-    if (typeof option === 'string') {
-      return option;
-    }
-    return `${option.Name} (${option.System})`;
-  }
-
-  selectVAccount(event: any): void {
-    this.plugin.VaultAccount = event.option.value;
-    this.vAccountInvalid = false;
-  }
-
-  showVAccounts(name?: string): void {
-    this.validVAccounts = [];
-
-    const accts = this.allVAccounts.filter(a => a.Name.includes(name));
-    accts.forEach(a => {
-      if (!this.validVAccounts.some(v => v.Id === a.Id)) {
-        this.validVAccounts.push({
-          Id: a.Id,
-          Name: a.Name,
-          System: a.DomainName ?? (a.SystemName ?? a.SystemNetworkAddress)
-        });
-      }
-    });
-
-    this.validVAccounts = this.validVAccounts
-      .sort((n1, n2) => {
-        if (n1.Name > n2.Name) {
-          return 1;
-        } else if (n1.Name < n2.Name) {
-          return -1;
-        } else {
-          return 0;
-        }
-      });
-  }
-
-  changeVAccounts(name?: any): void {
-    this.showVAccounts(name);
-
-    const invalid = !this.loadingVAccounts && this.validVAccounts && name ? !this.validVAccounts.some(a => a.Name === name) : false;
-    this.vAccountInvalid = invalid;
-
-    if (!name) {
-      this.plugin.VaultAccount = null;
-    }
   }
 }

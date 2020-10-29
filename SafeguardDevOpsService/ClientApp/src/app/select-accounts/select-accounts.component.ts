@@ -1,10 +1,11 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, Input } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
 import { SelectionModel } from '@angular/cdk/collections';
-import { EditPluginService, EditPluginMode } from '../edit-plugin.service';
-import { fromEvent, Observable, of } from 'rxjs';
-import { distinctUntilChanged, debounceTime, switchMap, tap } from 'rxjs/operators';
+import { EditPluginService } from '../edit-plugin.service';
+import { fromEvent, Observable, merge } from 'rxjs';
+import { distinctUntilChanged, debounceTime, switchMap, filter, tap, finalize } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { MatSort, SortDirection } from '@angular/material/sort';
 
 @UntilDestroy()
 @Component({
@@ -15,67 +16,120 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class SelectAccountsComponent implements OnInit, AfterViewInit {
   @ViewChild('assetSearch', { static: false }) assetSearchEl: ElementRef;
   @ViewChild('accountSearch', { static: false }) accountSearchEl: ElementRef;
+  @ViewChild(MatSort) sort: MatSort;
+
+  @Input() selectVaultAccount: boolean;
 
   constructor(
     private serviceClient: DevOpsServiceClient,
-    private editPluginService: EditPluginService
+    private editPluginService: EditPluginService,
+    private window: Window
   ) { }
 
   accounts: any[];
-  displayedColumns: string[] = ['select', 'asset', 'account'];
-  selection = new SelectionModel(true, []);
+  displayedColumns: string[];
+  selection: SelectionModel<any>;
   assetSearchVal: string;
   accountSearchVal: string;
   pluginAccounts = [];
+  sortColumn: string;
+  sortDirection: string;
+  isLoading: boolean;
 
   ngOnInit(): void {
-    // TODO: loading icon
+    this.displayedColumns = !this.selectVaultAccount ? ['select', 'asset', 'account'] : ['asset', 'account'];
+    this.selection = new SelectionModel<any>(!this.selectVaultAccount, []);
 
     this.pluginAccounts = this.editPluginService.plugin.Accounts;
 
+    const sortColumn = this.window.sessionStorage.getItem('AccountsSortColumn');
+    const sortDirection = this.window.sessionStorage.getItem('AccountsSortDirection');
+    if ((sortColumn === 'account' || sortColumn === 'asset') && (sortDirection === 'asc' || sortDirection === 'desc')) {
+      this.sortColumn = sortColumn;
+      this.sortDirection = sortDirection;
+    }
+
+    this.isLoading = true;
     this.editPluginService.getAvailableAccounts().pipe(
-      untilDestroyed(this)
+      untilDestroyed(this),
+      filter(() => !this.editPluginService.plugin.LoadingAvailableAccounts)
     ).subscribe(
       (data: any[]) => {
+        this.isLoading = false;
         this.accounts = [...data];
-        this.pluginAccounts.forEach(account => {
-          const indx = data.findIndex(x => x.Id === account.Id);
-          if (indx > -1) {
-            this.accounts.splice(indx, 1);
-          }
-        });
+        this.hideCurrentAccounts();
       }
     );
   }
 
-  ngAfterViewInit(): void {
-    const searchChange = [ fromEvent(this.assetSearchEl.nativeElement, 'keyup'),
-      fromEvent(this.accountSearchEl.nativeElement, 'keyup') ];
+  private hideCurrentAccounts(): void {
+    // Don't show current managed accounts
+    if (!this.selectVaultAccount) {
+      this.pluginAccounts.forEach(account => {
+        const indx = this.accounts.findIndex(x => x.Id === account.Id);
+        if (indx > -1) {
+          this.accounts.splice(indx, 1);
+        }
+      });
+    }
+  }
 
-    searchChange.forEach(
-      (x) => x.pipe(
+  ngAfterViewInit(): void {
+    merge(
+      fromEvent(this.assetSearchEl.nativeElement, 'keyup'),
+      fromEvent(this.accountSearchEl.nativeElement, 'keyup'),
+      this.sort.sortChange
+    ).pipe(
         untilDestroyed(this),
-        debounceTime(400),
+        debounceTime(500),
         distinctUntilChanged(),
-        switchMap(() => this.doSearch())
+        switchMap(() => this.doSearch()),
       ).subscribe(
         (data) => {
           this.accounts = data;
-      }));
+          this.hideCurrentAccounts();
+          this.isLoading = false;
+      });
   }
 
   doSearch(): Observable<any[]> {
-    let filter = '';
+    this.accounts = [];
+    this.isLoading = true;
+
+    let filterStr = '';
+    let sortby = '';
+
     if (this.assetSearchVal?.length > 0) {
-      filter = `(SystemName contains '${this.assetSearchVal}' or SystemNetworkAddress contains '${this.assetSearchVal}')`;
+      filterStr = `(SystemName contains '${this.assetSearchVal}' or SystemNetworkAddress contains '${this.assetSearchVal}')`;
     }
     if (this.accountSearchVal?.length > 0) {
-      if (filter.length > 0) {
-        filter += ' and ';
+      if (filterStr.length > 0) {
+        filterStr += ' and ';
       }
-      filter = `(Name contains '${this.accountSearchVal}' or DomainName contains '${this.accountSearchVal}')`;
+      filterStr += `(Name contains '${this.accountSearchVal}' or DomainName contains '${this.accountSearchVal}')`;
     }
-    return this.serviceClient.getAvailableAccounts(filter);
+
+    if (this.sort.active && this.sort.direction) {
+      const dir =  this.sort.direction === 'desc' ? '-' : '';
+
+      if (this.sort.active === 'asset') {
+        sortby = `${dir}SystemName,${dir}SystemNetworkAddress`;
+      } else if (this.sort.active === 'account') {
+        sortby = `${dir}Name,${dir}DomainName`;
+      }
+    }
+
+    // Save sort settings
+    if (this.sort.active !== this.sortColumn) {
+      this.window.sessionStorage.setItem('AccountsSortColumn', this.sort.active);
+      this.editPluginService.clearAvailableAccounts();
+    }
+    if (this.sort.direction !== this.sortDirection as SortDirection) {
+      this.window.sessionStorage.setItem('AccountsSortDirection', this.sort.direction);
+      this.editPluginService.clearAvailableAccounts();
+    }
+
+    return this.serviceClient.getAvailableAccounts(filterStr, sortby);
   }
 
   /** Whether the number of selected elements matches the total number of rows. */
@@ -92,8 +146,20 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
         this.accounts.forEach(row => this.selection.select(row));
   }
 
+  selectRow(event, row): void {
+    event.stopPropagation();
+
+    this.selection.toggle(row);
+
+    if (this.selectVaultAccount) {
+      this.editPluginService.closeVaultAccount(row);
+    }
+  }
+
   close(): void {
-    this.editPluginService.closeAccounts();
+    this.selectVaultAccount ?
+      this.editPluginService.closeVaultAccount() :
+      this.editPluginService.closeAccounts();
   }
 
   selectAccounts(): void {

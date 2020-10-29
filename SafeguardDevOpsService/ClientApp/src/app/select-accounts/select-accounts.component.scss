@@ -23,6 +23,10 @@ table {
   overflow: auto;
 }
 
+mat-spinner {
+  margin: 20px auto;
+}
+
 .search-container {
   mat-form-field {
     margin-right: 10px;
@@ -41,10 +45,15 @@ table {
 
 .selection-footer {
   background-color: $black-6;
-  color: $iris-tint;
+  color: #ffffff;
   display: flex;
 
   .spacer {
     flex: 1;
   }
+}
+
+.selectable-row:hover {
+  cursor: pointer;
+  background-color: $iris-pastel;
 }

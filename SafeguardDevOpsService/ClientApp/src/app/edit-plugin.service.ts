@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { ReplaySubject, BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, forkJoin, pipe } from 'rxjs';
 import { DevOpsServiceClient } from './service-client.service';
-import { tap, switchMap } from 'rxjs/operators';
+import { tap, finalize, delay } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy()
 @Injectable({ providedIn: 'root' })
-
 export class EditPluginService {
   private notifyEventSource = new Subject<EditPluginEvent>();
   public notifyEvent$ = this.notifyEventSource.asObservable();
@@ -13,20 +14,51 @@ export class EditPluginService {
   private availableAccountsSub;
   private availableAccounts$ = new BehaviorSubject(this.availableAccounts);
 
-  constructor(private serviceClient: DevOpsServiceClient) {
+  constructor(
+    private serviceClient: DevOpsServiceClient,
+    private window: Window) {
   }
 
   public plugin: any;
   private originalPlugin: any;
 
   getAvailableAccounts(): Observable<any[]> {
+    this.plugin.LoadingAvailableAccounts = true;
+
     if (!this.availableAccountsSub) {
-      this.availableAccountsSub = this.serviceClient.getAvailableAccounts().pipe(
+      const sortColumn = this.window.sessionStorage.getItem('AccountsSortColumn');
+      const sortDirection = this.window.sessionStorage.getItem('AccountsSortDirection');
+
+      let sortby = '';
+      if ((sortColumn === 'account' || sortColumn === 'asset') && (sortDirection === 'asc' || sortDirection === 'desc')) {
+        const dir =  sortDirection === 'desc' ? '-' : '';
+
+        if (sortColumn === 'asset') {
+          sortby = `${dir}SystemName,${dir}SystemNetworkAddress`;
+        } else {
+          sortby = `${dir}Name,${dir}DomainName`;
+        }
+      }
+
+      this.availableAccountsSub = this.serviceClient.getAvailableAccounts('', sortby).pipe(
+        untilDestroyed(this),
         tap((accounts) => {
+          this.plugin.LoadingAvailableAccounts = false;
+
           this.availableAccounts.push(...accounts);
-        })).subscribe();
+          this.availableAccounts$.next(accounts);
+        }),
+        finalize(() => this.plugin.LoadingAvailableAccounts = false)
+      ).subscribe();
+    } else {
+      this.plugin.LoadingAvailableAccounts = false;
     }
     return this.availableAccounts$;
+  }
+
+  clearAvailableAccounts(): void {
+    this.availableAccountsSub = null;
+    this.availableAccounts.splice(0);
   }
 
   openProperties(plugin: any): void {
@@ -35,6 +67,7 @@ export class EditPluginService {
     this.plugin.Accounts = [];
     this.plugin.VaultAccount = null;
     this.plugin.VaultAccountDisplayName = '';
+    this.plugin.LoadingPluginAccounts = true;
     this.initializePluginAccounts();
 
     this.notifyEventSource.next({
@@ -60,6 +93,23 @@ export class EditPluginService {
     this.notifyEvent$ = this.notifyEventSource.asObservable();
   }
 
+  openVaultAccount(): void {
+    this.notifyEventSource.next({
+      plugin: this.plugin,
+      mode: EditPluginMode.VaultAccount
+    });
+  }
+
+  closeVaultAccount(account?: any): void {
+    if (account) {
+      this.plugin.VaultAccount = account;
+    }
+    this.notifyEventSource.next({
+      plugin: this.plugin,
+      mode: EditPluginMode.Properties
+    });
+  }
+
   openAccounts(accounts: any[]): void {
     this.plugin.Accounts = accounts;
     this.notifyEventSource.next({
@@ -79,32 +129,36 @@ export class EditPluginService {
   }
 
   private initializePluginAccounts(): void {
-    this.serviceClient.getPluginAccounts(this.plugin.Name).pipe(
-      tap((accounts) => {
-        this.mapRetrievableToAvailableAccount(accounts);
-        this.plugin.Accounts = accounts;
-      }),
-      switchMap(() => {
-        return this.serviceClient.getPluginVaultAccount(this.plugin.Name);
-      }),
-      tap((vAcct) => {
-        if (vAcct) {
+    forkJoin([
+      this.serviceClient.getPluginAccounts(this.plugin.Name),
+      this.serviceClient.getPluginVaultAccount(this.plugin.Name)
+    ]).pipe(
+      tap(([managedAccounts, vaultAccount]) => {
+        this.mapRetrievableToAvailableAccount(managedAccounts);
+        this.plugin.Accounts = managedAccounts;
+
+        if (vaultAccount) {
           this.plugin.VaultAccount = {
-            Id: vAcct.AccountId,
-            Name: vAcct.AccountName,
-            System: vAcct.DomainName ?? (vAcct.SystemName ?? vAcct.SystemNetworkAddress)
+            Id: vaultAccount.AccountId,
+            Name: vaultAccount.AccountName,
+            DomainName: vaultAccount.DomainName,
+            SystemName: vaultAccount.SystemName,
+            SystemNetworkAddress: vaultAccount.NetworkAddress
           };
           this.plugin.VaultAccountDisplayName = this.getVaultAccountDisplay(this.plugin.VaultAccount);
         }
-      })).subscribe(() => {
-      });
+      }),
+      finalize(() => this.plugin.LoadingPluginAccounts = false)
+    ).subscribe();
   }
 
   public getVaultAccountDisplay(vaultAccount: any): string {
     if (!vaultAccount) {
       return '';
     }
-    return `${vaultAccount.Name} (${vaultAccount.System})`;
+    const system = vaultAccount.DomainName ?? (vaultAccount.SystemName ?? vaultAccount.SystemNetworkAddress);
+
+    return `${vaultAccount.Name} (${system})`;
   }
 
   private mapRetrievableToAvailableAccount(accounts: any[]): void {
@@ -125,5 +179,6 @@ export class EditPluginEvent {
 export enum EditPluginMode {
   None,
   Properties,
-  Accounts
+  Accounts,
+  VaultAccount
 }

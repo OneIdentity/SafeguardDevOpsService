@@ -5,8 +5,9 @@
    </div>
 </div>
 <div class='dialog-content' mat-dialog-content>
-   {{message}}
+   <div [innerHTML]="message"></div>
 </div>
 <div mat-dialog-actions align='end'>
-   <button mat-flat-button color='primary' (click)="confirm()" cdkFocusInitial>{{buttonText}}</button>
+  <button mat-button (click)="close()" cdkFocusInitial *ngIf="showCancel">Cancel</button>
+  <button mat-flat-button color='primary' (click)="confirm()">{{confirmText}}</button>
 </div>
