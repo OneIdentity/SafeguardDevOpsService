@@ -177,7 +177,7 @@ export class MainComponent implements OnInit {
   }
 
   private setArrows(): void {
-    const colors = [ 'CorbinOrange', 'MauiSunset', 'AspenGreenn', 'AzaleaPink' ];
+    const colors = [ 'CorbinOrange', 'MauiSunset', 'AspenGreen', 'AzaleaPink' ];
 
     try {
       const configured = $('.configured');
