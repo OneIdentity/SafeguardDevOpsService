@@ -12,6 +12,7 @@ export class ConfirmDialogComponent implements OnInit {
 
   title = '';
   message = '';
+  buttonText = 'OK';
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -20,6 +21,7 @@ export class ConfirmDialogComponent implements OnInit {
   ngOnInit(): void {
     this.title = this.data.title;
     this.message = this.data.message;
+    this.buttonText = this.data.buttonText || 'OK';
   }
 
   close(): void {

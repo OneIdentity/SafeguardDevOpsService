@@ -6,7 +6,7 @@
     <mat-menu #settingsMenu="matMenu">
       <button mat-menu-item (click)="logout()"><mat-icon>login</mat-icon>Log Out</button>
       <button mat-menu-item (click)="restart()"><mat-icon>refresh</mat-icon>Restart Secrets Broker</button>
-      <button mat-menu-item (click)="deleteConfig()"><mat-icon>delete</mat-icon>Disconnect Current Appliance</button>
+      <button mat-menu-item (click)="deleteConfig()"><mat-icon>delete</mat-icon>Delete Current Configuration</button>
     </mat-menu>
   </div>
   <div class="main-container">
@@ -56,10 +56,10 @@
 
            <div class='buttons'>
               <div class='left'>
-                <button mat-button (click)="createCSR('Client')" color="primary">Create a Certificate Signing Request (CSR)</button>
+                <button mat-button class='link-button' (click)="createCSR('Client')" color="primary">Create a Certificate Signing Request (CSR)</button>
               </div>
               <div class='right'>
-                <button mat-flat-button cdkFocusInitial (click)="addCertificate($event, 'Client')" color="primary">Upload Certificate</button>
+                <button mat-flat-button class='link-button' cdkFocusInitial (click)="addCertificate($event, 'Client')" color="primary">Upload Certificate</button>
               </div>
            </div>
         </div>
@@ -68,32 +68,32 @@
            <div class="info-label">Client Certificate</div>
            <div *ngIf="Thumbprint">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="custom-link" (click)="viewCertificate($event, 'Client')">View Details</button>
+             <button mat-button class="link-button" color='primary' (click)="viewCertificate($event, 'Client')">View Details</button>
            </div>
 
            <div class="info-label">Web Server Certificate</div>
            <div *ngIf="!webServerCertAdded">
-              <button mat-button class='custom-link' (click)="addCertificate($event, 'WebServer')" color='primary'>Add Certificate</button>
+              <button mat-button class="link-button" color='primary'(click)="addCertificate($event, 'WebServer')" color='primary'>Add Certificate</button>
            </div>
            <div *ngIf="webServerCertAdded">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="custom-link" (click)="viewCertificate($event,'WebServer')">View Details</button>
+             <button mat-button class="link-button" color='primary'(click)="viewCertificate($event,'WebServer')">View Details</button>
            </div>
 
            <div class="info-label">Trusted Certificates</div>
            <div *ngIf="!trustedCertsAdded">
-              <button mat-button class='custom-link' (click)='viewTrustedCertificates($event)' color='primary'>Add Certificate</button>
+              <button mat-button class="link-button" color='primary'(click)='viewTrustedCertificates($event)' color='primary'>Add Certificate</button>
            </div>
            <div *ngIf="trustedCertsAdded">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="custom-link" (click)="viewTrustedCertificates($event)">View Details</button>
+             <button mat-button class="link-button" color='primary'(click)="viewTrustedCertificates($event)">View Details</button>
            </div>
         </ng-container>
          </div>
     </mat-card>
 
     <ng-container *ngFor="let plugin of plugins">
-      <div class="plugin-container configured" (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup">
+      <div [ngClass]="['plugin-container','configured',isMonitoring?'monitored':'']" (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup">
         <div class="accounts-container">
           <div class="count">{{plugin.MappedAccountsCount}}</div>
           <div><div>Managed</div><div *ngIf="plugin.MappedAccountsCount == 1">Account</div><div *ngIf="plugin.MappedAccountsCount != 1">Accounts</div></div>
@@ -104,18 +104,27 @@
     </ng-container>
 
     <div class="plugin-container unconfigured" *ngIf="plugins.length > 0" #unconfigured>
-      <div class="header">What would you like to plug-in?</div>
+      <div class="header">
+         <p>What would you like to plug-in?</p>
+         <a href='https://github.com/OneIdentity/SafeguardDevOpsService/tree/master/ExternalPlugins'
+            target='_blank'
+            title="This will open a new tab to an external site.">View plugin repository</a>
+      </div>
       <div class="plugin-button-container">
         <ng-container *ngFor="let plugin of plugins">
           <ng-container *ngIf="!plugin.IsConfigurationSetup && plugin.IsUploadCustom">
-            <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".zip" />
-            <button mat-stroked-button class="plugin-button" (click)="uploadPlugin(plugin)">
-              {{plugin.DisplayName}}
-            </button>
+             <div class='button-container'>
+               <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".zip" />
+               <button mat-stroked-button class="plugin-button" (click)="uploadPlugin(plugin)">
+                 {{plugin.DisplayName}}
+               </button>
+             </div>
           </ng-container>
-          <button *ngIf="!plugin.IsConfigurationSetup && !plugin.IsUploadCustom" mat-stroked-button class="plugin-button" (click)="editPlugin(plugin)">
-            {{plugin.DisplayName}}
-          </button>
+          <div class='button-container'>
+             <button *ngIf="!plugin.IsConfigurationSetup && !plugin.IsUploadCustom" mat-stroked-button class="plugin-button" (click)="editPlugin(plugin)">
+               {{plugin.DisplayName}}
+             </button>
+          </div>
         </ng-container>
       </div>
     </div>
@@ -132,7 +141,7 @@
           <marker id="markerMauiSunset" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow2">
             <path d="M 0 0 a 10,15 90,1,0 0,30 z" />
           </marker>
-          <marker id="markerTikiSunrise" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow3">
+          <marker id="markerAspenGreen" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow3">
             <path d="M 0 0 a 10,15 90,1,0 0,30 z" />
           </marker>
           <marker id="markerAzaleaPink" viewBox="-23 15 40 10" refX="-23" refY="15" markerWidth="20" markerHeight="20" orient="auto" fill="none" class="arrow4">

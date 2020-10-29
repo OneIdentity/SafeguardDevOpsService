@@ -183,7 +183,7 @@ export class MainComponent implements OnInit {
   }
 
   private setArrows(): void {
-    const colors = [ 'CorbinOrange', 'MauiSunset', 'TikiSunrise', 'AzaleaPink' ];
+    const colors = [ 'CorbinOrange', 'MauiSunset', 'AspenGreenn', 'AzaleaPink' ];
 
     try {
       const configured = $('.configured');
@@ -417,7 +417,9 @@ export class MainComponent implements OnInit {
 
   deleteConfig(): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: { title: 'Delete Configuration', message: 'This removes all configuration for Safeguard Secrets Broker for DevOps. Click "OK" to continue.' }
+      data: { title: 'Delete Configuration', 
+        message: 'This deletes all configuration information for Safeguard Secrets Broker for DevOps.',
+        buttonText: 'Delete'}
     });
 
     dialogRef.afterClosed().pipe(

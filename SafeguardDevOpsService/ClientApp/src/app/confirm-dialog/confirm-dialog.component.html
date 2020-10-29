@@ -1,9 +1,12 @@
 <div mat-dialog-title>
-  <h1>{{title}}</h1>
+   <div class='dialog-title-elements'>
+      <div class='title-text'>{{title}}</div>
+      <div class='close-button'><button mat-icon-button class='link-button' mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
+   </div>
 </div>
 <div class='dialog-content' mat-dialog-content>
    {{message}}
 </div>
 <div mat-dialog-actions align='end'>
-   <button mat-flat-button color='primary' (click)="confirm()" cdkFocusInitial>OK</button>
+   <button mat-flat-button color='primary' (click)="confirm()" cdkFocusInitial>{{buttonText}}</button>
 </div>

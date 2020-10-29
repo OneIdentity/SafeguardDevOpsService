@@ -74,10 +74,11 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
     let dlgData;
 
     if (this.certificateType === 'Client') {
-      dlgData = { title: 'Delete Client Certificate', message: 'Deleting this certificate will break things. Press "OK" to continue.' };
+      dlgData = { title: 'Remove Client Certificate', message: 'Monitoring and pulling passwords will no longer be available if this certificate is removed.', buttonText: 'Remove Certificate' };
     } else if (this.certificateType === 'WebServer') {
       dlgData = { title: 'Delete Web Server Certificate',
-        message: 'This will remove the current web server certificate and will generate a new self-signed certificate to take its place. Press "OK" to continue.' };
+        message: 'This will remove the current web server certificate and will generate a new self-signed certificate to take its place.',
+        buttonText: 'Remove Certificate'};
     }
 
     if (dlgData) {

@@ -1,36 +1,34 @@
-<h1 mat-dialog-title>{{typeDisplay}} Certificate Details</h1>
+<div mat-dialog-title>
+   <div class='dialog-title-elements'>
+      <div class='title-text'>{{typeDisplay}} Certificate Details</div>
+      <div class='close-button'><button mat-icon-button class='link-button' mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
+   </div>
+</div>
+
 <div class='dialog-content' mat-dialog-content>
    <mat-spinner diameter="20" *ngIf="!certificateLoaded" color="accent"></mat-spinner>
    <div class='certificate-container' *ngIf='certificateLoaded'>
       <div>
-          <mat-form-field appearance="outline">
-            <mat-label>Subject Name</mat-label>
-            <input matInput #subject type="text" [(ngModel)]="retrievedCert.Subject" readonly>
-          </mat-form-field>
+         <div class='label'>Subject Name</div>
+         <div class='data'>{{retrievedCert.Subject}}</div>
       </div>
 
       <div>
-          <mat-form-field appearance="outline">
-            <mat-label>Issued By</mat-label>
-            <input matInput type="text" [(ngModel)]="retrievedCert.IssuedBy" readonly>
-          </mat-form-field>
+          <div class='label'>Issued By</div>
+          <div class='data'>{{retrievedCert.IssuedBy}}</div>
       </div>
 
       <div>
-          <mat-form-field appearance="outline">
-            <mat-label>Valid From</mat-label>
-            <input matInput type="text" [(ngModel)]="LocalizedValidFrom" readonly>
-          </mat-form-field>
+          <div class='label'>Valid From</div>
+          <div class='data'>{{LocalizedValidFrom}}</div>
       </div>
 
       <div>
-          <mat-form-field appearance="outline">
-            <mat-label>Thumbprint</mat-label>
-            <input matInput type="text" [(ngModel)]="retrievedCert.Thumbprint" readonly>
-          </mat-form-field>
+          <div class='label'>Thumbprint</div>
+          <div class='data'>{{retrievedCert.Thumbprint}}</div>
       </div>
    </div>
 </div>
 <div mat-dialog-actions align='start'>
-   <button mat-button color='primary' (click)="removeCertificate()">Remove Certificate</button>
+   <button mat-button class='link-button' color='primary' (click)="removeCertificate()" tabindex='-1'>Remove Certificate</button>
 </div>

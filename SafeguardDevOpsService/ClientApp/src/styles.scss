@@ -45,5 +45,19 @@ html, body { height: 100%; }
 body { 
   margin: 0; 
   font-family: "Source Sans Pro","Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
-  background-color: $asher-gray;
+  background-color: #f2f2f2;
 }
+
+.mat-drawer-container {
+  background-color: transparent;
+}
+
+.link-button.mat-button {
+  padding: 0;
+}
+ 
+.link-button.mat-button.mat-button-focus-overlay {
+  background-color: transparent !important;
+}
+
+
