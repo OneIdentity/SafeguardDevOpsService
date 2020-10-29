@@ -1,4 +1,9 @@
-<h1 mat-dialog-title>Add {{certificateType}} Certificate</h1>
+<div mat-dialog-title>
+   <div class='dialog-title-elements'>
+      <div class='title-text'>Add {{certificateType}} Certificate</div>
+      <div class='close-button'><button mat-icon-button class='link-button' mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
+   </div>
+</div>
 <div class='dialog-content' mat-dialog-content>
    <ng-container *ngIf='certificateType=="Client"'>
       <p>Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords. The most secure way to create this certificate is using a certificate signing request (CSR).</p>
@@ -9,7 +14,7 @@
       <p>This can be either a PFX formatted certificate that includes the private key and a passphrase for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.</p>
    </ng-container>
    <div class="show-more-link">
-    <button mat-button (click)="createCSR(certificateType)" color="primary">Create a Certificate Signing Request (CSR)</button>
+    <button mat-button (click)="createCSR(certificateType)" class='link-button' color="primary">Create a Certificate Signing Request (CSR)</button>
   </div>
 
   <div *ngIf="certificateType=='Client'">

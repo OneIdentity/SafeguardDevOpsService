@@ -258,6 +258,7 @@ export class CreateCsrComponent implements OnInit {
   keySize: number = 2048;
   certificateType: string = '';
   showDistinguishedNameBuilder: boolean = false;
+  creatingCSR: boolean = false;
   csr = { DnsNames: [], IpAddresses: [], Text: '' };
   dnBuilder = {
     FullyQualifiedDomainName: '',
@@ -286,6 +287,7 @@ export class CreateCsrComponent implements OnInit {
   }
 
   createCSR() { 
+    this.creatingCSR = true;
     this.serviceClient.getCSR('A2AClient', this.subjectName, this.csr.DnsNames.join(','), this.csr.IpAddresses.join(','), this.keySize)
       .subscribe(
         (csr) => {
@@ -299,7 +301,7 @@ export class CreateCsrComponent implements OnInit {
           saveModal.afterClosed().subscribe(result=>{ 
             this.dialogRef.close();
           });
-        });
+        }).add(() => {this.creatingCSR = false;});
   }
 
   goBack() {

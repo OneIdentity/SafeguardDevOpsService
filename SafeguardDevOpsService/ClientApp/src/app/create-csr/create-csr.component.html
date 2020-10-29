@@ -1,7 +1,13 @@
-<div class="csr-container">
-  <h1>Certificate Signing Request (CSR)</h1>
+<div mat-dialog-title>
+   <div class='dialog-title-elements'>
+      <div class='title-text'>Certificate Signing Request (CSR)</div>
+      <div class='close-button'><button mat-icon-button class='link-button' mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
+   </div>
+</div>
 
-  <mat-form-field appearance="outline">
+<mat-spinner diameter="20" *ngIf="creatingCSR" color="accent">Creating CSR</mat-spinner>
+<div class="csr-container" *ngIf='!creatingCSR'>
+  <mat-form-field appearance="outline" class='short-height'>
      <mat-label>Subject Name</mat-label>
      <input cdkFocusInitial matInput #subject type="text" placeholder='CN=' [pattern]='CertValidSubjectCharsRegex' [(ngModel)]="subjectName" name="subjectName">
   </mat-form-field>
@@ -49,7 +55,7 @@
   </div>
 
   <ng-container *ngIf='!showDistinguishedNameBuilder'>
-     <button mat-button class='dn-builder-toggle' color='primary' (click)='useDNBuilder(true)'>Use Distinguished Name Builder</button>
+     <button mat-button class='dn-builder-toggle link-button' color='primary' (click)='useDNBuilder(true)'>Use Distinguished Name Builder</button>
 
       <mat-form-field appearance="outline" class="text-with-chips">
          <mat-label><span >Subject Alternative Names (DNS)</span></mat-label>

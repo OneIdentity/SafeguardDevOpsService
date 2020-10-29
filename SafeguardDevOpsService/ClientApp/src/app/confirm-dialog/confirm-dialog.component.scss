@@ -1,28 +1,5 @@
 @import '../../colors.scss';
 
-.dialog-title-elements {
-  display: flex;
-  flex-direction: row;
-
-  .title-text, .close-button {
-    flex: 1 1 auto;
-  }
-    
-  .title-text {
-    font-size: 24px;
-  }
-    
-  .close-button {
-    text-align: right;
-
-    & button.link-button .mat-icon {
-      font-size: 32px;
-      font-weight: 400;
-      color: $black-9;
-    }
-  }
-}
-
 .dialog-content {
   max-width: 600px;
   width: 400px;
