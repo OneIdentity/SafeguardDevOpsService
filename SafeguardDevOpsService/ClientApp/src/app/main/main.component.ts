@@ -442,10 +442,12 @@ export class MainComponent implements OnInit {
         this.drawer.open();
       }),
       switchMap(() => this.serviceClient.deleteConfiguration()),
-      switchMap(() => this.serviceClient.logon()),
-      switchMap(() => this.serviceClient.deleteSafeguard()),
-      finalize(() => this.drawer.close())
+      finalize(() => {
+        this.drawer.close();
+        this.snackBar.dismiss();
+      })
     ).subscribe(() => {
+      this.window.sessionStorage.setItem('ApplianceAddress', '');
       this.router.navigate(['/login']);
     });
   }
