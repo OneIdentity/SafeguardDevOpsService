@@ -130,14 +130,22 @@ mat-drawer-container {
 
   .plugin-button-container {
     display: flex;
+    align-items:center;
+    flex-direction: column;
 
-    .plugin-button {
-      border-color: $iris-blue;
-      background-color: #ffffff;
-      color: $iris-blue;
-      font-weight: 400;
-      margin-right: 10px;
-      margin-bottom: 10px;
+    .button-container {
+      flex: 1 1 auto;
+      width: 100%;
+
+      .plugin-button {
+        border-color: $iris-blue;
+        background-color: #ffffff;
+        color: $iris-blue;
+        font-weight: 400;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        width: 100%;
+      }
     }
   }
 }
@@ -171,6 +179,10 @@ mat-drawer-container {
   }
 }
 
+.plugin-container.configured.monitored {
+  background-color: $white;
+}
+
 .plugin-container.configured:nth-child(2) {
   border-color: $corbin-orange;
   .header {
@@ -184,9 +196,9 @@ mat-drawer-container {
   }
 }
 .plugin-container.configured:nth-child(4) {
-  border-color: $tiki-sunrise;
+  border-color: $aspen-green;
   .header {
-    color: $tiki-sunrise;
+    color: $aspen-green;
   }
 }
 .plugin-container.configured:nth-child(5) {
@@ -223,11 +235,11 @@ marker.arrow2 {
 }
 
 path.arrow:nth-child(3) {
-  stroke: $tiki-sunrise;
-  color: $tiki-sunrise;
+  stroke: $aspen-green;
+  color: $aspen-green;
 }
 marker.arrow3 {
-  fill: $tiki-sunrise;
+  fill: $aspen-green;
 }
 
 path.arrow:nth-child(4) {
@@ -236,4 +248,10 @@ path.arrow:nth-child(4) {
 }
 marker.arrow4 {
   fill: $azalea-pink;
+}
+
+a {
+  text-decoration: none;
+  color: $iris-blue;
+  font-size: 14px;
 }

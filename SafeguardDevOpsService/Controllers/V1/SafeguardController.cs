@@ -458,10 +458,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("AvailableAccounts")]
-        public ActionResult<IEnumerable<SppAccount>> GetAvailableAccounts([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null, 
-            [FromQuery] int? page = null, [FromQuery] int? limit = null, [FromQuery] string orderby = null, [FromQuery] string q = null)
+        public ActionResult GetAvailableAccounts([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null, 
+            [FromQuery] int? page = null, [FromQuery] bool? count = null, [FromQuery] int? limit = null, [FromQuery] string orderby = null, [FromQuery] string q = null)
         {
-            var availableAccounts = safeguard.GetAvailableAccounts(filter, page, limit, orderby, q);
+            var availableAccounts = safeguard.GetAvailableAccounts(filter, page, count, limit, orderby, q);
 
             return Ok(availableAccounts);
         }

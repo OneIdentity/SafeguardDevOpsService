@@ -32,7 +32,6 @@ namespace OneIdentity.DevOps.ConfigDb
         int? ApiVersion { get; set; }
         string SvcId { get; }
         bool? IgnoreSsl { get; set; }
-        bool? PendingRemoval { get; set; }
         int? A2aUserId { get; set; }
         int? A2aRegistrationId { get; set; }
         int? A2aVaultRegistrationId { get; set; }

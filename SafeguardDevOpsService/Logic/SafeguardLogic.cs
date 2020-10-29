@@ -148,7 +148,6 @@ namespace OneIdentity.DevOps.Logic
                 {
                     ApplianceAddress = safeguardAddress,
                     IgnoreSsl = _configDb.IgnoreSsl ?? ignoreSsl,
-                    PendingRemoval = _configDb.PendingRemoval ?? false,
                     ApiVersion = apiVersion
                 };
         
@@ -524,8 +523,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion,
                 ApplianceAddress = _configDb.SafeguardAddress,
-                IgnoreSsl = _configDb.IgnoreSsl ?? false,
-                PendingRemoval = _configDb.PendingRemoval ?? false
+                IgnoreSsl = _configDb.IgnoreSsl ?? false
             });
         }
 
@@ -820,7 +818,6 @@ namespace OneIdentity.DevOps.Logic
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
                     IgnoreSsl = _configDb.IgnoreSsl,
-                    PendingRemoval = _configDb.PendingRemoval,
                     ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion
                 };
         
@@ -874,9 +871,6 @@ namespace OneIdentity.DevOps.Logic
 
             if (safeguardConnection != null && FetchAndStoreSignatureCertificate(token, safeguardConnection))
             {
-                // if the address is the same then set the PendingRemove to whatever the user specified. If the addresses
-                //  are different, then a change was just made and the new state for PendingRemoval should be false.
-                _configDb.PendingRemoval = _configDb.SafeguardAddress == safeguardData.ApplianceAddress ? safeguardData.PendingRemoval : false;
                 _configDb.SafeguardAddress = safeguardData.ApplianceAddress;
                 _configDb.ApiVersion = safeguardData.ApiVersion ?? DefaultApiVersion;
                 _configDb.IgnoreSsl = safeguardData.IgnoreSsl ?? false;
@@ -884,7 +878,6 @@ namespace OneIdentity.DevOps.Logic
                 safeguardConnection.ApplianceAddress = _configDb.SafeguardAddress;
                 safeguardConnection.ApiVersion = _configDb.ApiVersion;
                 safeguardConnection.IgnoreSsl = _configDb.IgnoreSsl;
-                safeguardConnection.PendingRemoval = _configDb.PendingRemoval;
                 return safeguardConnection;
             }
 
@@ -1028,7 +1021,7 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteAllTrustedCertificates();
         }
 
-        public IEnumerable<SppAccount> GetAvailableAccounts(string filter, int? page, int? limit, string orderby, string q)
+        public object GetAvailableAccounts(string filter, int? page, bool? count, int? limit, string orderby, string q)
         {
             using var sg = Connect();
 
@@ -1036,18 +1029,26 @@ namespace OneIdentity.DevOps.Logic
             {
                 var p = new Dictionary<string, string>();
                 JsonHelper.AddQueryParameter(p,nameof(filter), filter);
-                JsonHelper.AddQueryParameter(p,nameof(page), page == null ? null : page.ToString());
-                JsonHelper.AddQueryParameter(p,nameof(limit), limit == null ? null : limit.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(page), page?.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(limit), limit?.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(count), count?.ToString());
                 JsonHelper.AddQueryParameter(p,nameof(orderby), orderby);
                 JsonHelper.AddQueryParameter(p,nameof(q), q);
 
                 var result = sg.InvokeMethodFull(Service.Core, Method.Get, "PolicyAccounts", null, p);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
-                    var accounts = JsonHelper.DeserializeObject<IEnumerable<SppAccount>>(result.Body);
-                    if (accounts != null)
+                    if (count == null || count.Value == false)
                     {
-                        return accounts;
+                        var accounts = JsonHelper.DeserializeObject<IEnumerable<SppAccount>>(result.Body);
+                        if (accounts != null)
+                        {
+                            return accounts;
+                        }
+                    }
+                    else
+                    {
+                        return result.Body;
                     }
                 }
             }
@@ -1371,7 +1372,6 @@ namespace OneIdentity.DevOps.Logic
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
                     IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value,
-                    PendingRemoval = _configDb.PendingRemoval != null && _configDb.PendingRemoval.Value,
                     ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion
                 });
 

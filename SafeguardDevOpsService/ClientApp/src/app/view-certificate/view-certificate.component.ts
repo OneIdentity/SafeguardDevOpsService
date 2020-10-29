@@ -17,6 +17,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
 
   certificateType: string = '';
   certificateLoaded: boolean = false;
+  removingCertificate: boolean = false;
   LocalizedValidFrom: string = '';
   typeDisplay = '';
   retrievedCert = {
@@ -74,10 +75,13 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
     let dlgData;
 
     if (this.certificateType === 'Client') {
-      dlgData = { title: 'Delete Client Certificate', message: 'Deleting this certificate will break things. Press "OK" to continue.' };
+      dlgData = { title: 'Remove Client Certificate',
+        message: 'Monitoring and pulling passwords will no longer be available if this certificate is removed.',
+        confirmText: 'Remove Certificate' };
     } else if (this.certificateType === 'WebServer') {
       dlgData = { title: 'Delete Web Server Certificate',
-        message: 'This will remove the current web server certificate and will generate a new self-signed certificate to take its place. Press "OK" to continue.' };
+        message: 'This will remove the current web server certificate and will generate a new self-signed certificate to take its place.',
+        confirmText: 'Remove Certificate'};
     }
 
     if (dlgData) {
@@ -87,14 +91,17 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
 
       dialogRef.afterClosed().pipe(
         filter((dlgResult) => dlgResult.result === 'OK'),
-        switchMap(() => this.certificateType === 'Client' ?
-          this.serviceClient.deleteClientCertificate() :
-          this.serviceClient.deleteWebServerCertificate() )
+        switchMap(() => {
+          this.removingCertificate = true;
+          return this.certificateType === 'Client' ?
+            this.serviceClient.deleteClientCertificate() :
+            this.serviceClient.deleteWebServerCertificate();
+        })
       ).subscribe(
         () => {
           this.dialogRef.close({ removed: true });
         }
-      );
+      ).add(() => { this.removingCertificate = false;});
     }
   }
 }

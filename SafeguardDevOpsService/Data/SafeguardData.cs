@@ -17,9 +17,5 @@
         /// Should ignore Ssl verification
         /// </summary>
         public bool? IgnoreSsl { get; set; }
-        /// <summary>
-        /// Should the database be removed if connecting to a different appliance
-        /// </summary>
-        public bool? PendingRemoval { get; set; }
     }
 }

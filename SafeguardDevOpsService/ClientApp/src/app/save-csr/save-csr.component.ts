@@ -29,4 +29,8 @@ export class SaveCsrComponent implements OnInit {
     saveAs(data, this.csr.CertificateType + '__' + moment().format('YYYYMMDD[T]HHMMSS') + '.csr');
     this.dialogRef.close();
   }
+
+  goBack() {
+    this.dialogRef.close('back');
+  }
 }

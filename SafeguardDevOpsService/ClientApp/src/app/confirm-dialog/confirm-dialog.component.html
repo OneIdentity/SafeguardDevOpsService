@@ -1,5 +1,8 @@
 <div mat-dialog-title>
-  <h1>{{title}}</h1>
+   <div class='dialog-title-elements'>
+      <div class='title-text'>{{title}}</div>
+      <div class='close-button'><button *ngIf='!showCancel' mat-icon-button class='link-button' mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
+   </div>
 </div>
 <div class='dialog-content' mat-dialog-content>
    <div [innerHTML]="message"></div>

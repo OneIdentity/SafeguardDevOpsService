@@ -24,7 +24,7 @@ namespace OneIdentity.DevOps.Logic
         void RemoveWebServerCertificate();
         string GetCSR(int? size, string subjectName, string sanDns, string sanIp, CertificateType certificateType);
 
-        IEnumerable<SppAccount> GetAvailableAccounts(string filter, int? page, int? limit, string orderby, string q);
+        object GetAvailableAccounts(string filter, int? page, bool? count, int? limit, string orderby, string q);
         AssetAccount GetAccount(int id);
 
         A2ARegistration GetA2ARegistration(A2ARegistrationType registrationType);

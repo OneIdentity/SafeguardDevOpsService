@@ -3,7 +3,6 @@
 .csr-container {
   display: flex;
   flex-direction: column;
-  margin-left: 20px;
   margin-top: 10px;
   min-width: 400px;
 }
@@ -11,14 +10,14 @@
 .dn-builder-container {
   display: flex;
   flex-direction: column;
-  margin-left: -44px;
-  margin-right: -24px;
+  margin: 0 -24px -24px -24px;
   background-color: #d3ebf2;
   padding: 20px;
 }
 
 .dn-builder-toggle {
   text-align: left;
+  margin-bottom: 15px;
 }
 
 .dn-builder-actions {
@@ -65,4 +64,6 @@
   margin-bottom: 20px;
 }
 
-
+:host ::ng-deep .mat-form-field.short-height .mat-form-field-wrapper {
+  padding-bottom: 0 !important;
+}
