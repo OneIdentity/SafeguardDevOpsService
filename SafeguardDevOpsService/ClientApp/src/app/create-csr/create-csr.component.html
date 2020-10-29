@@ -9,7 +9,7 @@
 <div class="csr-container" *ngIf='!creatingCSR'>
   <mat-form-field appearance="outline" class='short-height'>
      <mat-label>Subject Name</mat-label>
-     <input cdkFocusInitial matInput #subject type="text" placeholder='CN=' [pattern]='CertValidSubjectCharsRegex' [(ngModel)]="subjectName" name="subjectName">
+     <input cdkFocusInitial matInput #subject id='subjectName' type="text" placeholder='CN=' [pattern]='CertValidSubjectCharsRegex' [(ngModel)]="subjectName" name="subjectName">
   </mat-form-field>
 
   <div *ngIf='showDistinguishedNameBuilder' class="dn-builder-container">

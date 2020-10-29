@@ -298,9 +298,14 @@ export class CreateCsrComponent implements OnInit {
                 Base64RequestData: csr,
               }
              });
-          saveModal.afterClosed().subscribe(result=>{ 
-            this.dialogRef.close();
-          });
+          saveModal.afterClosed().subscribe(
+            result=>{ 
+              if ( (result??'') == 'back') {
+                document.getElementById('subjectName')?.focus();
+              } else {
+                this.dialogRef.close();
+              }
+            });
         }).add(() => {this.creatingCSR = false;});
   }
 

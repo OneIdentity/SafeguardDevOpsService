@@ -66,18 +66,24 @@
 
         <ng-container *ngIf='Thumbprint'>
            <div class="info-label">Client Certificate</div>
+           <div *ngIf="certificateUploading['Client']">
+             <mat-spinner color="accent" diameter="30">Uploading</mat-spinner>
+           </div>
            <div *ngIf="Thumbprint">
              <mat-icon class="green-icon">check_circle</mat-icon>
              <button mat-button class="link-button" color="primary" (click)="viewCertificate($event, 'Client')">View Details</button>
            </div>
 
            <div class="info-label">Web Server Certificate</div>
+           <div *ngIf="certificateUploading['WebServer']">
+             <mat-spinner color="accent" diameter="30">Uploading</mat-spinner>
+           </div>
            <div *ngIf="!webServerCertAdded">
               <button mat-button class="link-button" (click)="addCertificate($event, 'WebServer')" color='primary'>Add Certificate</button>
            </div>
            <div *ngIf="webServerCertAdded">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="link-button" (click)="viewCertificate($event,'WebServer')">View Details</button>
+             <button mat-button class="link-button" (click)="viewCertificate($event,'WebServer')" color='primary'>View Details</button>
            </div>
 
            <div class="info-label">Trusted Certificates</div>
@@ -86,7 +92,7 @@
            </div>
            <div *ngIf="trustedCertsAdded">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="link-button" color="primary" (click)="viewTrustedCertificates($event)">View Details</button>
+             <button mat-button class="link-button" color="primary" (click)="viewTrustedCertificates($event)" color='primary'>View Details</button>
            </div>
         </ng-container>
          </div>

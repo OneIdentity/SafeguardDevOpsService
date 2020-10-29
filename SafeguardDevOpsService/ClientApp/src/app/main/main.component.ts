@@ -52,6 +52,11 @@ export class MainComponent implements OnInit {
   isLoading: boolean;
   openDrawer: string;
 
+  certificateUploading = {
+    Client: false,
+    WebServer: false,
+    trusted: false
+  };
   webServerCertAdded: boolean = false;
   trustedCertsAdded: boolean = false;
 
@@ -283,6 +288,7 @@ export class MainComponent implements OnInit {
           }
 
           const passphrase = resultArray.length > 1 ? resultArray[1] : '';
+          this.certificateUploading[certificateType] = true;
           return certificateType === 'Client' ?
             this.serviceClient.postConfiguration(fileContents, passphrase) :
             this.serviceClient.postWebServerCertificate(fileContents, passphrase);
@@ -293,6 +299,7 @@ export class MainComponent implements OnInit {
         if (certificateType === 'Client') {
           this.initializeConfig(config);
           this.initializePlugins();
+          this.viewCertificate(null, 'Client');
         } else {
           this.webServerCertAdded = true;
         }
@@ -303,6 +310,8 @@ export class MainComponent implements OnInit {
           // it's all we get
           this.snackBar.open('The password for the certificate in ' + certificateFileName + ' was not correct.', 'Dismiss', {duration: this.snackBarDuration});
         }
+      }).add(() => {
+        this.certificateUploading['Client'] = this.certificateUploading['WebServer'] = false;
       });
   }
 

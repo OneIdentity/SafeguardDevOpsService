@@ -7,7 +7,8 @@
 
 <div class='dialog-content' mat-dialog-content>
    <mat-spinner diameter="20" *ngIf="!certificateLoaded" color="accent"></mat-spinner>
-   <div class='certificate-container' *ngIf='certificateLoaded'>
+   <div *ngIf="removingCertificate"><mat-spinner diameter="20" color="accent"></mat-spinner>Removing {{typeDisplay}} Certificate</div>
+   <div class='certificate-container' *ngIf='certificateLoaded && !removingCertificate'>
       <div>
          <div class='label'>Subject Name</div>
          <div class='data'>{{retrievedCert.Subject}}</div>
@@ -30,5 +31,5 @@
    </div>
 </div>
 <div mat-dialog-actions align='start'>
-   <button mat-button class='link-button' color='primary' (click)="removeCertificate()" tabindex='-1'>Remove Certificate</button>
+   <button mat-button *ngIf="!removingCertificate" class='link-button' color='primary' (click)="removeCertificate()" tabindex='-1'>Remove Certificate</button>
 </div>
