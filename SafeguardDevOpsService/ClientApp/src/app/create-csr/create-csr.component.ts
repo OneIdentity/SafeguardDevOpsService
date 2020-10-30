@@ -268,6 +268,7 @@ export class CreateCsrComponent implements OnInit {
     State: '',
     Country: ''
   };
+  error = null;
 
   readonly Ipv4Regex = /^((^\s*|\.)((25[0-5])|(2[0-4]\d)|(1\d\d)|([1-9]?\d))){4}\s*$/;
   readonly Ipv6Regex = /^\s*([0-9a-fA-F]{1,4}|:)(:[0-9a-fA-F]{0,4}){1,7}\s*$/;
@@ -288,7 +289,8 @@ export class CreateCsrComponent implements OnInit {
 
   createCSR() { 
     this.creatingCSR = true;
-    this.serviceClient.getCSR('A2AClient', this.subjectName, this.csr.DnsNames.join(','), this.csr.IpAddresses.join(','), this.keySize)
+    this.serviceClient
+      .getCSR('A2AClient', this.subjectName, this.csr.DnsNames.join(','), this.csr.IpAddresses.join(','), this.keySize)
       .subscribe(
         (csr) => {
           this.csr.Text = csr;
@@ -306,7 +308,12 @@ export class CreateCsrComponent implements OnInit {
                 this.dialogRef.close();
               }
             });
-        }).add(() => {this.creatingCSR = false;});
+        },
+        (error) => {
+          this.error = error;
+        }
+      )
+      .add(() => {this.creatingCSR = false;});
   }
 
   goBack() {
@@ -368,8 +375,8 @@ export class CreateCsrComponent implements OnInit {
     } else {
       this.savedSubjectName = '';
       setTimeout(() => {
-        this.subjectInput.nativeElement.focus();
-        this.subjectInput.nativeElement.setSelectionRange(0,this.subjectName.length);
+        this.subjectInput?.nativeElement.focus();
+        this.subjectInput?.nativeElement.setSelectionRange(0,this.subjectName.length);
       },0);
     }
   }

@@ -1,0 +1,14 @@
+.loading-spinner-container{
+  margin: 20px 0px;
+  display: flex;
+  align-items: center;
+
+  .loadingMessage{
+    margin: 0px 5px;
+  }
+}
+
+.loading-spinner-container.noMargin{
+  margin: 0px 0px;
+}
+

@@ -1,0 +1,30 @@
+@import '../../colors.scss';
+
+.error-container {
+  width: 100%;
+  padding: 10px 0 10px 10px;
+  background-color: $phoenix-red;
+  color: white;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  .icon, .message, .dismisser {
+    flex: 1 1 auto;
+  }
+
+  .icon {
+    flex: 0 0 auto;
+  }
+
+  .message {
+    margin-left: 10px;
+    flex: 1 1 auto;
+  }
+
+  .dismisser {
+    text-align: right;
+    flex: 1 1 auto;
+  }
+}
+

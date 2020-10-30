@@ -39,6 +39,8 @@ import { ViewCertificateComponent } from './view-certificate/view-certificate.co
 import { SaveCsrComponent } from './save-csr/save-csr.component';
 import { EditTrustedCertificatesComponent } from './edit-trusted-certificates/edit-trusted-certificates.component';
 import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
+import { ProgressSpinnerComponent } from './progress-spinner/progress-spinner.component';
+import { ErrorBarComponent } from './error-bar/error-bar.component';
 
 @NgModule({
   declarations: [
@@ -53,7 +55,9 @@ import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.componen
     ViewCertificateComponent,
     SaveCsrComponent,
     EditTrustedCertificatesComponent,
-    ConfirmDialogComponent
+    ConfirmDialogComponent,
+    ProgressSpinnerComponent,
+    ErrorBarComponent
   ],
   imports: [
     BrowserModule,

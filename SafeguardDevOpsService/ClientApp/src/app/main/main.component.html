@@ -9,6 +9,9 @@
       <button mat-menu-item (click)="deleteConfig()"><mat-icon>delete</mat-icon>Delete Current Configuration</button>
     </mat-menu>
   </div>
+
+  <app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
+
   <div class="main-container">
     <mat-card class="info-container">
       <div class="info-column">
@@ -30,7 +33,7 @@
 
       <div class="vertical-line"></div>
       <div class="loading-container" *ngIf="isLoading">
-          <mat-spinner color="accent" diameter="30"></mat-spinner>
+          <app-progress-spinner color="accent" diameter="30" message='Loading configuration'></app-progress-spinner>
       </div>
       <div class="info-column" *ngIf="Thumbprint && !isLoading">
         <div><b>Linked Safeguard Objects</b></div>
@@ -66,18 +69,16 @@
 
         <ng-container *ngIf='Thumbprint'>
            <div class="info-label">Client Certificate</div>
-           <div *ngIf="certificateUploading['Client']">
-             <mat-spinner color="accent" diameter="30">Uploading</mat-spinner>
-           </div>
+           <app-progress-spinner color="accent" diameter="30" message="Uploading" [visible]="certificateUploading['Client']"></app-progress-spinner>
+          
            <div *ngIf="Thumbprint">
              <mat-icon class="green-icon">check_circle</mat-icon>
              <button mat-button class="link-button" color="primary" (click)="viewCertificate($event, 'Client')">View Details</button>
            </div>
 
            <div class="info-label">Web Server Certificate</div>
-           <div *ngIf="certificateUploading['WebServer']">
-             <mat-spinner color="accent" diameter="30">Uploading</mat-spinner>
-           </div>
+           <app-progress-spinner color="accent" diameter="30" message="Uploading" [visible]="certificateUploading['WebServer']"></app-progress-spinner>
+           
            <div *ngIf="!webServerCertAdded">
               <button mat-button class="link-button" (click)="addCertificate($event, 'WebServer')" color='primary'>Add Certificate</button>
            </div>
