@@ -288,11 +288,11 @@ export class CreateCsrComponent implements OnInit {
 
   createCSR() { 
     this.creatingCSR = true;
-    this.serviceClient.getCSR('A2AClient', this.subjectName, this.csr.DnsNames.join(','), this.csr.IpAddresses.join(','), this.keySize)
+    this.serviceClient
+      .getCSR('A2AClient', this.subjectName, this.csr.DnsNames.join(','), this.csr.IpAddresses.join(','), this.keySize)
       .subscribe(
         (csr) => {
           this.csr.Text = csr;
-          /*
           const saveModal = this.dialog.open(SaveCsrComponent,
             { data: {
                 CertificateType: this.certificateType,
@@ -307,8 +307,8 @@ export class CreateCsrComponent implements OnInit {
                 this.dialogRef.close();
               }
             });
-           */
-        }).add(() => {this.creatingCSR = true;});
+        })
+      .add(() => {this.creatingCSR = false;});
   }
 
   goBack() {
