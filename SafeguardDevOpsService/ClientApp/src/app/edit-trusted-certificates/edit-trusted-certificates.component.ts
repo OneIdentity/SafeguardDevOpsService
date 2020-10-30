@@ -98,13 +98,13 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
         finalize(() => {
           this.isLoading = false;
 
-          this.snackbar.open(`Added certifcate ${fileData.fileName}`, 'Dismiss', { duration: 5000 });
-
           // Clear the selection
           const input = this.fileSelectInputDialog.nativeElement as HTMLInputElement;
           input.value = null;
         })
-      ).subscribe();
+      ).subscribe(() => {
+        this.snackbar.open(`Added certificate ${fileData.fileName}`, 'Dismiss', { duration: 5000 });
+      });
     };
     fileReader.readAsArrayBuffer(fileSelected);
   }
@@ -139,6 +139,8 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
           // it's all we get
           this.snackbar.open(`The password for the certificate in ${resultArray[0].fileName} was not correct.`,
             'Dismiss', { duration: 5000 });
+        } else if (err.error?.Message) {
+          this.snackbar.open(err.error.Message, 'Dismiss', { duration: 5000 });
         }
         return of();
       })
