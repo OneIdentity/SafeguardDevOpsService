@@ -23,6 +23,16 @@ table {
   overflow: auto;
 }
 
+.spinner-container {
+  position: absolute;
+  width: 100%;
+  top: 0;
+
+  mat-spinner {
+    margin: 70px auto;
+  }
+}
+
 .search-container {
   mat-form-field {
     margin-right: 10px;
@@ -52,4 +62,15 @@ table {
 .selectable-row:hover {
   cursor: pointer;
   background-color: $iris-pastel;
+}
+
+.table-container {
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+
+  .mat-table {
+    flex: 1;
+  }
 }

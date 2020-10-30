@@ -2,10 +2,12 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, Input } from '
 import { DevOpsServiceClient } from '../service-client.service';
 import { SelectionModel } from '@angular/cdk/collections';
 import { EditPluginService } from '../edit-plugin.service';
-import { fromEvent, Observable, merge } from 'rxjs';
+import { fromEvent, Observable, merge, of } from 'rxjs';
 import { distinctUntilChanged, debounceTime, switchMap, filter, tap, finalize } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { MatSort, SortDirection } from '@angular/material/sort';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatTableDataSource } from '@angular/material/table';
 
 @UntilDestroy()
 @Component({
@@ -17,6 +19,7 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
   @ViewChild('assetSearch', { static: false }) assetSearchEl: ElementRef;
   @ViewChild('accountSearch', { static: false }) accountSearchEl: ElementRef;
   @ViewChild(MatSort) sort: MatSort;
+  @ViewChild(MatPaginator) paginator: MatPaginator;
 
   @Input() selectVaultAccount: boolean;
 
@@ -35,6 +38,11 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
   sortColumn: string;
   sortDirection: string;
   isLoading: boolean;
+  dataSource = new MatTableDataSource([]);
+  totalCount = 0;
+  currFilterStr: string;
+  currSortby: string;
+  page = 0;
 
   ngOnInit(): void {
     this.displayedColumns = !this.selectVaultAccount ? ['select', 'asset', 'account'] : ['asset', 'account'];
@@ -57,7 +65,9 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
       (data: any[]) => {
         this.isLoading = false;
         this.accounts = [...data];
+        this.totalCount = this.editPluginService.availableAccountsTotalCount;
         this.hideCurrentAccounts();
+        this.dataSource.data = this.accounts;
       }
     );
   }
@@ -78,7 +88,8 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
     merge(
       fromEvent(this.assetSearchEl.nativeElement, 'keyup'),
       fromEvent(this.accountSearchEl.nativeElement, 'keyup'),
-      this.sort.sortChange
+      this.sort.sortChange,
+      this.paginator.page
     ).pipe(
         untilDestroyed(this),
         debounceTime(500),
@@ -88,12 +99,14 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
         (data) => {
           this.accounts = data;
           this.hideCurrentAccounts();
+          this.dataSource.data = this.accounts;
           this.isLoading = false;
       });
   }
 
   doSearch(): Observable<any[]> {
     this.accounts = [];
+    this.dataSource.data = [];
     this.isLoading = true;
 
     let filterStr = '';
@@ -129,7 +142,24 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
       this.editPluginService.clearAvailableAccounts();
     }
 
-    return this.serviceClient.getAvailableAccounts(filterStr, sortby);
+    if (this.currSortby !== sortby || this.currFilterStr !== filterStr) {
+      this.page = 0;
+      this.currFilterStr = filterStr;
+      this.currSortby = sortby;
+
+      return this.serviceClient.getAvailableAccountsCount(filterStr, sortby).pipe(
+        switchMap((count) => {
+          this.totalCount = count;
+          if (this.totalCount > 0) {
+            return this.serviceClient.getAvailableAccounts(filterStr, sortby, this.paginator.pageIndex, this.paginator.pageSize);
+          } else {
+            return of([]);
+          }
+        })
+      );
+    }
+
+    return this.serviceClient.getAvailableAccounts(filterStr, sortby, this.paginator.pageIndex, this.paginator.pageSize);
   }
 
   /** Whether the number of selected elements matches the total number of rows. */

@@ -38,6 +38,30 @@ export class DevOpsServiceClient {
     };
   }
 
+  private buildQueryArguments(countOnly: boolean, filter?: string, orderby?: string, page?: number, pageSize?: number): string {
+    let query = '';
+
+    if (filter?.length > 0) {
+      query += '?filter=' + encodeURIComponent(filter);
+    }
+    if (orderby?.length > 0) {
+      query += ((query.length > 0) ? '&' : '?') +
+        'orderby=' + encodeURIComponent(orderby);
+    }
+    if (page >= 0) {
+      query += ((query.length > 0) ? '&' : '?') +
+        'page=' + encodeURIComponent(page);
+    }
+    if (pageSize) {
+      query += ((query.length > 0) ? '&' : '?') +
+        'limit=' + encodeURIComponent(pageSize);
+    }
+    query += ((query.length > 0) ? '&' : '?') +
+      'count=' + (countOnly ? 'true' : 'false');
+
+    return query;
+  }
+
   getSafeguard(): Observable<any> {
     const url = this.BASE + 'Safeguard';
 
@@ -208,17 +232,14 @@ export class DevOpsServiceClient {
     .pipe(catchError(this.error<any>('deletePluginConfiguration')));
   }
 
-  getAvailableAccounts(filter?: string, orderby?: string): Observable<any[]> {
-    let url = this.BASE + 'Safeguard/AvailableAccounts';
+  getAvailableAccountsCount(filter?: string, orderby?: string): Observable<number> {
+    const url = this.BASE + 'Safeguard/AvailableAccounts' + this.buildQueryArguments(true, filter, orderby);
+    return this.http.get(url, this.authHeader())
+      .pipe(catchError(this.error<any>('getAvailableAccountsCount')));
+  }
 
-    if (filter?.length > 0) {
-      url += '?filter=' + encodeURIComponent(filter);
-    }
-    if (orderby?.length > 0) {
-      url += (filter?.length > 0) ? '&' : '?' +
-        'orderby=' + encodeURIComponent(orderby);
-    }
-
+  getAvailableAccounts(filter?: string, orderby?: string, page?: number, pageSize?: number): Observable<any[]> {
+    const url = this.BASE + 'Safeguard/AvailableAccounts' + this.buildQueryArguments(false, filter, orderby, page, pageSize);
     return this.http.get(url, this.authHeader())
       .pipe(catchError(this.error<any>('getAvailableAccounts')));
   }
