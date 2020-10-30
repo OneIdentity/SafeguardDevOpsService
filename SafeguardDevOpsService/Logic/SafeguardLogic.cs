@@ -629,8 +629,13 @@ namespace OneIdentity.DevOps.Logic
                 try
                 {
                     using var rsa = RSA.Create();
-                    var privateKeyBytes = certificateType == CertificateType.A2AClient ?
-                        Convert.FromBase64String(_configDb.UserCsrPrivateKeyBase64Data) : Convert.FromBase64String(_configDb.WebSslCsrPrivateKeyBase64Data);
+                    var privateKeyBytesBase64 = certificateType == CertificateType.A2AClient ? 
+                        _configDb.UserCsrPrivateKeyBase64Data : _configDb.WebSslCsrPrivateKeyBase64Data;
+                    if (privateKeyBytesBase64 == null)
+                    {
+                        throw LogAndException("Failed to find a matching private key. Possibly a mismatched CSR type was selected.");
+                    }
+                    var privateKeyBytes = Convert.FromBase64String(privateKeyBytesBase64);
                     rsa.ImportRSAPrivateKey(privateKeyBytes, out _);
 
                     using (X509Certificate2 pubOnly = cert)
