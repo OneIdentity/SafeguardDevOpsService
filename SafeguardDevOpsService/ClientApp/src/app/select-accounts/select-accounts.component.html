@@ -19,7 +19,7 @@
         <input matInput type="text" #accountSearch [(ngModel)]="accountSearchVal">
       </mat-form-field>
     </div>
-    <div>
+    <div class="table-container" [ngClass]="{'hidden': isLoading}">
       <table mat-table [dataSource]="accounts" matSort [matSortActive]="sortColumn" [matSortDirection]="sortDirection">
         <ng-container matColumnDef="select" *ngIf="!selectVaultAccount">
           <th mat-header-cell *matHeaderCellDef>
@@ -55,7 +55,12 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns;"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;" [ngClass]="{ 'selectable-row': selectVaultAccount }" (click)="selectRow($event, row)"></tr>
       </table>
-      <app-progress-spinner [visible]="isLoading" diameter="30" color="primary"></app-progress-spinner>
+      <mat-paginator [pageSizeOptions]="[25, 50, 100, 200]" showFirstLastButtons [length]="totalCount" [pageIndex]="page"></mat-paginator>
+      <div class="spinner-container">
+        <mat-spinner *ngIf="isLoading" diameter="30" color="primary"></mat-spinner>
+      </div>
+
+      
     </div>
   </div>
   

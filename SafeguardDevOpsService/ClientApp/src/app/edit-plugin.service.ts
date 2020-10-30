@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, forkJoin, pipe } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, forkJoin, pipe, of } from 'rxjs';
 import { DevOpsServiceClient } from './service-client.service';
-import { tap, finalize, delay } from 'rxjs/operators';
+import { tap, finalize, delay, filter, switchMap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy()
@@ -9,6 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 export class EditPluginService {
   private notifyEventSource = new Subject<EditPluginEvent>();
   public notifyEvent$ = this.notifyEventSource.asObservable();
+  public availableAccountsTotalCount = 0;
 
   private availableAccounts = [];
   private availableAccountsSub;
@@ -39,9 +40,17 @@ export class EditPluginService {
           sortby = `${dir}Name,${dir}DomainName`;
         }
       }
-
-      this.availableAccountsSub = this.serviceClient.getAvailableAccounts('', sortby).pipe(
+      const defaultPageSize = 25;
+      this.availableAccountsSub = this.serviceClient.getAvailableAccountsCount('', sortby).pipe(
         untilDestroyed(this),
+        switchMap((count: number) => {
+          this.availableAccountsTotalCount = count;
+          if (count > 0) {
+            return this.serviceClient.getAvailableAccounts('', sortby, 0, defaultPageSize);
+          } else {
+            return of([]);
+          }
+        }),
         tap((accounts) => {
           this.plugin.LoadingAvailableAccounts = false;
 

@@ -1,15 +1,14 @@
 import { Component, OnInit, ViewChild, ElementRef, Renderer2 } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
-import { switchMap, map, concatAll, tap, distinctUntilChanged, debounceTime, finalize, catchError, filter } from 'rxjs/operators';
-import { of, Observable, fromEvent, forkJoin } from 'rxjs';
+import { switchMap, map, tap, finalize, filter } from 'rxjs/operators';
+import { of, Observable, forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { UploadCertificateComponent } from '../upload-certificate/upload-certificate.component';
 import { EnterPassphraseComponent } from '../upload-certificate/enter-passphrase/enter-passphrase.component';
 import { CreateCsrComponent } from '../create-csr/create-csr.component';
 import { ViewCertificateComponent } from '../view-certificate/view-certificate.component';
 import * as $ from 'jquery';
-import { ViewportScroller } from '@angular/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EditPluginService, EditPluginMode } from '../edit-plugin.service';
 import { MatDrawer } from '@angular/material/sidenav';
@@ -453,7 +452,7 @@ export class MainComponent implements OnInit {
       }),
       switchMap(() => this.serviceClient.restart()),
       switchMap(() => this.serviceClient.logon()),
-      finalize(() => {
+      tap(() => {
         this.snackBar.open('Safeguard Secrets Broker for DevOps service restarted.', null, { duration: this.snackBarDuration });
         // Hide overlay
         this.drawer.close();
@@ -479,12 +478,10 @@ export class MainComponent implements OnInit {
         // Show overlay to disable clicking on anything
         this.drawer.open();
       }),
-      switchMap(() => this.serviceClient.deleteConfiguration()),
-      finalize(() => {
-        this.drawer.close();
-        this.snackBar.dismiss();
-      })
+      switchMap(() => this.serviceClient.deleteConfiguration())
     ).subscribe(() => {
+      this.drawer.close();
+      this.snackBar.dismiss();
       this.window.sessionStorage.setItem('ApplianceAddress', '');
       this.router.navigate(['/login']);
     },
