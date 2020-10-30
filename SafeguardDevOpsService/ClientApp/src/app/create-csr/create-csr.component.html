@@ -7,6 +7,8 @@
 
 <app-progress-spinner diameter="20" color="warn" message="Creating CSR" [visible]="creatingCSR"></app-progress-spinner>
 
+<app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
+
 <div class="csr-container" *ngIf='!creatingCSR'>
   <mat-form-field appearance="outline" class='short-height'>
      <mat-label>Subject Name</mat-label>

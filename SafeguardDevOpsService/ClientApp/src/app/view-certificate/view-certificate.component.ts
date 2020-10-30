@@ -21,8 +21,8 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
   LocalizedValidFrom: string = '';
   typeDisplay = '';
   spinnerMessage = 'Loading';
-  retrievedCert = {
-  }
+  retrievedCert = {};
+  error = null;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -52,7 +52,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
           this.certificateLoaded = true;
         },
         error => {
-          var foo = error;
+          this.error = error
         }
       );
     }
@@ -74,6 +74,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
 
   removeCertificate(): void {
     let dlgData;
+    this.error = null;
 
     if (this.certificateType === 'Client') {
       dlgData = { title: 'Remove Client Certificate',
@@ -102,6 +103,9 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
       ).subscribe(
         () => {
           this.dialogRef.close({ removed: true });
+        },
+        (error) => {
+          this.error = error;
         }
       ).add(() => { this.removingCertificate = false; this.spinnerMessage='';});
     }

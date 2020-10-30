@@ -48,6 +48,8 @@ export class MainComponent implements OnInit {
   DevOpsInstanceId: string;
   ApplianceAddress: string;
 
+  error: any = null;
+
   plugins = [];
   isLoading: boolean;
   openDrawer: string;
@@ -100,11 +102,15 @@ export class MainComponent implements OnInit {
         ).subscribe(() => {
           // Monitoring available when we have plugins and an account for at least one plugin
           this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
+        },
+        error => {
+          this.error = error;
         });
     }
   }
 
   private initializeWebServerCertificate(): Observable<any> {
+    this.error = null;
     if (!this.Thumbprint) {
       return of({});
     }
@@ -117,6 +123,7 @@ export class MainComponent implements OnInit {
   }
 
   private initializePlugins(): Observable<any> {
+    this.error = null;
     if (!this.Thumbprint) {
       return of({});
     }
@@ -139,6 +146,7 @@ export class MainComponent implements OnInit {
   }
 
   private initializeMonitoring(): Observable<any> {
+    this.error = null;
     if (!this.Thumbprint) {
       return of({});
     }
@@ -149,6 +157,7 @@ export class MainComponent implements OnInit {
   }
 
   private initializeTrustedCertificates(): Observable<any> {
+    this.error = null;
     if (!this.Thumbprint) {
       return of({});
     }
@@ -220,6 +229,8 @@ export class MainComponent implements OnInit {
   }
 
   loginToDevOpsService(): Observable<any> {
+    this.error = null;
+
     return this.authService.getUserToken(this.ApplianceAddress)
       .pipe(
         switchMap((userTokenData) => {
@@ -254,6 +265,7 @@ export class MainComponent implements OnInit {
 
   addCertificate(e: Event, certificateType: string): void {
     let certificateFileName: string = '';
+    this.error = null;
     e.preventDefault();
 
     const dialogRef = this.dialog.open(UploadCertificateComponent, {
@@ -310,7 +322,7 @@ export class MainComponent implements OnInit {
           // it's all we get
           this.snackBar.open('The password for the certificate in ' + certificateFileName + ' was not correct.', 'Dismiss', {duration: this.snackBarDuration});
         } else if (error.error?.Message) {
-          this.snackBar.open('Unexpected error uploading ' + certificateType + ' certificate: ' + error.error.Message, 'Dismiss', {duration: this.snackBarDuration});
+          this.error = 'Unexpected error uploading ' + certificateType + ' certificate: ' + error.error.Message;
         }
       }).add(() => {
         this.certificateUploading['Client'] = this.certificateUploading['WebServer'] = false;
@@ -318,6 +330,7 @@ export class MainComponent implements OnInit {
   }
 
   editPlugin(plugin: any): void {
+    this.error = null;
     this.editPluginService.openProperties(plugin);
     this.openDrawer = 'properties';
     this.drawer.open();
@@ -361,6 +374,7 @@ export class MainComponent implements OnInit {
   }
 
   uploadPlugin(): void {
+    this.error = null;
     const e: HTMLElement = this.fileSelectInputDialog.nativeElement;
     e.click();
   }
@@ -390,27 +404,39 @@ export class MainComponent implements OnInit {
           this.snackBar.dismiss();
         }, 2000);
       }
-    });
+    },
+      error => {
+        this.error = error;
+      });
   }
 
   updateMonitoring(enabled: boolean): void {
+    this.error = null;
     this.serviceClient.postMonitor(enabled).pipe(
       untilDestroyed(this)
     ).subscribe(() => {
       this.isMonitoring = enabled;
       this.setArrows();
-    });
+    },
+      error => {
+        this.error = error;
+      });
   }
 
   logout(): void {
+    this.error = null;
     this.serviceClient.logout().pipe(
       untilDestroyed(this)
     ).subscribe(() => {
       this.router.navigate(['/login']);
-    });
+    },
+      error => {
+        this.error = error;
+      });
   }
 
   restart(): void {
+    this.error = null;
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Restart Service',
@@ -436,6 +462,7 @@ export class MainComponent implements OnInit {
   }
 
   deleteConfig(): void {
+    this.error = null;
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Delete Configuration',
@@ -460,10 +487,14 @@ export class MainComponent implements OnInit {
     ).subscribe(() => {
       this.window.sessionStorage.setItem('ApplianceAddress', '');
       this.router.navigate(['/login']);
-    });
+    },
+      error => {
+        this.error = error;
+      });
   }
 
   viewCertificate(e: Event, certType: string = 'Client'): void {
+    this.error = null;
     const dialogRef = this.dialog.open(ViewCertificateComponent, {
       data: { certificateType: certType }
     });
@@ -482,6 +513,7 @@ export class MainComponent implements OnInit {
   }
 
   viewTrustedCertificates(e: Event): void {
+    this.error = null;
     e.preventDefault();
 
     const dialogRef = this.dialog.open(EditTrustedCertificatesComponent, {

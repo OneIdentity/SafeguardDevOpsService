@@ -9,6 +9,9 @@
       <button mat-menu-item (click)="deleteConfig()"><mat-icon>delete</mat-icon>Delete Current Configuration</button>
     </mat-menu>
   </div>
+
+  <app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
+
   <div class="main-container">
     <mat-card class="info-container">
       <div class="info-column">

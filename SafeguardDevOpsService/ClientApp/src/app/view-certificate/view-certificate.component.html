@@ -6,6 +6,8 @@
 </div>
 
 <div class='dialog-content' mat-dialog-content>
+   <app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
+
    <app-progress-spinner diameter="20" color="accent" [visible]="!certificateLoaded || removingCertificate" [message]="spinnerMessage"></app-progress-spinner>
    <div class='certificate-container' *ngIf='certificateLoaded && !removingCertificate'>
       <div>
