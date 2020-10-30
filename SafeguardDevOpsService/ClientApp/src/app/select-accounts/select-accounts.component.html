@@ -55,7 +55,7 @@
         <tr mat-header-row *matHeaderRowDef="displayedColumns;"></tr>
         <tr mat-row *matRowDef="let row; columns: displayedColumns;" [ngClass]="{ 'selectable-row': selectVaultAccount }" (click)="selectRow($event, row)"></tr>
       </table>
-      <mat-spinner *ngIf="isLoading" diameter="30" color="primary"></mat-spinner>
+      <app-progress-spinner [visible]="isLoading" diameter="30" color="primary"></app-progress-spinner>
     </div>
   </div>
   

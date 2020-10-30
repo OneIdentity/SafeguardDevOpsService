@@ -78,15 +78,13 @@
       </mat-card>
 
       <div *ngIf="error" class="error"><mat-icon>error</mat-icon>{{error}}</div>
-      <div class="busy" *ngIf="plugin.LoadingPluginAccounts">
-        <mat-spinner color="primary" diameter="30"></mat-spinner>
-      </div>
+      <app-progress-spinner color="primary" diameter="30" [visible]="plugin.LoadingPluginAccounts"></app-progress-spinner>
     </div>
   
     <mat-toolbar class="selection-footer">
       <button mat-button (click)="delete()" [disabled]="isSaving || plugin.LoadingPluginAccounts" class="link-button">Delete Connection</button>
       <div class="spacer"></div>
-      <mat-spinner color="accent" diameter="20" *ngIf="isSaving"></mat-spinner>
+      <app-progress-spinner color="accent" diameter="20" [visible]="isSaving" message="Saving"></app-progress-spinner>
       <button mat-flat-button color="primary" (click)="save()" [disabled]="isSaving || plugin.LoadingPluginAccounts"><span *ngIf="!isSaving">Save</span><span *ngIf="isSaving">Saving...</span></button>
     </mat-toolbar>
   </div>

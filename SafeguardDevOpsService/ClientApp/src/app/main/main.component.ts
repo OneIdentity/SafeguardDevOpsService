@@ -287,7 +287,7 @@ export class MainComponent implements OnInit {
             return of();
           }
 
-          const passphrase = resultArray.length > 1 ? resultArray[1] : '';
+          var passphrase = resultArray.length > 1 ? resultArray[1] : '';
           this.certificateUploading[certificateType] = true;
           return certificateType === 'Client' ?
             this.serviceClient.postConfiguration(fileContents, passphrase) :
@@ -309,6 +309,8 @@ export class MainComponent implements OnInit {
           // bad password, have another try?
           // it's all we get
           this.snackBar.open('The password for the certificate in ' + certificateFileName + ' was not correct.', 'Dismiss', {duration: this.snackBarDuration});
+        } else if (error.error?.Message) {
+          this.snackBar.open('Unexpected error uploading ' + certificateType + ' certificate: ' + error.error.Message, 'Dismiss', {duration: this.snackBarDuration});
         }
       }).add(() => {
         this.certificateUploading['Client'] = this.certificateUploading['WebServer'] = false;

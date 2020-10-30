@@ -292,6 +292,7 @@ export class CreateCsrComponent implements OnInit {
       .subscribe(
         (csr) => {
           this.csr.Text = csr;
+          /*
           const saveModal = this.dialog.open(SaveCsrComponent,
             { data: {
                 CertificateType: this.certificateType,
@@ -306,7 +307,8 @@ export class CreateCsrComponent implements OnInit {
                 this.dialogRef.close();
               }
             });
-        }).add(() => {this.creatingCSR = false;});
+           */
+        }).add(() => {this.creatingCSR = true;});
   }
 
   goBack() {

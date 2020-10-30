@@ -6,8 +6,7 @@
 </div>
 
 <div class='dialog-content' mat-dialog-content>
-   <mat-spinner diameter="20" *ngIf="!certificateLoaded" color="accent"></mat-spinner>
-   <div *ngIf="removingCertificate"><mat-spinner diameter="20" color="accent"></mat-spinner>Removing {{typeDisplay}} Certificate</div>
+   <app-progress-spinner diameter="20" color="accent" [visible]="!certificateLoaded || removingCertificate" [message]="spinnerMessage"></app-progress-spinner>
    <div class='certificate-container' *ngIf='certificateLoaded && !removingCertificate'>
       <div>
          <div class='label'>Subject Name</div>

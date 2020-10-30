@@ -20,6 +20,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
   removingCertificate: boolean = false;
   LocalizedValidFrom: string = '';
   typeDisplay = '';
+  spinnerMessage = 'Loading';
   retrievedCert = {
   }
 
@@ -93,6 +94,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
         filter((dlgResult) => dlgResult.result === 'OK'),
         switchMap(() => {
           this.removingCertificate = true;
+          this.spinnerMessage = 'Removing ' + this.typeDisplay + ' Certificate';
           return this.certificateType === 'Client' ?
             this.serviceClient.deleteClientCertificate() :
             this.serviceClient.deleteWebServerCertificate();
@@ -101,7 +103,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
         () => {
           this.dialogRef.close({ removed: true });
         }
-      ).add(() => { this.removingCertificate = false;});
+      ).add(() => { this.removingCertificate = false; this.spinnerMessage='';});
     }
   }
 }
