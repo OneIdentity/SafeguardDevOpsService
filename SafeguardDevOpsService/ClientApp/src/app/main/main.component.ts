@@ -60,6 +60,7 @@ export class MainComponent implements OnInit {
   };
   webServerCertAdded: boolean = false;
   trustedCertsAdded: boolean = false;
+  webServerCert: any;
 
   config: any;
   trustedCertificates = [];
@@ -118,6 +119,7 @@ export class MainComponent implements OnInit {
         if (cert && cert.Subject !== 'CN=DevOpsServiceServerSSL') {
           this.webServerCertAdded = true;
         }
+        this.webServerCert = cert;
       }));
   }
 
@@ -268,7 +270,8 @@ export class MainComponent implements OnInit {
     e.preventDefault();
 
     const dialogRef = this.dialog.open(UploadCertificateComponent, {
-      data: { certificateType }
+      data: { certificateType,
+        certificate: certificateType === 'Web Server' ? this.webServerCert : null }
     });
 
     dialogRef.afterClosed().pipe(
@@ -300,11 +303,14 @@ export class MainComponent implements OnInit {
 
           var passphrase = resultArray.length > 1 ? resultArray[1] : '';
           this.certificateUploading[certificateType] = true;
+
+          this.snackBar.open('Uploading certificate...');
           return certificateType === 'Client' ?
             this.serviceClient.postConfiguration(fileContents, passphrase) :
             this.serviceClient.postWebServerCertificate(fileContents, passphrase);
         }
-      )
+      ),
+      finalize(() => this.snackBar.dismiss())
     ).subscribe(
       config => {
         if (certificateType === 'Client') {
@@ -313,6 +319,8 @@ export class MainComponent implements OnInit {
           this.viewCertificate(null, 'Client');
         } else {
           this.webServerCertAdded = true;
+          // Service restarts after updating web server cert; need to login again
+          this.authService.login(this.ApplianceAddress);
         }
       },
       error => {
@@ -493,7 +501,7 @@ export class MainComponent implements OnInit {
   viewCertificate(e: Event, certType: string = 'Client'): void {
     this.error = null;
     const dialogRef = this.dialog.open(ViewCertificateComponent, {
-      data: { certificateType: certType }
+      data: { certificateType: certType, certificate: certType === 'Web Server' ? this.webServerCert : null }
     });
 
     dialogRef.afterClosed().subscribe(
@@ -502,7 +510,8 @@ export class MainComponent implements OnInit {
           if (certType === 'Client') {
             window.location.reload();
           } else {
-            this.webServerCertAdded = false;
+            // Service restarts after removing web server cert; need to login again
+            this.authService.login(this.ApplianceAddress);
           }
         }
       }

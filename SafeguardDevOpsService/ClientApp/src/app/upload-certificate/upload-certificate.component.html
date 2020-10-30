@@ -9,19 +9,19 @@
       <p>Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords. The most secure way to create this certificate is using a certificate signing request (CSR).</p>
       <p>This can be either a PFX formatted certificate that includes the private key and a passphrase for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.</p>
    </ng-container>
-   <ng-container *ngIf='certificateType=="WebServer"'>
-      <p>Safeguard Secrets Broker for DevOps use TLS to authenticate itself and to protect its API. The first time it starts it generates a self-signed web server certificate. To ensure secure access this web certificate should be replaced. The most secure way to create this certificate is using a certificate signing request (CSR).</p>
-      <p>This can be either a PFX formatted certificate that includes the private key and a passphrase for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.</p>
+   <ng-container *ngIf='certificateType=="Web Server"'>
+      <p>Safeguard Secrets Broker for DevOps uses TLS to authenticate itself and to protect its API. The first time it starts it generates a self-signed web server certificate. <button mat-button class="link-button view-button" color="primary" (click)="viewCertificate('Web Server')" disableRipple>View</button></p>
+      <p>To ensure secure access this web certificate should be replaced. The most secure way to create this certificate is using a certificate signing request (CSR). This can be either a PFX formatted certificate that includes the private key and a passphrase for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.</p>
    </ng-container>
    <div class="show-more-link">
-    <button mat-button (click)="createCSR(certificateType)" class='link-button' color="primary">Create a Certificate Signing Request (CSR)</button>
+    <button mat-button (click)="createCSR(certificateType)" class='link-button' color="primary" disableRipple>Create Certificate Signing Request (CSR)</button>
   </div>
 
   <div *ngIf="certificateType=='Client'">
      <p></p>
      <p>A client certificate must be uploaded before Secrets Broker will work.</p>
   </div>
-  <div *ngIf="certificateType=='WebServer'">
+  <div *ngIf="certificateType=='Web Server'">
       <p></p>
       <p>Safeguard Secrets Broker for DevOps will be restarted so the new certificate can be applied.</p>
    </div>
