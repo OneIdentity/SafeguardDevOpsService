@@ -484,7 +484,6 @@ export class MainComponent implements OnInit {
 
     const dialogRef = this.dialog.open(EditTrustedCertificatesComponent, {
       width: '500px',
-      minHeight: '500px',
       data: { trustedCertificates: this.trustedCertificates }
     });
 

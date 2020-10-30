@@ -1,26 +1,79 @@
-<h1 mat-dialog-title>Trusted Certificates</h1>
-<div mat-dialog-content>
+<div class="root-container">
+
+  <div mat-dialog-title>
+    <div class='dialog-title-elements'>
+      <div class='title-text'>
+        <span>Trusted Certificates</span>
+        <button mat-icon-button tabindex='-1' class="info-icon" (click)="showExplanatoryText = true" *ngIf="trustedCertificates.length > 0"><mat-icon>info</mat-icon></button>
+      </div>
+      <div class='close-button'><button mat-icon-button mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
+    </div>
+  </div>
+
   <div class="actions">
-    <div class="upload-button">
+    <div class="upload-button" >
       <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".cer,.crt,.der,.pfx,.p12,.pem" />
       <button mat-stroked-button (click)="browse()" color="primary">Upload</button>
     </div>
     <button mat-flat-button (click)="import()" color="primary" cdkFocusInitial>Import from Safeguard</button>
     <div class="spacer"></div>
-    <mat-checkbox [(ngModel)]="useSsl" (disabled)="trustedCertificates.length == 0" (change)="updateUseSsl()">Use SSL</mat-checkbox>
+    <mat-checkbox [(ngModel)]="useSsl" (disabled)="trustedCertificates.length == 0" (change)="updateUseSsl()" matTooltip="Use trusted certificates to validate an SSL connection to Safeguard">Verify TLS Certifcate</mat-checkbox>
   </div>
-  <div *ngIf="trustedCertificates.length == 0" class="no-certs-msg">
-    <span>
-    Once Safeguard Secrets Broker for DevOps has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be established.
-    Establishing a trusted connection requires that trusted certificates be added to the service.
-    </span>
-  </div>
-  <div *ngIf="trustedCertificates.length > 0">
-    <mat-selection-list [multiple]="false" #certificates>
+
+  <mat-dialog-content>
+    <div *ngIf="trustedCertificates.length === 0 && !isLoading" class="no-certs-msg">
+      Once Safeguard Secrets Broker for DevOps has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be established.
+      Establishing a trusted connection requires that trusted certificates be added to the service.
+    </div>
+    
+    <mat-selection-list [multiple]="false" #certificates [ngClass]="{'cert-list': trustedCertificates.length > 0}">
       <mat-list-option *ngFor="let cert of trustedCertificates" [value]="cert">
         <span class="cert-info">{{cert.Subject}}</span>
       </mat-list-option>
     </mat-selection-list>
+  
+    <mat-spinner color="accent" diameter="80" *ngIf="isLoading"></mat-spinner>
+  </mat-dialog-content>
+
+  <div class="cert-details-container" *ngIf="selectedCert">
+    <div class="cert-details-body">
+      <div class="close-container">
+        <div class="spacer"></div>
+        <button mat-icon-button (click)="closeCertDetails()"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="cert-details">
+        <div class="info-label">Subject</div>
+        <div class="info-value">{{selectedCert.Subject}}</div>
+        <div class="info-label">Issued By</div>
+        <div class="info-value">{{selectedCert.IssuedBy}}</div>
+        <div class="info-label">Valid From</div>
+        <div class="info-value">{{localizedValidFrom}}</div>
+        <div class="info-label">Thumbprint</div>
+        <div class="info-value">{{selectedCert.Thumbprint}}</div>
+        <button mat-button class="link-button" color="primary" (click)="removeCertificate()">Remove Certificate</button>
+      </div>
+    </div>
+    <div class="filler-body" (click)="closeCertDetails()">
+    </div>
+  </div>
+
+  <div class="cert-details-container" *ngIf="showExplanatoryText">
+    <div class="cert-details-body">
+      <div class="close-container">
+        <div class="cert-details-title">Trusted Certificates</div>
+        <div class="spacer"></div>
+        <button mat-icon-button (click)="showExplanatoryText = false"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="cert-details">
+        <br/>
+        <p>Once Safeguard Secrets Broker for DevOps has been associated with a Safeguard for Privileged Passwords appliance, a trusted connection should be established.
+          Establishing a trusted connection requires that trusted certificates be added to the service.
+        </p>
+        <br/>
+      </div>
+    </div>
+    <div class="filler-body" (click)="showExplanatoryText = false">
+    </div>
   </div>
 </div>
 
