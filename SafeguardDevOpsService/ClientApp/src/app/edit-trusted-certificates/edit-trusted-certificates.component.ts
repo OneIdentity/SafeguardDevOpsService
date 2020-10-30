@@ -2,12 +2,11 @@ import { Component, OnInit, Inject, ViewChild, AfterViewInit, ElementRef } from 
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { DevOpsServiceClient } from '../service-client.service';
 import { MatSelectionList } from '@angular/material/list';
-import { MatDateFormats } from '@angular/material/core';
+import * as moment from 'moment-timezone';
 import { EnterPassphraseComponent } from '../upload-certificate/enter-passphrase/enter-passphrase.component';
 import { Observable, of } from 'rxjs';
 import { map, switchMap, tap, catchError, finalize } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDrawer } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-edit-trusted-certificates',
@@ -18,11 +17,13 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
 
   trustedCertificates: any[];
   useSsl: boolean;
-  sel: any;
+  selectedCert: any;
+  localizedValidFrom: string;
+  isLoading: boolean;
+  showExplanatoryText: boolean;
 
   @ViewChild('certificates', { static: false }) certList: MatSelectionList;
   @ViewChild('fileSelectInputDialog', { static: false }) fileSelectInputDialog: ElementRef;
-  @ViewChild('drawer', { static: false }) drawer: MatDrawer;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -33,12 +34,20 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.trustedCertificates = this.data?.trustedCertificates ?? [];
+
+    this.serviceClient.getSafeguard().subscribe((data: any) => {
+      if (data) {
+        this.useSsl = !data.IgnoreSsl;
+      }
+    });
   }
 
   ngAfterViewInit(): void {
     this.certList.selectionChange.subscribe((x) => {
-      this.sel = x;
-      this.drawer.open();
+      if (!this.selectedCert) {
+        this.selectedCert = x.option._value;
+        this.localizedValidFrom = moment(this.selectedCert.NotBefore).format('LLL (Z)') + ' - ' + moment(this.selectedCert.NotAfter).format('LLL (Z)');
+      }
     });
   }
 
@@ -80,9 +89,17 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
       };
 
       this.getPassphrase(fileData).pipe(
+        tap(() => {
+          this.isLoading = true;
+          this.trustedCertificates.splice(0);
+        }),
         switchMap((data) => this.saveCertificate(data)),
         switchMap(() => this.refreshCertificates()),
         finalize(() => {
+          this.isLoading = false;
+
+          this.snackbar.open(`Added certifcate ${fileData.fileName}`, 'Dismiss', { duration: 5000 });
+
           // Clear the selection
           const input = this.fileSelectInputDialog.nativeElement as HTMLInputElement;
           input.value = null;
@@ -131,18 +148,41 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   private refreshCertificates(): Observable<any[]> {
     return this.serviceClient.getTrustedCertificates().pipe(
       tap((certs) => {
-        this.trustedCertificates.splice(0);
         this.trustedCertificates.push(...certs);
       })
     );
   }
 
   import(): void {
-    this.serviceClient.postTrustedCertificates(true).subscribe(
+    this.isLoading = true;
+    this.trustedCertificates.splice(0);
+    let trustedCertsCount = 0;
+    this.serviceClient.postTrustedCertificates(true).pipe(
+      switchMap((trustedCerts) => {
+        trustedCertsCount = trustedCerts.length;
+        return this.refreshCertificates();
+      })
+    ).subscribe(
       (data) => {
-        this.trustedCertificates.splice(0);
-        this.trustedCertificates.push(...data);
+        this.isLoading = false;
+        this.snackbar.open(`Imported ${trustedCertsCount} certificates`, 'Dismiss', { duration: 5000 });
       }
     );
+  }
+
+  removeCertificate(): void {
+    const thumbprint = this.selectedCert.Thumbprint;
+    this.selectedCert = null;
+    this.isLoading = true;
+    this.trustedCertificates.splice(0);
+    this.serviceClient.deleteTrustedCertificate(thumbprint).pipe(
+      switchMap(() => this.refreshCertificates())
+    ).subscribe(() => {
+      this.isLoading = false;
+    });
+  }
+
+  closeCertDetails(): void {
+    this.selectedCert = null;
   }
 }

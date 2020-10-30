@@ -71,6 +71,7 @@ export class DevOpsServiceClient {
   putSafeguardUseSsl(useSsl: boolean): Observable<any> {
     const url = this.BASE + 'Safeguard';
     const payload = {
+      ApplianceAddress: this.applianceAddress,
       IgnoreSsl: !useSsl
     };
     return this.http.put(url, payload, this.authHeader())
@@ -305,7 +306,7 @@ export class DevOpsServiceClient {
   }
 
   deleteTrustedCertificate(thumbprint: string): Observable<any> {
-    return this.http.delete(this.BASE + 'Safeguard/TrustedCertificates' + encodeURIComponent(thumbprint), this.authHeader())
+    return this.http.delete(this.BASE + 'Safeguard/TrustedCertificates/' + encodeURIComponent(thumbprint), this.authHeader())
       .pipe(catchError(this.error<any>('deleteTrustedCertificate')));
   }
 }

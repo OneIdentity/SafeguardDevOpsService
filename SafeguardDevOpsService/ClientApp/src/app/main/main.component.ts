@@ -453,10 +453,12 @@ export class MainComponent implements OnInit {
         this.drawer.open();
       }),
       switchMap(() => this.serviceClient.deleteConfiguration()),
-      switchMap(() => this.serviceClient.logon()),
-      switchMap(() => this.serviceClient.deleteSafeguard()),
-      finalize(() => this.drawer.close())
+      finalize(() => {
+        this.drawer.close();
+        this.snackBar.dismiss();
+      })
     ).subscribe(() => {
+      this.window.sessionStorage.setItem('ApplianceAddress', '');
       this.router.navigate(['/login']);
     });
   }
@@ -484,7 +486,6 @@ export class MainComponent implements OnInit {
 
     const dialogRef = this.dialog.open(EditTrustedCertificatesComponent, {
       width: '500px',
-      minHeight: '500px',
       data: { trustedCertificates: this.trustedCertificates }
     });
 
