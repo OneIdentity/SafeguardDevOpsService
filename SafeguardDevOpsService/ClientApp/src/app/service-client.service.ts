@@ -81,17 +81,6 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('putSafeguard')));
   }
 
-  putPendingRemoval(): Observable<any> {
-    const url = this.BASE + 'Safeguard';
-    const payload = {
-      ApplianceAddress: this.applianceAddress,
-      IgnoreSsl: true,
-      PendingRemoval: true
-    };
-    return this.http.put(url, payload, this.authHeader())
-      .pipe(catchError(this.error<any>('putSafeguard')));
-  }
-
   putSafeguardUseSsl(useSsl: boolean): Observable<any> {
     const url = this.BASE + 'Safeguard';
     const payload = {

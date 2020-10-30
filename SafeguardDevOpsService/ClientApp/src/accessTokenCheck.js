@@ -17,7 +17,6 @@ function getAccessToken(){
 
 var token = this.getAccessToken();
 if (token){
-  console.log('ACCESS TOKEN ' + token);
   var index = this.window.location.pathname.indexOf('remote-token');
   if (index >= 0){
     this.window.sessionStorage.setItem("RemoteAccessToken", token);
