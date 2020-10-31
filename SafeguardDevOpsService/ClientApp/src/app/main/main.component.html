@@ -73,27 +73,28 @@
           
            <div *ngIf="Thumbprint">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="link-button" color="primary" (click)="viewCertificate($event, 'Client')">View Details</button>
+             <button mat-button class="link-button" color="primary" (click)="viewCertificate($event, 'Client')" disableRipple>View Details</button>
            </div>
 
            <div class="info-label">Web Server Certificate</div>
            <app-progress-spinner color="accent" diameter="30" message="Uploading" [visible]="certificateUploading['WebServer']"></app-progress-spinner>
            
            <div *ngIf="!webServerCertAdded">
-              <button mat-button class="link-button" (click)="addCertificate($event, 'WebServer')" color='primary'>Add Certificate</button>
+              <mat-icon class="yellow-icon">check_circle</mat-icon>
+              <button mat-button class="link-button" (click)="addCertificate($event, 'Web Server')" color='primary' disableRipple>View Details</button>
            </div>
            <div *ngIf="webServerCertAdded">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="link-button" (click)="viewCertificate($event,'WebServer')" color='primary'>View Details</button>
+             <button mat-button class="link-button" (click)="viewCertificate($event,'Web Server')" color='primary' disableRipple>View Details</button>
            </div>
 
            <div class="info-label">Trusted Certificates</div>
            <div *ngIf="!trustedCertsAdded">
-              <button mat-button class="link-button" (click)='viewTrustedCertificates($event)' color='primary'>Add Certificate</button>
+              <button mat-button class="link-button" (click)='viewTrustedCertificates($event)' color='primary' disableRipple>Add Certificate</button>
            </div>
            <div *ngIf="trustedCertsAdded">
              <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="link-button" color="primary" (click)="viewTrustedCertificates($event)" color='primary'>View Details</button>
+             <button mat-button class="link-button" color="primary" (click)="viewTrustedCertificates($event)" color='primary' disableRipple>View Details</button>
            </div>
         </ng-container>
          </div>

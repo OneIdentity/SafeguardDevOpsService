@@ -287,10 +287,11 @@ export class CreateCsrComponent implements OnInit {
     this.certificateType = this.data?.certificateType ?? 'Client';
   }
 
-  createCSR() { 
+  createCSR(): void {
+    const csrType = this.certificateType === 'Web Server' ? 'WebSsl' : 'A2AClient';
     this.creatingCSR = true;
     this.serviceClient
-      .getCSR('A2AClient', this.subjectName, this.csr.DnsNames.join(','), this.csr.IpAddresses.join(','), this.keySize)
+      .getCSR(csrType, this.subjectName, this.csr.DnsNames.join(','), this.csr.IpAddresses.join(','), this.keySize)
       .subscribe(
         (csr) => {
           this.csr.Text = csr;

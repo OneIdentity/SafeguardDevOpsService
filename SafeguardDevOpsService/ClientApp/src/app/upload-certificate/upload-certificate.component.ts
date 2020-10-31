@@ -3,6 +3,7 @@ import { DevOpsServiceClient } from '../service-client.service';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CreateCsrComponent } from '../create-csr/create-csr.component';
 import * as $ from 'jquery';
+import { ViewCertificateComponent } from '../view-certificate/view-certificate.component';
 
 @Component({
   selector: 'app-upload-certificate',
@@ -12,15 +13,16 @@ import * as $ from 'jquery';
 export class UploadCertificateComponent implements OnInit {
 
   certificateType: string = '';
+  certificate: any;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
-    private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
     private dialogRef: MatDialogRef<UploadCertificateComponent>) { }
 
   ngOnInit(): void {
     this.certificateType = this.data?.certificateType ?? '';
+    this.certificate = this.data?.certificate;
   }
 
   browse(): void {
@@ -59,18 +61,16 @@ export class UploadCertificateComponent implements OnInit {
     fileInput.trigger("click");
   }
 
-  createCSR(certificateType: string) {
-    const dialogRef = this.dialog.open(CreateCsrComponent, {
-      // disableClose: true
-      data: {certificateType: certificateType}
+  createCSR(certificateType: string): void {
+    this.dialog.open(CreateCsrComponent, {
+      data: { certificateType }
     });
-
-    dialogRef.afterClosed().subscribe(
-      result => {
-        if (result) {
-        }
-      }
-    );
   }
 
+  viewCertificate(certType: string): void {
+    this.dialogRef.close();
+    this.dialog.open(ViewCertificateComponent, {
+      data: { certificateType: certType, certificate: this.certificate }
+    });
+  }
 }

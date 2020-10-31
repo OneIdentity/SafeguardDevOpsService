@@ -29,7 +29,7 @@
             <div class="inline-div">
               <div class="info-label">Vault's Account in Safeguard</div>
               <div>{{plugin?.VaultAccountDisplayName}}</div>
-              <button mat-button class="link-button" color="primary" (click)="selectVaultAccount()" [disabled]="plugin?.LoadingAvailableAccounts" *ngIf="!plugin?.VaultAccountDisplayName">Select Account</button>
+              <button mat-button class="link-button" disableRipple color="primary" (click)="selectVaultAccount()" [disabled]="plugin?.LoadingAvailableAccounts" *ngIf="!plugin?.VaultAccountDisplayName">Select Account</button>
             </div>
             <button mat-icon-button *ngIf="plugin?.VaultAccountDisplayName" matTooltip="Remove Vault Account" (click)="removeVaultAccount()" class="remove-vault-button"><mat-icon>close</mat-icon></button>
           </div>
@@ -84,7 +84,7 @@
     </div>
   
     <mat-toolbar class="selection-footer">
-      <button mat-button (click)="delete()" [disabled]="isSaving || plugin.LoadingPluginAccounts" class="link-button">Delete Connection</button>
+      <button mat-button (click)="delete()" [disabled]="isSaving || plugin.LoadingPluginAccounts" class="link-button" disableRipple>Delete Connection</button>
       <div class="spacer"></div>
       <app-progress-spinner color="accent" diameter="20" [visible]="isSaving" message="Saving"></app-progress-spinner>
       <button mat-flat-button color="primary" (click)="save()" [disabled]="isSaving || plugin.LoadingPluginAccounts"><span *ngIf="!isSaving">Save</span><span *ngIf="isSaving">Saving...</span></button>
