@@ -4,10 +4,10 @@ import { switchMap, map, tap, finalize, filter } from 'rxjs/operators';
 import { of, Observable, forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { UploadCertificateComponent } from '../upload-certificate/upload-certificate.component';
+import { UploadCertificateComponent, UploadCertificateResult } from '../upload-certificate/upload-certificate.component';
 import { EnterPassphraseComponent } from '../upload-certificate/enter-passphrase/enter-passphrase.component';
-import { CreateCsrComponent } from '../create-csr/create-csr.component';
-import { ViewCertificateComponent } from '../view-certificate/view-certificate.component';
+import { CreateCsrComponent, CreateCsrResult } from '../create-csr/create-csr.component';
+import { ViewCertificateComponent, ViewCertificateResult } from '../view-certificate/view-certificate.component';
 import * as $ from 'jquery';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EditPluginService, EditPluginMode } from '../edit-plugin.service';
@@ -250,24 +250,24 @@ export class MainComponent implements OnInit {
       );
   }
 
-  createCSR(certificateType: string) {
+  createCSR(certificateType: string): void {
     const dialogRef = this.dialog.open(CreateCsrComponent, {
-      // disableClose: true
-      data: {certificateType: certificateType}
+      data:  { certificateType }
     });
 
     dialogRef.afterClosed().subscribe(
       result => {
-        if (result) {
+        if (result?.result === CreateCsrResult.AddCertificate) {
+          this.addCertificate(null, certificateType);
         }
       }
     );
   }
 
   addCertificate(e: Event, certificateType: string): void {
-    let certificateFileName: string = '';
+    let certificateFileName = '';
     this.error = null;
-    e.preventDefault();
+    e?.preventDefault();
 
     const dialogRef = this.dialog.open(UploadCertificateComponent, {
       data: { certificateType,
@@ -275,6 +275,18 @@ export class MainComponent implements OnInit {
     });
 
     dialogRef.afterClosed().pipe(
+      switchMap((dlgResult: any) => {
+        if (dlgResult?.result === UploadCertificateResult.UploadCertificate) {
+          return of(dlgResult.data);
+        }
+
+        if (dlgResult?.result === UploadCertificateResult.ViewCertificate) {
+          this.viewCertificate(null, certificateType);
+        } else if (dlgResult?.result === UploadCertificateResult.CreateCSR) {
+          this.createCSR(certificateType);
+        }
+        return of(); // Nothing more to do
+      }),
       switchMap(
         (fileData) => {
           certificateFileName = fileData.fileName;
@@ -505,14 +517,16 @@ export class MainComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(
-      result => {
-        if (result && result['removed']) {
+      (result) => {
+        if (result?.result === ViewCertificateResult.RemovedCertificate) {
           if (certType === 'Client') {
             window.location.reload();
           } else {
             // Service restarts after removing web server cert; need to login again
             this.authService.login(this.ApplianceAddress);
           }
+        } else if (result?.result === ViewCertificateResult.AddCertificate) {
+          this.addCertificate(null, certType);
         }
       }
     );

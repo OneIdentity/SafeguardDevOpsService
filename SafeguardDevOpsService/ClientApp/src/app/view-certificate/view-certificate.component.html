@@ -32,6 +32,6 @@
    </div>
 </div>
 <div mat-dialog-actions align='start'>
-   <button mat-button *ngIf="showBackButton" class='link-button' color='primary' (click)="addCertificate('Web Server')" tabindex='-1' disableRipple>&lt; &nbsp; Back</button>
+   <button mat-button *ngIf="showBackButton" class='link-button' color='primary' (click)="addCertificate()" tabindex='-1' disableRipple>&lt; &nbsp; Back</button>
    <button mat-button *ngIf="!removingCertificate && !showBackButton" class='link-button' color='primary' (click)="removeCertificate()" tabindex='-1' disableRipple>Remove Certificate</button>
 </div>

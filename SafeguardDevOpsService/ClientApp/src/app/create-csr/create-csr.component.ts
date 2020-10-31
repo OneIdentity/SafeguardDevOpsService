@@ -317,8 +317,8 @@ export class CreateCsrComponent implements OnInit {
       .add(() => {this.creatingCSR = false;});
   }
 
-  goBack() {
-    this.dialogRef.close(null);
+  goBack(): void {
+    this.dialogRef.close({ result: CreateCsrResult.AddCertificate });
   }
 
   addSubjectAlt(whichalt,event?):void {
@@ -398,4 +398,8 @@ export class CreateCsrComponent implements OnInit {
         (this.dnBuilder.Country ? ', C=' + this.dnBuilder.Country : '');
     }
   }
+}
+
+export enum CreateCsrResult {
+  AddCertificate
 }

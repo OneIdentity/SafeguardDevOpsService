@@ -1,9 +1,6 @@
-import { Component, OnInit, ElementRef, ViewChild, Inject } from '@angular/core';
-import { DevOpsServiceClient } from '../service-client.service';
+import { Component, OnInit, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { CreateCsrComponent } from '../create-csr/create-csr.component';
 import * as $ from 'jquery';
-import { ViewCertificateComponent } from '../view-certificate/view-certificate.component';
 
 @Component({
   selector: 'app-upload-certificate',
@@ -50,9 +47,12 @@ export class UploadCertificateComponent implements OnInit {
         var pkcs12Der = arrayBufferToString(fileReader.result);
         let cert:string = btoa(pkcs12Der);
         this.dialogRef.close({
-          fileType: fileSelected.type,
-          fileContents: cert,
-          fileName: fileSelected.name
+          result: UploadCertificateResult.UploadCertificate,
+          data: {
+            fileType: fileSelected.type,
+            fileContents: cert,
+            fileName: fileSelected.name
+          }
         });
       };
       fileReader.readAsArrayBuffer(fileSelected);
@@ -61,16 +61,17 @@ export class UploadCertificateComponent implements OnInit {
     fileInput.trigger("click");
   }
 
-  createCSR(certificateType: string): void {
-    this.dialog.open(CreateCsrComponent, {
-      data: { certificateType }
-    });
+  createCSR(): void {
+    this.dialogRef.close({ result: UploadCertificateResult.CreateCSR });
   }
 
-  viewCertificate(certType: string): void {
-    this.dialogRef.close();
-    this.dialog.open(ViewCertificateComponent, {
-      data: { certificateType: certType, certificate: this.certificate }
-    });
+  viewCertificate(): void {
+    this.dialogRef.close({ result: UploadCertificateResult.ViewCertificate });
   }
+}
+
+export enum UploadCertificateResult {
+  ViewCertificate,
+  UploadCertificate,
+  CreateCSR
 }
