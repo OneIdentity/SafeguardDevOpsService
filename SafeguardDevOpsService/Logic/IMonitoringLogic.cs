@@ -7,5 +7,6 @@ namespace OneIdentity.DevOps.Logic
     {
         void EnableMonitoring(bool enable);
         MonitorState GetMonitorState();
+        void Run();
     }
 }

@@ -326,6 +326,22 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
+        private void EnableA2AService(ISafeguardConnection sg)
+        {
+            try
+            {
+                var result = sg.InvokeMethodFull(Service.Appliance, Method.Post, "A2AService/Enable");
+                if (result.StatusCode != HttpStatusCode.OK)
+                {
+                    _logger.Error("Failed to start the A2A service.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to start the A2A service: {ex.Message}");
+            }
+        }
+
         private void CreateA2ARegistration(ISafeguardConnection sg, A2ARegistrationType registrationType)
         {
             if (_configDb.A2aUserId == null)
@@ -807,6 +823,7 @@ namespace OneIdentity.DevOps.Logic
             CreateA2AUser(sg);
             CreateA2ARegistration(sg, A2ARegistrationType.Account);
             CreateA2ARegistration(sg, A2ARegistrationType.Vault);
+            EnableA2AService(sg);
 
             return GetDevOpsConfiguration();
         }
