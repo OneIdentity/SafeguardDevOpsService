@@ -209,7 +209,7 @@ export class MainComponent implements OnInit {
         const color =  isUnconfigured || !this.isMonitoring ? 'Black9' :  colors[index % colors.length];
 
         pathEl.setAttribute('class', isUnconfigured || !this.isMonitoring ? 'arrow-unconfigured' : 'arrow');
-        pathEl.setAttribute('marker-end', `url(#marker${color})`);
+        pathEl.setAttribute('marker-end', `url(${this.window.location.href}#marker${color})`);
 
         this.renderer.appendChild(pathGroup, pathEl);
       });
