@@ -24,7 +24,7 @@ export class ErrorBarComponent implements OnInit {
     else {
       this.message = error.split("\n").join("<br\>");
     }
-  };
+  }
 
   @Input() dismissable: boolean = true;
 
