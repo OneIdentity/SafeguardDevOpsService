@@ -25,5 +25,9 @@
         /// Safeguard DevOps instance Id
         /// </summary>
         public string DevOpsInstanceId { get; set; }
+        /// <summary>
+        /// Safeguard DevOps version
+        /// </summary>
+        public string Version { get; set; }
     }
 }
