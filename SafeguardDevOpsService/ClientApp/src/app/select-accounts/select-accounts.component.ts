@@ -3,7 +3,7 @@ import { DevOpsServiceClient } from '../service-client.service';
 import { SelectionModel } from '@angular/cdk/collections';
 import { EditPluginService } from '../edit-plugin.service';
 import { fromEvent, Observable, merge, of } from 'rxjs';
-import { distinctUntilChanged, debounceTime, switchMap, filter, tap, finalize } from 'rxjs/operators';
+import { distinctUntilChanged, debounceTime, switchMap, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { MatSort, SortDirection } from '@angular/material/sort';
 import { MatPaginator } from '@angular/material/paginator';
@@ -79,6 +79,7 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
         const indx = this.accounts.findIndex(x => x.Id === account.Id);
         if (indx > -1) {
           this.accounts.splice(indx, 1);
+          this.totalCount--;
         }
       });
     }

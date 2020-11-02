@@ -59,7 +59,6 @@ export class MainComponent implements OnInit {
     trusted: false
   };
   webServerCertAdded: boolean = false;
-  trustedCertsAdded: boolean = false;
   webServerCert: any;
 
   config: any;
@@ -165,7 +164,6 @@ export class MainComponent implements OnInit {
     return this.serviceClient.getTrustedCertificates().pipe(
       tap((trustedCerts) => {
         this.trustedCertificates = trustedCerts;
-        this.trustedCertsAdded = this.trustedCertificates?.length > 0;
       }));
   }
 
