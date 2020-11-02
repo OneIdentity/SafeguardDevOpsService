@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -18,6 +19,7 @@ using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
 using Microsoft.AspNetCore.WebUtilities;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Extensions;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
@@ -57,6 +59,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var availabilityJson = sg.InvokeMethod(Service.Notification, Method.Get, "Status/Availability");
                 var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
+
                 return new SafeguardDevOpsConnection()
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
@@ -64,8 +67,10 @@ namespace OneIdentity.DevOps.Logic
                     ApplianceName = applianceAvailability.ApplianceName,
                     ApplianceVersion = applianceAvailability.ApplianceVersion,
                     ApplianceState = applianceAvailability.ApplianceCurrentState,
-                    DevOpsInstanceId = _configDb.SvcId
+                    DevOpsInstanceId = _configDb.SvcId,
+                    Version = WellKnownData.DevOpsServiceVersion()
                 };
+
             }
             catch (SafeguardDotNetException ex)
             {
@@ -81,6 +86,7 @@ namespace OneIdentity.DevOps.Logic
             safeguardConnection.ApplianceVersion = safeguard.ApplianceVersion;
             safeguardConnection.ApplianceState = safeguard.ApplianceState;
             safeguardConnection.DevOpsInstanceId = _configDb.SvcId;
+            safeguardConnection.Version = safeguard.Version;
 
             return safeguardConnection;
         }
