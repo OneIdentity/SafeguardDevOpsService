@@ -37,6 +37,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string A2aRegistrationIdKey = "A2aRegistrationId";
         private const string A2aVaultRegistrationIdKey = "A2aVaultRegistrationId";
         private const string SigningCertificateKey = "SigningCertificate";
+        private const string LastKnownMonitorStateKey = "LastKnownMonitorState";
 
         private const string UserCertificateThumbprintKey = "UserCertThumbprint";
         private const string UserCertificateDataKey = "UserCertData";
@@ -394,6 +395,12 @@ namespace OneIdentity.DevOps.ConfigDb
                 }
             }
             set => SetSimpleSetting(A2aVaultRegistrationIdKey, value.ToString());
+        }
+
+        public string LastKnownMonitorState
+        {
+            get => GetSimpleSetting(LastKnownMonitorStateKey);
+            set => SetSimpleSetting(LastKnownMonitorStateKey, value);
         }
 
         public string SigningCertificate

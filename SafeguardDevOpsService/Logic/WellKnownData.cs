@@ -31,6 +31,9 @@ namespace OneIdentity.DevOps.Logic
         public const string PluginDirName = "ExternalPlugins";
         public const string PluginStageName = "PluginStaging";
 
+        public const string MonitorEnabled = "Enabled";
+        public const string MonitorDisabled = "Disabled";
+
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ?

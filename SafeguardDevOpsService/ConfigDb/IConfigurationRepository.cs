@@ -36,6 +36,7 @@ namespace OneIdentity.DevOps.ConfigDb
         int? A2aRegistrationId { get; set; }
         int? A2aVaultRegistrationId { get; set; }
         string SigningCertificate { get; set; }
+        string LastKnownMonitorState { get; set; }
 
         string UserCertificateThumbprint { get; set; }
         string UserCertificateBase64Data { get; set; }
