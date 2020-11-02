@@ -89,10 +89,10 @@
            </div>
 
            <div class="info-label">Trusted Certificates</div>
-           <div *ngIf="!trustedCertsAdded">
+           <div *ngIf="!trustedCertificates?.length">
               <button mat-button class="link-button" (click)='viewTrustedCertificates($event)' color='primary' disableRipple>Add Certificate</button>
            </div>
-           <div *ngIf="trustedCertsAdded">
+           <div *ngIf="trustedCertificates?.length">
              <mat-icon class="green-icon">check_circle</mat-icon>
              <button mat-button class="link-button" color="primary" (click)="viewTrustedCertificates($event)" color='primary' disableRipple>View Details</button>
            </div>

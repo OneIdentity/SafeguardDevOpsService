@@ -4,7 +4,6 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import * as moment from 'moment-timezone';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { filter, switchMap } from 'rxjs/operators';
-import { UploadCertificateComponent } from '../upload-certificate/upload-certificate.component';
 import { of } from 'rxjs';
 
 @Component({
@@ -80,12 +79,8 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
     this.fieldFocus();
   }
 
-  addCertificate(certType: string): void {
-    this.dialogRef.close();
-
-    this.dialog.open(UploadCertificateComponent, {
-      data: { certificateType: certType, certificate: this.retrievedCert }
-    });
+  addCertificate(): void {
+    this.dialogRef.close({ result: ViewCertificateResult.AddCertificate });
   }
 
   removeCertificate(): void {
@@ -118,7 +113,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
         })
       ).subscribe(
         () => {
-          this.dialogRef.close({ removed: true });
+          this.dialogRef.close({ result: ViewCertificateResult.RemovedCertificate });
         },
         (error) => {
           this.error = error;
@@ -126,4 +121,9 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
       ).add(() => { this.removingCertificate = false; this.spinnerMessage='';});
     }
   }
+}
+
+export enum ViewCertificateResult {
+  RemovedCertificate,
+  AddCertificate
 }
