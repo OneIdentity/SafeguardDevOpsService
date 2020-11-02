@@ -472,6 +472,7 @@ export class MainComponent implements OnInit {
       switchMap(() => this.serviceClient.logon()),
       switchMap(() => this.initializeMonitoring()),
       tap(() => {
+        this.setArrows();
         this.snackBar.open('Safeguard Secrets Broker for DevOps service restarted.', null, { duration: this.snackBarDuration });
         // Hide overlay
         this.drawer.close();
