@@ -29,9 +29,9 @@
             <div class="inline-div">
               <div class="info-label">Vault's Account in Safeguard</div>
               <div>{{plugin?.VaultAccountDisplayName}}</div>
-              <button mat-button class="link-button" disableRipple color="primary" (click)="selectVaultAccount()" [disabled]="plugin?.LoadingAvailableAccounts" *ngIf="!plugin?.VaultAccountDisplayName">Select Account</button>
+              <button mat-button class="link-button" disableRipple color="primary" (click)="selectVaultAccount()" [disabled]="plugin?.LoadingAvailableAccounts || isSaving" *ngIf="!plugin?.VaultAccountDisplayName">Select Account</button>
             </div>
-            <button mat-icon-button *ngIf="plugin?.VaultAccountDisplayName" matTooltip="Remove Vault Account" (click)="removeVaultAccount()" class="remove-vault-button"><mat-icon>close</mat-icon></button>
+            <button mat-icon-button *ngIf="plugin?.VaultAccountDisplayName" matTooltip="Remove Vault Account" (click)="removeVaultAccount()" class="remove-vault-button" [disabled]="isSaving"><mat-icon>close</mat-icon></button>
           </div>
           <div class="field-text">This account will be used by Secrets Broker to pull new passwords from Safeguard</div>
         </div>
