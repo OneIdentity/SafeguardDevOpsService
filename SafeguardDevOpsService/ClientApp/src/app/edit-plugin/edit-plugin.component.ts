@@ -105,7 +105,8 @@ export class EditPluginComponent implements OnInit {
           data: {
             title: 'Next Steps',
             message: 'The plugin files must be manually removed from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder once Safeguard Secrets Broker for DevOps has been stopped.',
-            showCancel: false
+            showCancel: false,
+            confirmText: 'OK'
         }});
       }
     );

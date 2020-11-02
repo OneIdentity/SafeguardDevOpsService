@@ -216,41 +216,26 @@ path.arrow-unconfigured {
   color: $black-9;
   fill: none;
 }
-marker.arrow-unconfigured {
-  fill: $black-9;
-}
 
 path.arrow {
   fill: none;
   stroke: $corbin-orange;
   color: $corbin-orange;
 }
-marker.arrow1 {
-  fill: $corbin-orange;
-}
 
 path.arrow:nth-child(2) {
   stroke: $maui-sunset;
   color: $maui-sunset;
-}
-marker.arrow2 {
-  fill: $maui-sunset;
 }
 
 path.arrow:nth-child(3) {
   stroke: $aspen-green;
   color: $aspen-green;
 }
-marker.arrow3 {
-  fill: $aspen-green;
-}
 
 path.arrow:nth-child(4) {
   stroke: $azalea-pink;
   color: $azalea-pink;
-}
-marker.arrow4 {
-  fill: $azalea-pink;
 }
 
 a {
