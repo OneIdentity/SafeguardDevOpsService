@@ -81,31 +81,25 @@ export class MainComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoading = true;
-    this.ApplianceAddress =  this.window.sessionStorage.getItem('ApplianceAddress');
+    this.error = null;
 
-    if (!this.ApplianceAddress || this.ApplianceAddress === 'null') {
-      this.router.navigate(['/login']);
-    } else {
-      this.loginToDevOpsService()
-        .pipe(
-          untilDestroyed(this),
-          switchMap(() => this.serviceClient.getConfiguration()),
-          tap((config) => this.initializeConfig(config)),
-          switchMap(() => forkJoin([
-            this.initializeMonitoring(),
-            this.initializeTrustedCertificates(),
-            this.initializeWebServerCertificate(),
-            this.initializePlugins()
-          ])),
-          finalize(() => this.isLoading = false)
-        ).subscribe(() => {
-          // Monitoring available when we have plugins and an account for at least one plugin
-          this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
-        },
-        error => {
-          this.error = error;
-        });
-    }
+    this.initializeApplianceAddressAndLogin()
+      .pipe(
+        untilDestroyed(this),
+        switchMap(() => this.serviceClient.getConfiguration()),
+        tap((config) => this.initializeConfig(config)),
+        switchMap(() => forkJoin([
+          this.initializeMonitoring(),
+          this.initializeTrustedCertificates(),
+          this.initializeWebServerCertificate(),
+          this.initializePlugins()
+        ])),
+        finalize(() => this.isLoading = false)
+      ).subscribe(() => {
+      },
+      error => {
+        this.error = error;
+      });
   }
 
   private initializeWebServerCertificate(): Observable<any> {
@@ -142,6 +136,9 @@ export class MainComponent implements OnInit {
           plugin.IsConfigurationSetup = true;
           this.plugins.push(plugin);
         });
+
+        // Monitoring available when we have plugins and an account for at least one plugin
+        this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
       }));
   }
 
@@ -227,25 +224,36 @@ export class MainComponent implements OnInit {
     this.Thumbprint = config.Thumbprint;
   }
 
-  loginToDevOpsService(): Observable<any> {
-    this.error = null;
+  initializeApplianceAddressAndLogin(): Observable<any> {
+    let saveApplianceAddress = false;
 
-    return this.authService.getUserToken(this.ApplianceAddress)
-      .pipe(
-        switchMap((userTokenData) => {
-          if (userTokenData?.Status === 'Success') {
-            return this.serviceClient.getSafeguard();
-          }
-          return of();
-        }),
-        switchMap((safeguardData) => {
-          if (!safeguardData.ApplianceAddress) {
-            return this.serviceClient.putSafeguardAppliance(this.ApplianceAddress);
-          }
-          return of(undefined);
-        }),
-        switchMap(() => this.serviceClient.logon())
-      );
+    return this.serviceClient.getSafeguard().pipe(
+      tap((safeguardData) => {
+        this.ApplianceAddress =  safeguardData?.ApplianceAddress;
+
+        if (!this.ApplianceAddress) {
+          this.ApplianceAddress = this.window.sessionStorage.getItem('ApplianceAddress');
+          saveApplianceAddress = true;
+        }
+
+        this.window.sessionStorage.removeItem('ApplianceAddress');
+      }),
+      filter(() => this.ApplianceAddress && this.ApplianceAddress !== 'null'),
+      switchMap(() => this.authService.getUserToken(this.ApplianceAddress)),
+      switchMap(() => {
+        if (saveApplianceAddress) {
+          return this.serviceClient.putSafeguardAppliance(this.ApplianceAddress);
+        } else {
+          return of({});
+        }
+      }),
+      switchMap(() => this.serviceClient.logon()),
+      finalize(() => {
+        if (!this.ApplianceAddress || this.ApplianceAddress === 'null') {
+          this.router.navigate(['/login']);
+        }
+      })
+    );
   }
 
   createCSR(certificateType: string): void {
@@ -325,7 +333,11 @@ export class MainComponent implements OnInit {
       config => {
         if (certificateType === 'Client') {
           this.initializeConfig(config);
-          this.initializePlugins();
+          // This is a hack: if you call too quickly after client cert upload, it returns zero
+          setTimeout(() => {
+            this.initializePlugins().subscribe();
+          }, 2000);
+          this.initializeMonitoring().subscribe();
           this.viewCertificate(null, 'Client');
         } else {
           this.webServerCertAdded = true;
@@ -384,6 +396,16 @@ export class MainComponent implements OnInit {
             }
             // Monitoring available when we have plugins and an account for at least one plugin
             this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
+
+            if (data.saved === true && this.isMonitoring) {
+              this.dialog.open(ConfirmDialogComponent, {
+                data: {
+                  title: 'Plugin Configuration Changed',
+                  message: 'Restart the monitor to apply the new plugin configuration.',
+                  showCancel: false,
+                  confirmText: 'OK'
+              }});
+            }
           }
           break;
       }

@@ -13,9 +13,6 @@ export class AuthService {
   }
 
   login(applianceAddress: string): void {
-    // Save this to storage since we are reloading
-    this.window.sessionStorage.setItem('ApplianceAddress', applianceAddress);
-
     const redirect = encodeURIComponent(location.protocol + '//' + location.host + '/main');
     this.window.location.href = 'https://' + applianceAddress + '/RSTS/Login?response_type=token&redirect_uri=' + redirect;
   }
@@ -25,6 +22,7 @@ export class AuthService {
 
     if (!userToken) {
       const accessToken = this.window.sessionStorage.getItem('AccessToken');
+      this.window.sessionStorage.removeItem('AccessToken');
 
       if (!accessToken) {
         this.login(applianceAddress);
@@ -34,10 +32,10 @@ export class AuthService {
         .pipe(tap((data) => {
           if (data?.Status === 'Success') {
             this.window.sessionStorage.setItem('UserToken', data.UserToken);
-            this.window.sessionStorage.removeItem('AccessToken');
           }
         }));
     } else {
+      this.window.sessionStorage.removeItem('AccessToken');
       return of({ Status: 'Success', UserToken: userToken });
     }
   }

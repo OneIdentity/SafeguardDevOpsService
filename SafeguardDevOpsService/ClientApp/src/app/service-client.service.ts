@@ -32,9 +32,11 @@ export class DevOpsServiceClient {
     return (error): Observable<T> => {
       if (error.status === 401) {
         this.authService.login(this.applianceAddress);
+        return of();
+      } else {
+        console.log(`[DevOpsServiceClient.${method}]: ${error.message}`);
+        return throwError(error);
       }
-      console.log(`[DevOpsServiceClient.${method}]: ${error.message}`);
-      return throwError(error);
     };
   }
 
@@ -77,6 +79,7 @@ export class DevOpsServiceClient {
       ApplianceAddress: applianceAddress,
       IgnoreSsl: true
     };
+    this.applianceAddress = applianceAddress;
     return this.http.put(url, payload, this.authHeader())
       .pipe(catchError(this.error<any>('putSafeguard')));
   }
