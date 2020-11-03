@@ -46,6 +46,7 @@ export class MainComponent implements OnInit {
   Thumbprint: string;
   DevOpsInstanceId: string;
   ApplianceAddress: string;
+  DevOpsVersion: string;
 
   error: any = null;
 
@@ -137,8 +138,7 @@ export class MainComponent implements OnInit {
           this.plugins.push(plugin);
         });
 
-        // Monitoring available when we have plugins and an account for at least one plugin
-        this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
+        this.updateMonitoringAvailable();
       }));
   }
 
@@ -230,6 +230,7 @@ export class MainComponent implements OnInit {
     return this.serviceClient.getSafeguard().pipe(
       tap((safeguardData) => {
         this.ApplianceAddress =  safeguardData?.ApplianceAddress;
+        this.DevOpsVersion = safeguardData?.Version;
 
         if (!this.ApplianceAddress) {
           this.ApplianceAddress = this.window.sessionStorage.getItem('ApplianceAddress');
@@ -394,8 +395,7 @@ export class MainComponent implements OnInit {
             } else {
               this.plugins.splice(indx, 1);
             }
-            // Monitoring available when we have plugins and an account for at least one plugin
-            this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
+            this.updateMonitoringAvailable();
 
             if (data.saved === true && this.isMonitoring) {
               this.dialog.open(ConfirmDialogComponent, {
@@ -449,13 +449,21 @@ export class MainComponent implements OnInit {
       });
   }
 
+  updateMonitoringAvailable(): void {
+    // Monitoring available when we have plugins and an account for at least one plugin
+    this.isMonitoringAvailable = this.isMonitoring || (this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0));
+  }
+
   updateMonitoring(enabled: boolean): void {
     this.error = null;
     this.serviceClient.postMonitor(enabled).pipe(
       untilDestroyed(this)
     ).subscribe(() => {
       this.isMonitoring = enabled;
-      this.setArrows();
+      this.updateMonitoringAvailable();
+      setTimeout(() => {
+        this.setArrows();
+      }, 100);
     },
       error => {
         this.error = error;
