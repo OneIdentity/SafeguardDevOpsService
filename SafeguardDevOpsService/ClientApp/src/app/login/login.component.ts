@@ -13,6 +13,7 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private devOpsServiceClient: DevOpsServiceClient,
+    private window: Window,
     private authService: AuthService) { }
 
   ngOnInit(): void {
@@ -27,6 +28,9 @@ export class LoginComponent implements OnInit {
   }
 
   connect(): void {
+    // Save this to storage since we are reloading
+    this.window.sessionStorage.setItem('ApplianceAddress', this.applianceAddress);
+
     this.authService.login(this.applianceAddress);
   }
 
