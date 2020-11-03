@@ -95,7 +95,8 @@ export class EditPluginService {
   closeProperties(plugin?: any): void {
     this.notifyEventSource.next({
       plugin: plugin ? Object.assign(this.plugin, plugin) : this.originalPlugin,
-      mode: EditPluginMode.None
+      mode: EditPluginMode.None,
+      saved: plugin ? true : false
     });
     this.notifyEventSource.complete();
     this.notifyEventSource = new Subject<EditPluginEvent>();
@@ -183,6 +184,7 @@ export class EditPluginService {
 export class EditPluginEvent {
   plugin: any;
   mode: EditPluginMode;
+  saved?: boolean;
 }
 
 export enum EditPluginMode {

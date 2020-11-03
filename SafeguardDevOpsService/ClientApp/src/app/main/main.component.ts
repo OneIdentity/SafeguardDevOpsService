@@ -384,6 +384,16 @@ export class MainComponent implements OnInit {
             }
             // Monitoring available when we have plugins and an account for at least one plugin
             this.isMonitoringAvailable = this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0);
+
+            if (data.saved === true && this.isMonitoring) {
+              this.dialog.open(ConfirmDialogComponent, {
+                data: {
+                  title: 'Plugin Configuration Changed',
+                  message: 'Restart the monitor to apply the new plugin configuration.',
+                  showCancel: false,
+                  confirmText: 'OK'
+              }});
+            }
           }
           break;
       }
