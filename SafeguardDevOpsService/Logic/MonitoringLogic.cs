@@ -57,9 +57,17 @@ namespace OneIdentity.DevOps.Logic
 
         public void Run()
         {
-            if (_configDb.LastKnownMonitorState != null && _configDb.LastKnownMonitorState.Equals(WellKnownData.MonitorEnabled))
+            try
             {
-                StartMonitoring();
+                if (_configDb.LastKnownMonitorState != null &&
+                    _configDb.LastKnownMonitorState.Equals(WellKnownData.MonitorEnabled))
+                {
+                    StartMonitoring();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Could not restore the last known running state of the monitor. {ex.Message}");
             }
         }
 
