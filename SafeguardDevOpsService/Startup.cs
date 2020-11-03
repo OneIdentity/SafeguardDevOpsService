@@ -24,7 +24,7 @@ namespace OneIdentity.DevOps
         private static readonly string ApiName = $"{ServiceName} API";
         private static readonly string ApiVersion = "v1";
         private static readonly string VersionApiName = $"{ApiName} {ApiVersion}";
-        private static readonly string ApiDescription = "Web API for controlling the distribution of secrets from Safeguard for Privileged Passwords " + 
+        private static readonly string ApiDescription = "Web API for controlling the distribution of secrets from Safeguard for Privileged Passwords " +
                                                         "to third-party vaults and orchestration frameworks.  This gives your developers frictionless integration " +
                                                         "from their favorite DevOps tooling.";
 
@@ -87,7 +87,7 @@ namespace OneIdentity.DevOps
                 });
 
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                var xmlPath = Path.Combine(WellKnownData.ServiceDirPath, xmlFile);
                 c.IncludeXmlComments(xmlPath);
             });
 
@@ -96,7 +96,7 @@ namespace OneIdentity.DevOps
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
-                configuration.RootPath = Path.Combine(AppContext.BaseDirectory, "ClientApp/dist");
+                configuration.RootPath = Path.Combine(WellKnownData.ServiceDirPath, "ClientApp/dist");
             });
         }
 
