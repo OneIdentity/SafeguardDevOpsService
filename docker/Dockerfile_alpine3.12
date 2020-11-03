@@ -12,16 +12,17 @@ RUN apk -U --no-cache add \
     && groupadd -r safeguard \
     && useradd -r -g safeguard -s /bin/bash safeguard \
     && mkdir -p /home/safeguard \
-    && echo -e "{\n    \"HttpsPort\": \"4443\",\n    \"LogLevel\": \"Debug\"\n}" > /home/safeguard/appsettings.json \
-    && chown -R safeguard:safeguard /home/safeguard \
-    && chown -R safeguard:safeguard /usr/share
+    && echo -e "{\n    \"HttpsPort\": \"4443\",\n    \"LogLevel\": \"Debug\"\n}" > /home/safeguard/appsettings.json
 
+COPY ["SafeguardDevOpsService/bin/Release/linux-musl-x64/publish/SafeguardDevOpsService", "/home/safeguard/"]
+COPY ["SafeguardDevOpsService/bin/Release/linux-musl-x64/publish/ClientApp", "/home/safeguard/ClientApp"]
+COPY ["docker/run-devops.sh", "/home/safeguard/run-devops.sh"]
+
+RUN chown -R safeguard:safeguard /home/safeguard \
+    && chown -R safeguard:safeguard /usr/share
 
 USER safeguard
 WORKDIR /home/safeguard
-
-COPY ["SafeguardDevOpsService/bin/Release/linux-musl-x64/publish/SafeguardDevOpsService", "/home/safeguard/"]
-COPY ["docker/run-devops.sh", "/home/safeguard/run-devops.sh"]
 
 ENTRYPOINT ["/bin/bash"]
 CMD ["-c", "/home/safeguard/run-devops.sh"]
