@@ -46,6 +46,7 @@ export class MainComponent implements OnInit {
   Thumbprint: string;
   DevOpsInstanceId: string;
   ApplianceAddress: string;
+  DevOpsVersion: string;
 
   error: any = null;
 
@@ -230,6 +231,7 @@ export class MainComponent implements OnInit {
     return this.serviceClient.getSafeguard().pipe(
       tap((safeguardData) => {
         this.ApplianceAddress =  safeguardData?.ApplianceAddress;
+        this.DevOpsVersion = safeguardData?.Version;
 
         if (!this.ApplianceAddress) {
           this.ApplianceAddress = this.window.sessionStorage.getItem('ApplianceAddress');

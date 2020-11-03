@@ -25,6 +25,11 @@
               <div class="info-label">Dev Ops ID</div>
               <div>{{DevOpsInstanceId}}</div>
             </div>
+            <p></p>
+            <div *ngIf="DevOpsVersion">
+              <div class="info-label">Dev Ops Version</div>
+              <div>{{DevOpsVersion}}</div>
+            </div>
           </div>
         </div>
         <button mat-flat-button class="monitoring-button start-monitoring" *ngIf="!isMonitoring && isMonitoringAvailable" (click)="updateMonitoring(true)">Start Monitoring</button>
