@@ -189,6 +189,10 @@ try
         Write-Host -ForegroundColor Yellow "Using: $($local:VaultAssetAccountObj.SystemName)\$($local:VaultAssetAccountObj.Name)"
         Set-SgDevOpsPluginVaultAccount -PluginName "HashiCorpVault" -Asset $local:VaultAssetAccountObj.SystemName -Account $local:VaultAssetAccountObj.Name
 
+        $local:VaultLocation = "http://$VaultAddress"
+        Write-Host -ForegroundColor Green "Configuring vault location ($($local:VaultLocation)) ..."
+        Set-SgDevOpsPluginSetting "HashiCorpVault" "address" $local:VaultLocation
+
         Write-Host -ForegroundColor Green "Mapping asset accounts to HashiCorp Vault plugin ..."
         Get-SgDevOpsRegisteredAssetAccount | ForEach-Object {
             Add-SgDevOpsMappedAssetAccount "HashiCorpVault" -Asset $_.SystemName -Account $_.AccountName -Domain $_.DomainName

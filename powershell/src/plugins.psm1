@@ -89,13 +89,14 @@ function Install-SgDevOpsPlugin
 
     try
     {
+        $PluginZipFile = (Resolve-Path $PluginZipFile)
         $local:Bytes = [System.IO.File]::ReadAllBytes($PluginZipFile)
     }
     catch
     {
-        Write-Host -ForegroundColor Magenta "Invalid plugin zip file or file not found."
-        Write-Host "You must provide the full path to a valid plugin zip file."
-        throw "Invalid plugin zip file"
+        Write-Host -ForegroundColor Magenta "Unable to read plugin zip file."
+        Write-Host -ForegroundColor Red $_
+        throw "Invalid plugin zip file specified"
     }
 
     $local:Base64PluginData = [System.Convert]::ToBase64String($local:Bytes)
