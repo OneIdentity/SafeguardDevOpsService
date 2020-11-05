@@ -96,6 +96,12 @@ export class MainComponent implements OnInit {
     this.isLoading = true;
     this.error = null;
 
+    const reload = this.window.sessionStorage.getItem('reload');
+    if (reload) {
+      this.window.sessionStorage.removeItem('reload');
+      this.window.location.reload();
+    }
+
     this.initializeApplianceAddressAndLogin()
       .pipe(
         untilDestroyed(this),
@@ -349,10 +355,10 @@ export class MainComponent implements OnInit {
             this.serviceClient.postConfiguration(fileContents, passphrase) :
             this.serviceClient.postWebServerCertificate(fileContents, passphrase);
         }
-      ),
-      finalize(() => this.snackBar.dismiss())
+      )
     ).subscribe(
       config => {
+        this.snackBar.dismiss();
         if (certificateType === 'Client') {
           this.initializeConfig(config);
           // This is a hack: if you call too quickly after client cert upload, it returns zero
@@ -364,6 +370,8 @@ export class MainComponent implements OnInit {
         } else {
           this.webServerCertAdded = true;
           // Service restarts after updating web server cert; need to login again
+          // Reload is needed to accept new web server cert
+          this.window.sessionStorage.setItem('reload', 'true');
           this.authService.login(this.ApplianceAddress);
         }
       },
@@ -554,6 +562,8 @@ export class MainComponent implements OnInit {
       this.drawer.close();
       this.snackBar.dismiss();
       this.window.sessionStorage.setItem('ApplianceAddress', '');
+      // Reload is needed to accept new web server cert
+      this.window.sessionStorage.setItem('reload', 'true');
       this.router.navigate(['/login']);
     },
       error => {
@@ -574,6 +584,8 @@ export class MainComponent implements OnInit {
             window.location.reload();
           } else {
             // Service restarts after removing web server cert; need to login again
+            // Reload is needed to accept new web server cert
+            this.window.sessionStorage.setItem('reload', 'true');
             this.authService.login(this.ApplianceAddress);
           }
         } else if (result?.result === ViewCertificateResult.AddCertificate) {

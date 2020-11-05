@@ -17,6 +17,11 @@ export class LoginComponent implements OnInit {
     private authService: AuthService) { }
 
   ngOnInit(): void {
+    const reload = this.window.sessionStorage.getItem('reload');
+    if (reload) {
+      this.window.sessionStorage.removeItem('reload');
+      this.window.location.reload();
+    }
 
     this.devOpsServiceClient.getSafeguard().subscribe(
       (data) => {
