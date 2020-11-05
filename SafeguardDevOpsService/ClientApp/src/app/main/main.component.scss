@@ -37,6 +37,19 @@ mat-drawer-container {
   z-index: -1;
 }
 
+.footer {
+  color: $black-9;
+  text-align: right;
+  padding-right: 15px;
+  padding-bottom: 15px;
+}
+
+.footer-absolute {
+  position: fixed;
+  bottom: 0;
+  right: 15px;
+}
+
 .info-container {
   display: flex;
   margin: 50px;
@@ -95,14 +108,26 @@ mat-drawer-container {
   
   .green-icon {
     color: $aspen-green;
+    vertical-align: top;
     font-size: 16px;
-    vertical-align: middle;
+    padding-right: 5px;
+  }
+
+  .certificate-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    .cert-link {
+      margin-top: -15px;
+    }
   }
 
   .yellow-icon {
     color: $tiki-sunrise;
     font-size: 16px;
-    vertical-align: baseline;
+    vertical-align: top;
+    padding-right: 5px;
   }
   
   .loading-container{
@@ -154,7 +179,7 @@ mat-drawer-container {
 }
 
 .plugin-container.configured {
-  border: 1px solid;
+  border: 1px solid $black-9;
   margin-bottom: 20px;
   cursor: pointer;
 
@@ -186,29 +211,36 @@ mat-drawer-container {
   background-color: $white;
 }
 
-.plugin-container.configured:nth-child(2) {
+.plugin-container.configured.monitored:nth-child(2),
+.plugin-container.configured:nth-child(2):hover {
   border-color: $corbin-orange;
-  .header {
-    color: $corbin-orange;
-  }
 }
-.plugin-container.configured:nth-child(3) {
+.plugin-container.configured:nth-child(2) .header {
+  color: $corbin-orange;
+}
+
+.plugin-container.configured.monitored:nth-child(3),
+.plugin-container.configured:nth-child(3):hover {
   border-color: $maui-sunset;
-  .header {
-    color: $maui-sunset;
-  }
 }
-.plugin-container.configured:nth-child(4) {
+.plugin-container.configured:nth-child(3) .header {
+  color: $maui-sunset;
+}
+
+.plugin-container.configured.monitored:nth-child(4),
+.plugin-container.configured:nth-child(4):hover {
   border-color: $aspen-green;
-  .header {
-    color: $aspen-green;
-  }
 }
-.plugin-container.configured:nth-child(5) {
+.plugin-container.configured:nth-child(4) .header {
+  color: $aspen-green;;
+}
+
+.plugin-container.configured.monitored:nth-child(5),
+.plugin-container.configured:nth-child(5):hover {
   border-color: $azalea-pink;
-  .header {
-    color: $azalea-pink;
-  }
+}
+.plugin-container.configured:nth-child(5) .header {
+  color: $azalea-pink;
 }
 
 path.arrow-unconfigured {

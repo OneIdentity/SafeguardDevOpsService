@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, forkJoin, pipe, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, forkJoin, of } from 'rxjs';
 import { DevOpsServiceClient } from './service-client.service';
-import { tap, finalize, delay, filter, switchMap } from 'rxjs/operators';
+import { tap, finalize, switchMap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy()
@@ -101,6 +101,7 @@ export class EditPluginService {
     this.notifyEventSource.complete();
     this.notifyEventSource = new Subject<EditPluginEvent>();
     this.notifyEvent$ = this.notifyEventSource.asObservable();
+    this.clearAvailableAccounts();
   }
 
   openVaultAccount(): void {

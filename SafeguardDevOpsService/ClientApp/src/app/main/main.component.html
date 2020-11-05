@@ -11,7 +11,7 @@
   </div>
 
   <app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
-
+  
   <div class="main-container">
     <mat-card class="info-container">
       <div class="info-column">
@@ -24,11 +24,6 @@
             <div *ngIf="DevOpsInstanceId">
               <div class="info-label">Dev Ops ID</div>
               <div>{{DevOpsInstanceId}}</div>
-            </div>
-            <p></p>
-            <div *ngIf="DevOpsVersion">
-              <div class="info-label">Dev Ops Version</div>
-              <div>{{DevOpsVersion}}</div>
             </div>
           </div>
         </div>
@@ -51,7 +46,7 @@
         <div>{{A2ARegistrationName}}</div>
         <div>{{A2AVaultRegistrationName}}</div>
       </div>
-      <div class="info-column" *ngIf="!isLoading">
+      <div class="info-column certificate-container" *ngIf="!isLoading">
         <div *ngIf="!Thumbprint" class='no-client-certificate'>
            <p class='bold'>Before we begin you must upload a Client Certificate</p>
            <p>Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A
@@ -73,34 +68,43 @@
         </div>
 
         <ng-container *ngIf='Thumbprint'>
-           <div class="info-label">Client Certificate</div>
-           <app-progress-spinner color="accent" diameter="30" message="Uploading" [visible]="certificateUploading['Client']"></app-progress-spinner>
+          <div>
+            <div class="info-label">Client Certificate</div>
+            <app-progress-spinner color="accent" diameter="30" message="Uploading" [visible]="certificateUploading['Client']"></app-progress-spinner>
           
-           <div *ngIf="Thumbprint">
-             <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="link-button" color="primary" (click)="viewCertificate($event, 'Client')" disableRipple>View Details</button>
-           </div>
-
-           <div class="info-label">Web Server Certificate</div>
-           <app-progress-spinner color="accent" diameter="30" message="Uploading" [visible]="certificateUploading['WebServer']"></app-progress-spinner>
-           
-           <div *ngIf="!webServerCertAdded">
-              <mat-icon class="yellow-icon">check_circle</mat-icon>
-              <button mat-button class="link-button" (click)="addCertificate($event, 'Web Server')" color='primary' disableRipple>View Details</button>
-           </div>
-           <div *ngIf="webServerCertAdded">
-             <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="link-button" (click)="viewCertificate($event,'Web Server')" color='primary' disableRipple>View Details</button>
-           </div>
-
-           <div class="info-label">Trusted Certificates</div>
-           <div *ngIf="!trustedCertificates?.length">
-              <button mat-button class="link-button" (click)='viewTrustedCertificates($event)' color='primary' disableRipple>Add Certificate</button>
-           </div>
-           <div *ngIf="trustedCertificates?.length">
-             <mat-icon class="green-icon">check_circle</mat-icon>
-             <button mat-button class="link-button" color="primary" (click)="viewTrustedCertificates($event)" color='primary' disableRipple>View Details</button>
-           </div>
+            <div *ngIf="Thumbprint">
+              <button mat-button class="link-button cert-link" color="primary" (click)="viewCertificate($event, 'Client')" disableRipple><mat-icon class="green-icon" inline=true>check_circle</mat-icon> View Details</button>
+            </div>
+          </div>
+          <div>
+            <div class="info-label">Web Server Certificate</div>
+            <app-progress-spinner color="accent" diameter="30" message="Uploading" [visible]="certificateUploading['WebServer']"></app-progress-spinner>
+            
+            <div *ngIf="!webServerCertAdded">
+              <button mat-button class="link-button cert-link" (click)="addCertificate($event, 'Web Server')" color='primary' disableRipple>
+                  <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon>
+                  View Details
+              </button>
+            </div>
+            <div *ngIf="webServerCertAdded">
+              <button mat-button class="link-button cert-link" (click)="viewCertificate($event,'Web Server')" color='primary' disableRipple>
+                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>
+                View Details
+              </button>
+            </div>
+          </div>
+          <div>
+            <div class="info-label">Trusted Certificates</div>
+            <div *ngIf="!trustedCertificates?.length">
+              <button mat-button class="link-button cert-link" (click)='viewTrustedCertificates($event)' color='primary' disableRipple>Add Certificate</button>
+            </div>
+            <div *ngIf="trustedCertificates?.length">
+              <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)" color='primary' disableRipple>
+                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>
+                View Details
+              </button>
+            </div>
+          </div>
         </ng-container>
          </div>
     </mat-card>
@@ -118,7 +122,7 @@
 
     <div class="plugin-container unconfigured" *ngIf="plugins.length > 0" #unconfigured>
       <div class="header">
-         <p>What would you like to plug-in?</p>
+         <p>What would you like to plug in?</p>
          <a href='https://github.com/OneIdentity/SafeguardDevOpsService/releases/'
             target='_blank'
             title="This will open a new tab to an external site.">View plugin repository</a>
@@ -141,7 +145,9 @@
         </ng-container>
       </div>
     </div>
-    
+
+    <div [ngClass]="{'footer': true, 'footer-absolute': footerAbsolute}">Version: {{DevOpsVersion}}</div>
+
     <div class="svg-container">
       <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
         <defs>
@@ -168,6 +174,7 @@
 
   </div>
 
+  
   <mat-drawer mode="over" position="end" disableClose="true" autosize #drawer>
     <app-edit-plugin *ngIf="openDrawer=='properties'"></app-edit-plugin>
     <app-select-accounts *ngIf="openDrawer=='accounts'" [selectVaultAccount]="false"></app-select-accounts>
