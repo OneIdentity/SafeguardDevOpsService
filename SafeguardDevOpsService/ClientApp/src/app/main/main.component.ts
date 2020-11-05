@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, Renderer2 } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, Renderer2, HostListener } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
 import { switchMap, map, tap, finalize, filter } from 'rxjs/operators';
 import { of, Observable, forkJoin } from 'rxjs';
@@ -68,16 +68,28 @@ export class MainComponent implements OnInit {
   isMonitoring: boolean;
   isMonitoringAvailable: boolean;
 
+  unconfiguredDiv: any;
+  footerAbsolute: boolean = true;
+
   @ViewChild('drawer', { static: false }) drawer: MatDrawer;
 
   @ViewChild('fileSelectInputDialog', { static: false }) fileSelectInputDialog: ElementRef;
 
   @ViewChild('unconfigured', { static: false }) set contentUnconfigured(content: ElementRef) {
     if (content && !this.isLoading) {
+      this.unconfiguredDiv = content;
       setTimeout(() => {
         this.setArrows();
+        this.setFooter();
       }, 500);
     }
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    setTimeout(() => {
+      this.setFooter();
+    }, 500);
   }
 
   ngOnInit(): void {
@@ -181,6 +193,14 @@ export class MainComponent implements OnInit {
     return `M ${posA.x},${posA.y} V ${posB.y} a 3,3 0 0 0 3 3 H ${posB.x}`;
   }
 
+  private setFooter(): void {
+    if (!this.unconfiguredDiv) {
+      return;
+    }
+    const elBottom = this.unconfiguredDiv.nativeElement.offsetTop + this.unconfiguredDiv.nativeElement.offsetHeight + 80;
+    this.footerAbsolute = (elBottom < this.window.innerHeight);
+  }
+
   private setArrows(): void {
     const colors = [ 'CorbinOrange', 'MauiSunset', 'AspenGreen', 'AzaleaPink' ];
 
@@ -216,6 +236,7 @@ export class MainComponent implements OnInit {
   initializeConfig(config: any): void {
     this.ApplianceAddress =  config.Appliance.ApplianceAddress;
     this.DevOpsInstanceId = config.Appliance.DevOpsInstanceId;
+    this.DevOpsVersion = config.Appliance.Version;
     this.UserName = config.UserName;
     this.UserDisplayName = config.UserDisplayName;
     this.IdentityProviderName = config.IdentityProviderName;

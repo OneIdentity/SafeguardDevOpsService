@@ -92,7 +92,7 @@ export class EditPluginComponent implements OnInit {
     });
 
     dialogRef.afterClosed().pipe(
-      filter((dlgResult) => dlgResult.result === 'OK'),
+      filter((dlgResult) => dlgResult?.result === 'OK'),
       tap(() => {
         this.editPluginService.deletePlugin();
         this.snackBar.open('Deleting plugin...');
