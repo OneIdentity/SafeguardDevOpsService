@@ -24,7 +24,7 @@ namespace OneIdentity.DevOps
         private static readonly string ApiName = $"{ServiceName} API";
         private static readonly string ApiVersion = "v1";
         private static readonly string VersionApiName = $"{ApiName} {ApiVersion}";
-        private static readonly string ApiDescription = "Web API for controlling the distribution of secrets from Safeguard for Privileged Passwords " + 
+        private static readonly string ApiDescription = "Web API for controlling the distribution of secrets from Safeguard for Privileged Passwords " +
                                                         "to third-party vaults and orchestration frameworks.  This gives your developers frictionless integration " +
                                                         "from their favorite DevOps tooling.";
 
@@ -92,6 +92,12 @@ namespace OneIdentity.DevOps
             });
 
             services.AddSwaggerGenNewtonsoftSupport();
+
+            // In production, the Angular files will be served from this directory
+            services.AddSpaStaticFiles(configuration =>
+            {
+                configuration.RootPath = Path.Combine(WellKnownData.ServiceDirPath, "ClientApp/dist");
+            });
         }
 
         // This only gets called if your environment is Development. The
@@ -137,6 +143,16 @@ namespace OneIdentity.DevOps
             app.UseExceptionHandler("/Error");
             app.UseHttpsRedirection();
             app.UseMvc();
+
+            app.UseStaticFiles();
+            app.UseSpaStaticFiles();
+            app.UseSpa(spa =>
+            {
+                // To learn more about options for serving an Angular SPA from ASP.NET Core,
+                // see https://go.microsoft.com/fwlink/?linkid=864501
+
+                spa.Options.SourcePath = "ClientApp";
+            });
         }
     }
 }

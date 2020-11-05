@@ -43,6 +43,8 @@ namespace OneIdentity.DevOps.Logic
                 StartMonitoring();
             else
                 StopMonitoring();
+
+            _configDb.LastKnownMonitorState = GetMonitorState().Enabled ? WellKnownData.MonitorEnabled : WellKnownData.MonitorDisabled;
         }
 
         public MonitorState GetMonitorState()
@@ -51,6 +53,22 @@ namespace OneIdentity.DevOps.Logic
             {
                 Enabled = _eventListener != null && _a2AContext != null
             };
+        }
+
+        public void Run()
+        {
+            try
+            {
+                if (_configDb.LastKnownMonitorState != null &&
+                    _configDb.LastKnownMonitorState.Equals(WellKnownData.MonitorEnabled))
+                {
+                    StartMonitoring();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Could not restore the last known running state of the monitor. {ex.Message}");
+            }
         }
 
         private void StartMonitoring()

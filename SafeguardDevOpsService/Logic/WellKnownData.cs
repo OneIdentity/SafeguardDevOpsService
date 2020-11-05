@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
+using OneIdentity.DevOps.Common;
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -30,6 +31,9 @@ namespace OneIdentity.DevOps.Logic
 
         public const string PluginDirName = "ExternalPlugins";
         public const string PluginStageName = "PluginStaging";
+
+        public const string MonitorEnabled = "Enabled";
+        public const string MonitorDisabled = "Disabled";
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
@@ -75,6 +79,14 @@ namespace OneIdentity.DevOps.Logic
         public static string DevOpsServiceWebSslCertificate(string svcId)
         {
             return $"{_devOpsServiceWebSslCertificate}-{svcId}";
+        }
+
+        public static string DevOpsServiceVersion()
+        {
+            var assem = Assembly.GetAssembly(typeof(ILoadablePlugin));
+            var version = assem.GetName().Version;
+            var buildType = assem.GetCustomAttributes(false).OfType<DebuggableAttribute>().Any(da => da.IsJITTrackingEnabled) ? "Debug" : "Release";
+            return $"{buildType}-{version}";
         }
 
     }

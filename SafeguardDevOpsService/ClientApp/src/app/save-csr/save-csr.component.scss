@@ -1,0 +1,34 @@
+.save-csr-container {
+  min-height: 500px;
+}
+
+
+.instructions {
+  margin-bottom: 10px;
+}
+
+.button-container {
+  margin-top: 20px;
+  text-align: right;
+  width: 100%;
+
+  .left-side, .right-side {
+    display: inline-block;
+    width: 50%;
+  }
+  .left-side {
+    text-align: left;
+
+    button {
+      text-align: left;
+    }
+  }
+  .right-side {
+    text-align: right;
+  }
+}
+
+textarea {
+  width: calc(100% - 5px);
+}
+

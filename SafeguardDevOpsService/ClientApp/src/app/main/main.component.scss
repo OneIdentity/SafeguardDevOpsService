@@ -1,0 +1,277 @@
+@import '../../colors.scss';
+
+:host {
+  height: 100%;
+}
+
+.app-header {
+  height: 64px;
+  background-color: $iris-blue;
+  color: #ffffff;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  font-size: 1.4em;
+}
+
+.spacer {
+  flex: 1;
+}
+
+mat-drawer-container {
+  height: 100%;
+}
+
+.main-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
+}
+
+.svg-container {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  z-index: -1;
+}
+
+.footer {
+  color: $black-9;
+  text-align: right;
+  padding-right: 15px;
+  padding-bottom: 15px;
+}
+
+.footer-absolute {
+  position: fixed;
+  bottom: 0;
+  right: 15px;
+}
+
+.info-container {
+  display: flex;
+  margin: 50px;
+
+  .info-column {
+    margin: 0 20px;
+    .no-client-certificate {
+      .bold {
+        font-weight: bold;
+      }
+      .buttons {
+        div {
+          width: 50%;
+          display: inline-block;
+        }
+        .left {
+          text-align: left;
+        }
+        .right {
+          text-align: right;
+        }
+      }
+    }
+  }
+
+  .general-info-container {
+    display: flex;
+
+    .general-info {
+      margin-left: 20px;
+    }
+  }
+
+  .monitoring-button {
+    color: #ffffff;
+    margin-top: 20px;
+    width: 100%;
+  }
+
+  .start-monitoring {
+    background-color: $aspen-green;
+  }
+
+  .stop-monitoring {
+    background-color: $phoenix-red;
+  }
+
+  .info-label {
+    font-size: .85em;
+    color: $black-9;
+  }
+  
+  .vertical-line {
+    border-right: 1px solid $black-c;
+  }
+  
+  .green-icon {
+    color: $aspen-green;
+    vertical-align: top;
+    font-size: 16px;
+    padding-right: 5px;
+  }
+
+  .certificate-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    .cert-link {
+      margin-top: -15px;
+    }
+  }
+
+  .yellow-icon {
+    color: $tiki-sunrise;
+    font-size: 16px;
+    vertical-align: top;
+    padding-right: 5px;
+  }
+  
+  .loading-container{
+    width: 100%;
+    padding-left: 30px;
+  }
+}
+
+.plugin-container {
+  border-radius: 8px;
+  padding: 25px;
+  margin-left: 280px;
+  margin-right: 50px;
+}
+
+.plugin-container.unconfigured {
+  border: 2px dashed $black-9; 
+  color: $black-6;
+  display: flex;
+  margin-bottom: 20px;
+
+  .header {
+    width: 175px;
+    font-size: 1.5em;
+    font-weight: 400;
+    margin-right: 20px;
+  }
+
+  .plugin-button-container {
+    display: flex;
+    align-items:center;
+    flex-direction: column;
+
+    .button-container {
+      flex: 1 1 auto;
+      width: 100%;
+
+      .plugin-button {
+        border-color: $iris-blue;
+        background-color: #ffffff;
+        color: $iris-blue;
+        font-weight: 400;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+    }
+  }
+}
+
+.plugin-container.configured {
+  border: 1px solid $black-9;
+  margin-bottom: 20px;
+  cursor: pointer;
+
+  .header {
+    font-size: 2em;
+    font-weight: 300;
+    margin-bottom: 10px;
+  }
+
+  .edit-text {
+    color: $iris-blue;
+  }
+
+  .accounts-container {
+    float: right;
+    display: flex;
+    color: $black-9;
+
+    .count {
+      font-size: 3em;
+      font-weight: 400;
+      color: $black-6;
+      padding: 10px 8px 0 0;
+    }
+  }
+}
+
+.plugin-container.configured.monitored {
+  background-color: $white;
+}
+
+.plugin-container.configured.monitored:nth-child(2),
+.plugin-container.configured:nth-child(2):hover {
+  border-color: $corbin-orange;
+}
+.plugin-container.configured:nth-child(2) .header {
+  color: $corbin-orange;
+}
+
+.plugin-container.configured.monitored:nth-child(3),
+.plugin-container.configured:nth-child(3):hover {
+  border-color: $maui-sunset;
+}
+.plugin-container.configured:nth-child(3) .header {
+  color: $maui-sunset;
+}
+
+.plugin-container.configured.monitored:nth-child(4),
+.plugin-container.configured:nth-child(4):hover {
+  border-color: $aspen-green;
+}
+.plugin-container.configured:nth-child(4) .header {
+  color: $aspen-green;;
+}
+
+.plugin-container.configured.monitored:nth-child(5),
+.plugin-container.configured:nth-child(5):hover {
+  border-color: $azalea-pink;
+}
+.plugin-container.configured:nth-child(5) .header {
+  color: $azalea-pink;
+}
+
+path.arrow-unconfigured {
+  stroke: $black-9;
+  color: $black-9;
+  fill: none;
+}
+
+path.arrow {
+  fill: none;
+  stroke: $corbin-orange;
+  color: $corbin-orange;
+}
+
+path.arrow:nth-child(2) {
+  stroke: $maui-sunset;
+  color: $maui-sunset;
+}
+
+path.arrow:nth-child(3) {
+  stroke: $aspen-green;
+  color: $aspen-green;
+}
+
+path.arrow:nth-child(4) {
+  stroke: $azalea-pink;
+  color: $azalea-pink;
+}
+
+a {
+  text-decoration: none;
+  color: $iris-blue;
+  font-size: 14px;
+}

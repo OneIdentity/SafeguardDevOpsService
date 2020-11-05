@@ -22,6 +22,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
         private const string MountPointName = "mountPoint";
 
         public string Name => "HashiCorpVault";
+        public string DisplayName => "HashiCorp Vault";
         public string Description => "This is the HashiCorp Vault plugin for updating passwords";
 
         public Dictionary<string,string> GetPluginInitialConfiguration()

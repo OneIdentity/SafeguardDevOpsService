@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -18,6 +19,7 @@ using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
 using Microsoft.AspNetCore.WebUtilities;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Extensions;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
@@ -57,6 +59,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var availabilityJson = sg.InvokeMethod(Service.Notification, Method.Get, "Status/Availability");
                 var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
+
                 return new SafeguardDevOpsConnection()
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
@@ -64,8 +67,10 @@ namespace OneIdentity.DevOps.Logic
                     ApplianceName = applianceAvailability.ApplianceName,
                     ApplianceVersion = applianceAvailability.ApplianceVersion,
                     ApplianceState = applianceAvailability.ApplianceCurrentState,
-                    DevOpsInstanceId = _configDb.SvcId
+                    DevOpsInstanceId = _configDb.SvcId,
+                    Version = WellKnownData.DevOpsServiceVersion()
                 };
+
             }
             catch (SafeguardDotNetException ex)
             {
@@ -81,6 +86,7 @@ namespace OneIdentity.DevOps.Logic
             safeguardConnection.ApplianceVersion = safeguard.ApplianceVersion;
             safeguardConnection.ApplianceState = safeguard.ApplianceState;
             safeguardConnection.DevOpsInstanceId = _configDb.SvcId;
+            safeguardConnection.Version = safeguard.Version;
 
             return safeguardConnection;
         }
@@ -324,6 +330,22 @@ namespace OneIdentity.DevOps.Logic
             }
 
             return null;
+        }
+
+        private void EnableA2AService(ISafeguardConnection sg)
+        {
+            try
+            {
+                var result = sg.InvokeMethodFull(Service.Appliance, Method.Post, "A2AService/Enable");
+                if (result.StatusCode != HttpStatusCode.OK)
+                {
+                    _logger.Error("Failed to start the A2A service.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to start the A2A service: {ex.Message}");
+            }
         }
 
         private void CreateA2ARegistration(ISafeguardConnection sg, A2ARegistrationType registrationType)
@@ -629,8 +651,13 @@ namespace OneIdentity.DevOps.Logic
                 try
                 {
                     using var rsa = RSA.Create();
-                    var privateKeyBytes = certificateType == CertificateType.A2AClient ?
-                        Convert.FromBase64String(_configDb.UserCsrPrivateKeyBase64Data) : Convert.FromBase64String(_configDb.WebSslCsrPrivateKeyBase64Data);
+                    var privateKeyBytesBase64 = certificateType == CertificateType.A2AClient ? 
+                        _configDb.UserCsrPrivateKeyBase64Data : _configDb.WebSslCsrPrivateKeyBase64Data;
+                    if (privateKeyBytesBase64 == null)
+                    {
+                        throw LogAndException("Failed to find a matching private key. Possibly a mismatched CSR type was selected.");
+                    }
+                    var privateKeyBytes = Convert.FromBase64String(privateKeyBytesBase64);
                     rsa.ImportRSAPrivateKey(privateKeyBytes, out _);
 
                     using (X509Certificate2 pubOnly = cert)
@@ -802,6 +829,7 @@ namespace OneIdentity.DevOps.Logic
             CreateA2AUser(sg);
             CreateA2ARegistration(sg, A2ARegistrationType.Account);
             CreateA2ARegistration(sg, A2ARegistrationType.Vault);
+            EnableA2AService(sg);
 
             return GetDevOpsConfiguration();
         }
@@ -874,6 +902,10 @@ namespace OneIdentity.DevOps.Logic
                 _configDb.SafeguardAddress = safeguardData.ApplianceAddress;
                 _configDb.ApiVersion = safeguardData.ApiVersion ?? DefaultApiVersion;
                 _configDb.IgnoreSsl = safeguardData.IgnoreSsl ?? false;
+
+                safeguardConnection.ApplianceAddress = _configDb.SafeguardAddress;
+                safeguardConnection.ApiVersion = _configDb.ApiVersion;
+                safeguardConnection.IgnoreSsl = _configDb.IgnoreSsl;
                 return safeguardConnection;
             }
 
@@ -1017,7 +1049,7 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteAllTrustedCertificates();
         }
 
-        public IEnumerable<SppAccount> GetAvailableAccounts(string filter, int? page, int? limit, string orderby, string q)
+        public object GetAvailableAccounts(string filter, int? page, bool? count, int? limit, string orderby, string q)
         {
             using var sg = Connect();
 
@@ -1025,18 +1057,26 @@ namespace OneIdentity.DevOps.Logic
             {
                 var p = new Dictionary<string, string>();
                 JsonHelper.AddQueryParameter(p,nameof(filter), filter);
-                JsonHelper.AddQueryParameter(p,nameof(page), page == null ? null : page.ToString());
-                JsonHelper.AddQueryParameter(p,nameof(limit), limit == null ? null : limit.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(page), page?.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(limit), limit?.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(count), count?.ToString());
                 JsonHelper.AddQueryParameter(p,nameof(orderby), orderby);
                 JsonHelper.AddQueryParameter(p,nameof(q), q);
 
                 var result = sg.InvokeMethodFull(Service.Core, Method.Get, "PolicyAccounts", null, p);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
-                    var accounts = JsonHelper.DeserializeObject<IEnumerable<SppAccount>>(result.Body);
-                    if (accounts != null)
+                    if (count == null || count.Value == false)
                     {
-                        return accounts;
+                        var accounts = JsonHelper.DeserializeObject<IEnumerable<SppAccount>>(result.Body);
+                        if (accounts != null)
+                        {
+                            return accounts;
+                        }
+                    }
+                    else
+                    {
+                        return result.Body;
                     }
                 }
             }
@@ -1136,6 +1176,7 @@ namespace OneIdentity.DevOps.Logic
                         var result = sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
                         _configDb.DeleteAccountMappings();
                         _serviceConfiguration.UserName = null;
+                        _serviceConfiguration.UserDisplayName = null;
                         _serviceConfiguration.IdentityProviderName = null;
                         _serviceConfiguration.AdminRoles = null;
                     }
@@ -1338,6 +1379,7 @@ namespace OneIdentity.DevOps.Logic
         {
             _serviceConfiguration.IdentityProviderName = null;
             _serviceConfiguration.UserName = null;
+            _serviceConfiguration.UserDisplayName = null;
             _serviceConfiguration.AdminRoles = null;
             _serviceConfiguration.A2ARegistrationName = null;
             _serviceConfiguration.A2AVaultRegistrationName = null;
@@ -1349,6 +1391,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 _serviceConfiguration.IdentityProviderName = a2aUser.IdentityProviderName;
                 _serviceConfiguration.UserName = a2aUser.UserName;
+                _serviceConfiguration.UserDisplayName = a2aUser.DisplayName;
                 _serviceConfiguration.AdminRoles = a2aUser.AdminRoles;
             }
 

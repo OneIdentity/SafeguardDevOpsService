@@ -1,0 +1,8 @@
+
+<div class="loading-spinner-container" [ngClass]="{'noMargin': noMargin}" *ngIf="visible">
+  <div class="spinner">
+    <mat-spinner mode="indeterminate" [diameter]="diameter" [ngClass]="{'whiteSpinner': isWhiteSpinner}" [color]="color"></mat-spinner>
+  </div>
+  <span class="loadingMessage">{{message}}</span>
+</div>
+

@@ -1,0 +1,8 @@
+<div class='error-container' *ngIf='message'>
+   <div class='icon'><mat-icon>{{icon}}</mat-icon></div>
+   <div class='message' [innerHTML]='message'></div>
+   <div class='dismisser'>
+      <button mat-icon-button *ngIf='dismissable' (click)='dismiss()'><mat-icon>close</mat-icon></button>
+   </div>
+</div>
+

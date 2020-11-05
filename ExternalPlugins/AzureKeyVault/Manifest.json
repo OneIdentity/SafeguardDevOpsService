@@ -1,5 +1,6 @@
 {
-  "Name" : "AzureKeyVault",
-	"Assembly" : "AzureKeyVault.dll",
-	"Version" : "1.0"
+	"Name": "AzureKeyVault",
+	"DisplayName": "Azure Key Vault",
+  "Assembly": "AzureKeyVault.dll",
+	"Version": "1.0"
 }

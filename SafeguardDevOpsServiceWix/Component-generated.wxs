@@ -341,6 +341,9 @@
             <Component Id="Microsoft.AspNetCore.Mvc.ViewFeatures.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Mvc.ViewFeatures.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Mvc.ViewFeatures.dll" />
             </Component>
+            <Component Id="Microsoft.AspNetCore.NodeServices.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.NodeServices.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.NodeServices.dll" />
+            </Component>
             <Component Id="Microsoft.AspNetCore.Razor.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Razor.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Razor.dll" />
             </Component>
@@ -397,6 +400,12 @@
             </Component>
             <Component Id="Microsoft.AspNetCore.SignalR.Protocols.Json.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.SignalR.Protocols.Json.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.SignalR.Protocols.Json.dll" />
+            </Component>
+            <Component Id="Microsoft.AspNetCore.SpaServices.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.SpaServices.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.SpaServices.dll" />
+            </Component>
+            <Component Id="Microsoft.AspNetCore.SpaServices.Extensions.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.SpaServices.Extensions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.SpaServices.Extensions.dll" />
             </Component>
             <Component Id="Microsoft.AspNetCore.StaticFiles.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.StaticFiles.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.StaticFiles.dll" />
@@ -1193,17 +1202,39 @@
             <Component Id="_appsettings.json" Guid="*">
                 <File Id="_appsettings.json" KeyPath="yes" Source="$(var.SourceDir)\_appsettings.json" />
             </Component>
-            <Directory Id="runtimes" Name="runtimes">
-                <Directory Id="win" Name="win">
-                    <Directory Id="lib" Name="lib">
-                        <Directory Id="netstandard2.0" Name="netstandard2.0">
-                            <Component Id="System.ServiceProcess.ServiceController.dll_1" Guid="*">
-                                <File Id="System.ServiceProcess.ServiceController.dll_1" KeyPath="yes" Source="$(var.SourceDir)\runtimes\win\lib\netstandard2.0\System.ServiceProcess.ServiceController.dll" />
-                            </Component>
-                            <Component Id="System.Threading.AccessControl.dll_1" Guid="*">
-                                <File Id="System.Threading.AccessControl.dll_1" KeyPath="yes" Source="$(var.SourceDir)\runtimes\win\lib\netstandard2.0\System.Threading.AccessControl.dll" />
-                            </Component>
-                        </Directory>
+            <Directory Id="ClientApp" Name="ClientApp">
+                <Directory Id="dist" Name="dist">
+                    <Component Id="_3rdpartylicenses.txt" Guid="*">
+                        <File Id="_3rdpartylicenses.txt" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\3rdpartylicenses.txt" />
+                    </Component>
+                    <Component Id="accessTokenCheck.js" Guid="*">
+                        <File Id="accessTokenCheck.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\accessTokenCheck.js" />
+                    </Component>
+                    <Component Id="favicon.ico" Guid="*">
+                        <File Id="favicon.ico" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\favicon.ico" />
+                    </Component>
+                    <Component Id="index.html" Guid="*">
+                        <File Id="index.html" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\index.html" />
+                    </Component>
+                    <Component Id="main.133da131c1f414725eac.js" Guid="*">
+                        <File Id="main.133da131c1f414725eac.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.133da131c1f414725eac.js" />
+                    </Component>
+                    <Component Id="polyfills.a4021de53358bb0fec14.js" Guid="*">
+                        <File Id="polyfills.a4021de53358bb0fec14.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\polyfills.a4021de53358bb0fec14.js" />
+                    </Component>
+                    <Component Id="runtime.e227d1a0e31cbccbf8ec.js" Guid="*">
+                        <File Id="runtime.e227d1a0e31cbccbf8ec.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\runtime.e227d1a0e31cbccbf8ec.js" />
+                    </Component>
+                    <Component Id="scripts.568694a568f45ab03c95.js" Guid="*">
+                        <File Id="scripts.568694a568f45ab03c95.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\scripts.568694a568f45ab03c95.js" />
+                    </Component>
+                    <Component Id="styles.cac096e93acbab6a5816.css" Guid="*">
+                        <File Id="styles.cac096e93acbab6a5816.css" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\styles.cac096e93acbab6a5816.css" />
+                    </Component>
+                    <Directory Id="assets" Name="assets">
+                        <Component Id="SafeguardLogo.png" Guid="*">
+                            <File Id="SafeguardLogo.png" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\assets\SafeguardLogo.png" />
+                        </Component>
                     </Directory>
                 </Directory>
             </Directory>
@@ -1324,6 +1355,7 @@
             <ComponentRef Id="Microsoft.AspNetCore.Mvc.RazorPages.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Mvc.TagHelpers.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Mvc.ViewFeatures.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.NodeServices.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Razor.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Razor.Runtime.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.ResponseCaching.Abstractions.dll" />
@@ -1343,6 +1375,8 @@
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.Core.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.Protocols.Json.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.SpaServices.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.SpaServices.Extensions.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.StaticFiles.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.WebSockets.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.WebUtilities.dll" />
@@ -1608,8 +1642,16 @@
             <ComponentRef Id="ucrtbase.dll" />
             <ComponentRef Id="WindowsBase.dll" />
             <ComponentRef Id="_appsettings.json" />
-            <ComponentRef Id="System.ServiceProcess.ServiceController.dll_1" />
-            <ComponentRef Id="System.Threading.AccessControl.dll_1" />
+            <ComponentRef Id="_3rdpartylicenses.txt" />
+            <ComponentRef Id="accessTokenCheck.js" />
+            <ComponentRef Id="favicon.ico" />
+            <ComponentRef Id="index.html" />
+            <ComponentRef Id="main.133da131c1f414725eac.js" />
+            <ComponentRef Id="polyfills.a4021de53358bb0fec14.js" />
+            <ComponentRef Id="runtime.e227d1a0e31cbccbf8ec.js" />
+            <ComponentRef Id="scripts.568694a568f45ab03c95.js" />
+            <ComponentRef Id="styles.cac096e93acbab6a5816.css" />
+            <ComponentRef Id="SafeguardLogo.png" />
         </ComponentGroup>
     </Fragment>
 </Wix>

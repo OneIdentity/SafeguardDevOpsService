@@ -1,0 +1,37 @@
+<div mat-dialog-title>
+   <div class='dialog-title-elements'>
+      <div class='title-text'>{{typeDisplay}} Certificate Details</div>
+      <div class='close-button'><button mat-icon-button class='link-button' mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
+   </div>
+</div>
+
+<div class='dialog-content' mat-dialog-content>
+   <app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
+
+   <app-progress-spinner diameter="20" color="accent" [visible]="!certificateLoaded || removingCertificate" [message]="spinnerMessage"></app-progress-spinner>
+   <div class='certificate-container' *ngIf='certificateLoaded && !removingCertificate'>
+      <div>
+         <div class='label'>Subject Name</div>
+         <div class='data'>{{retrievedCert.Subject}}</div>
+      </div>
+
+      <div>
+          <div class='label'>Issued By</div>
+          <div class='data'>{{retrievedCert.IssuedBy}}</div>
+      </div>
+
+      <div>
+          <div class='label'>Valid From</div>
+          <div class='data'>{{LocalizedValidFrom}}</div>
+      </div>
+
+      <div>
+          <div class='label'>Thumbprint</div>
+          <div class='data'>{{retrievedCert.Thumbprint}}</div>
+      </div>
+   </div>
+</div>
+<div mat-dialog-actions align='start'>
+   <button mat-button *ngIf="showBackButton" class='link-button' color='primary' (click)="addCertificate()" tabindex='-1' disableRipple>&lt; &nbsp; Back</button>
+   <button mat-button *ngIf="!removingCertificate && !showBackButton" class='link-button' color='primary' (click)="removeCertificate()" tabindex='-1' disableRipple>Remove Certificate</button>
+</div>

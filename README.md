@@ -79,10 +79,11 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 ### From Source
 
-1. Checkout and rebuild all (Rebuild Solution) the SafeguardDevOpsService (<https://github.com/OneIdentity/SafeguardDevOpsService>)
+1. Checkout and load the SafeguardDevOpsService project solution in Visual Studio. (<https://github.com/OneIdentity/SafeguardDevOpsService>)
+1. Rebuild all (Rebuild Solution) the SafeguardDevOpsService.
 1. Start the SafeguardDevOpsService.
 1. In a browser navigate to <https://localhost/service/devops/swagger/index.html>
-1. Right-click on the SetupSafeguardDevOpsService project and select "Build" to build the installer MSI package.
+1. To build an installer MSI package, in the SafeguardDevOpsService Visual Studio solution, right-click on the SetupSafeguardDevOpsService project and select "Build".
 
 ### From Installer
 
@@ -155,6 +156,32 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
 
 ## Configuring Safeguard Secrets Broker for DevOps
 
+### Using the Web User Interface
+
+1. Once the Secrets Broker has been install and the service as been started as decribed above, in a browser navigate to the root URI of the service. `https://<service IP address or DNS>`
+2. The Secrets Broker will request the IP address or Host Name of the Safeguard appliance that the Secrets Broker should use.
+
+![SafeguardDevOpsService](Images/SafeguardDevOpsConnect-1.png)
+
+3. The Secrets Broker will redirect to the Safeguard login page and allow the user to login in the same way as for Safeguard itself.
+4. After the user has authenticated with Safeguard, the Secrets Broker will display the main page.
+5. At this point the user must either upload a new client certificate or create a CSR and have it signed by a trusted signing authority.
+
+![SafeguardDevOpsService](Images/SafeguardDevOpsCsr-1.png)
+
+6. After uploading the client certificate, the Secrets Broker will complete the configuration of the service which involves adding two A2A registrations to the associates Safeguard appliance and adding a certificate user.
+7. The next step is to upload one or more plugins which will allow the Secrets Broker to push passwords to a third party vault. Follow the link to the Github repository for downloading available plugins. After downloading a plugin from the Github project, upload a plugin into the Secrets Broker.
+8. After a plugin has been uploaded, it will appear on the main page and allow the user to configure it. Each plugin has a unique configuration. Click on the 'Edit Configration' button to finishing configuring the plugin.
+9. Each plugin must also be associated with 1 or more accounts. These accounts represent the accounts for which the Secrets Broker will pull passwords from the Safeguard Appliance and push them to the corresponding third party vault.
+
+![SafeguardDevOpsService](Images/SafeguardDevOpsPluginConfig-1.png)
+
+10. After all plugins have been installed, configured and include mapped accounts, the user can start the monitoring process by clicking on the 'Start Monitor' button.  The Secrets Broker will listen for a changed password event for any of the mapped accounts and automatically pull the passwords for those accounts and push the passwords to their respective third party vaults.
+
+![SafeguardDevOpsService](Images/SafeguardDevOpsMonitoring-1.png)
+
+### Using the REST API
+
 1. There are two different certificates that Safeguard Secrets Broker for DevOps needs in order to function properly.
     - The first certificate is the web service SSL certificate.  A default self-signed SSL certificate was create when Safeguard Secrets Broker for DevOps was launched for the first time.  This certificate can be replaced with your own server authentication SSL certificate if desired.  This is optional.
     - The second certificate is a client authentication certificate which will be used to create the SPP certificate user and A2A registration.
@@ -164,7 +191,7 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
     - Sign the CSR to produce a public certificate.
       - KeyUsage - DigitalSignature, KeyEncipherment.
       - ExtendedKeyUsage - ClientAuth.
-    - Navigate to and call the POST /service/devops/Safeguard/ClientCertificate with the JSON body.
+    - Navigate to and call the `POST /service/devops/Safeguard/ClientCertificate` with the JSON body.
 
     ```json
     {
@@ -183,7 +210,7 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
         - "LogLevel": `"<level>"` - The log level defaults to "Information". However the level can be set to "Information", "Error", "Fatal", "Verbose", "Warning" or "Debug".
       - After making any changes to the appsettings.json settings file, Safeguard Secrets Broker for DevOps must be restarted in order for the changes to take effect.
 
-## Deploying Vault Plugins
+## Installing Vault Plugins
 
 1. Copy one or more plugin zip files to the Windows local file system.
 1. Navigate to and call: `POST /service/devops/Plugins/File` to upload the plugin zip file.
@@ -236,17 +263,3 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
 
 1. The same API can be used to stop password monitoring.
 1. At this point Safeguard Secrets Broker for DevOps will detect whenever a password changes in SPP, pull the password and push it to the appropriate plugin(s).  The custom code in the plugin(s) will push the password to the third party vault.
-
-## Notice
-
-This project is currently in **BETA** stage. It should not be used for any
-production environment.
-
-During the **Beta** stages, the plugin interface is still being
-developed and **may be changed**.
-
-There are some security considerations that have not yet been addressed.
-
-More documentation will be provided in the near future.
-
-Feedback welcome.

@@ -19,6 +19,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
         private static string _defaultNamespace = "default";
 
         public string Name => "KubernetesSecrets";
+        public string DisplayName => "Kubernetes Secrets";
         public string Description => "This is the Kubernetes Secrets plugin for updating passwords";
 
         public Dictionary<string,string> GetPluginInitialConfiguration()

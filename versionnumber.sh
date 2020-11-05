@@ -14,7 +14,7 @@ buildNumber=$(expr $buildId % 65535) # max value for version part on Windows is 
 echo "buildNumber = $($local:buildNumber)"
 
 versionString="$semVer.$buildNumber"
-templateVersion = "65534.65534.65534.65534"
+templateVersion = "255.255.65534.65534"
 echo "versionString = $versionString"
 echo "templateVersion = $templateVersion"
 

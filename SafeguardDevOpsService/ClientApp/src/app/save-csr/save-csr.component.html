@@ -1,0 +1,22 @@
+<div mat-dialog-title>
+   <div class='dialog-title-elements'>
+      <div class='title-text'>Download {{csr.CertificateType}} Certificate CSR</div>
+      <div class='close-button'><button mat-icon-button class='link-button' mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
+   </div>
+</div>
+
+<div class='save-csr-container'>
+   <div class="formNewLine"></div>
+
+   <div class='instructions'>Either download the CSR to a file or copy the text to the clipboard and submit to your CA.</div>
+
+   <div class="formNewLine"></div>
+
+   <textarea cols='65' rows='25' readonly>{{csr.Base64RequestData}}</textarea>
+
+   <div class='button-container'>
+      <div class='left-side'><button mat-button class='link-button' (click)='goBack()' color='primary'>&lt; &nbsp; Back</button></div>
+      <div class='right-side'><button mat-flat-button color="primary" (click)="save()" cdkInitialFocus>Download</button></div>
+   </div>
+</div>
+

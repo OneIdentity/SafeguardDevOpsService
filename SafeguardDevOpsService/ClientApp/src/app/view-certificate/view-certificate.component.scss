@@ -1,0 +1,18 @@
+@import '../../colors.scss';
+
+.dialog-content {
+  max-width: 600px;
+  width: 550px;
+}
+
+.label {
+  color: $black-6;
+  font-size: 13px;
+}
+
+.data {
+  color: $gunmetal;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+

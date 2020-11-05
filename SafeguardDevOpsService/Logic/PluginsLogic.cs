@@ -39,6 +39,7 @@ namespace OneIdentity.DevOps.Logic
         {
             var plugins = _configDb.GetAllPlugins().ToList();
             plugins.ForEach(x => x.IsLoaded = _pluginManager.IsLoadedPlugin(x.Name));
+            plugins.ForEach(x => x.MappedAccountsCount = GetAccountMappingsCount(x.Name));
             return plugins;
         }
 
@@ -119,6 +120,7 @@ namespace OneIdentity.DevOps.Logic
             if (plugin != null)
             {
                 plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
+                plugin.MappedAccountsCount = GetAccountMappingsCount(plugin.Name);
             }
 
             return plugin;
@@ -160,6 +162,19 @@ namespace OneIdentity.DevOps.Logic
 
             var accountMappings = mappings.Where(x => x.VaultName.Equals(name, StringComparison.InvariantCultureIgnoreCase));
             return accountMappings;
+        }
+
+        private int GetAccountMappingsCount(string name)
+        {
+            try
+            {
+                var mappings = GetAccountMappings(name);
+                return mappings?.Count() ?? 0;
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         public AccountMapping GetAccountMappingById(string name, int accountId)

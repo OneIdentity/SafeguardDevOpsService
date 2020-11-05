@@ -7,7 +7,6 @@ using OneIdentity.DevOps.Logic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Extensions;
@@ -19,7 +18,8 @@ namespace OneIdentity.DevOps
     internal class SafeguardDevOpsService
     {
         private readonly IWebHost _host;
-        private readonly IEnumerable<IPluginManager> _services;
+        private readonly IPluginManager _pluginManager;
+        private readonly IMonitoringLogic _monitoringLogic;
 
         public SafeguardDevOpsService()
         {
@@ -97,13 +97,19 @@ namespace OneIdentity.DevOps
                 .UseStartup<Startup>()
                 .Build();
 
-            // TODO: better way to start this service??
-            _services = (IEnumerable<IPluginManager>)_host.Services.GetService(typeof(IEnumerable<IPluginManager>));
+            _monitoringLogic = (IMonitoringLogic) _host.Services.GetService(typeof(IMonitoringLogic));
+            _pluginManager = (IPluginManager)_host.Services.GetService(typeof(IPluginManager));
         }
 
         public void Start()
         {
-            _services.ToList().ForEach(s => s.Run());
+            // This kicks off a function that
+            // checks for and loads any staged plugins
+            _pluginManager.Run();
+            // This kicks off a function that restores
+            // the password change monitor to last known
+            // running state.
+            _monitoringLogic.Run();
             _host.RunAsync();
         }
 

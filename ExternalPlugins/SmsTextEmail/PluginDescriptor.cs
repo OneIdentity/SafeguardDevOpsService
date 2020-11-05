@@ -21,6 +21,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
         private string[] toAddresses = null;
 
         public string Name => "SmsTextEmail";
+        public string DisplayName => "Sms Text & Email";
         public string Description => "This is the SMS email to text plugin";
 
         public Dictionary<string,string> GetPluginInitialConfiguration()

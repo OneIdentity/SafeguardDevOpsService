@@ -41,6 +41,10 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public string UserName { get; set; }
         /// <summary>
+        /// User display name
+        /// </summary>
+        public string UserDisplayName { get; set; }
+        /// <summary>
         /// Admin roles
         /// </summary>
         public string[] AdminRoles { get; set; }
