@@ -27,6 +27,12 @@ the port information delimited with a colon (e.g. ssbdevops.example.com:12345).
 .PARAMETER VaultAddress
 Network address (IP or DNS) of HashiCorp Vault to use.
 
+.PARAMETER VaultUseHttps
+Whether to use HTTPS to communicate with HashiCorp Vault.
+
+.PARAMETER VaultSecretsPath
+Which mount point to use in HashiCorp Vault to store secrests (default: secrets)
+
 .PARAMETER SppAddress
 Network address (IP or DNS) of SPP.
 
@@ -72,6 +78,10 @@ Param(
     [string]$SecretsBrokerAddress,
     [Parameter(Mandatory=$true)]
     [string]$VaultAddress,
+    [Parameter(Mandatory=$false)]
+    [bool]$VaultUseHttps = $false,
+    [Parameter(Mandatory=$false)]
+    [string]$VaultSecretsPath = "secret",
     [Parameter(Mandatory=$true)]
     [string]$SppAddress,
     [Parameter(Mandatory=$false)]
@@ -159,7 +169,7 @@ try
         Write-Host -ForegroundColor Cyan "Initializing Secrets Broker DevOps API communication ..."
         Write-Host -ForegroundColor Green "Configuring Secrets Broker client certificate user ..."
         Write-Host -ForegroundColor Yellow "Using certificate: $UserPfxFile"
-        Install-SgDevOpsClientCertificate -CertificateFile $UserPfxFile -Password $UserPfxFilePassword | Select-Object -Property Subject,IssuedBy,Thumbprint
+        Install-SgDevOpsClientCertificate -CertificateFile $UserPfxFile -Password $UserPfxFilePassword | Select-Object -Property Subject,IssuedBy,Thumbprint | Format-List
 
         Write-Host -ForegroundColor Green "Setting up DevOps (A2A) API registration ..."
         Initialize-SgDevOpsConfiguration
@@ -167,8 +177,9 @@ try
         Write-Host -ForegroundColor Green "Registering asset accounts with DevOps (A2A) API ..."
         foreach ($local:MappedAssetAccountObj in $local:MappedAssetAccountObjList)
         {
-            Register-SgDevOpsAssetAccount $local:MappedAssetAccountObj.SystemName $local:MappedAssetAccountObj.Name -Domain $local:MappedAssetAccountObj.DomainName
+            Register-SgDevOpsAssetAccount $local:MappedAssetAccountObj.SystemName $local:MappedAssetAccountObj.Name -Domain $local:MappedAssetAccountObj.DomainName | Format-Table
         }
+        [Console]::Out.Flush()
 
         Write-Host -ForegroundColor Cyan "Configuring the HashiCorp Vault plugin ..."
         Write-Host -ForegroundColor Green "Downloading the latest HashiCorp Vault plugin from GitHub ..."
@@ -182,26 +193,42 @@ try
 
         Write-Host -ForegroundColor Green "Uploading the HashiCorp Vault plugin to Secrets Broker ..."
         Install-SgDevOpsPlugin -PluginZipFile "HashiCorpVault.zip"
+        [Console]::Out.Flush()
 
         Start-Sleep 5 # Give the plugin time to load
 
         Write-Host -ForegroundColor Green "Configuring HashiCorp Vault plugin service account ..."
         Write-Host -ForegroundColor Yellow "Using: $($local:VaultAssetAccountObj.SystemName)\$($local:VaultAssetAccountObj.Name)"
         Set-SgDevOpsPluginVaultAccount -PluginName "HashiCorpVault" -Asset $local:VaultAssetAccountObj.SystemName -Account $local:VaultAssetAccountObj.Name
+        [Console]::Out.Flush()
 
-        $local:VaultLocation = "http://$VaultAddress"
-        Write-Host -ForegroundColor Green "Configuring vault location ($($local:VaultLocation)) ..."
+        if ($VaultUseHttps)
+        {
+            $local:VaultLocation = "https://$VaultAddress"
+        }
+        else
+        {
+            $local:VaultLocation = "http://$VaultAddress"
+        }
+
+        Write-Host -ForegroundColor Green "Configuring vault address ($($local:VaultLocation)) ..."
         Set-SgDevOpsPluginSetting "HashiCorpVault" "address" $local:VaultLocation
+        [Console]::Out.Flush()
+
+        Write-Host -ForegroundColor Green "Configuring vault mountpoint ($VaultSecretsPath) ..."
+        Set-SgDevOpsPluginSetting "HashiCorpVault" "mountpoint" $VaultSecretsPath
+        [Console]::Out.Flush()
 
         Write-Host -ForegroundColor Green "Mapping asset accounts to HashiCorp Vault plugin ..."
         Get-SgDevOpsRegisteredAssetAccount | ForEach-Object {
-            Add-SgDevOpsMappedAssetAccount "HashiCorpVault" -Asset $_.SystemName -Account $_.AccountName -Domain $_.DomainName
+            Add-SgDevOpsMappedAssetAccount "HashiCorpVault" -Asset $_.SystemName -Account $_.AccountName -Domain $_.DomainName | Format-Table
         }
-
-        Get-SgDevOpsMappedAssetAccount "HashiCorpVault" | Select-Object -Property VaultName,AssetName,AccountName,DomainName
+        [Console]::Out.Flush()
 
         Write-Host -ForegroundColor Cyan "Starting the Secrets Broker monitor ..."
         Enable-SgDevOpsMonitor
+        [Console]::Out.Flush()
+
     }
     finally
     {
