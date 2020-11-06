@@ -146,6 +146,8 @@ A Docker image for Safeguard Secrets Broker for Devops is built and made availab
     $ docker pull oneidentity/safeguard-devops
     ```
 
+WARNING: In some docker environments, the container may not be able to determine the host IP address. This can result in an A2A IP restriction that does not match the host and may prevent the password monitor from starting. If the SafeguardDevOpsService.log shows that the monitor is failing to start, open the Safeguard Desktop Client and navigate to the Application to Application registration configuration in Settings. Edit the SafeguardDevOpsServer-xxx and SafeguardDevOpsServiceVaultCredentials-xxx registrations that match the Secrets Broker. Within the A2A registration, select the Credential Retrieval tab and modify each restriction so that it matches the IP address of the Secrets Broker host. This is a known issue which should be resolved in a future version of the Secrets Broker.
+
 ### Environment Variables
 
 Initialization of the Secrets Broker on Windows or as a Docker image can be controled by specifying certain environment variables. These environment variables can be passed nto the initializtion of the Secrets Broker in one of two ways depending on the operating system. For Windows, the environment variables are set through a file called 'appsettings.json'. To change the variables on windows, navigate to the installed location of the Secrets Broker and rename the '_appsettings.json' to 'appsettings.json'. Then edit the settings file and change the corresponding variable. To change the variables in a Docker environment, the variables need to be set on the command line and passed into the image. The following describes the available environment variables:
