@@ -159,13 +159,15 @@ PrivateData = @{
          ExternalModuleDependencies = @('safeguard-ps')
 
          # Pre-release tag
-         Prerelease = '-pre'
+         # Prerelease = '-pre'
 
          # ReleaseNotes of this module
          ReleaseNotes = @"
-safeguard-devops 0.1 Release Notes:
+safeguard-devops 99999.99999.99999 Release Notes:
 
- - initial beta version
+ - New module release
+
+ - Bug fixes
 "@
 
      } # End of PSData hashtable
