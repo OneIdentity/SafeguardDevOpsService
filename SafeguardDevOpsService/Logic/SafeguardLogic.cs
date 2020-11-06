@@ -592,8 +592,8 @@ namespace OneIdentity.DevOps.Logic
                     Thumbprint = cert.Thumbprint,
                     IssuedBy = cert.Issuer,
                     Subject = cert.Subject,
-                    NotAfter = cert.NotBefore,
-                    NotBefore = cert.NotAfter,
+                    NotAfter = cert.NotAfter,
+                    NotBefore = cert.NotBefore,
                     Base64CertificateData = cert.ToPemFormat()
                 };
                 return result;
