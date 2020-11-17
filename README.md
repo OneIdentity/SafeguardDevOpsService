@@ -58,13 +58,14 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 **PARCache** -- This is a new PARCache service written for Safeguard customers transitioning from TPAM.
 
-[![Safeguad DevOps Demo Video](Images/SafeguardDevOpsServiceDemo-1.png)](https://www.youtube.com/watch?v=QFNllIpQxQ8)
+[![Safeguard DevOps Demo Video](Images/SafeguardDevOpsServiceDemo-1.png)](https://www.youtube.com/watch?v=vwHu7gYnEvo)
 
 ## Safeguard Secrets Broker for DevOps Technologies Plugins
 
 - HashiCorp Vault
 - Azure Key Vault
 - Kubernetes Secrets Storage
+- Jenkins Secrets
 - ...
 
 ## Safeguard for Privileged Passwords Setup
