@@ -6,7 +6,7 @@
   <Product Id="*" Name="SafeguardDevOpsService" Language="1033" Version="!(bind.fileVersion.DevOpsPluginCommon.dll)" Manufacturer="!(loc.CompanyName)" UpgradeCode="8a0194a6-6aed-441c-8130-a81b96490bd7">
 		<Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated" />
 
-    <MajorUpgrade AllowSameVersionUpgrades="yes" Schedule="afterInstallInitialize" DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MajorUpgrade AllowSameVersionUpgrades="yes" Schedule="afterInstallFinalize" DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
     <MediaTemplate EmbedCab="yes"  />
 
     <Property Id="ARPURLINFOABOUT">https://github.com/OneIdentity/SafeguardDevOpsService</Property>
@@ -74,7 +74,7 @@
                   ExeCommand='/c rmdir "[CommonAppDataFolder]!(loc.ProductNameFolder)" /s /q' />
 
     <InstallExecuteSequence>
-      <Custom Action="EXECUTE_STOP" After="InstallInitialize">NOT _INSTALL</Custom>
+      <Custom Action="EXECUTE_STOP" After="StopServices">NOT _INSTALL</Custom>
       <Custom Action="EXECUTE_UNINSTALL" After="EXECUTE_STOP">NOT _INSTALL</Custom>
       <Custom Action="CLEANUP_DATA_ON_UNINSTALL" Before="InstallFinalize">_UNINSTALL</Custom>
       <Custom Action="CLEANUP_EXT_DATA_ON_UNINSTALL" After="CLEANUP_DATA_ON_UNINSTALL">_UNINSTALL</Custom>
