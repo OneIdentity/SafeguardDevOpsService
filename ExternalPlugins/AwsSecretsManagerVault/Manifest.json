@@ -1,0 +1,6 @@
+{
+	"Name": "AwsSecretsManagerVault",
+	"DisplayName": "AWS Secrets Vault",
+  "Assembly": "AwsSecretsManagerVault.dll",
+	"Version": "1.0"
+}
