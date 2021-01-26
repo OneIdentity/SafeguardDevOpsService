@@ -156,7 +156,7 @@ namespace OneIdentity.DevOps.Logic
                     {
                         try
                         {
-                            _logger.Information($"Sending password for account {account} to {account.VaultName}.");
+                            _logger.Information($"Sending password for account {account.AccountName} to {account.VaultName}.");
                             if (!_pluginManager.SendPassword(account.VaultName, account.AssetName, account.AccountName, password))
                                 _logger.Error(
                                     $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
