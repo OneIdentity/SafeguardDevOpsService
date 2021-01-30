@@ -2,6 +2,10 @@
 [![Docker Hub](https://img.shields.io/badge/docker-oneidentity%2Fsafeguard--devops-blue.svg)](https://hub.docker.com/r/oneidentity/safeguard-devops/)
 [![GitHub](https://img.shields.io/github/license/OneIdentity/SafeguardDevOpsService.svg)](https://github.com/OneIdentity/SafeguardDevOpsService/blob/master/LICENSE)
 
+## [Note]
+
+Due to an upgraded version of the SignalR technology in Safeguard for Privileged Passwords, a matching SignalR client version had to be upgraded in the Safeguard Secrets Broker for DevOps.  The upgraded SignalR technology that is used to monitor the password change events, is not backwards compatible with previous versions.  Therefore, version 1.5.0 and above of the Safeguard Secrets Broker for DevOps is only compatible with Safeguard for Privileged Passwords 6.8.0 and above.  The Safeguard Secrets Broker for DevOps 1.0.0 must be used with versions of Safeguard for Privileged Passwords 6.7.0 or below.
+
 # Safeguard Secrets Broker for DevOps
 
 The term DevOps can mean different things to different people.  It is important to make sure that we understand what we mean when we say we need help securing DevOps.
