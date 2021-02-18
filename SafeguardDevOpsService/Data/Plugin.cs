@@ -40,6 +40,11 @@ namespace OneIdentity.DevOps.Data
         public bool IsLoaded { get; set; }
 
         /// <summary>
+        /// Is the plugin loaded
+        /// </summary>
+        public bool IsDeleted { get; set; } = false;
+
+        /// <summary>
         /// Plugin version
         /// </summary>
         public string Version { get; set; }

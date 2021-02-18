@@ -194,7 +194,7 @@ export class DevOpsServiceClient {
     const options = Object.assign({ body: accounts }, this.authHeader());
 
     return this.http.request('delete', this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Accounts', options)
-      .pipe(catchError(this.error<any>('putPluginAccounts')));
+      .pipe(catchError(this.error<any>('deletePluginAccounts')));
   }
 
   getPluginVaultAccount(name: string): Observable<any> {
@@ -220,7 +220,9 @@ export class DevOpsServiceClient {
   }
 
   deletePluginConfiguration(name: string): Observable<any> {
-    return this.http.delete(this.BASE + 'Plugins/' + encodeURIComponent(name), this.authHeader())
+    const options = Object.assign({ responseType: 'text' }, this.authHeader());
+
+    return this.http.delete(this.BASE + 'Plugins/' + encodeURIComponent(name), options)
     .pipe(catchError(this.error<any>('deletePluginConfiguration')));
   }
 

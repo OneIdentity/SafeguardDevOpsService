@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -914,6 +915,12 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeleteSafeguardData()
         {
+            // Since the database is about to be dropped, we can't store deleted plugins in the database.
+            // Write an empty file in the plugins dir to indicate on startup that the plugins need to be deleted.
+            if (Directory.Exists(WellKnownData.PluginDirPath))
+            {
+                File.Create(WellKnownData.DeleteAllPlugins).Dispose();
+            }
             _configDb.DropDatabase();
             RestartService();
         }

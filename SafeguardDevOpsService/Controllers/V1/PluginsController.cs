@@ -43,9 +43,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet]
-        public ActionResult<IEnumerable<Plugin>> GetPlugins([FromServices] IPluginsLogic pluginsLogic)
+        public ActionResult<IEnumerable<Plugin>> GetPlugins([FromServices] IPluginsLogic pluginsLogic, [FromQuery] bool includeDeleted = false)
         {
-            var plugins = pluginsLogic.GetAllPlugins();
+            var plugins = pluginsLogic.GetAllPlugins(includeDeleted);
             if (plugins == null)
                 return NotFound();
 
@@ -168,22 +168,29 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin must be installed and configured individually.
         ///
-        /// This endpoint removes the configuration for a specific plugin by name and unregisters the plugin from Safeguard Secrets Broker for DevOps.
+        /// This endpoint marks the plugin as deleted by name and unregisters the plugin from Safeguard Secrets Broker for DevOps.
         /// However, this endpoint does not remove the plugin from the \ProgramData\SafeguardDevOpsService\ExternalPlugins folder. The
-        /// plugin files must be manually removed from the ExternalPlugins folder once Safeguard Secrets Broker for DevOps has been stopped.
+        /// Safeguard Secrets Broker for DevOps service must be restarted so that the plugin files can be removed.
         /// </remarks>
         /// <param name="name">Name of the plugin.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
+        /// <response code="200">Success - needing restart</response>
         /// <response code="204">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("{name}")]
-        public ActionResult DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        public ActionResult DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromQuery] bool restart = false)
         {
             pluginsLogic.DeleteAccountMappings(name);
             pluginsLogic.RemovePluginVaultAccount(name);
             pluginsLogic.DeletePluginByName(name);
         
+            if (restart)
+                pluginsLogic.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok("Safeguard Secrets Broker for DevOps needs to be restarted to finish removing the plugin.");
+
             return NoContent();
         }
 

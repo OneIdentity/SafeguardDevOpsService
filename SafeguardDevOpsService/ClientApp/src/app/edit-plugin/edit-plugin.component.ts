@@ -85,8 +85,8 @@ export class EditPluginComponent implements OnInit {
         title: 'Delete Plugin',
         message:
           '<p>Are you sure you want to remove the configuration for this plugin and unregister the plugin from Safeguard Secrets Broker for DevOps?</p>' +
-          '<p>This does not remove the plugin from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder.</p>' +
-          '<p>The plugin files must be manually removed from the ExternalPlugins folder once Safeguard Secrets Broker for DevOps has been stopped.</p>',
+          '<p>This does not remove the plugin from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder at this point.</p>' +
+          '<p>The Safeguard Secrets Broker for DevOps service must be restarted to completely remove the deleted plugin. Select the "Restart Secrets Broker" option from the settings menu.</p>',
         confirmText: 'Delete Plugin'
       }
     });
@@ -104,7 +104,7 @@ export class EditPluginComponent implements OnInit {
         this.dialog.open(ConfirmDialogComponent, {
           data: {
             title: 'Next Steps',
-            message: 'The plugin files must be manually removed from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder once Safeguard Secrets Broker for DevOps has been stopped.',
+            message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
             showCancel: false,
             confirmText: 'OK'
         }});

@@ -11,7 +11,7 @@ namespace OneIdentity.DevOps.Logic
         void InstallPlugin(string base64Plugin);
         void InstallPlugin(IFormFile formFile);
 
-        IEnumerable<Plugin> GetAllPlugins();
+        IEnumerable<Plugin> GetAllPlugins(bool includeDeleted = false);
         Plugin GetPluginByName(string name);
         void DeletePluginByName(string name);
         Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name);
