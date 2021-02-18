@@ -35,12 +35,16 @@ namespace OneIdentity.DevOps.Logic
             return new DevOpsException(msg, ex);
         }
 
-        public IEnumerable<Plugin> GetAllPlugins()
+        public IEnumerable<Plugin> GetAllPlugins(bool includeDeleted = false)
         {
             var plugins = _configDb.GetAllPlugins().ToList();
             plugins.ForEach(x => x.IsLoaded = _pluginManager.IsLoadedPlugin(x.Name));
             plugins.ForEach(x => x.MappedAccountsCount = GetAccountMappingsCount(x.Name));
-            return plugins;
+
+            if (includeDeleted)
+                return plugins;
+
+            return plugins.Where(x => x.IsDeleted == false).ToList();
         }
 
         private void InstallPlugin(ZipArchive zipArchive)
@@ -128,7 +132,15 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeletePluginByName(string name)
         {
-            _configDb.DeletePluginByName(name);
+            //Don't actually delete the plugin configuration yet.  Mark the plugin to be deleted
+            // and then delete it on the next restart.
+            var plugin = _configDb.GetPluginByName(name);
+            if (plugin != null)
+            {
+                plugin.IsDeleted = true;
+                _configDb.SavePluginConfiguration(plugin);
+                RestartManager.Instance.ShouldRestart = true;
+            }
         }
 
 

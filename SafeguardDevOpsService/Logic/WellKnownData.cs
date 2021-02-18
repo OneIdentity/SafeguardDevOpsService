@@ -42,6 +42,7 @@ namespace OneIdentity.DevOps.Logic
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
         public static readonly string SvcIdPath = Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.ServiceIdentifier);
+        public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, "DeletePlugins.all");
 
 
         public static string GetSppToken(HttpContext context)

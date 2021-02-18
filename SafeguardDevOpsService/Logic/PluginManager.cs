@@ -53,6 +53,8 @@ namespace OneIdentity.DevOps.Logic
 
         public void Run()
         {
+            CleanUpDeletedPlugins();
+
             var pluginDirPath = WellKnownData.PluginDirPath;
             Directory.CreateDirectory(pluginDirPath);
 
@@ -94,6 +96,44 @@ namespace OneIdentity.DevOps.Logic
             _watcher.Created += OnDirectoryCreate;
 
             DetectPlugins(pluginDirPath);
+        }
+
+        public void CleanUpDeletedPlugins()
+        {
+            // If the DeleteAllPlugins file exists, just remove the entire external plugins directory.
+            if (File.Exists(WellKnownData.DeleteAllPlugins))
+            {
+                try
+                {
+                    Directory.Delete(WellKnownData.PluginDirPath, true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to clean up the external plugins directory. {ex.Message}");
+                }
+                return;
+            }
+
+            var plugins = _configDb.GetAllPlugins();
+            foreach (var plugin in plugins)
+            {
+                if (plugin.IsDeleted)
+                {
+                    try
+                    {
+                        _configDb.DeletePluginByName(plugin.Name);
+
+                        var dirPath = Path.Combine(WellKnownData.PluginDirPath, plugin.Name);
+                        if (Directory.Exists(dirPath)) 
+                            Directory.Delete(dirPath, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Failed to clean up the external plugin {plugin.Name}. {ex.Message}");
+                    }
+                }
+
+            }
         }
 
         public void SetConfigurationForPlugin(string name)
