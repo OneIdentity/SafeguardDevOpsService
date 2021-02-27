@@ -4,7 +4,7 @@
       <div class="spacer"></div>
       <button mat-icon-button (click)="close()"><mat-icon>close</mat-icon></button>
     </mat-toolbar>
-  
+
     <div class="main-container">
       <mat-card>
         <div class="basic-info-header">
@@ -44,6 +44,7 @@
             </mat-form-field>
           </div>
         </ng-container>
+        <button mat-button (click)="testConnection()" [disabled]="isSaving || plugin.LoadingPluginAccounts" color="primary" class="link-button" disableRipple>Test Configuration</button>
       </mat-card>
 
       <mat-card *ngIf="!plugin.LoadingPluginAccounts">
@@ -57,14 +58,14 @@
                 <div class="detail-row">{{element.SystemNetworkAddress}}</div>
               </td>
             </ng-container>
-    
+
             <ng-container matColumnDef="account">
               <td mat-cell *matCellDef="let element">
                 <span>{{element.Name}}</span>
                 <div class="detail-row">{{element.DomainName}}</div>
               </td>
             </ng-container>
-    
+
             <ng-container matColumnDef="delete">
               <td mat-cell *matCellDef="let row">
                 <button mat-icon-button (click)="removeAccount($event, row)" color="primary" [disabled]="isSaving"><mat-icon>delete</mat-icon></button>
@@ -82,11 +83,11 @@
         <mat-spinner color="primary" diameter="30"></mat-spinner>
       </div>
     </div>
-  
+
     <mat-toolbar class="selection-footer">
-      <button mat-button (click)="delete()" [disabled]="isSaving || plugin.LoadingPluginAccounts" class="link-button" disableRipple>Delete Connection</button>
+      <button mat-button (click)="delete()" [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts" class="link-button" disableRipple>Delete Connection</button>
       <div class="spacer"></div>
       <app-progress-spinner color="accent" diameter="20" [visible]="isSaving" message="Saving"></app-progress-spinner>
-      <button mat-flat-button color="primary" (click)="save()" [disabled]="isSaving || plugin.LoadingPluginAccounts"><span *ngIf="!isSaving">Save</span><span *ngIf="isSaving">Saving...</span></button>
+      <button mat-flat-button color="primary" (click)="save()" [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts"><span *ngIf="!isSaving">Save</span><span *ngIf="isSaving">Saving...</span></button>
     </mat-toolbar>
   </div>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using k8s;
 using k8s.Models;
 using OneIdentity.DevOps.Common;
@@ -60,6 +61,31 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             else
             {
                 _logger.Error("Some parameters are missing from the configuration or the configuration file is invalid.");
+            }
+        }
+
+        public bool TestVaultConnection()
+        {
+            if (_client == null)
+                return false;
+
+            var vaultNamespace = _defaultNamespace;
+            if (_configuration != null && _configuration.ContainsKey(VaultNamespaceName))
+            {
+                vaultNamespace = _configuration[VaultNamespaceName];
+            }
+
+            try
+            {
+                var task = Task.Run(async () => await _client.ListNamespacedSecretAsync(vaultNamespace));
+                var result = task.Result;
+                _logger.Information($"Successfully passed the connection test for Password for {DisplayName}.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                return false;
             }
         }
 

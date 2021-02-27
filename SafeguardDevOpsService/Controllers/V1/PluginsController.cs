@@ -151,6 +151,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <param name="name">Name of plugin to update</param>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
         [HttpPut("{name}")]
         public ActionResult<Plugin> GetPlugins([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginConfiguration pluginConfiguration)
         {
@@ -192,6 +194,34 @@ namespace OneIdentity.DevOps.Controllers.V1
                 return Ok("Safeguard Secrets Broker for DevOps needs to be restarted to finish removing the plugin.");
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Test the plugin connection configuration.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint tests the connection configuration between the plugin and the third party vault.
+        /// </remarks>
+        /// <param name="name">Name of plugin configuration to test</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Failed test</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost("{name}/TestConnection")]
+        public ActionResult TestPluginConnection([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        {
+            var success = pluginsLogic.TestPluginConnectionByName(name);
+
+            if (!success)
+            {
+                return BadRequest(new ErrorMessage("Test connection failed."));
+            }
+
+            return Ok();
         }
 
         /// <summary>
@@ -372,6 +402,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <param name="assetAccount">Account to associate with the vault.</param>
         /// <response code="200">Success</response>
         /// <response code="400">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
         [HttpPut("{name}/VaultAccount")]
         public ActionResult<AssetAccount> PutPluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] AssetAccount assetAccount)
         {
@@ -396,6 +428,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <param name="name">Name of plugin to update</param>
         /// <response code="204">Success</response>
         /// <response code="400">Bad Request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
         [HttpDelete("{name}/VaultAccount")]
         public ActionResult RemovePluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {

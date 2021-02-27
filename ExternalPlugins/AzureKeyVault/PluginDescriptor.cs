@@ -65,6 +65,24 @@ namespace OneIdentity.DevOps.AzureKeyVault
             }
         }
 
+        public bool TestVaultConnection()
+        {
+            if (_keyVaultClient == null)
+                return false;
+
+            try
+            {
+                var task = Task.Run(async () => await _keyVaultClient.GetSecretsAsync(_configuration[VaultUriName]));
+                var result = task.Result;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                return false;
+            }
+        }
+
         public bool SetPassword(string asset, string account, string password)
         {
             if (_keyVaultClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))

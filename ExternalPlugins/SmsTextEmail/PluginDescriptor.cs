@@ -84,6 +84,12 @@ namespace OneIdentity.DevOps.SmsTextEmail
             _logger = logger;
         }
 
+        public bool TestVaultConnection()
+        {
+            _logger.Information($"Successfully passed the connection test for Password for {DisplayName}.");
+            return true;
+        }
+
         public void Unload()
         {
             _logger = null;

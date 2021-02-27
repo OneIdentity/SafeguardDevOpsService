@@ -15,11 +15,17 @@ namespace OneIdentity.DevOps.Logic
     {
         public static byte[] ConvertPemToData(string pem)
         {
+            var b64String = ConvertPemToBase64(pem);
+            return Convert.FromBase64String(b64String);
+        }
+
+        public static string ConvertPemToBase64(string pem)
+        {
             var noLabel = Regex.Replace(pem, "-----.*?-----", "",
                 RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
             var b64String = Regex.Replace(noLabel, "\r|\n", "",
                 RegexOptions.Multiline & RegexOptions.Compiled & RegexOptions.IgnoreCase & RegexOptions.ECMAScript);
-            return Convert.FromBase64String(b64String);
+            return b64String;
         }
 
         public static bool CertificateValidation(object sender, X509Certificate certificate, X509Chain chain,

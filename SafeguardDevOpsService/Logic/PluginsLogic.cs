@@ -62,7 +62,7 @@ namespace OneIdentity.DevOps.Logic
                 if (pluginManifest != null)
                 {
                     var extractLocation = Path.Combine(WellKnownData.PluginDirPath, pluginManifest.Name);
-                    if (_pluginManager.IsLoadedPlugin(pluginManifest.Name))
+                    if (_pluginManager.IsLoadedPlugin(pluginManifest.Name) || Directory.Exists(extractLocation))
                     {
                         RestartManager.Instance.ShouldRestart = true;
 
@@ -159,6 +159,19 @@ namespace OneIdentity.DevOps.Logic
             _pluginManager.SetConfigurationForPlugin(name);
 
             return plugin;
+        }
+
+        public bool TestPluginConnectionByName(string name)
+        {
+            var plugin = _configDb.GetPluginByName(name);
+
+            if (plugin == null)
+            {
+                _logger.Error($"Failed to test the safeguardConnection. No plugin {name} was found.");
+                return false;
+            }
+
+            return _pluginManager.TestPluginVaultConnection(name);
         }
 
         public IEnumerable<AccountMapping> GetAccountMappings(string name)

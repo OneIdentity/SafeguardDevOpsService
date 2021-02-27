@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using OneIdentity.DevOps.Common;
 using Serilog;
 
@@ -91,6 +92,24 @@ namespace OneIdentity.DevOps.JenkinsSecrets
             else
             {
                 _logger.Error("The plugin configuration or credential is missing.");
+            }
+        }
+
+        public bool TestVaultConnection()
+        {
+            if (_secretsClient == null)
+                return false;
+
+            try
+            {
+                var task = Task.Run(async () => await _secretsClient.GetAsync($"api/"));
+                var result = task.Result;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                return false;
             }
         }
 

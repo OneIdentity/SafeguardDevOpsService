@@ -28,5 +28,6 @@ namespace OneIdentity.DevOps.Logic
         void RemovePluginVaultAccount(string name);
 
         void RestartService();
+        bool TestPluginConnectionByName(string name);
     }
 }
