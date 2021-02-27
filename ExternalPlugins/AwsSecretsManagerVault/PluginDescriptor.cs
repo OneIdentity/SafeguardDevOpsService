@@ -131,6 +131,28 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             _logger = logger;
         }
 
+        public bool TestVaultConnection()
+        {
+            if (_awsClient == null)
+                return false;
+
+            try
+            {
+                var listRequest = new Amazon.SecretsManager.Model.ListSecretsRequest()
+                {
+                    MaxResults = 1
+                };
+                var task = Task.Run(async () => await _awsClient.ListSecretsAsync(listRequest));
+                var result = task.Result;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                return false;
+            }
+        }
+
         public void Unload()
         {
         }

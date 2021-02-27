@@ -197,6 +197,11 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('deletePluginAccounts')));
   }
 
+  postPluginTestConnection(name: string): Observable<any[]> {
+    return this.http.post(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/TestConnection', '', this.authHeader())
+      .pipe(catchError(this.error<any>('postPluginTestConnection')));
+  }
+
   getPluginVaultAccount(name: string): Observable<any> {
     return this.http.get(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/VaultAccount', this.authHeader())
       // Ignore 404 Not Found, when there is no vault account

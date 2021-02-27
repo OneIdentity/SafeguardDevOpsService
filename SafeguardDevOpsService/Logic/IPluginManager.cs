@@ -9,6 +9,7 @@ namespace OneIdentity.DevOps.Logic
         void Run();
         void SetConfigurationForPlugin(string name);
         void SendPluginVaultCredentials(string plugin, string apiKey);
+        bool TestPluginVaultConnection(string plugin);
         bool SendPassword(string name, string assetName, string accountName, SecureString password);
         bool IsLoadedPlugin(string name);
 

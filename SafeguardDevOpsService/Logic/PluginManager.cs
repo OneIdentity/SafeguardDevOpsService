@@ -216,6 +216,42 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        public bool TestPluginVaultConnection(string pluginName)
+        {
+            var plugin = _configDb.GetPluginByName(pluginName);
+
+            if (_safeguardLogic.IsLoggedIn() && plugin?.VaultAccountId != null)
+            {
+                var pluginInstance = LoadedPlugins[pluginName];
+                if (pluginInstance != null)
+                {
+                    try
+                    {
+                        RefreshPluginCredential(plugin);
+                        if (pluginInstance.TestVaultConnection())
+                        {
+                            _logger.Error($"Test connection for plugin {pluginName} successful.");
+                            return true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Failed to test the connection for plugin {pluginName}.  {ex.Message}");
+                    }
+                }
+                else
+                {
+                    _logger.Error($"Failed to test the connection for plugin {pluginName}.  Plugin information is missing.");
+                }
+            }
+            else
+            {
+                _logger.Error($"Failed to test the connection for plugin {pluginName}.  Missing login or vault account information.");
+            }
+
+            return false;
+        }
+
         private string GetPluginCredential(string name, string apiKey)
         {
             var sppAddress = _configDb.SafeguardAddress;

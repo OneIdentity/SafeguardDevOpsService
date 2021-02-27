@@ -13,6 +13,7 @@ namespace OneIdentity.DevOps.Common
         void SetVaultCredential(string credential);
         bool SetPassword(string asset, string account, string password);
         void SetLogger(ILogger logger);
+        bool TestVaultConnection();
         void Unload();
     }
 }

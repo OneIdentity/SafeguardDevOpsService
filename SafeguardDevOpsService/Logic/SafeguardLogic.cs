@@ -122,28 +122,11 @@ namespace OneIdentity.DevOps.Logic
                     (httpRequestMessage, cert, certChain, policyErrors) => true
             };
 
-            string result;
-            using (var client = new HttpClient(handler))
-            {
-                client.BaseAddress = new Uri($"https://{applianceAddress}");
-                var response = client.GetAsync("RSTS/Saml2FedMetadata").Result;
-                response.EnsureSuccessStatusCode();
+            using var client = new HttpClient(handler) {BaseAddress = new Uri($"https://{applianceAddress}")};
+            var response = client.GetAsync("RSTS/SigningCertificate").Result;
+            response.EnsureSuccessStatusCode();
 
-                result = response.Content.ReadAsStringAsync().Result;
-            }
-
-            if (result != null)
-            {
-                var xml = new XmlDocument();
-                xml.LoadXml(result);
-                var certificates = xml.DocumentElement.GetElementsByTagName("X509Certificate");
-                if (certificates != null && certificates.Count > 0)
-                {
-                    return certificates.Item(0).InnerText;
-                }
-            }
-
-            return null;
+            return CertificateHelper.ConvertPemToBase64(response.Content.ReadAsStringAsync().Result);
         }
 
         private SafeguardDevOpsConnection ConnectAnonymous(string safeguardAddress, int apiVersion, bool ignoreSsl)
@@ -562,22 +545,25 @@ namespace OneIdentity.DevOps.Logic
                 var cert = new X509Certificate2(bytes);
 
                 var parts = token.Split('.');
+
                 var header = parts[0];
                 var payload = parts[1];
                 var signature = Base64UrlTextEncoder.Decode(parts[2]);
-
                 var data = Encoding.UTF8.GetBytes(header + '.' + payload);
 
                 var validToken = cert.GetRSAPublicKey()
                     .VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-
                 if (validToken && safeguardConnection != null)
                 {
                     return GetAndValidateUserPermissions(token, safeguardConnection);
                 }
 
                 return validToken;
-            } catch { }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex.Message);
+            }
 
             return false;
         }

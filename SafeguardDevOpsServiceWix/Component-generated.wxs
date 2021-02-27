@@ -167,9 +167,6 @@
             <Component Id="LiteDB.dll" Guid="*">
                 <File Id="LiteDB.dll" KeyPath="yes" Source="$(var.SourceDir)\LiteDB.dll" />
             </Component>
-            <Component Id="Microsoft.AspNet.SignalR.Client.dll" Guid="*">
-                <File Id="Microsoft.AspNet.SignalR.Client.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNet.SignalR.Client.dll" />
-            </Component>
             <Component Id="Microsoft.AspNetCore.Antiforgery.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Antiforgery.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Antiforgery.dll" />
             </Component>
@@ -262,6 +259,9 @@
             </Component>
             <Component Id="Microsoft.AspNetCore.Http.Abstractions.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Http.Abstractions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Http.Abstractions.dll" />
+            </Component>
+            <Component Id="Microsoft.AspNetCore.Http.Connections.Client.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.Http.Connections.Client.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Http.Connections.Client.dll" />
             </Component>
             <Component Id="Microsoft.AspNetCore.Http.Connections.Common.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Http.Connections.Common.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Http.Connections.Common.dll" />
@@ -388,6 +388,12 @@
             </Component>
             <Component Id="Microsoft.AspNetCore.Session.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Session.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Session.dll" />
+            </Component>
+            <Component Id="Microsoft.AspNetCore.SignalR.Client.Core.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.SignalR.Client.Core.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.SignalR.Client.Core.dll" />
+            </Component>
+            <Component Id="Microsoft.AspNetCore.SignalR.Client.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.SignalR.Client.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.SignalR.Client.dll" />
             </Component>
             <Component Id="Microsoft.AspNetCore.SignalR.Common.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.SignalR.Common.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.SignalR.Common.dll" />
@@ -587,6 +593,9 @@
             <Component Id="mscordaccore_amd64_amd64_4.700.20.20201.dll" Guid="*">
                 <File Id="mscordaccore_amd64_amd64_4.700.20.20201.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.20.20201.dll" />
             </Component>
+            <Component Id="mscordaccore_amd64_amd64_4.700.21.6504.dll" Guid="*">
+                <File Id="mscordaccore_amd64_amd64_4.700.21.6504.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.21.6504.dll" />
+            </Component>
             <Component Id="mscordbi.dll" Guid="*">
                 <File Id="mscordbi.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordbi.dll" />
             </Component>
@@ -652,9 +661,6 @@
             </Component>
             <Component Id="Serilog.Settings.Configuration.dll" Guid="*">
                 <File Id="Serilog.Settings.Configuration.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Settings.Configuration.dll" />
-            </Component>
-            <Component Id="Serilog.Sinks.ColoredConsole.dll" Guid="*">
-                <File Id="Serilog.Sinks.ColoredConsole.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Sinks.ColoredConsole.dll" />
             </Component>
             <Component Id="Serilog.Sinks.Console.dll" Guid="*">
                 <File Id="Serilog.Sinks.Console.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Sinks.Console.dll" />
@@ -1103,9 +1109,6 @@
             <Component Id="System.Text.RegularExpressions.dll" Guid="*">
                 <File Id="System.Text.RegularExpressions.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Text.RegularExpressions.dll" />
             </Component>
-            <Component Id="System.Threading.AccessControl.dll" Guid="*">
-                <File Id="System.Threading.AccessControl.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Threading.AccessControl.dll" />
-            </Component>
             <Component Id="System.Threading.Channels.dll" Guid="*">
                 <File Id="System.Threading.Channels.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Threading.Channels.dll" />
             </Component>
@@ -1216,20 +1219,26 @@
                     <Component Id="index.html" Guid="*">
                         <File Id="index.html" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\index.html" />
                     </Component>
-                    <Component Id="main.133da131c1f414725eac.js" Guid="*">
-                        <File Id="main.133da131c1f414725eac.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.133da131c1f414725eac.js" />
+                    <Component Id="main.6910309d1c6a233c3932.js" Guid="*">
+                        <File Id="main.6910309d1c6a233c3932.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.6910309d1c6a233c3932.js" />
                     </Component>
-                    <Component Id="polyfills.a4021de53358bb0fec14.js" Guid="*">
-                        <File Id="polyfills.a4021de53358bb0fec14.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\polyfills.a4021de53358bb0fec14.js" />
+                    <Component Id="main.a6996621b0dfce450a0e.js" Guid="*">
+                        <File Id="main.a6996621b0dfce450a0e.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.a6996621b0dfce450a0e.js" />
                     </Component>
-                    <Component Id="runtime.e227d1a0e31cbccbf8ec.js" Guid="*">
-                        <File Id="runtime.e227d1a0e31cbccbf8ec.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\runtime.e227d1a0e31cbccbf8ec.js" />
+                    <Component Id="main.b2d39d10a131001cd9cb.js" Guid="*">
+                        <File Id="main.b2d39d10a131001cd9cb.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.b2d39d10a131001cd9cb.js" />
+                    </Component>
+                    <Component Id="polyfills.35a5ca1855eb057f016a.js" Guid="*">
+                        <File Id="polyfills.35a5ca1855eb057f016a.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\polyfills.35a5ca1855eb057f016a.js" />
+                    </Component>
+                    <Component Id="runtime.acf0dec4155e77772545.js" Guid="*">
+                        <File Id="runtime.acf0dec4155e77772545.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\runtime.acf0dec4155e77772545.js" />
                     </Component>
                     <Component Id="scripts.568694a568f45ab03c95.js" Guid="*">
                         <File Id="scripts.568694a568f45ab03c95.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\scripts.568694a568f45ab03c95.js" />
                     </Component>
-                    <Component Id="styles.cac096e93acbab6a5816.css" Guid="*">
-                        <File Id="styles.cac096e93acbab6a5816.css" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\styles.cac096e93acbab6a5816.css" />
+                    <Component Id="styles.8729de72097e4a8ae805.css" Guid="*">
+                        <File Id="styles.8729de72097e4a8ae805.css" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\styles.8729de72097e4a8ae805.css" />
                     </Component>
                     <Directory Id="assets" Name="assets">
                         <Component Id="SafeguardLogo.png" Guid="*">
@@ -1297,7 +1306,6 @@
             <ComponentRef Id="hostfxr.dll" />
             <ComponentRef Id="hostpolicy.dll" />
             <ComponentRef Id="LiteDB.dll" />
-            <ComponentRef Id="Microsoft.AspNet.SignalR.Client.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Antiforgery.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Authentication.Abstractions.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Authentication.Cookies.dll" />
@@ -1329,6 +1337,7 @@
             <ComponentRef Id="Microsoft.AspNetCore.Hosting.Server.Abstractions.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Html.Abstractions.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Http.Abstractions.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.Http.Connections.Client.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Http.Connections.Common.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Http.Connections.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Http.dll" />
@@ -1371,6 +1380,8 @@
             <ComponentRef Id="Microsoft.AspNetCore.Server.Kestrel.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Session.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.SignalR.Client.Core.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.SignalR.Client.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.Common.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.Core.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.dll" />
@@ -1437,6 +1448,7 @@
             <ComponentRef Id="Microsoft.Win32.SystemEvents.dll" />
             <ComponentRef Id="mscordaccore.dll" />
             <ComponentRef Id="mscordaccore_amd64_amd64_4.700.20.20201.dll" />
+            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.21.6504.dll" />
             <ComponentRef Id="mscordbi.dll" />
             <ComponentRef Id="mscorlib.dll" />
             <ComponentRef Id="mscorrc.debug.dll" />
@@ -1459,7 +1471,6 @@
             <ComponentRef Id="Serilog.Extensions.Logging.dll" />
             <ComponentRef Id="Serilog.Formatting.Compact.dll" />
             <ComponentRef Id="Serilog.Settings.Configuration.dll" />
-            <ComponentRef Id="Serilog.Sinks.ColoredConsole.dll" />
             <ComponentRef Id="Serilog.Sinks.Console.dll" />
             <ComponentRef Id="Serilog.Sinks.Debug.dll" />
             <ComponentRef Id="Serilog.Sinks.File.dll" />
@@ -1609,7 +1620,6 @@
             <ComponentRef Id="System.Text.Encodings.Web.dll" />
             <ComponentRef Id="System.Text.Json.dll" />
             <ComponentRef Id="System.Text.RegularExpressions.dll" />
-            <ComponentRef Id="System.Threading.AccessControl.dll" />
             <ComponentRef Id="System.Threading.Channels.dll" />
             <ComponentRef Id="System.Threading.dll" />
             <ComponentRef Id="System.Threading.Overlapped.dll" />
@@ -1646,11 +1656,13 @@
             <ComponentRef Id="accessTokenCheck.js" />
             <ComponentRef Id="favicon.ico" />
             <ComponentRef Id="index.html" />
-            <ComponentRef Id="main.133da131c1f414725eac.js" />
-            <ComponentRef Id="polyfills.a4021de53358bb0fec14.js" />
-            <ComponentRef Id="runtime.e227d1a0e31cbccbf8ec.js" />
+            <ComponentRef Id="main.6910309d1c6a233c3932.js" />
+            <ComponentRef Id="main.a6996621b0dfce450a0e.js" />
+            <ComponentRef Id="main.b2d39d10a131001cd9cb.js" />
+            <ComponentRef Id="polyfills.35a5ca1855eb057f016a.js" />
+            <ComponentRef Id="runtime.acf0dec4155e77772545.js" />
             <ComponentRef Id="scripts.568694a568f45ab03c95.js" />
-            <ComponentRef Id="styles.cac096e93acbab6a5816.css" />
+            <ComponentRef Id="styles.8729de72097e4a8ae805.css" />
             <ComponentRef Id="SafeguardLogo.png" />
         </ComponentGroup>
     </Fragment>

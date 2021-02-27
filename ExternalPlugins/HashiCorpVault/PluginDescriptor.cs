@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using OneIdentity.DevOps.Common;
 using Serilog;
 using VaultSharp;
@@ -68,6 +69,27 @@ namespace OneIdentity.DevOps.HashiCorpVault
             {
                 _logger.Error("The plugin configuration or credential is missing.");
             }
+        }
+
+        public bool TestVaultConnection()
+        {
+            if (_vaultClient == null)
+                return false;
+
+            try
+            {
+                var task = Task.Run(async () =>
+                    await _vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync("/", $"{_configuration[MountPointName]}"));
+                var result = task.Result;
+                _logger.Information($"Successfully passed the connection test for Password for {DisplayName}.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                return false;
+            }
+
         }
 
         public bool SetPassword(string asset, string account, string password)
