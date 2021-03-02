@@ -10,17 +10,16 @@ namespace OneIdentity.DevOps
 {
     internal class Program
     {
-        private static readonly string ServiceIdentifier = "SafeguardDevOpsService";
         private static readonly string ServiceDescription =
             "Safeguard for Privileged Passwords DevOps integration service.";
 
         private static void Main()
         {
             Directory.CreateDirectory(WellKnownData.ProgramDataPath);
-            var logDirPath = Path.Combine(WellKnownData.ProgramDataPath, $"{ServiceIdentifier}.log");
+            var logDirPath = WellKnownData.LogDirPath;
 
             Log.Logger = new LoggerConfiguration()
-                .WriteTo.File(logDirPath,
+                .WriteTo.File(logDirPath, shared: true,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .Enrich.FromLogContext()
                 .MinimumLevel.ControlledBy(LogLevelSwitcher.Instance.LogLevelSwitch)
@@ -43,8 +42,8 @@ namespace OneIdentity.DevOps
                     hostConfig.UseEnvironmentBuilder(c => new DotNetCoreEnvironmentBuilder(c));
                 }
                 hostConfig.StartAutomaticallyDelayed();
-                hostConfig.SetDisplayName(ServiceIdentifier);
-                hostConfig.SetServiceName(ServiceIdentifier);
+                hostConfig.SetDisplayName(WellKnownData.DevOpsServiceName);
+                hostConfig.SetServiceName(WellKnownData.DevOpsServiceName);
                 hostConfig.SetDescription(ServiceDescription);
                 hostConfig.EnableServiceRecovery(recoveryOption =>
                 {

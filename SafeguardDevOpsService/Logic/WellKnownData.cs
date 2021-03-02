@@ -41,8 +41,10 @@ namespace OneIdentity.DevOps.Logic
                 Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule.FileName);
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
-        public static readonly string SvcIdPath = Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.ServiceIdentifier);
+        public static readonly string SvcIdPath = Path.Combine(ServiceDirPath, ServiceIdentifier);
         public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, "DeletePlugins.all");
+        public static readonly string LogDirPath = Path.Combine(ProgramDataPath, $"{DevOpsServiceName}.log");
+
 
 
         public static string GetSppToken(HttpContext context)

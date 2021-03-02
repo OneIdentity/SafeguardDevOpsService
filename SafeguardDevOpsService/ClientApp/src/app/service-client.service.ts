@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { catchError, tap } from 'rxjs/operators';
 import { Observable, throwError, of } from 'rxjs';
 import { Injectable } from '@angular/core';
@@ -154,6 +154,13 @@ export class DevOpsServiceClient {
     };
     return this.http.post(url, payload, this.authHeader())
       .pipe(catchError(this.error('postConfiguration')));
+  }
+
+  getLogFile(): Observable<HttpResponse<Blob>> {
+    const options = Object.assign({ reportProgress: true, responseType: 'blob', observe: 'response' }, this.authHeader());
+
+    return this.http.get(this.BASE + 'Safeguard/Log', options)
+      .pipe(catchError(this.error<any>('getLogFile')));
   }
 
   getPlugins(): Observable<any> {

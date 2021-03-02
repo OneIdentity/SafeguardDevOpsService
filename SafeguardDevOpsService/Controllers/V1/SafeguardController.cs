@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using LiteDB;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
+using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 #pragma warning disable 1573
@@ -612,6 +617,43 @@ namespace OneIdentity.DevOps.Controllers.V1
             safeguard.RestartService();
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Download the Safeguard Secrets Broker for Devops log file.
+        /// </summary>
+        /// <remarks>
+        /// The Safeguard Secrets Broker for DevOps log file contains additional information about errors or events that may occur during normal operation.
+        /// 
+        /// This endpoint downloads the log file.
+        /// </remarks>
+        /// <response code="200">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpGet("Log")]
+        public async Task<IActionResult> GetLogFile([FromServices] ISafeguardLogic safeguard)
+        {
+            var filePath = WellKnownData.LogDirPath;
+
+            if (!System.IO.File.Exists(filePath))
+                return NotFound();
+
+            try
+            {
+                var memory = new MemoryStream();
+                await using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    await stream.CopyToAsync(memory);
+                    memory.Seek(0, SeekOrigin.Begin);
+                }
+
+                return File(memory, "plain/text", $"{WellKnownData.DevOpsServiceName}.log");
+            }
+            catch (Exception ex)
+            {
+                throw new DevOpsException("Failed to download the log file.", ex);
+            }
         }
 
         /// <summary>

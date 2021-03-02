@@ -16,6 +16,7 @@ import { AuthService } from '../auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { EditTrustedCertificatesComponent } from '../edit-trusted-certificates/edit-trusted-certificates.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { HttpEventType, HttpResponse } from '@angular/common/http';
 
 @UntilDestroy()
 @Component({
@@ -509,6 +510,37 @@ export class MainComponent implements OnInit {
       error => {
         this.error = error;
       });
+  }
+
+  downloadLog(): void {
+    this.error = null;
+    this.serviceClient.getLogFile().pipe(
+      tap(() => {
+        this.snackBar.open('Downloading log file...');
+      })
+    ).subscribe((data) => {
+      this.downloadFile(data);
+      this.snackBar.open('Download complete.', 'Dismiss', {duration: this.snackBarDuration});
+    },
+      error => {
+        this.snackBar.open('Download failed.', 'Dismiss', {duration: this.snackBarDuration});
+        this.error = error;
+      });
+  }
+
+  private downloadFile(data: HttpResponse<Blob>) {
+    var contentDisposition = data.headers.get('Content-Disposition');
+    var fileName = 'SafeguardSecretsBroker.log';
+    if (contentDisposition != null) {
+      var result = contentDisposition.split(';')[1].trim().split('=')[1];
+      fileName = result.replace(/"/g, '');
+    }
+
+    const downloadedFile = new Blob([data.body], { type: data.body.type });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(downloadedFile);
+    a.download = fileName;
+    a.click();
   }
 
   restart(): void {
