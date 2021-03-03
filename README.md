@@ -70,6 +70,7 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 - Azure Key Vault
 - Kubernetes Secrets Storage
 - Jenkins Secrets
+- AWS Secrets Manager Vault
 - ...
 
 ## Safeguard for Privileged Passwords Setup
@@ -270,3 +271,7 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
 
 1. The same API can be used to stop password monitoring.
 1. At this point Safeguard Secrets Broker for DevOps will detect whenever a password changes in SPP, pull the password and push it to the appropriate plugin(s).  The custom code in the plugin(s) will push the password to the third party vault.
+
+## Developing Custom Plugins for Safeguard Secrets Broker for DevOps
+
+An external plugin is a simple intermediary between the Safeguard Secrets Broker and a third party vault or any technology that stores secrets. Building an external plugin requires the plugin developer to implement a predefined plugin template with the specific functionality for communicating with the third party vault. The Safeguard Secrets Broker for DevOps project provides working plugins as well as a simple example plugin that can be used as a reference for building a new plugin. To get started building a custom Safeguard Secrets Broker plugin, go to the ExternalPlugins page of the project at `https://github.com/OneIdentity/SafeguardDevOpsService/tree/master/ExternalPlugins`
