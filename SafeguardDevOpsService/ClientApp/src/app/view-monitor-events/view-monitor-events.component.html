@@ -13,14 +13,15 @@
           <th mat-header-cell *matHeaderCellDef>Event</th>
           <td mat-cell *matCellDef="let element">
             <span>{{element.Event}}</span>
-            <div class="detail-row">{{element.Result}}</div>
+            <div class="detail-row-success" *ngIf="element.Result=='Success'">{{element.Result}}</div>
+            <div class="detail-row-failure" *ngIf="element.Result!='Success'">{{element.Result}}</div>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="Date">
           <th mat-header-cell *matHeaderCellDef>Date</th>
           <td mat-cell *matCellDef="let element">
-            <span>{{element.Date | date: 'EEEE MMMM dd, yyyy'}}</span>
+            <span>{{element.Date | date: 'd MMM yyyy'}}</span>
           </td>
         </ng-container>
 

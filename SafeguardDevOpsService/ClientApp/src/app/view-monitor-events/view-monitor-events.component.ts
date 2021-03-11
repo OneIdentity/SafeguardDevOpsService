@@ -28,7 +28,18 @@ export class ViewMonitorEventsComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.displayedColumns = ['Event', 'Date'];
+    this.loadData();
+  }
 
+  ngAfterViewInit(): void {
+    this.dataSource.paginator = this.paginator;
+  }
+
+  refresh(): void {
+    this.loadData();
+  }
+
+  private loadData(): void {
     this.isLoading = true;
     this.serviceClient.getMonitorEvents().pipe(
       untilDestroyed(this),
@@ -39,10 +50,6 @@ export class ViewMonitorEventsComponent implements OnInit, AfterViewInit {
         this.dataSource.data = this.events;
       }
     );
-  }
-
-  ngAfterViewInit(): void {
-    this.dataSource.paginator = this.paginator;
   }
 
   close(): void {

@@ -178,7 +178,7 @@ namespace OneIdentity.DevOps.Logic
                             {
                                 _logger.Error(
                                     $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
-                                monitorEvent.Result = "failed";
+                                monitorEvent.Result = "Failure";
                             }
                         }
                         catch (Exception ex)

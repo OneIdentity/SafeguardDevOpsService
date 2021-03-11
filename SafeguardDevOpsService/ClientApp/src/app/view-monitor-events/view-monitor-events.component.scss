@@ -15,6 +15,16 @@ table {
   color: $black-9;
 }
 
+.detail-row-success {
+  font-size: .85em;
+  color: $aspen-green;
+}
+
+.detail-row-failure {
+  font-size: .85em;
+  color: $phoenix-red;
+}
+
 .main-container {
   background-color: $asher-gray;
   padding: 20px;
