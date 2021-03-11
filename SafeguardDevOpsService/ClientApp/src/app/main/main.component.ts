@@ -389,6 +389,18 @@ export class MainComponent implements OnInit {
       });
   }
 
+  viewMonitorEvents(): void {
+    this.drawer.close();
+    this.openDrawer = 'monitorevents';
+    this.drawer.open();
+
+    this.editPluginService.notifyEvent$.subscribe((data) => {
+      if (data.mode === EditPluginMode.ViewMonitorEvents) {
+        this.drawer.close();
+      }
+    });
+  }
+
   editPlugin(plugin: any): void {
     this.error = null;
     this.editPluginService.openProperties(plugin);

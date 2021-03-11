@@ -593,6 +593,9 @@
             <Component Id="mscordaccore_amd64_amd64_4.700.20.20201.dll" Guid="*">
                 <File Id="mscordaccore_amd64_amd64_4.700.20.20201.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.20.20201.dll" />
             </Component>
+            <Component Id="mscordaccore_amd64_amd64_4.700.21.11102.dll" Guid="*">
+                <File Id="mscordaccore_amd64_amd64_4.700.21.11102.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.21.11102.dll" />
+            </Component>
             <Component Id="mscordaccore_amd64_amd64_4.700.21.6504.dll" Guid="*">
                 <File Id="mscordaccore_amd64_amd64_4.700.21.6504.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.21.6504.dll" />
             </Component>
@@ -1222,6 +1225,9 @@
                     <Component Id="main.6910309d1c6a233c3932.js" Guid="*">
                         <File Id="main.6910309d1c6a233c3932.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.6910309d1c6a233c3932.js" />
                     </Component>
+                    <Component Id="main.6c1a6f1e3c81524bcada.js" Guid="*">
+                        <File Id="main.6c1a6f1e3c81524bcada.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.6c1a6f1e3c81524bcada.js" />
+                    </Component>
                     <Component Id="main.a6996621b0dfce450a0e.js" Guid="*">
                         <File Id="main.a6996621b0dfce450a0e.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.a6996621b0dfce450a0e.js" />
                     </Component>
@@ -1448,6 +1454,7 @@
             <ComponentRef Id="Microsoft.Win32.SystemEvents.dll" />
             <ComponentRef Id="mscordaccore.dll" />
             <ComponentRef Id="mscordaccore_amd64_amd64_4.700.20.20201.dll" />
+            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.21.11102.dll" />
             <ComponentRef Id="mscordaccore_amd64_amd64_4.700.21.6504.dll" />
             <ComponentRef Id="mscordbi.dll" />
             <ComponentRef Id="mscorlib.dll" />
@@ -1657,6 +1664,7 @@
             <ComponentRef Id="favicon.ico" />
             <ComponentRef Id="index.html" />
             <ComponentRef Id="main.6910309d1c6a233c3932.js" />
+            <ComponentRef Id="main.6c1a6f1e3c81524bcada.js" />
             <ComponentRef Id="main.a6996621b0dfce450a0e.js" />
             <ComponentRef Id="main.b2d39d10a131001cd9cb.js" />
             <ComponentRef Id="polyfills.35a5ca1855eb057f016a.js" />

@@ -6,6 +6,7 @@
     <mat-menu #settingsMenu="matMenu">
       <button mat-menu-item (click)="logout()"><mat-icon>login</mat-icon>Log Out</button>
       <button mat-menu-item (click)="downloadLog()"><mat-icon>cloud_download</mat-icon>Download Log</button>
+      <button mat-menu-item (click)="viewMonitorEvents()"><mat-icon>history</mat-icon>View Monitor Event History</button>
       <button mat-menu-item (click)="restart()"><mat-icon>refresh</mat-icon>Restart Secrets Broker</button>
       <button mat-menu-item (click)="deleteConfig()"><mat-icon>delete</mat-icon>Delete Current Configuration</button>
     </mat-menu>
@@ -180,5 +181,6 @@
     <app-edit-plugin *ngIf="openDrawer=='properties'"></app-edit-plugin>
     <app-select-accounts *ngIf="openDrawer=='accounts'" [selectVaultAccount]="false"></app-select-accounts>
     <app-select-accounts *ngIf="openDrawer=='vaultaccount'" [selectVaultAccount]="true"></app-select-accounts>
+    <app-view-monitor-events *ngIf="openDrawer=='monitorevents'"></app-view-monitor-events>
   </mat-drawer>
 </mat-drawer-container>

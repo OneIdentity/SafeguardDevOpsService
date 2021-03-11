@@ -42,6 +42,7 @@ import { EditTrustedCertificatesComponent } from './edit-trusted-certificates/ed
 import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.component';
 import { ProgressSpinnerComponent } from './progress-spinner/progress-spinner.component';
 import { ErrorBarComponent } from './error-bar/error-bar.component';
+import { ViewMonitorEventsComponent } from './view-monitor-events/view-monitor-events.component';
 
 @NgModule({
   declarations: [
@@ -58,7 +59,8 @@ import { ErrorBarComponent } from './error-bar/error-bar.component';
     EditTrustedCertificatesComponent,
     ConfirmDialogComponent,
     ProgressSpinnerComponent,
-    ErrorBarComponent
+    ErrorBarComponent,
+    ViewMonitorEventsComponent
   ],
   imports: [
     BrowserModule,
