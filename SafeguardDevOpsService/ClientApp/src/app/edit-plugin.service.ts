@@ -139,6 +139,13 @@ export class EditPluginService {
     });
   }
 
+  closeViewMonitorEvents(): void {
+    this.notifyEventSource.next({
+      plugin: {},
+      mode: EditPluginMode.ViewMonitorEvents
+    });
+  }
+
   private initializePluginAccounts(): void {
     forkJoin([
       this.serviceClient.getPluginAccounts(this.plugin.Name),
@@ -192,5 +199,6 @@ export enum EditPluginMode {
   None,
   Properties,
   Accounts,
-  VaultAccount
+  VaultAccount,
+  ViewMonitorEvents
 }

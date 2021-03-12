@@ -24,6 +24,7 @@ namespace OneIdentity.DevOps.Logic
         private static ISafeguardEventListener _eventListener;
         private static ISafeguardA2AContext _a2AContext;
         private static List<AccountMapping> _retrievableAccounts;
+        private static FixedSizeQueue<MonitorEvent> _lastEventsQueue = new FixedSizeQueue<MonitorEvent>(1000);
 
         public MonitoringLogic(IConfigurationRepository configDb, IPluginManager pluginManager)
         {
@@ -53,6 +54,15 @@ namespace OneIdentity.DevOps.Logic
             {
                 Enabled = _eventListener != null && _a2AContext != null
             };
+        }
+
+        public IEnumerable<MonitorEvent> GetMonitorEvents(int size)
+        {
+            if (size <= 0)
+                size = 25;
+            if (size > _lastEventsQueue.Count)
+                size = _lastEventsQueue.Count;
+            return _lastEventsQueue.TakeLast(size).Reverse();
         }
 
         public void Run()
@@ -154,18 +164,30 @@ namespace OneIdentity.DevOps.Logic
                     var selectedAccounts = accounts.Where(a => a.ApiKey.Equals(apiKey));
                     foreach (var account in selectedAccounts)
                     {
+                        var monitorEvent = new MonitorEvent()
+                        {
+                            Event = $"Sending password for account {account.AccountName} to {account.VaultName}.",
+                            Result = "Success",
+                            Date = DateTime.UtcNow
+                        };
+
                         try
                         {
-                            _logger.Information($"Sending password for account {account.AccountName} to {account.VaultName}.");
+                            _logger.Information(monitorEvent.Event);
                             if (!_pluginManager.SendPassword(account.VaultName, account.AssetName, account.AccountName, password))
+                            {
                                 _logger.Error(
                                     $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
+                                monitorEvent.Result = "Failure";
+                            }
                         }
                         catch (Exception ex)
                         {
                             _logger.Error(
                                 $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
+                            monitorEvent.Result = "failed";
                         }
+                        _lastEventsQueue.Enqueue(monitorEvent);
                     }
                 }
             }

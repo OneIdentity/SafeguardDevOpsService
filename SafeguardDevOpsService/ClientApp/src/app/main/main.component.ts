@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, Renderer2, HostListener } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewChildren, ElementRef, Renderer2, HostListener, AfterViewInit, QueryList } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
 import { switchMap, map, tap, finalize, filter } from 'rxjs/operators';
 import { of, Observable, forkJoin } from 'rxjs';
@@ -17,6 +17,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { EditTrustedCertificatesComponent } from '../edit-trusted-certificates/edit-trusted-certificates.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { HttpEventType, HttpResponse } from '@angular/common/http';
+import { ViewMonitorEventsComponent } from '../view-monitor-events/view-monitor-events.component';
 
 @UntilDestroy()
 @Component({
@@ -24,9 +25,10 @@ import { HttpEventType, HttpResponse } from '@angular/common/http';
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.scss']
 })
-export class MainComponent implements OnInit {
+export class MainComponent implements OnInit, AfterViewInit {
 
   private snackBarDuration: number = 5000;
+  private viewMonitorEventsRef : ViewMonitorEventsComponent;
 
   constructor(
     private window: Window,
@@ -86,6 +88,8 @@ export class MainComponent implements OnInit {
     }
   }
 
+  @ViewChildren(ViewMonitorEventsComponent) viewMonitorEventsRefs: QueryList<ViewMonitorEventsComponent>;
+
   @HostListener('window:resize', ['$event'])
   onResize() {
     setTimeout(() => {
@@ -120,6 +124,13 @@ export class MainComponent implements OnInit {
       error => {
         this.error = error;
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.viewMonitorEventsRefs.changes.subscribe((comps: QueryList <ViewMonitorEventsComponent>) =>
+    {
+        this.viewMonitorEventsRef = comps.first;
+    });
   }
 
   private initializeWebServerCertificate(): Observable<any> {
@@ -387,6 +398,20 @@ export class MainComponent implements OnInit {
       }).add(() => {
         this.certificateUploading['Client'] = this.certificateUploading['WebServer'] = false;
       });
+  }
+
+  viewMonitorEvents(): void {
+    this.drawer.close();
+    this.openDrawer = 'monitorevents';
+    this.drawer.open();
+
+    if (this.viewMonitorEventsRef)
+      this.viewMonitorEventsRef.refresh();
+    this.editPluginService.notifyEvent$.subscribe((data) => {
+      if (data.mode === EditPluginMode.ViewMonitorEvents) {
+        this.drawer.close();
+      }
+    });
   }
 
   editPlugin(plugin: any): void {

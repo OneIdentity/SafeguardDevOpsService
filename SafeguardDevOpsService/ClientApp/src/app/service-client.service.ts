@@ -310,6 +310,11 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('putMonitor')));
   }
 
+  getMonitorEvents(): Observable<any> {
+    return this.http.get(this.BASE + 'Monitor/Events?size=100', this.authHeader())
+      .pipe(catchError(this.error<any>('getMonitorEvents')));
+  }
+
   getTrustedCertificates(): Observable<any[]> {
     return this.http.get(this.BASE + 'Safeguard/TrustedCertificates', this.authHeader())
       .pipe(catchError(this.error<any>('getTrustedCertificates')));

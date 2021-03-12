@@ -1,0 +1,39 @@
+<div class="root-container">
+  <mat-toolbar class="header">
+    <span>Monitor Events</span>
+    <div class="spacer"></div>
+    <button mat-icon-button (click)="close()"><mat-icon>close</mat-icon></button>
+  </mat-toolbar>
+
+  <div class="main-container">
+    <div class="table-container" [ngClass]="{'hidden': isLoading}">
+      <table mat-table [dataSource]="dataSource">
+
+        <ng-container matColumnDef="Event">
+          <th mat-header-cell *matHeaderCellDef>Event</th>
+          <td mat-cell *matCellDef="let element">
+            <span>{{element.Event}}</span>
+            <div class="detail-row-success" *ngIf="element.Result=='Success'">{{element.Result}}</div>
+            <div class="detail-row-failure" *ngIf="element.Result!='Success'">{{element.Result}}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Date">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let element">
+            <span>{{element.Date | date: 'd MMM yyyy'}}</span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <mat-paginator [pageSizeOptions]="[10, 20, 50, 100]" showFirstLastButtons></mat-paginator>
+      <div class="spinner-container">
+        <mat-spinner *ngIf="isLoading" diameter="30" color="primary"></mat-spinner>
+      </div>
+    </div>
+  </div>
+
+</div>

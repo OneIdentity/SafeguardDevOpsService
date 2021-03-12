@@ -1,4 +1,5 @@
-﻿using OneIdentity.DevOps.Data;
+﻿using System.Collections.Generic;
+using OneIdentity.DevOps.Data;
 #pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
@@ -7,6 +8,7 @@ namespace OneIdentity.DevOps.Logic
     {
         void EnableMonitoring(bool enable);
         MonitorState GetMonitorState();
+        IEnumerable<MonitorEvent> GetMonitorEvents(int size);
         void Run();
     }
 }

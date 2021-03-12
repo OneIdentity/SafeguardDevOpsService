@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Logic;
@@ -65,5 +66,27 @@ namespace OneIdentity.DevOps.Controllers.V1
 
             return Ok(monitorState);
         }
+
+        /// <summary>
+        /// Get the last x number of credential push events. Default size is 25.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
+        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        ///
+        /// This endpoint gets the last x number of credential push events.
+        /// </remarks>
+        /// <param name="size">Number of events to return.</param>
+        /// <response code="200">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("Events")]
+        public ActionResult<IEnumerable<MonitorEvent>> GetMonitorEvents([FromServices] IMonitoringLogic monitoringLogic, [FromQuery] int size = 25)
+        {
+            var monitorEvents = monitoringLogic.GetMonitorEvents(size);
+
+            return Ok(monitorEvents);
+        }
+
     }
 }
