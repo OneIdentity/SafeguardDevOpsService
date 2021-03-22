@@ -35,6 +35,9 @@ namespace OneIdentity.DevOps.Logic
         public const string MonitorEnabled = "Enabled";
         public const string MonitorDisabled = "Disabled";
 
+        public const string SentPasswordSuccess = "Success";
+        public const string SentPasswordFailure = "Failure";
+
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ?

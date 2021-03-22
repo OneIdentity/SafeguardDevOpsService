@@ -437,5 +437,50 @@ namespace OneIdentity.DevOps.Controllers.V1
 
             return NoContent();
         }
+
+        /// <summary>
+        /// Get the enabled/disabled state of a specific plugin.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint gets the enabled/disabled state of a specific plugin by name.
+        /// </remarks>
+        /// <param name="name">Name of the plugin.</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("{name}/Disabled")]
+        public ActionResult<PluginState> GetPluginDisabledState([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        {
+            var state = pluginsLogic.GetPluginDisabledState(name);
+
+            return Ok(state);
+        }
+
+        /// <summary>
+        /// Update the enabled/disabled state of a plugin.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint sets the enabled/disabled state of a specific plugin by name.
+        /// </remarks>
+        /// <param name="name">Name of plugin to update</param>
+        /// <param name="pluginState">New state of the plugin.</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost("{name}/Disabled")]
+        public ActionResult<PluginState> UpdatePluginDisabledState([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginState pluginState)
+        {
+            var result = pluginsLogic.UpdatePluginDisabledState(name, pluginState.Disabled);
+
+            return Ok(result);
+        }
     }
 }

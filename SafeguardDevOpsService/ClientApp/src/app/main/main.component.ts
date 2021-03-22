@@ -194,7 +194,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       }));
   }
 
-  private calculateArrow(A: HTMLElement, B: HTMLElement, index: number, totalArrows: number): string {
+  private calculateArrow(A: HTMLElement, B: HTMLElement, index: number, totalArrows: number, isDisabled: boolean): string {
     const isUnconfigured = index === totalArrows - 1;
 
     const posA = {
@@ -202,7 +202,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       y: A.offsetTop + A.offsetHeight - 15 + this.window.scrollY
     };
 
-    const markerOffset = this.isMonitoring && !isUnconfigured ? 22 : 50;
+    const markerOffset = this.isMonitoring && !isUnconfigured && !isDisabled ? 22 : 50;
     const posB = {
       x: B.offsetLeft - markerOffset,
       y: B.offsetTop + B.offsetHeight / 2 - 5
@@ -235,15 +235,17 @@ export class MainComponent implements OnInit, AfterViewInit {
       all.push(unconfigured);
 
       all.forEach((item, index) => {
-        const dStr = this.calculateArrow(startEl, item, index, total);
+        const isDisabled = item.classList.contains('disabled:true');
+
+        const dStr = this.calculateArrow(startEl, item, index, total, isDisabled);
 
         const pathEl = this.renderer.createElement('path', 'svg');
         pathEl.setAttribute('d', dStr);
 
         const isUnconfigured = index === total - 1;
-        const color =  isUnconfigured || !this.isMonitoring ? 'Black9' :  colors[index % colors.length];
+        const color =  isUnconfigured || isDisabled || !this.isMonitoring ? 'Black9' :  colors[index % colors.length];
 
-        pathEl.setAttribute('class', isUnconfigured || !this.isMonitoring ? 'arrow-unconfigured' : 'arrow');
+        pathEl.setAttribute('class', isUnconfigured || isDisabled || !this.isMonitoring ? 'arrow-unconfigured' : 'arrow');
         pathEl.setAttribute('marker-end', `url(${this.window.location.href}#marker${color})`);
 
         this.renderer.appendChild(pathGroup, pathEl);

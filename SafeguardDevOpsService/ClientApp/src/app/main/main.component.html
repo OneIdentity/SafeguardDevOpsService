@@ -112,7 +112,7 @@
     </mat-card>
 
     <ng-container *ngFor="let plugin of plugins">
-      <div [ngClass]="['plugin-container','configured',isMonitoring?'monitored':'']" (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup">
+      <div [ngClass]="['plugin-container','configured',isMonitoring?'monitored':'','disabled:'+plugin.IsDisabled]" (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup">
         <div class="accounts-container">
           <div class="count">{{plugin.MappedAccountsCount}}</div>
           <div><div>Managed</div><div *ngIf="plugin.MappedAccountsCount == 1">Account</div><div *ngIf="plugin.MappedAccountsCount != 1">Accounts</div></div>

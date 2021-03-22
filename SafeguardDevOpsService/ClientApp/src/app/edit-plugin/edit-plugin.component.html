@@ -35,6 +35,7 @@
           </div>
           <div class="field-text">This account will be used by Secrets Broker to pull new passwords from Safeguard</div>
         </div>
+        <mat-checkbox [(ngModel)]="isPluginDisabled" (change)="updatePluginDisabled()" matTooltip="Disable the plugin to prevent monitoring the associated accounts">Disabled</mat-checkbox>
         <div class="sub-title-2">Plugin Details</div>
         <ng-container *ngFor="let config of configs">
           <div class="field-container">

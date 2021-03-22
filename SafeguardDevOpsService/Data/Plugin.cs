@@ -45,6 +45,11 @@ namespace OneIdentity.DevOps.Data
         public bool IsDeleted { get; set; } = false;
 
         /// <summary>
+        /// Is the plugin disabled
+        /// </summary>
+        public bool IsDisabled { get; set; } = false;
+
+        /// <summary>
         /// Plugin version
         /// </summary>
         public string Version { get; set; }
