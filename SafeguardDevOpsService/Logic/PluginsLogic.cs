@@ -174,6 +174,37 @@ namespace OneIdentity.DevOps.Logic
             return _pluginManager.TestPluginVaultConnection(name);
         }
 
+        public PluginState GetPluginDisabledState(string name)
+        {
+            var plugin = _configDb.GetPluginByName(name);
+
+            if (plugin == null)
+            {
+                var msg = $"Plugin {name} not found";
+                _logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+
+            return new PluginState() {Disabled = plugin.IsDisabled};
+        }
+
+        public PluginState UpdatePluginDisabledState(string name, bool state)
+        {
+            var plugin = _configDb.GetPluginByName(name);
+
+            if (plugin == null)
+            {
+                var msg = $"Plugin {name} not found";
+                _logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+
+            plugin.IsDisabled = state;
+            _configDb.SavePluginConfiguration(plugin);
+
+            return new PluginState() {Disabled = plugin.IsDisabled};
+        }
+
         public IEnumerable<AccountMapping> GetAccountMappings(string name)
         {
             if (_configDb.GetPluginByName(name) == null)

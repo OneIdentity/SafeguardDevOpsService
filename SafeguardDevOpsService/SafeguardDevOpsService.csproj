@@ -52,9 +52,16 @@
 
   <ItemGroup>
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
+    <Compile Remove="ClientApp\.vscode\**" />
     <Content Remove="$(SpaRoot)**" />
+    <EmbeddedResource Remove="ClientApp\.vscode\**" />
     <None Remove="$(SpaRoot)**" />
+    <None Remove="ClientApp\.vscode\**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="ClientApp\.vscode\launch.json" />
   </ItemGroup>
 
   <ItemGroup>

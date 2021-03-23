@@ -238,6 +238,16 @@ export class DevOpsServiceClient {
     .pipe(catchError(this.error<any>('deletePluginConfiguration')));
   }
 
+  getPluginDisableState(name: string): Observable<any> {
+    return this.http.get(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Disabled', this.authHeader())
+      .pipe(catchError(this.error<any>('getPluginDisableState')));
+  }
+
+  postPluginDisableState(name: string, state: boolean): Observable<any> {
+    return this.http.post(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Disabled', { Disabled: state}, this.authHeader())
+      .pipe(catchError(this.error<any>('postPluginDisableState')));
+  }
+
   getAvailableAccountsCount(filter?: string, orderby?: string): Observable<number> {
     const url = this.BASE + 'Safeguard/AvailableAccounts' + this.buildQueryArguments(true, filter, orderby);
     return this.http.get(url, this.authHeader())

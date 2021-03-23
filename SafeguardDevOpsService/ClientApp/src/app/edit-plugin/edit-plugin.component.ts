@@ -31,9 +31,11 @@ export class EditPluginComponent implements OnInit {
   isSaving = false;
   isTesting = false;
   displayedColumns: string[] = ['asset', 'account', 'delete'];
+  isPluginDisabled: boolean;
 
   ngOnInit(): void {
     this.plugin = this.editPluginService.plugin;
+    this.isPluginDisabled = this.plugin.IsDisabled;
 
     this.configs.splice(0);
     Object.keys(this.plugin.Configuration).forEach(key => {
@@ -130,6 +132,10 @@ export class EditPluginComponent implements OnInit {
       });
   }
 
+  updatePluginDisabled(): void {
+    this.plugin.IsDisabled = this.isPluginDisabled;
+  }
+
   private mapConfiguration(): void {
     this.configs.forEach(config => {
       this.plugin.Configuration[config.key] = config.value;
@@ -171,13 +177,16 @@ export class EditPluginComponent implements OnInit {
       this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.plugin.VaultAccount) :
       this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
 
-    forkJoin([obs1, obs2, obs3]).pipe(
+    const obs4 = this.serviceClient.postPluginDisableState(this.plugin.Name, this.plugin.IsDisabled);
+
+    forkJoin([obs1, obs2, obs3, obs4]).pipe(
       untilDestroyed(this)
     ).subscribe(
       (data) => {
         this.plugin = data[1];
         this.plugin.Accounts =  data[0];
         this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
+        this.plugin.IsDisabled = data[3].Disabled;
 
         this.editPluginService.closeProperties(this.plugin);
       },

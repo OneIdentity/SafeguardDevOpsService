@@ -29,5 +29,7 @@ namespace OneIdentity.DevOps.Logic
 
         void RestartService();
         bool TestPluginConnectionByName(string name);
+        PluginState GetPluginDisabledState(string name);
+        PluginState UpdatePluginDisabledState(string name, bool isDisabled);
     }
 }

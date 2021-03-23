@@ -167,26 +167,36 @@ namespace OneIdentity.DevOps.Logic
                         var monitorEvent = new MonitorEvent()
                         {
                             Event = $"Sending password for account {account.AccountName} to {account.VaultName}.",
-                            Result = "Success",
+                            Result = WellKnownData.SentPasswordSuccess,
                             Date = DateTime.UtcNow
                         };
 
-                        try
+                        if (_pluginManager.IsDisabledPlugin(account.VaultName))
                         {
-                            _logger.Information(monitorEvent.Event);
-                            if (!_pluginManager.SendPassword(account.VaultName, account.AssetName, account.AccountName, password))
+                            monitorEvent.Event = $"{account.VaultName} is disabled or not loaded. No password sent for account {account.AccountName}.";
+                            monitorEvent.Event = WellKnownData.SentPasswordFailure;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                _logger.Information(monitorEvent.Event);
+                                if (!_pluginManager.SendPassword(account.VaultName, account.AssetName,
+                                    account.AccountName, password))
+                                {
+                                    _logger.Error(
+                                        $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
+                                    monitorEvent.Result = WellKnownData.SentPasswordFailure;
+                                }
+                            }
+                            catch (Exception ex)
                             {
                                 _logger.Error(
-                                    $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
-                                monitorEvent.Result = "Failure";
+                                    $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
+                                monitorEvent.Result = WellKnownData.SentPasswordFailure;
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            _logger.Error(
-                                $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
-                            monitorEvent.Result = "failed";
-                        }
+
                         _lastEventsQueue.Enqueue(monitorEvent);
                     }
                 }

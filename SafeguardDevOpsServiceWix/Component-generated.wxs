@@ -1216,8 +1216,8 @@
                     <Component Id="index.html" Guid="*">
                         <File Id="index.html" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\index.html" />
                     </Component>
-                    <Component Id="main.e146e6432e5f2491904f.js" Guid="*">
-                        <File Id="main.e146e6432e5f2491904f.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.e146e6432e5f2491904f.js" />
+                    <Component Id="main.563a3f6de5ba944554b9.js" Guid="*">
+                        <File Id="main.563a3f6de5ba944554b9.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.563a3f6de5ba944554b9.js" />
                     </Component>
                     <Component Id="polyfills.35a5ca1855eb057f016a.js" Guid="*">
                         <File Id="polyfills.35a5ca1855eb057f016a.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\polyfills.35a5ca1855eb057f016a.js" />
@@ -1646,7 +1646,7 @@
             <ComponentRef Id="accessTokenCheck.js" />
             <ComponentRef Id="favicon.ico" />
             <ComponentRef Id="index.html" />
-            <ComponentRef Id="main.e146e6432e5f2491904f.js" />
+            <ComponentRef Id="main.563a3f6de5ba944554b9.js" />
             <ComponentRef Id="polyfills.35a5ca1855eb057f016a.js" />
             <ComponentRef Id="runtime.acf0dec4155e77772545.js" />
             <ComponentRef Id="scripts.568694a568f45ab03c95.js" />

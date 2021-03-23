@@ -426,6 +426,17 @@ namespace OneIdentity.DevOps.Logic
             return (LoadedPlugins.ContainsKey(name));
         }
 
+        public bool IsDisabledPlugin(string name)
+        {
+            if (LoadedPlugins.ContainsKey(name))
+            {
+                var plugin = _configDb.GetPluginByName(name);
+                return plugin.IsDisabled;
+            }
+
+            return true;
+        }
+
         public void Dispose()
         {
             _watcher.Created -= OnDirectoryCreate;
