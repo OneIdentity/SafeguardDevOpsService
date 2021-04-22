@@ -128,7 +128,7 @@ export class EditPluginComponent implements OnInit {
       (error) => {
         this.snackBar.open('Test configuration failed.', 'Dismiss', { duration: 5000 });
         this.isTesting = false;
-        this.error = error;
+        this.error = SCH.parseError(error);
       });
   }
 
