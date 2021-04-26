@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Hosting;
 using OneIdentity.DevOps.Logic;
@@ -30,6 +31,13 @@ namespace OneIdentity.DevOps
             {
                 Log.Logger.Error("Failed to find or change the default SSL certificate.");
                 Environment.Exit(1);
+            }
+
+            if (bool.Parse(Environment.GetEnvironmentVariable("DOCKER_RUNNING") ?? ""))
+            {
+                Log.Logger.Information("Running in Docker container");
+                var hostEntry = Dns.GetHostEntry("host.docker.internal");
+                Log.Logger.Information($"Host IP: {hostEntry.AddressList[0]}");
             }
 
             Log.Logger.Information($"Thumbprint for {webSslCert.Subject}: {webSslCert.Thumbprint}");
