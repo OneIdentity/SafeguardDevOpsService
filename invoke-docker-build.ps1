@@ -31,12 +31,6 @@ if (-not (Get-Command "npm" -EA SilentlyContinue))
     throw "This script requires npm for building the UI"
 }
 
-if (-not (Get-Command "ng" -EA SilentlyContinue))
-{
-    Write-Host -ForegroundColor Magenta "Run: npm install -g @angular/cli"
-    throw "This script requires angular for building the UI"
-}
-
 if ($Version)
 {
     $Version = "$Version-"
