@@ -9,6 +9,7 @@ USAGE: run-docker.sh [-h] [-b image] [-p port] [-c command]
   -h  Show help and exit
   -b  Base image type to use (default: alpine)
   -p  Port number to expose service on (default: 443)
+  -i  Specify Docker host IP address
   -c  Alternate command to run in the container (-c /bin/bash to get a prompt)
       Always specify the -c option last (most useful with -i)
 EOF
