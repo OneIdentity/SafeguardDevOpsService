@@ -41,8 +41,8 @@ try
 {
     Push-Location $PSScriptRoot
     Write-Host -ForegroundColor Yellow "Cleaning up all build directories ..."
-    (Get-ChildItem -Recurse -Filter obj -EA SilentlyContinue) | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
-    (Get-ChildItem -Recurse -Filter bin -EA SilentlyContinue) | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
+    (Get-ChildItem -Recurse -Filter obj -EA SilentlyContinue) | Where-Object { $_.FullName -inotmatch "node_modules" } | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
+    (Get-ChildItem -Recurse -Filter bin -EA SilentlyContinue) | Where-Object { $_.FullName -inotmatch "node_modules" } | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
     Write-Host -ForegroundColor Yellow "Building for full-size Linux distros ..."
     dotnet publish -v d -r linux-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
     if ($LASTEXITCODE -ne 0)
