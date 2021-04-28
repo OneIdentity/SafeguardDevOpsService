@@ -1,5 +1,6 @@
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine3.12
 MAINTAINER support@oneidentity.com
+ENV DOCKER_RUNNING=true
 
 RUN apk -U --no-cache add \
         shadow \
