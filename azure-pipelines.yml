@@ -15,7 +15,7 @@ trigger:
 #
 variables:
   semanticVersion: "1.7.0"
-  isPrerelease: ${{ false }}
+  isPrerelease: ${{ true }}
   isReleaseBranch: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
 
 jobs:
