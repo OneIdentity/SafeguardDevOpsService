@@ -14,8 +14,8 @@ trigger:
 # isReleaseBranch controls whether packages will be generated and published.
 #
 variables:
-  semanticVersion: "1.6.0"
-  isPrerelease: ${{ true }}
+  semanticVersion: "1.7.0"
+  isPrerelease: ${{ false }}
   isReleaseBranch: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
 
 jobs:
