@@ -465,11 +465,23 @@ namespace OneIdentity.DevOps.Logic
                 return null;
             }
 
+            if (bool.Parse(Environment.GetEnvironmentVariable("DOCKER_RUNNING") ?? "false"))
+            {
+                _logger.Debug("Running in Docker and searching for local IP address");
+                var dockerHost = Environment.GetEnvironmentVariable("DOCKER_HOST_IP") ?? "";
+                _logger.Debug($"Found host IP address {dockerHost}");
+
+                return $"\"{dockerHost}\"";
+            }
+
+            _logger.Debug("Running as a service and searching for local IP address");
             var host = Dns.GetHostEntry(Dns.GetHostName());
 
             var addresses = host.AddressList.Where(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+            var hostAddresses = string.Join(",", addresses.Select(x => $"\"{x}\""));
+            _logger.Debug($"Found host IP address(s) {hostAddresses}");
 
-            return string.Join(",", addresses.Select(x => $"\"{x}\""));
+            return hostAddresses;
         }
 
         public void RemoveClientCertificate()

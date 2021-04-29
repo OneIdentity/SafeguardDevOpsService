@@ -33,7 +33,7 @@ namespace OneIdentity.DevOps
                 Environment.Exit(1);
             }
 
-            if (bool.Parse(Environment.GetEnvironmentVariable("DOCKER_RUNNING") ?? ""))
+            if (bool.Parse(Environment.GetEnvironmentVariable("DOCKER_RUNNING") ?? "false"))
             {
                 Log.Logger.Information("Running in Docker container");
                 if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DOCKER_HOST_IP")))

@@ -130,17 +130,20 @@ A Docker image for Safeguard Secrets Broker for Devops is built and made availab
 1. The following command will download and deploy the docker image of the Secrets Broker.
 
     ```Command
-    $ docker run -it -p 443:4443 --cap-add NET_ADMIN oneidentity/safeguard-devops
+    $ docker run -it -p 443:4443 --env DOCKER_HOST_IP=<hostIp> --cap-add NET_ADMIN oneidentity/safeguard-devops
     ```
 
     The safeguard-devops docker image binds the server to port 4443 internally. The -p 443:4443 parameter maps the internal port to 443 externally. To map the internal port to a different external port, replace the value 443 with externally available port.
 
-    The --cap-add NET_ADMIN parameter is necessary of the internal port is being mapped to an external privileged port (port less than 1024).
+    The --env DOCKER_HOST_IP=\<hostIp\> must be set to the IP address of the docker host computer. If omitted, the Safeguard Secrets Broker for Devops will be unable to accurately apply the IP restrictions to the A2A registrations in Safeguard.
+
+    The --cap-add NET_ADMIN parameter is necessary if the internal port is being mapped to an external privileged port (port less than 1024).
 
 1. There are certain environment variables that can be set at the time the docker image deployed to control the debug level and database encryption. For security reasons, these environment variables should be provided to the docker environment using a heredoc to create an ephemeral file. The following is an example of how to set the environment variables.
 
     ```Command
     $ docker run -it -p 443:4443 --cap-add NET_ADMIN --env-file <(cat <<EOF
+      DOCKER_HOST_IP=<hostIp>
       SSBEncPasswd=thisisapasswordformyencrypteddatabase
       EOF
       ) oneidentity/safeguard-devops
@@ -152,12 +155,13 @@ A Docker image for Safeguard Secrets Broker for Devops is built and made availab
     $ docker pull oneidentity/safeguard-devops
     ```
 
-WARNING: In some docker environments, the container may not be able to determine the host IP address. This can result in an A2A IP restriction that does not match the host and may prevent the password monitor from starting. If the SafeguardDevOpsService.log shows that the monitor is failing to start, open the Safeguard Desktop Client and navigate to the Application to Application registration configuration in Settings. Edit the SafeguardDevOpsServer-xxx and SafeguardDevOpsServiceVaultCredentials-xxx registrations that match the Secrets Broker. Within the A2A registration, select the Credential Retrieval tab and modify each restriction so that it matches the IP address of the Secrets Broker host. This is a known issue which should be resolved in a future version of the Secrets Broker.
+WARNING: In some docker environments, the container may not be able to determine the host IP address. This can result in an A2A registration IP restriction that does not match the host and may prevent the password monitor from starting. The recommended way to fix this issue is to set the DOCKER_HOST_IP environment variable to the IP address of the docker host computer.
 
 ### Environment Variables
 
 Initialization of the Secrets Broker on Windows or as a Docker image can be controled by specifying certain environment variables. These environment variables can be passed nto the initializtion of the Secrets Broker in one of two ways depending on the operating system. For Windows, the environment variables are set through a file called 'appsettings.json'. To change the variables on windows, navigate to the installed location of the Secrets Broker and rename the '_appsettings.json' to 'appsettings.json'. Then edit the settings file and change the corresponding variable. To change the variables in a Docker environment, the variables need to be set on the command line and passed into the image. The following describes the available environment variables:
 
+- DOCKER_HOST_IP - This environment variable should always be included when starting the Safeguard Secrets Broker for Devops in a docker container. It should be set to the IP address of the docker host computer.
 - LogLevel - Information(Default for Windows), Debug(Default for Docker), Error, Warning, Fatal and Verbose
 - SSBEncPasswd - The encryption password for encrypting the Secrets Broker database on disk. This is only available for docker. The Windows database is always encrypted.
 - Port - Secrets Broker listen port. The docker environment should be left at the default of 4443. The windows port can be changed by updating the appsettings.json file.
