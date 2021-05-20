@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using CredentialManagement;
 using LiteDB;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;

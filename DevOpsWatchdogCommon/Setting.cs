@@ -1,8 +1,8 @@
 ﻿using LiteDB;
 
-namespace OneIdentity.DevOps.ConfigDb
+namespace OneIdentity.DevOps.Common
 {
-    internal class Setting : ISetting
+    public class Setting : ISetting
     {
         [BsonId]
         public string Name { get; set; }

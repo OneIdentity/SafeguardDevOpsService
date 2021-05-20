@@ -3,7 +3,7 @@ using System.Net;
 
 #pragma warning disable 1591
 
-namespace OneIdentity.DevOps.Exceptions
+namespace OneIdentity.DevOps.Common
 {
     [Serializable]
     public class DevOpsException : Exception

@@ -1,16 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 #pragma warning disable 1591
 
 namespace OneIdentity.DevOps.ConfigDb
 {
-    public interface IConfigurationRepository
+    public interface IConfigurationRepository : ISettingsRepository
     {
-        ISetting GetSetting(string name);
-        void SetSetting(ISetting value);
-        void RemoveSetting(string name);
-
         IEnumerable<Plugin> GetAllPlugins();
         Plugin GetPluginByName(string name);
         Plugin SavePluginConfiguration(Plugin plugin);

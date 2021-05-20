@@ -87,6 +87,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DevOpsPluginCommon\DevOpsPluginCommon.csproj" />
+    <ProjectReference Include="..\DevOpsWatchdogCommon\DevOpsWatchdogCommon.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">

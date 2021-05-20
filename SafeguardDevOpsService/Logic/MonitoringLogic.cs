@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;

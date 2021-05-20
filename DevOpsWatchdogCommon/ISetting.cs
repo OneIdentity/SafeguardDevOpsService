@@ -1,6 +1,6 @@
 ﻿#pragma warning disable 1591
 
-namespace OneIdentity.DevOps.ConfigDb
+namespace OneIdentity.DevOps.Common
 {
     public interface ISetting
     {

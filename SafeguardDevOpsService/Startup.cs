@@ -99,6 +99,8 @@ namespace OneIdentity.DevOps
                 configuration.RootPath = Path.Combine(WellKnownData.ServiceDirPath, "ClientApp/dist");
                 Serilog.Log.Information($"Website root {configuration.RootPath}");
             });
+
+            services.AddHostedService<WatchdogManager>();
         }
 
         // This only gets called if your environment is Development. The
