@@ -1,28 +1,24 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.Logic
 {
-    internal class WatchdogManager : IHostedService, IDisposable
+    internal class AddonManager : IHostedService, IDisposable
     {
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
 
-        private IDevOpsWatchdog _devOpsWatchdog;
+        private IAddonService _devOpsAddon;
 
-        public WatchdogManager(IConfigurationRepository configDb)
+        public AddonManager(IConfigurationRepository configDb)
         {
             _configDb = configDb;
             _logger = Serilog.Log.Logger;
@@ -35,9 +31,10 @@ namespace OneIdentity.DevOps.Logic
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            LoadWatchdogService();
-
-            Task.Run(async () => await _devOpsWatchdog.RunWatchdogAsync(cancellationToken), cancellationToken);
+            if (LoadAddonService())
+            {
+                Task.Run(async () => await _devOpsAddon.RunAddonServiceAsync(cancellationToken), cancellationToken);
+            }
 
             return Task.CompletedTask;
         }
@@ -47,51 +44,55 @@ namespace OneIdentity.DevOps.Logic
             return Task.CompletedTask;
         }
 
-        private void LoadWatchdogService()
+        private bool LoadAddonService()
         {
             try
             {
-                if (!File.Exists(WellKnownData.WatchdogServicePath))
-                    return;
+                if (!File.Exists(WellKnownData.AddonServicePath))
+                    return false;
 
-                var assembly = Assembly.LoadFrom(WellKnownData.WatchdogServicePath);
+                var assembly = Assembly.LoadFrom(WellKnownData.AddonServicePath);
 
                 var watchdogClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
-                                                                   && t.Name.Equals(WellKnownData.WatchdogServiceClassName) 
-                                                                   && typeof(IDevOpsWatchdog).IsAssignableFrom(t));
+                                                                   && t.Name.Equals(WellKnownData.AddonServiceClassName) 
+                                                                   && typeof(IAddonService).IsAssignableFrom(t));
 
                 if (watchdogClass != null)
                 {
-                    _logger.Information($"Loading Watchdog service from path {WellKnownData.WatchdogServicePath}.");
-                    var watchdogService = (IDevOpsWatchdog) Activator.CreateInstance(watchdogClass);
+                    _logger.Information($"Loading Add-on service from path {WellKnownData.AddonServicePath}.");
+                    var watchdogService = (IAddonService) Activator.CreateInstance(watchdogClass);
 
                     if (watchdogService == null)
                     {
-                        _logger.Warning($"Unable to instantiate Watchdog service from {WellKnownData.WatchdogServicePath}");
+                        _logger.Warning($"Unable to instantiate the Add-on service from {WellKnownData.AddonServicePath}");
                     }
                     else
                     {
-                        _devOpsWatchdog = watchdogService;
-                        _devOpsWatchdog.SetLogger(_logger);
-                        _devOpsWatchdog.SetDatabase(_configDb);
+                        _devOpsAddon = watchdogService;
+                        _devOpsAddon.SetLogger(_logger);
+                        _devOpsAddon.SetDatabase(_configDb);
 
-                        _logger.Information($"Successfully loaded Watchdog Service {_devOpsWatchdog.DisplayName} : {_devOpsWatchdog.Description}.");
+                        _logger.Information($"Successfully loaded the Add-on Service {_devOpsAddon.DisplayName} : {_devOpsAddon.Description}.");
 
                         try
                         {
-                            var pluginVersion = ReadPluginVersion(WellKnownData.WatchdogServicePath);
+                            var pluginVersion = ReadPluginVersion(WellKnownData.AddonServicePath);
                         }
                         catch (Exception ex)
                         {
-                            _logger.Warning($"Failed to load Watchdog service {Path.GetFileName(WellKnownData.WatchdogServicePath)}: {ex.Message}.");
+                            _logger.Warning($"Failed to load Watchdog service {Path.GetFileName(WellKnownData.AddonServicePath)}: {ex.Message}.");
                         }
+
+                        return true;
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to load Watchdog service {Path.GetFileName(WellKnownData.WatchdogServicePath)}: {ex.Message}.");
+                _logger.Error($"Failed to load Watchdog service {Path.GetFileName(WellKnownData.AddonServicePath)}: {ex.Message}.");
             }
+
+            return false;
         }
 
         private string ReadPluginVersion(string pluginPath)

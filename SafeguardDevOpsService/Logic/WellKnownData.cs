@@ -31,9 +31,10 @@ namespace OneIdentity.DevOps.Logic
 
         public const string PluginDirName = "ExternalPlugins";
         public const string PluginStageName = "PluginStaging";
-        public const string WatchdogAddonDirName = "WatchdogAddon";
-        public const string WatchdogServiceName = "SafeguardDevopsVaultWatchdog";
-        public const string WatchdogServiceClassName = "DevOpsWatchdog";
+        public const string WatchdogAddonDirName = "VaultAddon";
+        public const string AddonServiceName = "SafeguardDevopsVaultAddon"; //TODO: Need to have a generic name
+        public const string AddonServiceClassName = "AddonService";
+        public const string DeployAddonClassName = "DeployAddon";
 
         public const string MonitorEnabled = "Enabled";
         public const string MonitorDisabled = "Disabled";
@@ -47,8 +48,8 @@ namespace OneIdentity.DevOps.Logic
                 Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule.FileName);
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
-        public static readonly string WatchdogAddonDirPath = Path.Combine(ProgramDataPath, WatchdogAddonDirName);
-        public static readonly string WatchdogServicePath = Path.Combine(WatchdogAddonDirPath, WatchdogServiceName+".dll");
+        public static readonly string AddonServiceDirPath = Path.Combine(ProgramDataPath, WatchdogAddonDirName);
+        public static readonly string AddonServicePath = Path.Combine(AddonServiceDirPath, AddonServiceName+".dll");
         public static readonly string SvcIdPath = Path.Combine(ServiceDirPath, ServiceIdentifier);
         public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, "DeletePlugins.all");
         public static readonly string LogDirPath = Path.Combine(ProgramDataPath, $"{DevOpsServiceName}.log");

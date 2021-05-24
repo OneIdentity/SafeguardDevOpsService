@@ -5,12 +5,12 @@ using Serilog;
 
 namespace OneIdentity.DevOps.Common
 {
-    public interface IDevOpsWatchdog
+    public interface IAddonService
     {
         string Name { get; }
         string DisplayName { get; }
         string Description { get; }
-        Task RunWatchdogAsync(CancellationToken cancellationToken);
+        Task RunAddonServiceAsync(CancellationToken cancellationToken);
         void SetLogger(ILogger logger);
         void SetDatabase(ISettingsRepository settingDb);
         void Unload();

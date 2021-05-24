@@ -789,5 +789,36 @@ namespace OneIdentity.DevOps.Controllers.V1
             return NoContent();
         }
 
+        /// <summary>
+        /// Upload a Secrets Broker add-on via multipart-form-data.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.  
+        ///
+        /// The add-on must be a zip compressed file. 
+        /// </remarks>
+        /// <param name="formFile">Zip compressed add-on file.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
+        /// <response code="200">Success. Needing restart</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [DisableRequestSizeLimit]
+        [UnhandledExceptionError]
+        [HttpPost("Addon")]
+        public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard, IFormFile formFile, [FromQuery] bool restart = false)
+        {
+            addonLogic.InstallAddon(formFile);
+
+            if (restart)
+                safeguard.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok("Safeguard Secrets Broker for DevOps needs to be restarted to finish installing the new add-on.");
+
+            return NoContent();
+        }
+
+
     }
 }

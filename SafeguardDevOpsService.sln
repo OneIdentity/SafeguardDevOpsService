@@ -28,9 +28,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JenkinsSecrets", "ExternalP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AwsSecretsManagerVault", "ExternalPlugins\AwsSecretsManagerVault\AwsSecretsManagerVault.csproj", "{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsWatchdogCommon", "DevOpsWatchdogCommon\DevOpsWatchdogCommon.csproj", "{4AFC5746-9A46-4DEF-BD80-845E16D5E610}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsAddonCommon", "DevOpsWatchdogCommon\DevOpsAddonCommon.csproj", "{4AFC5746-9A46-4DEF-BD80-845E16D5E610}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevopsVaultWatchdog", "..\SafeguardDevOpsVault-temp\SafeguardDevopsVaultWatchdog\SafeguardDevopsVaultWatchdog.csproj", "{A4A049F9-DEEC-4E46-ABBF-46A6E3E41CC9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevopsVaultAddon", "..\SafeguardDevOpsVault-temp\SafeguardDevopsVaultWatchdog\SafeguardDevopsVaultAddon.csproj", "{A4A049F9-DEEC-4E46-ABBF-46A6E3E41CC9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
