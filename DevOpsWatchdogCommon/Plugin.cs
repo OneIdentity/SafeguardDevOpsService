@@ -1,7 +1,7 @@
 ﻿
 using LiteDB;
 
-namespace OneIdentity.DevOps.Data
+namespace OneIdentity.DevOps.Common
 {
     /// <summary>
     /// Represents a DevOps plugin

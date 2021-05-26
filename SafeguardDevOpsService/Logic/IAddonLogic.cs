@@ -8,5 +8,6 @@ namespace OneIdentity.DevOps.Logic
     public interface IAddonLogic
     {
         public void InstallAddon(IFormFile formFile);
+        public void RemoveAddon();
     }
 }

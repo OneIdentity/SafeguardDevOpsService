@@ -6,13 +6,8 @@ using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.ConfigDb
 {
-    public interface IConfigurationRepository : ISettingsRepository
+    public interface IConfigurationRepository : ISettingsRepository, IPluginRepository
     {
-        IEnumerable<Plugin> GetAllPlugins();
-        Plugin GetPluginByName(string name);
-        Plugin SavePluginConfiguration(Plugin plugin);
-        void DeletePluginByName(string name);
-
         IEnumerable<AccountMapping> GetAccountMappings();
         void SaveAccountMappings(IEnumerable<AccountMapping> accounts);
         void DeleteAccountMappingsByKey(string key);

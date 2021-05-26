@@ -31,7 +31,11 @@ namespace OneIdentity.DevOps.Logic
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            if (LoadAddonService())
+            if (File.Exists(WellKnownData.RemoveAddonFilePath))
+            {
+                Directory.Delete(WellKnownData.AddonServiceDirPath, true);
+            } 
+            else if (LoadAddonService())
             {
                 Task.Run(async () => await _devOpsAddon.RunAddonServiceAsync(cancellationToken), cancellationToken);
             }

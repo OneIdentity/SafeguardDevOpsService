@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
@@ -14,14 +15,14 @@ namespace OneIdentity.DevOps.Logic
     {
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
-
         private IDeployAddon _deployAddon;
+        private IUndeployAddon _undeployAddon;
 
 
         public AddonLogic(IConfigurationRepository configDb)
         {
-            _configDb = configDb;
             _logger = Serilog.Log.Logger;
+            _configDb = configDb;
         }
 
         private DevOpsException LogAndException(string msg, Exception ex = null)
@@ -50,6 +51,34 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        public void RemoveAddon()
+        {
+            _logger.Information("Saving the remove token to disk. The Add-on will be delete after a reboot.");
+            try
+            {
+                using (File.Create(WellKnownData.RemoveAddonFilePath)) {}
+            }
+            catch {}
+
+            UndeployAddon();
+        }
+
+        // public void CleanUpDeletedPlugins()
+        // {
+        //     // If the DeleteAddon.all file exists, just remove the entire addon directory.
+        //     if (File.Exists(WellKnownData.RemoveAddonFilePath))
+        //     {
+        //         try
+        //         {
+        //             Directory.Delete(WellKnownData.AddonServiceDirPath, true);
+        //         }
+        //         catch (Exception ex)
+        //         {
+        //             _logger.Error($"Failed to clean up the {WellKnownData.AddonServiceDirPath} directory. {ex.Message}");
+        //         }
+        //     }
+        // }
+
         private void InstallAddon(ZipArchive zipArchive)
         {
             var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
@@ -58,33 +87,21 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException("Failed to find the manifest for the add-on.");
             }
 
-            var tempFolder = GetTemporaryDirectory();
-
-            try
+            using (var reader = new StreamReader(manifestEntry.Open()))
             {
-                using (var reader = new StreamReader(manifestEntry.Open()))
+                var manifest = reader.ReadToEnd();
+                var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
+                if (pluginManifest != null)
                 {
-                    var manifest = reader.ReadToEnd();
-                    var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
-                    if (pluginManifest != null)
-                    {
-                        RestartManager.Instance.ShouldRestart = true;
-                        zipArchive.ExtractToDirectory(tempFolder, true);
+                    RestartManager.Instance.ShouldRestart = true;
+                    zipArchive.ExtractToDirectory(WellKnownData.AddonServiceStageDirPath, true);
 
-                        DeployAddon(pluginManifest.Assembly, tempFolder);
-                    }
-                    else
-                    {
-                        throw LogAndException(
-                            $"Add-on package does not contain a {WellKnownData.ManifestPattern} file.");
-                    }
+                    DeployAddon(pluginManifest.Assembly, WellKnownData.AddonServiceStageDirPath);
                 }
-            }
-            finally
-            {
-                if (Directory.Exists(tempFolder))
+                else
                 {
-                    Directory.Delete(tempFolder, true);
+                    throw LogAndException(
+                        $"Add-on package does not contain a {WellKnownData.ManifestPattern} file.");
                 }
             }
         }
@@ -131,12 +148,49 @@ namespace OneIdentity.DevOps.Logic
 
         }
 
-        private string GetTemporaryDirectory()
+        private void UndeployAddon()
         {
-            string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            Directory.CreateDirectory(tempDirectory);
-            return tempDirectory;
-        }
+            try
+            {
+                var assembly = AppDomain.CurrentDomain.GetAssemblies().
+                    SingleOrDefault(assembly => assembly.GetName().Name == WellKnownData.AddonServiceName);
 
+                if (assembly == null)
+                {
+                    _logger.Error(
+                        $"Failed to find the reference to the loaded Add-on {WellKnownData.AddonServiceName}.  Loading the Add-on.");
+                    assembly = Assembly.LoadFrom(WellKnownData.AddonServicePath);
+                }
+
+
+                var undeployAddonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
+                                                                               && t.Name.Equals(WellKnownData.UndeployAddonClassName) 
+                                                                               && typeof(IUndeployAddon).IsAssignableFrom(t));
+
+                if (undeployAddonClass != null)
+                {
+                    _logger.Information($"Loading the {WellKnownData.UndeployAddonClassName} class.");
+                    var undeployAddon = (IUndeployAddon) Activator.CreateInstance(undeployAddonClass);
+
+                    if (undeployAddon == null)
+                    {
+                        _logger.Warning($"Unable to instantiate the Add-on service {WellKnownData.UndeployAddonClassName} class.");
+                    }
+                    else
+                    {
+                        _undeployAddon = undeployAddon;
+                        _undeployAddon.SetLogger(_logger);
+                        _undeployAddon.SetPluginDb(_configDb);
+
+                        _undeployAddon.Undeploy();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to undeploy the Add-on service {WellKnownData.AddonServiceName}: {ex.Message}.");
+            }
+
+        }
     }
 }

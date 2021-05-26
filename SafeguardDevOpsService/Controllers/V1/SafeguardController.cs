@@ -790,7 +790,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Upload a Secrets Broker add-on via multipart-form-data.
+        /// Upload and deploy a Secrets Broker add-on via multipart-form-data.
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
@@ -814,7 +814,39 @@ namespace OneIdentity.DevOps.Controllers.V1
             if (restart)
                 safeguard.RestartService();
             else if (RestartManager.Instance.ShouldRestart)
-                return Ok("Safeguard Secrets Broker for DevOps needs to be restarted to finish installing the new add-on.");
+                return Ok(WellKnownData.RestartNotice);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Remove a Secrets Broker add-on.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.  
+        ///
+        /// This endpoint removes the currently deployed Secrets Broker add-on. 
+        /// </remarks>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
+        /// <response code="200">Success. Needing restart</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [DisableRequestSizeLimit]
+        [UnhandledExceptionError]
+        [HttpDelete("Addon")]
+        public ActionResult RemoveAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm, [FromQuery] bool restart = false)
+        {
+            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+                return BadRequest();
+
+            addonLogic.RemoveAddon();
+
+            if (restart)
+                safeguard.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok(WellKnownData.RestartNotice);
 
             return NoContent();
         }
