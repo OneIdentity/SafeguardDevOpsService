@@ -63,22 +63,6 @@ namespace OneIdentity.DevOps.Logic
             UndeployAddon();
         }
 
-        // public void CleanUpDeletedPlugins()
-        // {
-        //     // If the DeleteAddon.all file exists, just remove the entire addon directory.
-        //     if (File.Exists(WellKnownData.RemoveAddonFilePath))
-        //     {
-        //         try
-        //         {
-        //             Directory.Delete(WellKnownData.AddonServiceDirPath, true);
-        //         }
-        //         catch (Exception ex)
-        //         {
-        //             _logger.Error($"Failed to clean up the {WellKnownData.AddonServiceDirPath} directory. {ex.Message}");
-        //         }
-        //     }
-        // }
-
         private void InstallAddon(ZipArchive zipArchive)
         {
             var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
