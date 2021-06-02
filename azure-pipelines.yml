@@ -9,7 +9,7 @@ jobs:
   - job:
     displayName: "Windows MSI and Plugin Build"
     variables:
-      - template: pipeline-templates/job-variables.yml
+      - template: pipeline-templates/windows-job-variables.yml
     pool:
       vmImage: 'windows-latest'
     steps:
