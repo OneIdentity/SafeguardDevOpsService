@@ -5,6 +5,7 @@ trigger:
     include:
       - master
       - release-*
+pr: none
 jobs:
   - job:
     displayName: "Windows MSI and Plugin Build"
