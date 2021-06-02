@@ -29,6 +29,13 @@ steps:
     displayName: 'Build $(setupProject) no signing'
     condition: and(succeeded(), eq(variables.isReleaseBranch, false))
 
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'custom'
+      custom: 'pack'
+      arguments: '$(Build.SourcesDirectory)\DevOpsPluginCommon\DevOpsPluginCommon.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
+    displayName: Building Plugin Common NuGet packages
+
   - task: DeleteFiles@1
     inputs:
       SourceFolder: '$(Build.BinariesDirectory)'

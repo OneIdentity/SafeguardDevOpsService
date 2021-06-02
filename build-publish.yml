@@ -38,6 +38,13 @@ jobs:
         displayName: 'Publish Powershell module to Powershell Gallery'
         condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
+      - task: NuGetCommand@2
+        inputs:
+          command: 'custom'
+          arguments: 'push $(Build.ArtifactStagingDirectory)\*.nupkg -source https://api.nuget.org/v3/index.json -ApiKey $(NugetOrgApiKey) -NonInteractive -Verbosity detailed'
+        displayName: 'Publishing NuGet packages to NuGet.org'
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
   - job:
     displayName: "Linux Docker Alpine Build"
     variables:
