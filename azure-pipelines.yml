@@ -70,32 +70,32 @@ jobs:
         condition: and(succeeded(), eq(variables.isReleaseBranch, true))
         displayName: 'Pushing docker Alpine image to Docker Hub'
 
-- job:
-  displayName: "Linux Docker Ubuntu Build"
-  variables:
-      imageType: ubuntu20.04
-  pool:
-    vmImage: 'ubuntu-latest'
-  steps:
-    - task: AzureKeyVault@1
-      inputs:
-        azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
-        KeyVaultName: 'SafeguardBuildSecrets'
-        SecretsFilter: 'DockerHubAccessToken,DockerHubPassword'
-      displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
-      condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+  - job:
+    displayName: "Linux Docker Ubuntu Build"
+    variables:
+        imageType: ubuntu20.04
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - task: AzureKeyVault@1
+        inputs:
+          azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+          KeyVaultName: 'SafeguardBuildSecrets'
+          SecretsFilter: 'DockerHubAccessToken,DockerHubPassword'
+        displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
-    - task: Bash@3
-      inputs:
-        targetType: 'inline'
-        script: |
-          docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
+      - task: Bash@3
+        inputs:
+          targetType: 'inline'
+          script: |
+            docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
 
-          docker tag oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04 oneidentity/safeguard-devops:$(VersionString)-ubuntu
-          docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04
-          docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu
+            docker tag oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04 oneidentity/safeguard-devops:$(VersionString)-ubuntu
+            docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04
+            docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu
 
-          docker logout
-        failOnStderr: true
-      condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-      displayName: 'Pushing docker ubuntu image to Docker Hub'
+            docker logout
+          failOnStderr: true
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+        displayName: 'Pushing docker ubuntu image to Docker Hub'
