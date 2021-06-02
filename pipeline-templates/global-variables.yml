@@ -1,0 +1,17 @@
+# Global Variables:
+#
+# semanticVersion.<generated build number> gets set in a variable called VersionString.
+#   VersionString is used to replace placeholders in assemblies and packages.
+#
+# isPrerelease controls whether the release artifacts on GitHub and the Powershell module
+#   in the Powershell Gallery is marked as prerelease or not.
+#
+# isReleaseBranch controls whether packages will be generated and published.
+#
+variables:
+  - name: semanticVersion
+    value: "1.7.0"
+  - name: isPrerelease
+    value: ${{ true }}
+  - name: isReleaseBranch
+    value: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
