@@ -3,7 +3,7 @@ steps:
     inputs:
       targetType: filePath
       filePath: $(System.DefaultWorkingDirectory)\versionnumber.ps1
-      arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId)
+      arguments: $(Build.SourcesDirectory) $(semanticVersion) $(Build.BuildId) $$(isPrerelease)
     displayName: 'Setting build version'
 
   - task: NuGetToolInstaller@1
