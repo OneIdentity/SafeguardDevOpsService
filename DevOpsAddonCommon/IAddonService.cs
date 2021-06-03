@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
 
@@ -7,12 +6,13 @@ namespace OneIdentity.DevOps.Common
 {
     public interface IAddonService
     {
-        string Name { get; }
-        string DisplayName { get; }
-        string Description { get; }
+        string Name { get; set; }
+        string DisplayName { get; set; }
+        string Description { get; set; }
+        AddonWithCredentials AddOn { get; set; }
         Task RunAddonServiceAsync(CancellationToken cancellationToken);
         void SetLogger(ILogger logger);
-        void SetDatabase(ISettingsRepository settingDb);
+//        void SetDatabase(object configDb);
         void Unload();
     }
 }

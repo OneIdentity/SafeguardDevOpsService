@@ -121,7 +121,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
-                        _configDb.DeletePluginByName(plugin.Name);
+                        _configDb.DeletePluginByName(plugin.Name, true);
 
                         var dirPath = Path.Combine(WellKnownData.PluginDirPath, plugin.Name);
                         if (Directory.Exists(dirPath)) 

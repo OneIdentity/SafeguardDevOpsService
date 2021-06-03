@@ -1,6 +1,7 @@
 ﻿using LiteDB;
+using OneIdentity.DevOps.ConfigDb;
 
-namespace OneIdentity.DevOps.Common
+namespace OneIdentity.DevOps.Data
 {
     public class Setting : ISetting
     {

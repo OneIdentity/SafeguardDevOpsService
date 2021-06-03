@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
@@ -6,7 +7,7 @@ using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.ConfigDb
 {
-    public interface IConfigurationRepository : ISettingsRepository, IPluginRepository
+    public interface IConfigurationRepository : ISettingsRepository, IPluginRepository, IAddonRepository
     {
         IEnumerable<AccountMapping> GetAccountMappings();
         void SaveAccountMappings(IEnumerable<AccountMapping> accounts);
@@ -43,6 +44,7 @@ namespace OneIdentity.DevOps.ConfigDb
         X509Certificate2 UserCertificate { get; }
         X509Certificate2 WebSslCertificate { get; set; }
 
+        Tuple<string, string> GetWebSslPemCertificate();
         void DropDatabase();
     }
 }

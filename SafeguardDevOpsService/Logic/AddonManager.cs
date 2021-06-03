@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
-using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -15,13 +14,15 @@ namespace OneIdentity.DevOps.Logic
     {
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
+        private readonly ISafeguardLogic _safeguardLogic;
 
         private IAddonService _devOpsAddon;
 
-        public AddonManager(IConfigurationRepository configDb)
+        public AddonManager(IConfigurationRepository configDb, ISafeguardLogic safeguardLogic)
         {
             _configDb = configDb;
             _logger = Serilog.Log.Logger;
+            _safeguardLogic = safeguardLogic;
         }
 
         public void Dispose()
@@ -31,13 +32,26 @@ namespace OneIdentity.DevOps.Logic
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            if (File.Exists(WellKnownData.RemoveAddonFilePath))
+            var files = Directory.GetFiles(WellKnownData.ProgramDataPath, WellKnownData.AddonDeleteFile, SearchOption.AllDirectories);
+            if (files.Any())
             {
-                Directory.Delete(WellKnownData.AddonServiceDirPath, true);
-            } 
-            else if (LoadAddonService())
+                foreach (var addonPath in files)
+                {
+                    Directory.Delete(Path.GetDirectoryName(addonPath), true);
+                }
+            }
+            else
             {
-                Task.Run(async () => await _devOpsAddon.RunAddonServiceAsync(cancellationToken), cancellationToken);
+                var addons = _configDb.GetAllAddons();
+
+                foreach (var addon in addons)
+                {
+                    if (LoadAddonService(addon))
+                    {
+                        Task.Run(async () => await _devOpsAddon.RunAddonServiceAsync(cancellationToken),
+                            cancellationToken);
+                    }
+                }
             }
 
             return Task.CompletedTask;
@@ -48,81 +62,65 @@ namespace OneIdentity.DevOps.Logic
             return Task.CompletedTask;
         }
 
-        private bool LoadAddonService()
+        private bool LoadAddonService(AddonWithCredentials addon)
         {
+            var addonAssemblyPath = Path.Combine(WellKnownData.ProgramDataPath, addon.Manifest.DestinationFolder, addon.Manifest.Assembly);
+
             try
             {
-                if (!File.Exists(WellKnownData.AddonServicePath))
+                if (!File.Exists(addonAssemblyPath))
                     return false;
 
-                var assembly = Assembly.LoadFrom(WellKnownData.AddonServicePath);
+                var assembly = Assembly.LoadFrom(addonAssemblyPath);
 
-                var watchdogClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
-                                                                   && t.Name.Equals(WellKnownData.AddonServiceClassName) 
+                var addonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
+                                                                   && t.Name.Equals(addon.Manifest.ServiceClassName) 
                                                                    && typeof(IAddonService).IsAssignableFrom(t));
 
-                if (watchdogClass != null)
+                if (addonClass != null)
                 {
-                    _logger.Information($"Loading Add-on service from path {WellKnownData.AddonServicePath}.");
-                    var watchdogService = (IAddonService) Activator.CreateInstance(watchdogClass);
+                    _logger.Information($"Loading Add-on service from path {addonAssemblyPath}.");
+                    var addonService = (IAddonService) Activator.CreateInstance(addonClass);
 
-                    if (watchdogService == null)
+                    if (addonService == null)
                     {
-                        _logger.Warning($"Unable to instantiate the Add-on service from {WellKnownData.AddonServicePath}");
+                        _logger.Error($"Unable to instantiate the Add-on service from {addonAssemblyPath}");
                     }
                     else
                     {
-                        _devOpsAddon = watchdogService;
+                        _devOpsAddon = addonService;
                         _devOpsAddon.SetLogger(_logger);
-                        _devOpsAddon.SetDatabase(_configDb);
+
+                        _devOpsAddon.Name = addon.Manifest.Name;
+                        _devOpsAddon.DisplayName = addon.Manifest.DisplayName;
+                        _devOpsAddon.Description = addon.Manifest.Description;
+                        _devOpsAddon.AddOn = addon;
+
+                        //Subscribe for property changes in the addon object
+                        _devOpsAddon.AddOn.PropertyChanged += AddonPropertyChangedHandler;
 
                         _logger.Information($"Successfully loaded the Add-on Service {_devOpsAddon.DisplayName} : {_devOpsAddon.Description}.");
-
-                        try
-                        {
-                            var pluginVersion = ReadPluginVersion(WellKnownData.AddonServicePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Warning($"Failed to load Watchdog service {Path.GetFileName(WellKnownData.AddonServicePath)}: {ex.Message}.");
-                        }
-
                         return true;
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to load Watchdog service {Path.GetFileName(WellKnownData.AddonServicePath)}: {ex.Message}.");
+                _logger.Error($"Failed to load the add-on service {addon.Manifest.Name}: {ex.Message}.");
             }
 
             return false;
         }
 
-        private string ReadPluginVersion(string pluginPath)
+        public void AddonPropertyChangedHandler(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            var version = "Unknown";
-            var manifestPath = Path.Combine(Path.GetDirectoryName(pluginPath) ?? pluginPath, WellKnownData.ManifestPattern);
-            if (File.Exists(manifestPath))
-            {
-                try
-                {
-                    var manifest = File.ReadAllText(manifestPath);
-                    var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
-                    if (pluginManifest != null)
-                    {
-                        version = pluginManifest.Version ?? version;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failed to read the manifest file for {pluginPath}. {ex.Message}");
-                }
-            }
+            _logger.Information($"Property {e.PropertyName} just changed");
 
-            return version;
+            _devOpsAddon.AddOn.PropertyChanged -= AddonPropertyChangedHandler;
+            _devOpsAddon.AddOn.IsDirty = false;
+            _devOpsAddon.AddOn.PropertyChanged += AddonPropertyChangedHandler;
+
         }
-
 
     }
 }

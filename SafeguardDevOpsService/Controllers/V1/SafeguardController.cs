@@ -790,6 +790,48 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
+        /// Get a list of the known add-ons.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.  
+        ///
+        /// </remarks>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("Addons")]
+        public ActionResult<IEnumerable<Addon>> GetAddons([FromServices] IAddonLogic addonLogic)
+        {
+            var addons = addonLogic.GetAddons();
+
+            return Ok(addons);
+        }
+
+        /// <summary>
+        /// Get a list of the known add-ons.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.  
+        ///
+        /// </remarks>
+        /// <param name="addonName">Name of the add-on to retrieve.</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        /// <response code="404">Not Found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("Addons/{addonName}")]
+        public ActionResult<Addon> GetAddons([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        {
+            var addon = addonLogic.GetAddon(addonName);
+
+            return Ok(addon);
+        }
+
+        /// <summary>
         /// Upload and deploy a Secrets Broker add-on via multipart-form-data.
         /// </summary>
         /// <remarks>
@@ -806,10 +848,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [DisableRequestSizeLimit]
         [UnhandledExceptionError]
-        [HttpPost("Addon")]
-        public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard, IFormFile formFile, [FromQuery] bool restart = false)
+        [HttpPost("Addons")]
+        public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard, IFormFile formFile, [FromQuery] bool restart = false, [FromQuery] bool force = false)
         {
-            addonLogic.InstallAddon(formFile);
+            addonLogic.InstallAddon(formFile, force);
 
             if (restart)
                 safeguard.RestartService();
@@ -828,20 +870,22 @@ namespace OneIdentity.DevOps.Controllers.V1
         ///
         /// This endpoint removes the currently deployed Secrets Broker add-on. 
         /// </remarks>
+        /// <param name="addonName">Name of the add-on to remove.</param>
+        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the add-on.</param>
         /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
         /// <response code="200">Success. Needing restart</response>
         /// <response code="204">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
-        [DisableRequestSizeLimit]
         [UnhandledExceptionError]
-        [HttpDelete("Addon")]
-        public ActionResult RemoveAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm, [FromQuery] bool restart = false)
+        [HttpDelete("Addons/{addonName}")]
+        public ActionResult RemoveAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,  
+            [FromRoute] string addonName, [FromQuery] string confirm, [FromQuery] bool restart = false)
         {
             if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
 
-            addonLogic.RemoveAddon();
+            addonLogic.RemoveAddon(addonName);
 
             if (restart)
                 safeguard.RestartService();

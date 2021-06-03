@@ -31,11 +31,7 @@ namespace OneIdentity.DevOps.Logic
 
         public const string PluginDirName = "ExternalPlugins";
         public const string PluginStageName = "PluginStaging";
-        public const string VaultAddonDirName = "VaultAddon";
-        public const string AddonServiceName = "SafeguardDevopsVaultAddon"; //TODO: Need to have a generic name
-        public const string AddonServiceClassName = "AddonService";
-        public const string DeployAddonClassName = "DeployAddon";
-        public const string UndeployAddonClassName = "UndeployAddon";
+//        public const string VaultAddonDirName = "VaultAddon";
         public const string AddonServiceStageName = "AddonServiceStaging";
 
         public const string MonitorEnabled = "Enabled";
@@ -44,19 +40,22 @@ namespace OneIdentity.DevOps.Logic
         public const string SentPasswordSuccess = "Success";
         public const string SentPasswordFailure = "Failure";
 
+        public const string PluginsDeleteFile = "DeletePlugins.all";
+        public const string AddonDeleteFile = "DeleteAddon.all";
+
+
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ?
                 Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule.FileName);
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
-        public static readonly string AddonServiceDirPath = Path.Combine(ProgramDataPath, VaultAddonDirName);
-        public static readonly string AddonServicePath = Path.Combine(AddonServiceDirPath, AddonServiceName+".dll");
+//        public static readonly string AddonServiceDirPath = Path.Combine(ProgramDataPath, VaultAddonDirName);
         public static readonly string AddonServiceStageDirPath = Path.Combine(ProgramDataPath, AddonServiceStageName);
         public static readonly string SvcIdPath = Path.Combine(ServiceDirPath, ServiceIdentifier);
-        public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, "DeletePlugins.all");
+        public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, PluginsDeleteFile);
         public static readonly string LogDirPath = Path.Combine(ProgramDataPath, $"{DevOpsServiceName}.log");
-        public static readonly string RemoveAddonFilePath = Path.Combine(AddonServiceDirPath, "DeleteAddon.all");
+//        public static readonly string RemoveAddonFilePath = Path.Combine(AddonServiceDirPath, "DeleteAddon.all");
 
         public static readonly string RestartNotice =
             "Safeguard Secrets Broker for DevOps needs to be restarted to complete installing this action.";

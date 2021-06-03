@@ -152,6 +152,12 @@
             <Component Id="dbgshim.dll" Guid="*">
                 <File Id="dbgshim.dll" KeyPath="yes" Source="$(var.SourceDir)\dbgshim.dll" />
             </Component>
+            <Component Id="DevOpsAddonCommon.dll" Guid="*">
+                <File Id="DevOpsAddonCommon.dll" KeyPath="yes" Source="$(var.SourceDir)\DevOpsAddonCommon.dll" />
+            </Component>
+            <Component Id="DevOpsAddonCommon.pdb" Guid="*">
+                <File Id="DevOpsAddonCommon.pdb" KeyPath="yes" Source="$(var.SourceDir)\DevOpsAddonCommon.pdb" />
+            </Component>
             <Component Id="DevOpsPluginCommon.dll" Guid="*">
                 <File Id="DevOpsPluginCommon.dll" KeyPath="yes" Source="$(var.SourceDir)\DevOpsPluginCommon.dll" />
             </Component>
@@ -590,8 +596,11 @@
             <Component Id="mscordaccore.dll" Guid="*">
                 <File Id="mscordaccore.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore.dll" />
             </Component>
-            <Component Id="mscordaccore_amd64_amd64_4.700.21.11102.dll" Guid="*">
-                <File Id="mscordaccore_amd64_amd64_4.700.21.11102.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.21.11102.dll" />
+            <Component Id="mscordaccore_amd64_amd64_4.700.21.16201.dll" Guid="*">
+                <File Id="mscordaccore_amd64_amd64_4.700.21.16201.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.21.16201.dll" />
+            </Component>
+            <Component Id="mscordaccore_amd64_amd64_4.700.21.21202.dll" Guid="*">
+                <File Id="mscordaccore_amd64_amd64_4.700.21.21202.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.21.21202.dll" />
             </Component>
             <Component Id="mscordbi.dll" Guid="*">
                 <File Id="mscordbi.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordbi.dll" />
@@ -871,6 +880,9 @@
             </Component>
             <Component Id="System.Net.Http.dll" Guid="*">
                 <File Id="System.Net.Http.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Net.Http.dll" />
+            </Component>
+            <Component Id="System.Net.Http.Formatting.dll" Guid="*">
+                <File Id="System.Net.Http.Formatting.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Net.Http.Formatting.dll" />
             </Component>
             <Component Id="System.Net.HttpListener.dll" Guid="*">
                 <File Id="System.Net.HttpListener.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Net.HttpListener.dll" />
@@ -1216,8 +1228,8 @@
                     <Component Id="index.html" Guid="*">
                         <File Id="index.html" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\index.html" />
                     </Component>
-                    <Component Id="main.563a3f6de5ba944554b9.js" Guid="*">
-                        <File Id="main.563a3f6de5ba944554b9.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.563a3f6de5ba944554b9.js" />
+                    <Component Id="main.bec681124a9bebc58a37.js" Guid="*">
+                        <File Id="main.bec681124a9bebc58a37.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.bec681124a9bebc58a37.js" />
                     </Component>
                     <Component Id="polyfills.35a5ca1855eb057f016a.js" Guid="*">
                         <File Id="polyfills.35a5ca1855eb057f016a.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\polyfills.35a5ca1855eb057f016a.js" />
@@ -1292,6 +1304,8 @@
             <ComponentRef Id="coreclr.dll" />
             <ComponentRef Id="CredentialManagement.dll" />
             <ComponentRef Id="dbgshim.dll" />
+            <ComponentRef Id="DevOpsAddonCommon.dll" />
+            <ComponentRef Id="DevOpsAddonCommon.pdb" />
             <ComponentRef Id="DevOpsPluginCommon.dll" />
             <ComponentRef Id="DevOpsPluginCommon.pdb" />
             <ComponentRef Id="hostfxr.dll" />
@@ -1438,7 +1452,8 @@
             <ComponentRef Id="Microsoft.Win32.Registry.dll" />
             <ComponentRef Id="Microsoft.Win32.SystemEvents.dll" />
             <ComponentRef Id="mscordaccore.dll" />
-            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.21.11102.dll" />
+            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.21.16201.dll" />
+            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.21.21202.dll" />
             <ComponentRef Id="mscordbi.dll" />
             <ComponentRef Id="mscorlib.dll" />
             <ComponentRef Id="mscorrc.debug.dll" />
@@ -1532,6 +1547,7 @@
             <ComponentRef Id="System.Memory.dll" />
             <ComponentRef Id="System.Net.dll" />
             <ComponentRef Id="System.Net.Http.dll" />
+            <ComponentRef Id="System.Net.Http.Formatting.dll" />
             <ComponentRef Id="System.Net.HttpListener.dll" />
             <ComponentRef Id="System.Net.Mail.dll" />
             <ComponentRef Id="System.Net.NameResolution.dll" />
@@ -1646,7 +1662,7 @@
             <ComponentRef Id="accessTokenCheck.js" />
             <ComponentRef Id="favicon.ico" />
             <ComponentRef Id="index.html" />
-            <ComponentRef Id="main.563a3f6de5ba944554b9.js" />
+            <ComponentRef Id="main.bec681124a9bebc58a37.js" />
             <ComponentRef Id="polyfills.35a5ca1855eb057f016a.js" />
             <ComponentRef Id="runtime.acf0dec4155e77772545.js" />
             <ComponentRef Id="scripts.568694a568f45ab03c95.js" />

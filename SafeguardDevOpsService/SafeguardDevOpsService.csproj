@@ -81,13 +81,14 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="5.6.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="5.6.3" />
+    <PackageReference Include="System.Security.Cryptography.Cng" Version="4.3.0" />
     <PackageReference Include="Topshelf" Version="4.3.0" />
     <PackageReference Include="Topshelf.Serilog" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DevOpsAddonCommon\DevOpsAddonCommon.csproj" />
     <ProjectReference Include="..\DevOpsPluginCommon\DevOpsPluginCommon.csproj" />
-    <ProjectReference Include="..\DevOpsWatchdogCommon\DevOpsAddonCommon.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(OS)' == 'Windows_NT' ">

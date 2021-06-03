@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -17,7 +17,7 @@ namespace OneIdentity.DevOps.Common
 
             if (dataTransferObject == null)
             {
-                throw new DevOpsException("Deserialization failed");
+                throw new Exception("Deserialization failed");
             }
             return dataTransferObject;
         }
@@ -35,7 +35,7 @@ namespace OneIdentity.DevOps.Common
 
             if (rawJson == null)
             {
-                throw new DevOpsException("Serialization failed");
+                throw new Exception("Serialization failed");
             }
 
             return rawJson;
