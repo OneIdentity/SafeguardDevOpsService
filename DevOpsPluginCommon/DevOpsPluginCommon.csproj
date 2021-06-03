@@ -6,7 +6,30 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <Platforms>x64</Platforms>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <PackageId>OneIdentity.SafeguardSecretsBroker.PluginCommon</PackageId>
+    <Authors>One Identity LLC</Authors>
+    <Copyright>(c) 2021 One Identity LLC. All rights reserved.</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDevOpsService</PackageProjectUrl>
+    <PackageIcon>Content\images\SafeguardLogo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/OneIdentity/SafeguardDevOpsService</RepositoryUrl>
+    <Version>255.255.65534</Version>
+    <Description>Safeguard Secrets Broker for Devops Common Plugin Interface</Description>
+    <AssemblyVersion>255.255.65534.65534</AssemblyVersion>
+    <FileVersion>255.255.65534.65534</FileVersion>
+    <AssemblyName>OneIdentity.SafeguardSecretsBroker.PluginCommon</AssemblyName>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageTags>safeguard;credentials;vault;sdk</PackageTags>
+    <PackageReleaseNotes>Safeguard Secrets Broker for Devops Common Plugin Interface
+
+This is the interface that Secrets Broker will use to call a third-party plugin.
+Plugin developers should add this package when developing a plugin.
+
+Updates:
+- Initial nuget.org release.</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -18,6 +41,10 @@
     <OutputPath>bin\Release\</OutputPath>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\SafeguardLogo.png" Link="SafeguardLogo.png" Pack="true" PackagePath="Content\images\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />

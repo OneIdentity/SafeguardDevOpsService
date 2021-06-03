@@ -1,0 +1,110 @@
+variables:
+  - template: pipeline-templates/global-variables.yml
+trigger:
+  branches:
+    include:
+      - master
+      - release-*
+pr: none
+jobs:
+  - job:
+    displayName: "Windows MSI and Plugin Build"
+    variables:
+      - template: pipeline-templates/windows-job-variables.yml
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+      - template: pipeline-templates/windows-setup-and-key-vault.yml
+      - template: pipeline-templates/windows-build-steps.yml
+      - task: GitHubRelease@1
+        inputs:
+          gitHubConnection: 'github.ReleaseServiceAccount'
+          repositoryName: 'OneIdentity/SafeguardDevOpsService'
+          action: 'create'
+          target: '$(Build.SourceVersion)'
+          tagSource: 'userSpecifiedTag'
+          tag: 'release-$(VersionString)'
+          title: '$(VersionString)'
+          isPreRelease: $(isPrerelease)
+          changeLogCompareToRelease: 'lastFullRelease'
+          changeLogType: 'commitBased'
+          assets: |
+            $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\en-us\*.msi
+            $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)\*.zip
+        displayName: 'Creating and publishing a release to Github'
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+      - powershell: Publish-Module -Path $(Build.SourcesDirectory)\safeguard-devops -NuGetApiKey "$(PowerShellGalleryApiKey)" -Verbose -SkipAutomaticTags
+        displayName: 'Publish Powershell module to Powershell Gallery'
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+      - task: NuGetCommand@2
+        inputs:
+          command: 'custom'
+          arguments: 'push $(Build.ArtifactStagingDirectory)\*.nupkg -source https://api.nuget.org/v3/index.json -ApiKey $(NugetOrgApiKey) -NonInteractive -Verbosity detailed'
+        displayName: 'Publishing NuGet packages to NuGet.org'
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+  - job:
+    displayName: "Linux Docker Alpine Build"
+    variables:
+      imageType: alpine3.12
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - template: pipeline-templates/linux-build-steps.yml
+      - task: AzureKeyVault@1
+        inputs:
+          azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+          KeyVaultName: 'SafeguardBuildSecrets'
+          SecretsFilter: 'DockerHubAccessToken,DockerHubPassword'
+        displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+      - task: Bash@3
+        inputs:
+          targetType: 'inline'
+          script: |
+            docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
+
+            docker tag oneidentity/safeguard-devops:$(VersionString)-alpine3.12 oneidentity/safeguard-devops:$(VersionString)-alpine
+            docker tag oneidentity/safeguard-devops:$(VersionString)-alpine3.12 oneidentity/safeguard-devops:latest
+            docker push oneidentity/safeguard-devops:$(VersionString)-alpine3.12
+            docker push oneidentity/safeguard-devops:$(VersionString)-alpine
+            docker push oneidentity/safeguard-devops:latest
+
+            docker logout
+          failOnStderr: true
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+        displayName: 'Pushing docker Alpine image to Docker Hub'
+
+  - job:
+    displayName: "Linux Docker Ubuntu Build"
+    variables:
+        imageType: ubuntu20.04
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - template: pipeline-templates/linux-build-steps.yml
+      - task: AzureKeyVault@1
+        inputs:
+          azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
+          KeyVaultName: 'SafeguardBuildSecrets'
+          SecretsFilter: 'DockerHubAccessToken,DockerHubPassword'
+        displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
+      - task: Bash@3
+        inputs:
+          targetType: 'inline'
+          script: |
+            docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
+
+            docker tag oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04 oneidentity/safeguard-devops:$(VersionString)-ubuntu
+            docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04
+            docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu
+
+            docker logout
+          failOnStderr: true
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+        displayName: 'Pushing docker ubuntu image to Docker Hub'
