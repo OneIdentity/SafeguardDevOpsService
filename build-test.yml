@@ -1,0 +1,34 @@
+variables:
+  - template: pipeline-templates/global-variables.yml
+trigger: none
+pr:
+  branches:
+    include:
+      - master
+      - release-*
+jobs:
+  - job:
+    displayName: "Windows MSI and Plugin Build"
+    variables:
+      - template: pipeline-templates/windows-job-variables.yml
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+      - template: pipeline-templates/windows-setup-and-key-vault.yml
+      - template: pipeline-templates/windows-build-steps.yml
+  - job:
+    displayName: "Linux Docker Alpine Build"
+    variables:
+      imageType: alpine3.12
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - template: pipeline-templates/linux-build-steps.yml
+  - job:
+    displayName: "Linux Docker Ubuntu Build"
+    variables:
+        imageType: ubuntu20.04
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      - template: pipeline-templates/linux-build-steps.yml
