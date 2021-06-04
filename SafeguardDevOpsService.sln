@@ -33,10 +33,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AwsSecretsManagerVault", "E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsAddonCommon", "DevOpsAddonCommon\DevOpsAddonCommon.csproj", "{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevopsVaultAddon", "..\Safeguard-DevOps-AddOn\SafeguardDevopsVaultAddon\SafeguardDevopsVaultAddon.csproj", "{BFC5C4C2-762B-40BB-B256-6EB4A7357135}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecretsBrokerVault", "..\Safeguard-DevOps-AddOn\ExternalPlugins\SecretsBrokerVault\SecretsBrokerVault.csproj", "{EBEB873C-7891-48BD-8D49-591D248911FF}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,18 +100,6 @@ Global
 		{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}.Release|Any CPU.ActiveCfg = Release|x64
 		{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}.Release|x64.ActiveCfg = Release|x64
 		{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}.Release|x64.Build.0 = Release|x64
-		{BFC5C4C2-762B-40BB-B256-6EB4A7357135}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{BFC5C4C2-762B-40BB-B256-6EB4A7357135}.Debug|x64.ActiveCfg = Debug|x64
-		{BFC5C4C2-762B-40BB-B256-6EB4A7357135}.Debug|x64.Build.0 = Debug|x64
-		{BFC5C4C2-762B-40BB-B256-6EB4A7357135}.Release|Any CPU.ActiveCfg = Release|x64
-		{BFC5C4C2-762B-40BB-B256-6EB4A7357135}.Release|x64.ActiveCfg = Release|x64
-		{BFC5C4C2-762B-40BB-B256-6EB4A7357135}.Release|x64.Build.0 = Release|x64
-		{EBEB873C-7891-48BD-8D49-591D248911FF}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{EBEB873C-7891-48BD-8D49-591D248911FF}.Debug|x64.ActiveCfg = Debug|x64
-		{EBEB873C-7891-48BD-8D49-591D248911FF}.Debug|x64.Build.0 = Debug|x64
-		{EBEB873C-7891-48BD-8D49-591D248911FF}.Release|Any CPU.ActiveCfg = Release|x64
-		{EBEB873C-7891-48BD-8D49-591D248911FF}.Release|x64.ActiveCfg = Release|x64
-		{EBEB873C-7891-48BD-8D49-591D248911FF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

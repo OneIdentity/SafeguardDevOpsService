@@ -5,6 +5,7 @@ pr:
   branches:
     include:
       - master
+      - vault
       - release-*
 jobs:
   - job:

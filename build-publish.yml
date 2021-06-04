@@ -4,6 +4,7 @@ trigger:
   branches:
     include:
       - master
+      - vault
       - release-*
 pr: none
 jobs:
