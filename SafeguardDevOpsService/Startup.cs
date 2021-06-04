@@ -99,6 +99,8 @@ namespace OneIdentity.DevOps
                 configuration.RootPath = Path.Combine(WellKnownData.ServiceDirPath, "ClientApp/dist");
                 Serilog.Log.Information($"Website root {configuration.RootPath}");
             });
+
+            services.AddHostedService<AddonManager>();
         }
 
         // This only gets called if your environment is Development. The
@@ -118,6 +120,7 @@ namespace OneIdentity.DevOps
             builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>(), c.Resolve<ISafeguardLogic>())).As<IPluginManager>().SingleInstance();
             builder.Register(c => new PluginsLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>(), c.Resolve<ISafeguardLogic>())).As<IPluginsLogic>().SingleInstance();
             builder.Register(c => new MonitoringLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>())).As<IMonitoringLogic>().SingleInstance();
+            builder.Register(c => new AddonLogic(c.Resolve<IConfigurationRepository>())).As<IAddonLogic>().SingleInstance();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)

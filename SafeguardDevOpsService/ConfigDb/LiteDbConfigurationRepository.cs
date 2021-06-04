@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using CredentialManagement;
 using LiteDB;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
@@ -20,6 +21,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private ILiteCollection<Setting> _settings;
         private ILiteCollection<AccountMapping> _accountMappings;
         private ILiteCollection<Plugin> _plugins;
+        private ILiteCollection<AddonWithCredentials> _addons;
         private ILiteCollection<TrustedCertificate> _trustedCertificates;
         private string _svcId;
 
@@ -28,6 +30,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string SettingsTableName = "settings";
         private const string AccountMappingsTableName = "accountmappings";
         private const string PluginsTableName = "plugins";
+        private const string AddonsTableName = "addons";
         private const string TrustedCertificateTableName = "trustedcertificates";
 
         private const string SafeguardAddressKey = "SafeguardAddress";
@@ -82,6 +85,7 @@ namespace OneIdentity.DevOps.ConfigDb
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
             _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
             _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
+            _addons = _configurationDb.GetCollection<AddonWithCredentials>(AddonsTableName);
             _trustedCertificates = _configurationDb.GetCollection<TrustedCertificate>(TrustedCertificateTableName);
         }
 
@@ -196,13 +200,49 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public Plugin SavePluginConfiguration(Plugin plugin)
         {
-            _plugins.Upsert(plugin);
+            if (!_plugins.Upsert(plugin))
+            {
+                return null;
+            }
             return plugin;
         }
 
-        public void DeletePluginByName(string name)
+        public bool DeletePluginByName(string name, bool hardDelete = false)
         {
-            _plugins.Delete(name);
+            if (hardDelete)
+            {
+                return _plugins.Delete(name);
+            }
+
+            var plugin = GetPluginByName(name);
+            if (plugin != null)
+            {
+                plugin.IsDeleted = true;
+                SavePluginConfiguration(plugin);
+            }
+
+            return true;
+        }
+
+        public IEnumerable<AddonWithCredentials> GetAllAddons()
+        {
+            return _addons.FindAll();
+        }
+
+        public AddonWithCredentials GetAddonByName(string name)
+        {
+            return _addons.FindById(name);
+        }
+
+        public AddonWithCredentials SaveAddon(AddonWithCredentials addon)
+        {
+            _addons.Upsert(addon);
+            return addon;
+        }
+
+        public void DeleteAddonByName(string name)
+        {
+            _addons.Delete(name);
         }
 
         public IEnumerable<AccountMapping> GetAccountMappings()
@@ -546,6 +586,37 @@ namespace OneIdentity.DevOps.ConfigDb
                     WebSslCertificateBase64Data = null;
                 }
             }
+        }
+
+        public Tuple<string,string> GetWebSslPemCertificate()
+        {
+            if (!string.IsNullOrEmpty(WebSslCertificateBase64Data))
+            {
+                try
+                {
+                    var bytes = Convert.FromBase64String(WebSslCertificateBase64Data);
+                    var cert = string.IsNullOrEmpty(WebSslCertificatePassphrase)
+                        ? new X509Certificate2(bytes, "", X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet)
+                        : new X509Certificate2(bytes, WebSslCertificatePassphrase, X509KeyStorageFlags.Exportable);
+
+                    var privateKey = cert.GetRSAPrivateKey();
+
+                    var pubCert = Convert.ToBase64String(cert.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks);
+                    var privKey = Convert.ToBase64String(privateKey.ExportRSAPrivateKey(), Base64FormattingOptions.InsertLineBreaks);
+
+                    var pubPem = $"-----BEGIN CERTIFICATE-----\r\n{pubCert}\r\n-----END CERTIFICATE-----";
+                    var privPem = $"-----BEGIN RSA PRIVATE KEY-----\r\n{privKey}\r\n-----END RSA PRIVATE KEY-----";
+
+                    return new Tuple<string,string>(pubPem, privPem);
+                }
+                catch (Exception ex)
+                {
+                    // TODO: log?
+                    // throw appropriate error?
+                }
+            }
+
+            return null;
         }
 
         public void DropDatabase()

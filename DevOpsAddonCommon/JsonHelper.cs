@@ -1,12 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using OneIdentity.DevOps.Common;
-using OneIdentity.DevOps.Exceptions;
 
-namespace OneIdentity.DevOps.Logic
+namespace OneIdentity.DevOps.Common
 {
-    internal class JsonHelper
+    public class JsonHelper
     {
         public static T DeserializeObject<T>(string rawJson) where T : class
         {
@@ -19,7 +17,7 @@ namespace OneIdentity.DevOps.Logic
 
             if (dataTransferObject == null)
             {
-                throw new DevOpsException("Deserialization failed");
+                throw new Exception("Deserialization failed");
             }
             return dataTransferObject;
         }
@@ -37,23 +35,17 @@ namespace OneIdentity.DevOps.Logic
 
             if (rawJson == null)
             {
-                throw new DevOpsException("Serialization failed");
+                throw new Exception("Serialization failed");
             }
 
             return rawJson;
         }
 
-        public static void HandleDeserializationError(object sender, ErrorEventArgs errorArgs)
+        private static void HandleDeserializationError(object sender, ErrorEventArgs errorArgs)
         {
             var currentError = errorArgs.ErrorContext.Error.Message;
             Serilog.Log.Logger.Debug(currentError);
             errorArgs.ErrorContext.Handled = true;
-        }
-
-        public static void AddQueryParameter(Dictionary<string, string> paramsDictionary, string key, string value)
-        {
-            if (value != null)
-                paramsDictionary.Add(key, value);
         }
     }
 }

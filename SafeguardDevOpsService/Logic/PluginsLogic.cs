@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
@@ -134,11 +135,8 @@ namespace OneIdentity.DevOps.Logic
         {
             //Don't actually delete the plugin configuration yet.  Mark the plugin to be deleted
             // and then delete it on the next restart.
-            var plugin = _configDb.GetPluginByName(name);
-            if (plugin != null)
+            if (_configDb.DeletePluginByName(name))
             {
-                plugin.IsDeleted = true;
-                _configDb.SavePluginConfiguration(plugin);
                 RestartManager.Instance.ShouldRestart = true;
             }
         }
