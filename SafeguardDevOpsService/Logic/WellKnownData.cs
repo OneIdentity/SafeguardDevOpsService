@@ -31,7 +31,6 @@ namespace OneIdentity.DevOps.Logic
 
         public const string PluginDirName = "ExternalPlugins";
         public const string PluginStageName = "PluginStaging";
-//        public const string VaultAddonDirName = "VaultAddon";
         public const string AddonServiceStageName = "AddonServiceStaging";
 
         public const string MonitorEnabled = "Enabled";
@@ -50,12 +49,10 @@ namespace OneIdentity.DevOps.Logic
                 Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule.FileName);
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
-//        public static readonly string AddonServiceDirPath = Path.Combine(ProgramDataPath, VaultAddonDirName);
         public static readonly string AddonServiceStageDirPath = Path.Combine(ProgramDataPath, AddonServiceStageName);
         public static readonly string SvcIdPath = Path.Combine(ServiceDirPath, ServiceIdentifier);
         public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, PluginsDeleteFile);
         public static readonly string LogDirPath = Path.Combine(ProgramDataPath, $"{DevOpsServiceName}.log");
-//        public static readonly string RemoveAddonFilePath = Path.Combine(AddonServiceDirPath, "DeleteAddon.all");
 
         public static readonly string RestartNotice =
             "Safeguard Secrets Broker for DevOps needs to be restarted to complete installing this action.";
