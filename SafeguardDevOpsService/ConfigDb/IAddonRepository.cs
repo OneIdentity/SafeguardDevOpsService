@@ -5,11 +5,11 @@ using OneIdentity.DevOps.Common;
 
 namespace OneIdentity.DevOps.ConfigDb
 {
-    public interface IAddonRepository
+    public interface IAddOnRepository
     {
-        IEnumerable<AddonWithCredentials> GetAllAddons();
-        AddonWithCredentials GetAddonByName(string name);
-        AddonWithCredentials SaveAddon(AddonWithCredentials plugin);
-        void DeleteAddonByName(string name);
+        IEnumerable<AddOnWithCredentials> GetAllAddOns();
+        AddOnWithCredentials GetAddOnByName(string name);
+        AddOnWithCredentials SaveAddOn(AddOnWithCredentials plugin);
+        void DeleteAddOnByName(string name);
     }
 }

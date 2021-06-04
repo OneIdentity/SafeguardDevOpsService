@@ -2,7 +2,7 @@
 
 namespace OneIdentity.DevOps.Common
 {
-    public class AddonManifest
+    public class AddOnManifest
     {
         public string Name { get; set; }
         public string DisplayName { get; set; }

@@ -6,7 +6,30 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <Platforms>x64</Platforms>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <PackageId>OneIdentity.SafeguardSecretsBroker.AddOnCommon</PackageId>
+    <Authors>One Identity LLC</Authors>
+    <Copyright>(c) 2021 One Identity LLC. All rights reserved.</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/OneIdentity/SafeguardDevOpsService</PackageProjectUrl>
+    <PackageIcon>Content\images\SafeguardLogo.png</PackageIcon>
+    <RepositoryUrl>https://github.com/OneIdentity/SafeguardDevOpsService</RepositoryUrl>
+    <Version>255.255.65534</Version>
+    <Description>Safeguard Secrets Broker for Devops Common AddOn Interface</Description>
+    <AssemblyVersion>255.255.65534.65534</AssemblyVersion>
+    <FileVersion>255.255.65534.65534</FileVersion>
+    <AssemblyName>OneIdentity.SafeguardSecretsBroker.AddOnCommon</AssemblyName>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageTags>safeguard;credentials;vault;sdk</PackageTags>
+    <PackageReleaseNotes>Safeguard Secrets Broker for Devops Common AddOn Interface
+
+This is the interface that Secrets Broker will use to call a One Identity AddOn.
+One Identity AddOn developers should add this package when developing an AddOn.
+
+Updates:
+- Initial release.</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

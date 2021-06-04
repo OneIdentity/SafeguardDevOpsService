@@ -30,10 +30,10 @@ namespace OneIdentity.DevOps
 
             try
             {
-                if (Directory.Exists(WellKnownData.AddonServiceStageDirPath))
+                if (Directory.Exists(WellKnownData.AddOnServiceStageDirPath))
                 {
-                    Directory.Delete(WellKnownData.AddonServiceStageDirPath, true);
-                    Log.Logger.Information($"Cleaning up Add-on staging folder {WellKnownData.AddonServiceStageDirPath}.");
+                    Directory.Delete(WellKnownData.AddOnServiceStageDirPath, true);
+                    Log.Logger.Information($"Cleaning up Add-on staging folder {WellKnownData.AddOnServiceStageDirPath}.");
                 }
             }
             catch (Exception ex)

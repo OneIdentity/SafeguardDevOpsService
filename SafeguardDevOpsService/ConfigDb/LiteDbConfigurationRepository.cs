@@ -8,7 +8,6 @@ using CredentialManagement;
 using LiteDB;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
-using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.ConfigDb
@@ -17,11 +16,11 @@ namespace OneIdentity.DevOps.ConfigDb
     {
         private bool _disposed;
         private LiteDatabase _configurationDb;
-        private X509Certificate2Collection _trustedCertificateCollection = null;
+        private X509Certificate2Collection _trustedCertificateCollection;
         private ILiteCollection<Setting> _settings;
         private ILiteCollection<AccountMapping> _accountMappings;
         private ILiteCollection<Plugin> _plugins;
-        private ILiteCollection<AddonWithCredentials> _addons;
+        private ILiteCollection<AddOnWithCredentials> _addOns;
         private ILiteCollection<TrustedCertificate> _trustedCertificates;
         private string _svcId;
 
@@ -30,7 +29,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string SettingsTableName = "settings";
         private const string AccountMappingsTableName = "accountmappings";
         private const string PluginsTableName = "plugins";
-        private const string AddonsTableName = "addons";
+        private const string AddOnsTableName = "addons";
         private const string TrustedCertificateTableName = "trustedcertificates";
 
         private const string SafeguardAddressKey = "SafeguardAddress";
@@ -85,7 +84,7 @@ namespace OneIdentity.DevOps.ConfigDb
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
             _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
             _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
-            _addons = _configurationDb.GetCollection<AddonWithCredentials>(AddonsTableName);
+            _addOns = _configurationDb.GetCollection<AddOnWithCredentials>(AddOnsTableName);
             _trustedCertificates = _configurationDb.GetCollection<TrustedCertificate>(TrustedCertificateTableName);
         }
 
@@ -224,25 +223,25 @@ namespace OneIdentity.DevOps.ConfigDb
             return true;
         }
 
-        public IEnumerable<AddonWithCredentials> GetAllAddons()
+        public IEnumerable<AddOnWithCredentials> GetAllAddOns()
         {
-            return _addons.FindAll();
+            return _addOns.FindAll();
         }
 
-        public AddonWithCredentials GetAddonByName(string name)
+        public AddOnWithCredentials GetAddOnByName(string name)
         {
-            return _addons.FindById(name);
+            return _addOns.FindById(name);
         }
 
-        public AddonWithCredentials SaveAddon(AddonWithCredentials addon)
+        public AddOnWithCredentials SaveAddOn(AddOnWithCredentials addOn)
         {
-            _addons.Upsert(addon);
-            return addon;
+            _addOns.Upsert(addOn);
+            return addOn;
         }
 
-        public void DeleteAddonByName(string name)
+        public void DeleteAddOnByName(string name)
         {
-            _addons.Delete(name);
+            _addOns.Delete(name);
         }
 
         public IEnumerable<AccountMapping> GetAccountMappings()
@@ -609,7 +608,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
                     return new Tuple<string,string>(pubPem, privPem);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // TODO: log?
                     // throw appropriate error?

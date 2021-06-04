@@ -1,16 +1,14 @@
-﻿
-using System.Collections.Generic;
-using LiteDB;
+﻿using LiteDB;
 
 namespace OneIdentity.DevOps.Common
 {
     /// <summary>
-    /// Represents a Secrets Broker addon
+    /// Represents a Secrets Broker AddOn
     /// </summary>
-    public class Addon
+    public class AddOn
     {
         /// <summary>
-        /// Name of the addon
+        /// Name of the AddOn
         /// </summary>
         [BsonId]
         public string Name { get; set; }
@@ -38,6 +36,6 @@ namespace OneIdentity.DevOps.Common
         /// <summary>
         /// Vault Credentials
         /// </summary>
-        public AddonManifest Manifest { get; set; }
+        public AddOnManifest Manifest { get; set; }
     }
 }

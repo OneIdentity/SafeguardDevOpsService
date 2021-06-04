@@ -31,7 +31,7 @@ namespace OneIdentity.DevOps.Logic
 
         public const string PluginDirName = "ExternalPlugins";
         public const string PluginStageName = "PluginStaging";
-        public const string AddonServiceStageName = "AddonServiceStaging";
+        public const string AddOnServiceStageName = "AddOnServiceStaging";
 
         public const string MonitorEnabled = "Enabled";
         public const string MonitorDisabled = "Disabled";
@@ -40,7 +40,7 @@ namespace OneIdentity.DevOps.Logic
         public const string SentPasswordFailure = "Failure";
 
         public const string PluginsDeleteFile = "DeletePlugins.all";
-        public const string AddonDeleteFile = "DeleteAddon.all";
+        public const string AddOnDeleteFile = "DeleteAddOn.all";
 
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
@@ -49,7 +49,7 @@ namespace OneIdentity.DevOps.Logic
                 Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule.FileName);
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
-        public static readonly string AddonServiceStageDirPath = Path.Combine(ProgramDataPath, AddonServiceStageName);
+        public static readonly string AddOnServiceStageDirPath = Path.Combine(ProgramDataPath, AddOnServiceStageName);
         public static readonly string SvcIdPath = Path.Combine(ServiceDirPath, ServiceIdentifier);
         public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, PluginsDeleteFile);
         public static readonly string LogDirPath = Path.Combine(ProgramDataPath, $"{DevOpsServiceName}.log");

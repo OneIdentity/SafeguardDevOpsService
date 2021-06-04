@@ -2,9 +2,9 @@
 
 namespace OneIdentity.DevOps.Common
 {
-    public interface IUndeployAddon
+    public interface IUndeployAddOn
     {
-        void Undeploy(AddonManifest addonManifest);
+        void Undeploy(AddOnManifest addOnManifest);
         void SetLogger(ILogger logger);
 //        void SetConfigDb(object configDb);
     }

@@ -7,7 +7,7 @@ using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.ConfigDb
 {
-    public interface IConfigurationRepository : ISettingsRepository, IPluginRepository, IAddonRepository
+    public interface IConfigurationRepository : ISettingsRepository, IPluginRepository, IAddOnRepository
     {
         IEnumerable<AccountMapping> GetAccountMappings();
         void SaveAccountMappings(IEnumerable<AccountMapping> accounts);

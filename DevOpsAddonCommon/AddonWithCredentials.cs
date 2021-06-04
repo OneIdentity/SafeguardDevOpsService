@@ -7,9 +7,9 @@ using OneIdentity.DevOps.Common.Annotations;
 namespace OneIdentity.DevOps.Common
 {
     /// <summary>
-    /// Represents a Secrets Broker addon
+    /// Represents a Secrets Broker AddOn
     /// </summary>
-    public class AddonWithCredentials: Addon, INotifyPropertyChanged
+    public class AddOnWithCredentials: AddOn, INotifyPropertyChanged
     {
         private bool _isDirty = false;
 

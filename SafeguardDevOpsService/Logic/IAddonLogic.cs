@@ -6,11 +6,11 @@ using OneIdentity.DevOps.Common;
 
 namespace OneIdentity.DevOps.Logic
 {
-    public interface IAddonLogic
+    public interface IAddOnLogic
     {
-        void InstallAddon(IFormFile formFile, bool force);
-        void RemoveAddon(string name);
-        IEnumerable<Addon> GetAddons();
-        Addon GetAddon(string addonName);
+        void InstallAddOn(IFormFile formFile, bool force);
+        void RemoveAddOn(string name);
+        IEnumerable<AddOn> GetAddOns();
+        AddOn GetAddOn(string addOnName);
     }
 }

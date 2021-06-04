@@ -4,13 +4,13 @@ using Serilog;
 
 namespace OneIdentity.DevOps.Common
 {
-    public interface IAddonService
+    public interface IAddOnService
     {
         string Name { get; set; }
         string DisplayName { get; set; }
         string Description { get; set; }
-        AddonWithCredentials AddOn { get; set; }
-        Task RunAddonServiceAsync(CancellationToken cancellationToken);
+        AddOnWithCredentials AddOn { get; set; }
+        Task RunAddOnServiceAsync(CancellationToken cancellationToken);
         void SetLogger(ILogger logger);
 //        void SetDatabase(object configDb);
         void Unload();

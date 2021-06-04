@@ -13,15 +13,15 @@ using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.Logic
 {
-    internal class AddonLogic : IAddonLogic
+    internal class AddOnLogic : IAddOnLogic
     {
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
-        private IDeployAddon _deployAddon;
-        private IUndeployAddon _undeployAddon;
+        private IDeployAddOn _deployAddOn;
+        private IUndeployAddOn _undeployAddOn;
 
 
-        public AddonLogic(IConfigurationRepository configDb)
+        public AddOnLogic(IConfigurationRepository configDb)
         {
             _logger = Serilog.Log.Logger;
             _configDb = configDb;
@@ -34,7 +34,7 @@ namespace OneIdentity.DevOps.Logic
         }
 
 
-        public void InstallAddon(IFormFile formFile, bool force)
+        public void InstallAddOn(IFormFile formFile, bool force)
         {
             if (formFile.Length <= 0)
                 throw LogAndException("Add-on cannot be null or empty");
@@ -44,7 +44,7 @@ namespace OneIdentity.DevOps.Logic
                 using (var inputStream = formFile.OpenReadStream())
                 using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
                 {
-                    InstallAddon(zipArchive, force);
+                    InstallAddOn(zipArchive, force);
                 }
             }
             catch (Exception ex)
@@ -53,10 +53,10 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public void RemoveAddon(string name)
+        public void RemoveAddOn(string name)
         {
-            var addon = _configDb.GetAddonByName(name);
-            if (addon == null)
+            var addOn = _configDb.GetAddOnByName(name);
+            if (addOn == null)
             {
                 throw LogAndException("Failed to find the add-on in the database.");
             }
@@ -64,28 +64,28 @@ namespace OneIdentity.DevOps.Logic
             _logger.Information("Saving the remove token to disk. The Add-on will be delete after a reboot.");
             try
             {
-                using (File.Create(Path.Combine(WellKnownData.ProgramDataPath, addon.Manifest.DestinationFolder, WellKnownData.AddonDeleteFile))) {}
+                using (File.Create(Path.Combine(WellKnownData.ProgramDataPath, addOn.Manifest.DestinationFolder, WellKnownData.AddOnDeleteFile))) {}
             }
             catch {}
 
-            UndeployAddon(addon);
+            UndeployAddOn(addOn);
         }
 
-        public IEnumerable<Addon> GetAddons()
+        public IEnumerable<AddOn> GetAddOns()
         {
-            var addonsInternal = _configDb.GetAllAddons();
-            var addons = addonsInternal.Select(x => JsonHelper.DeserializeObject<Addon>(JsonHelper.SerializeObject(x)));
-            return addons;
+            var addOnsInternal = _configDb.GetAllAddOns();
+            var addOns = addOnsInternal.Select(x => JsonHelper.DeserializeObject<AddOn>(JsonHelper.SerializeObject(x)));
+            return addOns;
         }
 
-        public Addon GetAddon(string addonName)
+        public AddOn GetAddOn(string addOnName)
         {
-            var addonInternal = _configDb.GetAddonByName(addonName);
-            var addon = JsonHelper.DeserializeObject<Addon>(JsonHelper.SerializeObject(addonInternal));
-            return addon;
+            var addOnInternal = _configDb.GetAddOnByName(addOnName);
+            var addOn = JsonHelper.DeserializeObject<AddOn>(JsonHelper.SerializeObject(addOnInternal));
+            return addOn;
         }
 
-        private void InstallAddon(ZipArchive zipArchive, bool force)
+        private void InstallAddOn(ZipArchive zipArchive, bool force)
         {
             var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
             if (manifestEntry == null)
@@ -96,34 +96,34 @@ namespace OneIdentity.DevOps.Logic
             using (var reader = new StreamReader(manifestEntry.Open()))
             {
                 var manifest = reader.ReadToEnd();
-                var addonManifest = JsonHelper.DeserializeObject<AddonManifest>(manifest);
-                if (addonManifest != null)
+                var addOnManifest = JsonHelper.DeserializeObject<AddOnManifest>(manifest);
+                if (addOnManifest != null)
                 {
-                    var addon = _configDb.GetAddonByName(addonManifest.Name);
-                    if (addon != null)
+                    var addOn = _configDb.GetAddOnByName(addOnManifest.Name);
+                    if (addOn != null)
                     {
                         if (force)
                         {
-                            _configDb.DeleteAddonByName(addonManifest.Name);
+                            _configDb.DeleteAddOnByName(addOnManifest.Name);
                         }
                         else
                         {
-                            _logger.Warning($"Add-on {addon.Name} already exists. ");
+                            _logger.Warning($"Add-on {addOn.Name} already exists. ");
                             return;
                         }
                     }
 
                     RestartManager.Instance.ShouldRestart = true;
-                    zipArchive.ExtractToDirectory(WellKnownData.AddonServiceStageDirPath, true);
+                    zipArchive.ExtractToDirectory(WellKnownData.AddOnServiceStageDirPath, true);
 
-                    addon = new AddonWithCredentials()
+                    addOn = new AddOnWithCredentials()
                     {
-                        Name = addonManifest.Name,
-                        Manifest = addonManifest,
+                        Name = addOnManifest.Name,
+                        Manifest = addOnManifest,
                     };
-                    _configDb.SaveAddon(addon);
+                    _configDb.SaveAddOn(addOn);
 
-                    DeployAddon(addonManifest, WellKnownData.AddonServiceStageDirPath);
+                    DeployAddOn(addOnManifest, WellKnownData.AddOnServiceStageDirPath);
                 }
                 else
                 {
@@ -133,90 +133,90 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void DeployAddon(AddonManifest addonManifest, string tempFolder)
+        private void DeployAddOn(AddOnManifest addOnManifest, string tempFolder)
         {
             try
             {
-                var addonPath = Path.Combine(WellKnownData.AddonServiceStageDirPath, addonManifest.SourceFolder, addonManifest.Assembly);
-                if (!File.Exists(addonPath))
+                var addOnPath = Path.Combine(WellKnownData.AddOnServiceStageDirPath, addOnManifest.SourceFolder, addOnManifest.Assembly);
+                if (!File.Exists(addOnPath))
                 {
                     throw LogAndException("Failed to find the add-on module.");
                 }
 
-                var assembly = Assembly.LoadFrom(addonPath);
+                var assembly = Assembly.LoadFrom(addOnPath);
 
-                var deployAddonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
-                                                                   && t.Name.Equals(addonManifest.DeployClassName) 
-                                                                   && typeof(IDeployAddon).IsAssignableFrom(t));
+                var deployAddOnClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
+                                                                   && t.Name.Equals(addOnManifest.DeployClassName) 
+                                                                   && typeof(IDeployAddOn).IsAssignableFrom(t));
 
-                if (deployAddonClass != null)
+                if (deployAddOnClass != null)
                 {
-                    _logger.Information($"Loading the Add-on service from path {addonPath}.");
-                    var deployAddon = (IDeployAddon) Activator.CreateInstance(deployAddonClass);
+                    _logger.Information($"Loading the Add-on service from path {addOnPath}.");
+                    var deployAddOn = (IDeployAddOn) Activator.CreateInstance(deployAddOnClass);
 
-                    if (deployAddon == null)
+                    if (deployAddOn == null)
                     {
-                        _logger.Warning($"Unable to instantiate the Add-on service from {addonPath}");
+                        _logger.Warning($"Unable to instantiate the Add-on service from {addOnPath}");
                     }
                     else
                     {
-                        _deployAddon = deployAddon;
-                        _deployAddon.SetLogger(_logger);
-                        _deployAddon.SetTempDirectory(tempFolder);
+                        _deployAddOn = deployAddOn;
+                        _deployAddOn.SetLogger(_logger);
+                        _deployAddOn.SetTempDirectory(tempFolder);
 
-                        _deployAddon.Deploy(addonManifest, _configDb.GetWebSslPemCertificate());
+                        _deployAddOn.Deploy(addOnManifest, _configDb.GetWebSslPemCertificate());
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to deploy the Add-on service {addonManifest.Name}: {ex.Message}.");
+                _logger.Error($"Failed to deploy the Add-on service {addOnManifest.Name}: {ex.Message}.");
             }
 
         }
 
-        private void UndeployAddon(AddonWithCredentials addon)
+        private void UndeployAddOn(AddOnWithCredentials addOn)
         {
             try
             {
                 var assembly = AppDomain.CurrentDomain.GetAssemblies().
-                    SingleOrDefault(assembly => assembly.GetName().Name == addon.Manifest.AssemblyName);
+                    SingleOrDefault(assembly => assembly.GetName().Name == addOn.Manifest.AssemblyName);
 
                 if (assembly == null)
                 {
                     _logger.Warning(
-                        $"Failed to find the reference to the loaded Add-on {addon.Manifest.AssemblyName}.  Loading the Add-on.");
-                    assembly = Assembly.LoadFrom(Path.Combine(WellKnownData.ProgramDataPath, addon.Manifest.DestinationFolder, addon.Manifest.Assembly));
+                        $"Failed to find the reference to the loaded Add-on {addOn.Manifest.AssemblyName}.  Loading the Add-on.");
+                    assembly = Assembly.LoadFrom(Path.Combine(WellKnownData.ProgramDataPath, addOn.Manifest.DestinationFolder, addOn.Manifest.Assembly));
                 }
 
 
-                var undeployAddonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
-                                                                               && t.Name.Equals(addon.Manifest.UndeployClassName) 
-                                                                               && typeof(IUndeployAddon).IsAssignableFrom(t));
+                var undeployAddOnClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
+                                                                               && t.Name.Equals(addOn.Manifest.UndeployClassName) 
+                                                                               && typeof(IUndeployAddOn).IsAssignableFrom(t));
 
-                if (undeployAddonClass != null)
+                if (undeployAddOnClass != null)
                 {
-                    _logger.Information($"Loading the {addon.Manifest.UndeployClassName} class.");
-                    var undeployAddon = (IUndeployAddon) Activator.CreateInstance(undeployAddonClass);
+                    _logger.Information($"Loading the {addOn.Manifest.UndeployClassName} class.");
+                    var undeployAddOn = (IUndeployAddOn) Activator.CreateInstance(undeployAddOnClass);
 
-                    if (undeployAddon == null)
+                    if (undeployAddOn == null)
                     {
-                        _logger.Warning($"Unable to instantiate the Add-on service {addon.Manifest.UndeployClassName} class.");
+                        _logger.Warning($"Unable to instantiate the Add-on service {addOn.Manifest.UndeployClassName} class.");
                     }
                     else
                     {
-                        _undeployAddon = undeployAddon;
-                        _undeployAddon.SetLogger(_logger);
+                        _undeployAddOn = undeployAddOn;
+                        _undeployAddOn.SetLogger(_logger);
 
-                        _undeployAddon.Undeploy(addon.Manifest);
-                        _configDb.DeleteAddonByName(addon.Manifest.Name);
-                        _configDb.DeletePluginByName(addon.Manifest.PluginName);
+                        _undeployAddOn.Undeploy(addOn.Manifest);
+                        _configDb.DeleteAddOnByName(addOn.Manifest.Name);
+                        _configDb.DeletePluginByName(addOn.Manifest.PluginName);
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw LogAndException($"Failed to undeploy the Add-on service {addon.Manifest.ServiceClassName}: {ex.Message}.");
+                throw LogAndException($"Failed to undeploy the Add-on service {addOn.Manifest.ServiceClassName}: {ex.Message}.");
             }
         }
     }

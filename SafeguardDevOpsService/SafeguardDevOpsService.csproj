@@ -87,7 +87,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DevOpsAddonCommon\DevOpsAddonCommon.csproj" />
+    <ProjectReference Include="..\DevOpsAddOnCommon\DevOpsAddOnCommon.csproj" />
     <ProjectReference Include="..\DevOpsPluginCommon\DevOpsPluginCommon.csproj" />
   </ItemGroup>
 
