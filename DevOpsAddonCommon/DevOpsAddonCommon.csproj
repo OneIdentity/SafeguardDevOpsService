@@ -26,7 +26,8 @@
     <PackageReleaseNotes>Safeguard Secrets Broker for Devops Common AddOn Interface
 
 This is the interface that Secrets Broker will use to call a One Identity AddOn.
-One Identity AddOn developers should add this package when developing an AddOn.
+AddOns are developed by One Identity as opposed to plugins that can be developed
+by any third party.
 
 Updates:
 - Initial release.</PackageReleaseNotes>
