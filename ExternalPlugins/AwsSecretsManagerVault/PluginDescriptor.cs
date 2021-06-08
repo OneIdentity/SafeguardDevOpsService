@@ -4,7 +4,6 @@ using OneIdentity.DevOps.Common;
 using Serilog;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 
@@ -138,12 +137,13 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
 
             try
             {
-                var listRequest = new Amazon.SecretsManager.Model.ListSecretsRequest()
+                var listRequest = new ListSecretsRequest()
                 {
                     MaxResults = 1
                 };
                 var task = Task.Run(async () => await _awsClient.ListSecretsAsync(listRequest));
                 var result = task.Result;
+                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)
@@ -169,7 +169,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
 
             try
             {
-                var createAccountRequest = new Amazon.SecretsManager.Model.CreateSecretRequest
+                var createAccountRequest = new CreateSecretRequest
                 {
                     Name = name,
                     SecretString = password

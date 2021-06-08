@@ -8,6 +8,7 @@ using CredentialManagement;
 using LiteDB;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.ConfigDb

@@ -18,6 +18,7 @@ using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
 using Microsoft.AspNetCore.WebUtilities;
 using OneIdentity.DevOps.Common;
+using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Extensions;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 
@@ -1145,8 +1146,7 @@ namespace OneIdentity.DevOps.Logic
                 registration = GetA2ARegistration(sg, registrationType);
                 if (registration != null)
                 {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Delete,
-                        $"A2ARegistrations/{registration.Id}");
+                    sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registration.Id}");
                     if (registrationType == A2ARegistrationType.Account)
                     {
                         _configDb.DeleteAccountMappings();
@@ -1174,7 +1174,7 @@ namespace OneIdentity.DevOps.Logic
                     user = GetA2AUser(sg);
                     if (user != null)
                     {
-                        var result = sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
+                        sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
                         _configDb.DeleteAccountMappings();
                         _serviceConfiguration.UserName = null;
                         _serviceConfiguration.UserDisplayName = null;

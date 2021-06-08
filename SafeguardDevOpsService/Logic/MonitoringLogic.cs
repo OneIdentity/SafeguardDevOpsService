@@ -8,6 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Exceptions;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using OneIdentity.SafeguardDotNet.Event;
@@ -84,7 +85,8 @@ namespace OneIdentity.DevOps.Logic
         private void StartMonitoring()
         {
             if (_eventListener != null)
-                throw new DevOpsException("Listener is already running.");
+                throw new 
+                    DevOpsException("Listener is already running.");
 
             var sppAddress = _configDb.SafeguardAddress;
             var userCertificate = _configDb.UserCertificateBase64Data;

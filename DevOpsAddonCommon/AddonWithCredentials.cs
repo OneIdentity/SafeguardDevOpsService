@@ -10,7 +10,7 @@ namespace OneIdentity.DevOps.Common
     /// </summary>
     public class AddonWithCredentials: Addon, INotifyPropertyChanged
     {
-        private bool _isDirty = false;
+        private bool _isDirty;
 
         /// <summary>
         /// Vault Credentials

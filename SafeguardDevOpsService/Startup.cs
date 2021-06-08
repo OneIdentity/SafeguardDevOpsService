@@ -97,7 +97,7 @@ namespace OneIdentity.DevOps
             services.AddSpaStaticFiles(configuration =>
             {
                 configuration.RootPath = Path.Combine(WellKnownData.ServiceDirPath, "ClientApp/dist");
-                Serilog.Log.Information($"Website root {configuration.RootPath}");
+                Log.Information($"Website root {configuration.RootPath}");
             });
 
             services.AddHostedService<AddonManager>();
