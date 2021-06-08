@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
-using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 #pragma warning disable 1591
@@ -27,6 +26,7 @@ namespace OneIdentity.DevOps.Logic
         A2ARetrievableAccount GetPluginVaultAccount(string name);
         A2ARetrievableAccount SavePluginVaultAccount(string name, AssetAccount sppAccount);
         void RemovePluginVaultAccount(string name);
+        void ClearMappedPluginVaultAccounts();
 
         void RestartService();
         bool TestPluginConnectionByName(string name);

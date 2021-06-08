@@ -300,10 +300,10 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    result = sg.InvokeMethodFull(Service.Core, Method.Get, $"Users/{_configDb.A2aUserId}");
-                    if (result.StatusCode == HttpStatusCode.OK)
+                    var a2aUser = GetA2AUser(sg, _configDb.A2aUserId);
+                    if (a2aUser != null)
                     {
-                        return JsonHelper.DeserializeObject<A2AUser>(result.Body);
+                        return a2aUser;
                     }
                 }
                 catch (Exception ex)
@@ -313,6 +313,27 @@ namespace OneIdentity.DevOps.Logic
 
                 // Apparently the user id we have is wrong so get rid of it.
                 _configDb.A2aUserId = null;
+            }
+
+            return null;
+        }
+
+        private A2AUser GetA2AUser(ISafeguardConnection sg, int? id)
+        {
+            if (id != null)
+            {
+                try
+                {
+                    var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"Users/{id.Value}");
+                    if (result.StatusCode == HttpStatusCode.OK)
+                    {
+                        return JsonHelper.DeserializeObject<A2AUser>(result.Body);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndException($"Failed to get the A2A user by id {id.Value}: {ex.Message}");
+                }
             }
 
             return null;
@@ -427,11 +448,10 @@ namespace OneIdentity.DevOps.Logic
                     : _configDb.A2aVaultRegistrationId;
                 try
                 {
-                    result = sg.InvokeMethodFull(Service.Core, Method.Get,
-                        $"A2ARegistrations/{registrationId}");
-                    if (result.StatusCode == HttpStatusCode.OK)
+                    var a2aRegistration = GetA2ARegistration(sg, registrationId);
+                    if (a2aRegistration != null)
                     {
-                        return JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
+                        return a2aRegistration;
                     }
                 }
                 catch (Exception ex)
@@ -455,6 +475,30 @@ namespace OneIdentity.DevOps.Logic
             else
             {
                 _configDb.A2aVaultRegistrationId = null;
+            }
+
+            return null;
+        }
+
+        private A2ARegistration GetA2ARegistration(ISafeguardConnection sg, int? id)
+        {
+            FullResponse result;
+
+            if (id != null)
+            {
+                try
+                {
+                    result = sg.InvokeMethodFull(Service.Core, Method.Get,
+                        $"A2ARegistrations/{id}");
+                    if (result.StatusCode == HttpStatusCode.OK)
+                    {
+                        return JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndException($"Failed to get the registration for id '{id}': {ex.Message}", ex);
+                }
             }
 
             return null;
@@ -1126,11 +1170,88 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
+        public object GetAvailableA2ARegistrations(string filter, int? page, bool? count, int? limit, string @orderby, string q)
+        {
+            using var sg = Connect();
+
+            try
+            {
+                var p = new Dictionary<string, string>();
+                JsonHelper.AddQueryParameter(p,nameof(filter), filter);
+                JsonHelper.AddQueryParameter(p,nameof(page), page?.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(limit), limit?.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(count), count?.ToString());
+                JsonHelper.AddQueryParameter(p,nameof(orderby), orderby);
+                JsonHelper.AddQueryParameter(p,nameof(q), q);
+
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "A2ARegistrations", null, p);
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    if (count == null || count.Value == false)
+                    {
+                        var registrations = JsonHelper.DeserializeObject<IEnumerable<A2ARegistration>>(result.Body);
+                        if (registrations != null)
+                        {
+                            registrations = registrations.Where(x => !string.IsNullOrEmpty(x.DevOpsInstanceId));
+                            return registrations;
+                        }
+                    }
+                    else
+                    {
+                        return result.Body;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Get available accounts failed. {ex.Message}", ex);
+            }
+
+            return new List<A2ARegistration>();
+        }
+
         public A2ARegistration GetA2ARegistration(A2ARegistrationType registrationType)
         {
             using var sg = Connect();
 
             return GetA2ARegistration(sg, registrationType);
+        }
+
+        public A2ARegistration SetA2ARegistration(IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, int id)
+        {
+            //Turn off the monitor if it is running
+            //Remove all of the mapped accounts to plugins
+            //Remove all of the mapped vault accounts to plugins
+
+            //Look up the new A2A registration to make sure that it exists in Safeguard
+            //Update the configdb.svcId with the DevOpsInstanceId from the A2A registration;
+
+            using var sg = Connect();
+            var a2aRegistration = GetA2ARegistration(sg, id);
+
+            if (a2aRegistration != null && !string.IsNullOrEmpty(a2aRegistration.DevOpsInstanceId))
+            {
+                monitoringLogic.EnableMonitoring(false);
+
+                _configDb.SvcId = a2aRegistration.DevOpsInstanceId;
+                _configDb.A2aUserId = a2aRegistration.CertificateUserId;
+
+                var a2aUser = GetA2AUser(sg, _configDb.A2aUserId);
+                _configDb.A2aUserId = a2aUser.Id;
+
+                //Just making these calls with the config ids set to null will realign everything.
+                _configDb.A2aRegistrationId = null;
+                _configDb.A2aVaultRegistrationId = null;
+                GetA2ARegistration(sg, A2ARegistrationType.Account);
+                GetA2ARegistration(sg, A2ARegistrationType.Vault);
+
+                pluginsLogic.DeleteAccountMappings();
+                pluginsLogic.ClearMappedPluginVaultAccounts();
+
+                return a2aRegistration;
+            }
+
+            return null;
         }
 
         public void DeleteA2ARegistration(A2ARegistrationType registrationType)

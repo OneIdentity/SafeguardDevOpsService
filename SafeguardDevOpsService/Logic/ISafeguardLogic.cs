@@ -27,7 +27,9 @@ namespace OneIdentity.DevOps.Logic
         object GetAvailableAccounts(string filter, int? page, bool? count, int? limit, string orderby, string q);
         AssetAccount GetAccount(int id);
 
+        object GetAvailableA2ARegistrations(string filter, int? page, bool? count, int? limit, string @orderby, string q);
         A2ARegistration GetA2ARegistration(A2ARegistrationType registrationType);
+        A2ARegistration SetA2ARegistration(IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, int id);
         // void DeleteA2ARegistration();
         A2ARetrievableAccount GetA2ARetrievableAccount(int id, A2ARegistrationType registrationType);
         void DeleteA2ARetrievableAccount(int id, A2ARegistrationType registrationType);

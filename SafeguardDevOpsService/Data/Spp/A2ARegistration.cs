@@ -20,6 +20,10 @@ namespace OneIdentity.DevOps.Data.Spp
         /// </summary>
         public string Description { get; set; }
         /// <summary>
+        /// DevOps instance id
+        /// </summary>
+        public string DevOpsInstanceId { get; set; }
+        /// <summary>
         /// Is the registration disabled
         /// </summary>
         public bool Disabled { get; set; }

@@ -116,7 +116,7 @@ namespace OneIdentity.DevOps.Logic
                     RestartManager.Instance.ShouldRestart = true;
                     zipArchive.ExtractToDirectory(WellKnownData.AddonServiceStageDirPath, true);
 
-                    addon = new AddonWithCredentials()
+                    addon = new Addon()
                     {
                         Name = addonManifest.Name,
                         Manifest = addonManifest,
@@ -175,7 +175,7 @@ namespace OneIdentity.DevOps.Logic
 
         }
 
-        private void UndeployAddon(AddonWithCredentials addon)
+        private void UndeployAddon(Addon addon)
         {
             try
             {

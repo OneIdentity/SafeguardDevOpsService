@@ -443,6 +443,18 @@ namespace OneIdentity.DevOps.Logic
             _configDb.SavePluginConfiguration(plugin);
         }
 
+        // This method just removes the vault account mappings in the local database.  It does
+        //  not remove the vault A2A registration.
+        public void ClearMappedPluginVaultAccounts()
+        {
+            var plugins = _configDb.GetAllPlugins();
+            foreach (var plugin in plugins)
+            {
+                plugin.VaultAccountId = null;
+                _configDb.SavePluginConfiguration(plugin);
+            }
+        }
+
         public void RestartService()
         {
             _safeguardLogic.RestartService();

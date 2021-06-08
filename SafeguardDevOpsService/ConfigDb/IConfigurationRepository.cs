@@ -23,7 +23,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
         string SafeguardAddress { get; set; }
         int? ApiVersion { get; set; }
-        string SvcId { get; }
+        string SvcId { get; set; }
         bool? IgnoreSsl { get; set; }
         int? A2aUserId { get; set; }
         int? A2aRegistrationId { get; set; }
