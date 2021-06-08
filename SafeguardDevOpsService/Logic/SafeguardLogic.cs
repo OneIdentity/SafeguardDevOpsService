@@ -617,7 +617,7 @@ namespace OneIdentity.DevOps.Logic
 
             if (cert.HasPrivateKey)
             {
-                _logger.Debug($"Parsed certificate contains private key");
+                _logger.Debug("Parsed certificate contains private key");
                 if (!CertificateHelper.ValidateCertificate(cert, certificateType))
                     throw new DevOpsException("Invalid certificate");
 
@@ -968,7 +968,7 @@ namespace OneIdentity.DevOps.Logic
                 var existingCert = _configDb.GetTrustedCertificateByThumbPrint(cert.Thumbprint);
                 if (existingCert != null)
                 {
-                    _logger.Debug($"New trusted certificate already exists.");
+                    _logger.Debug("New trusted certificate already exists.");
                     return existingCert.GetCertificateInfo();
                 }
 

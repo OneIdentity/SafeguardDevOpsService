@@ -36,8 +36,8 @@ namespace OneIdentity.DevOps.Data
         [ReadOnly(true)]
         public DateTime NotBefore
         {
-            get { return _notBefore; }
-            set { _notBefore = DateTime.SpecifyKind(value, DateTimeKind.Utc); }
+            get => _notBefore;
+            set => _notBefore = DateTime.SpecifyKind(value, DateTimeKind.Utc);
         }
 
         /// <summary>
@@ -46,8 +46,8 @@ namespace OneIdentity.DevOps.Data
         [ReadOnly(true)]
         public DateTime NotAfter
         {
-            get { return _notAfter; }
-            set { _notAfter = DateTime.SpecifyKind(value, DateTimeKind.Utc); }
+            get => _notAfter;
+            set => _notAfter = DateTime.SpecifyKind(value, DateTimeKind.Utc);
         }
 
         /// <summary>
@@ -75,8 +75,7 @@ namespace OneIdentity.DevOps.Data
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
-            return Equals((CertificateInfo) obj);
+            return obj.GetType() == GetType() && Equals((CertificateInfo) obj);
         }
 
         public override int GetHashCode()

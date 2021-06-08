@@ -9,6 +9,7 @@
     <OutputName>SafeguardDevOpsService-$(Configuration)-$(Platform)</OutputName>
     <OutputType>Package</OutputType>
     <Name>SetupSafeguardDevOpsService</Name>
+    <DefineSolutionProperties>false</DefineSolutionProperties>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
     <DefineConstants>Debug;SourceDir=bin\$(Configuration)\publish</DefineConstants>
