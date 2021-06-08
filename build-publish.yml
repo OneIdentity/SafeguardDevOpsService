@@ -42,14 +42,14 @@ jobs:
       - task: NuGetCommand@2
         inputs:
           command: 'custom'
-          arguments: 'push $(Build.ArtifactStagingDirectory)\*.nupkg -source https://api.nuget.org/v3/index.json -ApiKey $(NugetOrgApiKey) -NonInteractive -Verbosity detailed'
+          arguments: 'push $(Build.ArtifactStagingDirectory)\OneIdentity.SafeguardSecretsBroker.PluginCommon.*.nupkg -source https://api.nuget.org/v3/index.json -ApiKey $(NugetOrgApiKey) -NonInteractive -Verbosity detailed'
         displayName: 'Publishing NuGet packages to NuGet.org'
         condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
       - task: NuGetCommand@2
         inputs:
           command: 'push'
-          packagesToPush: '$(Build.ArtifactStagingDirectory)\*.nupkg'
+          packagesToPush: '$(Build.ArtifactStagingDirectory)\OneIdentity.SafeguardSecretsBroker.AddonCommon.*.nupkg'
           nuGetFeedType: 'internal'
           publishVstsFeed: 'OneIdentity'
         displayName: 'Publish NuGet packages to Azure DevOps Artifacts'
