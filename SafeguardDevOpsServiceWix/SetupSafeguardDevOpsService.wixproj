@@ -16,12 +16,13 @@
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <SuppressValidation>False</SuppressValidation>
-    <SuppressIces>ICE61;ICE63</SuppressIces>
+    <SuppressIces>ICE61;ICE63;ICE64</SuppressIces>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Platform)\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>SourceDir=bin\$(Configuration)\publish</DefineConstants>
+    <SuppressIces>ICE61;ICE63;ICE64</SuppressIces>
   </PropertyGroup>
   <PropertyGroup>
     <SignToolPath>C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64\signtool.exe</SignToolPath>
