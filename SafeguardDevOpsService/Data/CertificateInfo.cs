@@ -22,13 +22,13 @@ namespace OneIdentity.DevOps.Data
         /// The Subject of the certificate (Read-only)
         /// </summary>
         [ReadOnly(true)]
-        public string Subject { get; set; }
+        public string Subject { get; }
 
         /// <summary>
         /// The CA that issued the certificate (Read-only)
         /// </summary>
         [ReadOnly(true)]
-        public string IssuedBy { get; set; }
+        public string IssuedBy { get; }
 
         /// <summary>
         /// The date the certificate becomes valid (Read-only)
@@ -54,7 +54,7 @@ namespace OneIdentity.DevOps.Data
         /// The thumbprint of the certificate (Read-only)
         /// </summary>
         [ReadOnly(true)]
-        public string Thumbprint { get; set; }
+        public string Thumbprint { get; }
 
         /// <summary>
         /// Base64 representation of the certificate (write-only)

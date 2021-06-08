@@ -177,7 +177,7 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 var assembly = AppDomain.CurrentDomain.GetAssemblies().
-                    SingleOrDefault(assembly => assembly.GetName().Name == addon.Manifest.AssemblyName);
+                    SingleOrDefault(a => a.GetName().Name == addon.Manifest.AssemblyName);
 
                 if (assembly == null)
                 {
