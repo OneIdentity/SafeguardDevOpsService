@@ -1,6 +1,4 @@
-﻿
-using System.Collections.Generic;
-using LiteDB;
+﻿using LiteDB;
 
 namespace OneIdentity.DevOps.Common
 {

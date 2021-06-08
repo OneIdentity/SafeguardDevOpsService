@@ -1,7 +1,4 @@
-﻿
-using System;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
+﻿using System.Security.Cryptography.X509Certificates;
 using LiteDB;
 using OneIdentity.DevOps.Extensions;
 using OneIdentity.DevOps.Logic;

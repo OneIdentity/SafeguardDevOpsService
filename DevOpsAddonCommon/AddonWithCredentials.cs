@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using OneIdentity.DevOps.Common.Annotations;
 
 namespace OneIdentity.DevOps.Common
 {

@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using OneIdentity.DevOps.Common;
-using OneIdentity.DevOps.Exceptions;
 
 namespace OneIdentity.DevOps.Logic
 {

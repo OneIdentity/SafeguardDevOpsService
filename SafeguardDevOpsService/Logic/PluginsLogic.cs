@@ -9,7 +9,6 @@ using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
-using OneIdentity.DevOps.Exceptions;
 using OneIdentity.SafeguardDotNet;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 

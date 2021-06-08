@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc.Filters;
+
 #pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Attributes
