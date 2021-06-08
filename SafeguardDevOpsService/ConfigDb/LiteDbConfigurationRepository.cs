@@ -8,7 +8,6 @@ using CredentialManagement;
 using LiteDB;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
-using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.ConfigDb
@@ -17,7 +16,7 @@ namespace OneIdentity.DevOps.ConfigDb
     {
         private bool _disposed;
         private LiteDatabase _configurationDb;
-        private X509Certificate2Collection _trustedCertificateCollection = null;
+        private X509Certificate2Collection _trustedCertificateCollection;
         private ILiteCollection<Setting> _settings;
         private ILiteCollection<AccountMapping> _accountMappings;
         private ILiteCollection<Plugin> _plugins;
@@ -609,7 +608,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
                     return new Tuple<string,string>(pubPem, privPem);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // TODO: log?
                     // throw appropriate error?

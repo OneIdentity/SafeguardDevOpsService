@@ -4,12 +4,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
-using System.Resources;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
-using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.Logic
 {

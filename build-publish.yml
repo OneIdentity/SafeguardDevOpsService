@@ -46,6 +46,15 @@ jobs:
         displayName: 'Publishing NuGet packages to NuGet.org'
         condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
+      - task: NuGetCommand@2
+        inputs:
+          command: 'push'
+          packagesToPush: '$(Build.ArtifactStagingDirectory)\*.nupkg'
+          nuGetFeedType: 'internal'
+          publishVstsFeed: 'OneIdentity'
+        displayName: 'Publish NuGet packages to Azure DevOps Artifacts'
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+
   - job:
     displayName: "Linux Docker Alpine Build"
     variables:
