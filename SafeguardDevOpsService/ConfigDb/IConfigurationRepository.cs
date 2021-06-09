@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
-using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 #pragma warning disable 1591
 

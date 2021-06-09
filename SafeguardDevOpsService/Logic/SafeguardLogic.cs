@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
@@ -667,7 +662,7 @@ namespace OneIdentity.DevOps.Logic
 
             if (cert.HasPrivateKey)
             {
-                _logger.Debug($"Parsed certificate contains private key");
+                _logger.Debug("Parsed certificate contains private key");
                 if (!CertificateHelper.ValidateCertificate(cert, certificateType))
                     throw new DevOpsException("Invalid certificate");
 
@@ -1018,7 +1013,7 @@ namespace OneIdentity.DevOps.Logic
                 var existingCert = _configDb.GetTrustedCertificateByThumbPrint(cert.Thumbprint);
                 if (existingCert != null)
                 {
-                    _logger.Debug($"New trusted certificate already exists.");
+                    _logger.Debug("New trusted certificate already exists.");
                     return existingCert.GetCertificateInfo();
                 }
 
@@ -1272,8 +1267,7 @@ namespace OneIdentity.DevOps.Logic
                 registration = GetA2ARegistration(sg, registrationType);
                 if (registration != null)
                 {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Delete,
-                        $"A2ARegistrations/{registration.Id}");
+                    sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registration.Id}");
                     if (registrationType == A2ARegistrationType.Account)
                     {
                         _configDb.DeleteAccountMappings();
@@ -1301,7 +1295,7 @@ namespace OneIdentity.DevOps.Logic
                     user = GetA2AUser(sg);
                     if (user != null)
                     {
-                        var result = sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
+                        sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
                         _configDb.DeleteAccountMappings();
                         _serviceConfiguration.UserName = null;
                         _serviceConfiguration.UserDisplayName = null;

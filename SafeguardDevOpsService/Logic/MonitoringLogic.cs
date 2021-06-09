@@ -85,7 +85,8 @@ namespace OneIdentity.DevOps.Logic
         private void StartMonitoring()
         {
             if (_eventListener != null)
-                throw new DevOpsException("Listener is already running.");
+                throw new 
+                    DevOpsException("Listener is already running.");
 
             var sppAddress = _configDb.SafeguardAddress;
             var userCertificate = _configDb.UserCertificateBase64Data;

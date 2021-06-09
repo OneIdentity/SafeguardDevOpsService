@@ -79,7 +79,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             {
                 var task = Task.Run(async () => await _client.ListNamespacedSecretAsync(vaultNamespace));
                 var result = task.Result;
-                _logger.Information($"Successfully passed the connection test for Password for {DisplayName}.");
+                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)

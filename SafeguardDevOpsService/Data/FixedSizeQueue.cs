@@ -18,9 +18,9 @@ namespace OneIdentity.DevOps.Data
             base.Enqueue(obj);
             lock (_syncObject)
             {
-                while (base.Count > Size)
+                while (Count > Size)
                 {
-                    base.TryDequeue(out _);
+                    TryDequeue(out _);
                 }
             }
         }

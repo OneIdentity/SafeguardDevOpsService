@@ -81,7 +81,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 var task = Task.Run(async () =>
                     await _vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync("/", $"{_configuration[MountPointName]}"));
                 var result = task.Result;
-                _logger.Information($"Successfully passed the connection test for Password for {DisplayName}.");
+                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)
