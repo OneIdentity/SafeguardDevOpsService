@@ -18,7 +18,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
         private const string FromAddressName = "from-address";
         private const string ToAddressesName = "to-addresses";
 
-        private string[] toAddresses = null;
+        private string[] _toAddresses;
 
         public string Name => "SmsTextEmail";
         public string DisplayName => "Sms Text & Email";
@@ -41,9 +41,9 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 configuration.ContainsKey(ToAddressesName))
             {
                 _configuration = configuration;
-                toAddresses = configuration[ToAddressesName].Split(';');
+                _toAddresses = configuration[ToAddressesName].Split(';');
 
-                if (toAddresses.Length == 0)
+                if (_toAddresses.Length == 0)
                     _logger.Information("No recipient addresses were found.");
 
                 _logger.Information($"Plugin {Name} has been successfully configured.");
@@ -68,7 +68,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 Body = $"{asset} - {account}\n{password}"
             };
 
-            foreach (var address in toAddresses)
+            foreach (var address in _toAddresses)
             {
                 message.To.Add(new MailAddress(address));
             }

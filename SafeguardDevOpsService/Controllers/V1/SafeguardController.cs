@@ -8,6 +8,7 @@ using OneIdentity.DevOps.Attributes;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
+using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 #pragma warning disable 1573

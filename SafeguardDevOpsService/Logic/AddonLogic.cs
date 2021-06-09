@@ -7,6 +7,7 @@ using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.Exceptions;
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -61,9 +62,14 @@ namespace OneIdentity.DevOps.Logic
             _logger.Information("Saving the remove token to disk. The Add-on will be delete after a reboot.");
             try
             {
-                using (File.Create(Path.Combine(WellKnownData.ProgramDataPath, addon.Manifest.DestinationFolder, WellKnownData.AddonDeleteFile))) {}
+                using (File.Create(Path.Combine(WellKnownData.ProgramDataPath, addon.Manifest.DestinationFolder,
+                    WellKnownData.AddonDeleteFile)))
+                {}
             }
-            catch {}
+            catch
+            {
+                _logger.Warning("Unable to create addon delete file.");
+            }
 
             UndeployAddon(addon);
         }
@@ -177,7 +183,7 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 var assembly = AppDomain.CurrentDomain.GetAssemblies().
-                    SingleOrDefault(assembly => assembly.GetName().Name == addon.Manifest.AssemblyName);
+                    SingleOrDefault(a => a.GetName().Name == addon.Manifest.AssemblyName);
 
                 if (assembly == null)
                 {

@@ -104,6 +104,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
             {
                 var task = Task.Run(async () => await _secretsClient.GetAsync($"api/"));
                 var result = task.Result;
+                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)

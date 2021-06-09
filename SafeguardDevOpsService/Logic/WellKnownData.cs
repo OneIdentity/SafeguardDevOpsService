@@ -19,12 +19,12 @@ namespace OneIdentity.DevOps.Logic
 
         public const string DevOpsServiceName = "SafeguardDevOpsService";
 
-        private const string _devOpsUserName = "SafeguardDevOpsUser";
-        private const string _devOpsRegistrationName = DevOpsServiceName;
-        private const string _devOpsVaultRegistrationName = _devOpsRegistrationName + "VaultCredentials";
+        private const string DevOpsServiceUserName = "SafeguardDevOpsUser";
+        private const string DevOpsA2ARegistrationName = DevOpsServiceName;
+        private const string DevOpsVaultA2ARegistrationName = DevOpsA2ARegistrationName + "VaultCredentials";
 
-        private const string _devOpsServiceClientCertificate = "CN=DevOpsServiceClientCertificate";
-        private const string _devOpsServiceWebSslCertificate = "CN=DevOpsServiceWebSslCertificate";
+        private const string DevOpsServiceClientCertificateSubject = "CN=DevOpsServiceClientCertificate";
+        private const string DevOpsServiceWebSslCertificateSubject = "CN=DevOpsServiceWebSslCertificate";
 
         public const string ManifestPattern = "Manifest.json";
         public const string DllPattern = "*.dll";
@@ -46,7 +46,7 @@ namespace OneIdentity.DevOps.Logic
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ?
-                Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule.FileName);
+                Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule?.FileName);
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
         public static readonly string AddonServiceStageDirPath = Path.Combine(ProgramDataPath, AddonServiceStageName);
@@ -73,35 +73,43 @@ namespace OneIdentity.DevOps.Logic
 
         public static string DevOpsUserName(string svcId)
         {
-            return $"{_devOpsUserName}-{svcId}";
+            return $"{DevOpsServiceUserName}-{svcId}";
         }
 
         public static string DevOpsRegistrationName(string svcId)
         {
-            return $"{_devOpsRegistrationName}-{svcId}";
+            return $"{DevOpsA2ARegistrationName}-{svcId}";
         }
 
         public static string DevOpsVaultRegistrationName(string svcId)
         {
-            return $"{_devOpsVaultRegistrationName}-{svcId}";
+            return $"{DevOpsVaultA2ARegistrationName}-{svcId}";
         }
 
         public static string DevOpsServiceClientCertificate(string svcId)
         {
-            return $"{_devOpsServiceClientCertificate}-{svcId}";
+            return $"{DevOpsServiceClientCertificateSubject}-{svcId}";
         }
 
         public static string DevOpsServiceWebSslCertificate(string svcId)
         {
-            return $"{_devOpsServiceWebSslCertificate}-{svcId}";
+            return $"{DevOpsServiceWebSslCertificateSubject}-{svcId}";
         }
 
         public static string DevOpsServiceVersion()
         {
-            var assem = Assembly.GetAssembly(typeof(ILoadablePlugin));
-            var version = assem.GetName().Version;
-            var buildType = assem.GetCustomAttributes(false).OfType<DebuggableAttribute>().Any(da => da.IsJITTrackingEnabled) ? "Debug" : "Release";
-            return $"{buildType}-{version}";
+            var assembly = Assembly.GetAssembly(typeof(ILoadablePlugin));
+            if (assembly != null)
+            {
+                var version = assembly.GetName().Version;
+                var buildType =
+                    assembly.GetCustomAttributes(false).OfType<DebuggableAttribute>().Any(da => da.IsJITTrackingEnabled)
+                        ? "Debug"
+                        : "Release";
+                return $"{buildType}-{version}";
+            }
+
+            return "UnknownConfig-UnknownVersion";
         }
 
     }

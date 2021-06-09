@@ -6,16 +6,16 @@ namespace OneIdentity.DevOps.Extensions
 {
     public static class ExceptionExtensions
     {
-        public static Exception FlattenException(this Exception This)
+        public static Exception FlattenException(this Exception ex)
         {
-            var ae = This as AggregateException;
+            var ae = ex as AggregateException;
             if (ae == null)
             {
-                return This;
+                return ex;
             }
 
             var e = ae.Flatten().InnerExceptions.FirstOrDefault(x => !(x is AggregateException));
-            return e ?? This;
+            return e ?? ex;
         }
     }
 }

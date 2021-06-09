@@ -22,9 +22,9 @@ namespace OneIdentity.DevOps.Extensions
             return builder.ToString();
         }
 
-        public static string ToPemFormat(this X509Certificate2 This)
+        public static string ToPemFormat(this X509Certificate2 cert)
         {
-            var b64String = Convert.ToBase64String(This.Export(X509ContentType.Cert), Base64FormattingOptions.None);
+            var b64String = Convert.ToBase64String(cert.Export(X509ContentType.Cert), Base64FormattingOptions.None);
             var builder = new StringBuilder()
                 .Append("-----BEGIN CERTIFICATE-----\r\n")
                 .Append(AddPemLineBreaks(b64String))

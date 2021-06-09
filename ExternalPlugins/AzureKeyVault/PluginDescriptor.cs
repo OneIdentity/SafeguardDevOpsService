@@ -74,6 +74,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
             {
                 var task = Task.Run(async () => await _keyVaultClient.GetSecretsAsync(_configuration[VaultUriName]));
                 var result = task.Result;
+                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)
