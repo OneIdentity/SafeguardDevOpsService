@@ -7,9 +7,9 @@ namespace OneIdentity.DevOps.ConfigDb
 {
     public interface IAddonRepository
     {
-        IEnumerable<AddonWithCredentials> GetAllAddons();
-        AddonWithCredentials GetAddonByName(string name);
-        AddonWithCredentials SaveAddon(AddonWithCredentials plugin);
+        IEnumerable<Addon> GetAllAddons();
+        Addon GetAddonByName(string name);
+        Addon SaveAddon(Addon plugin);
         void DeleteAddonByName(string name);
     }
 }

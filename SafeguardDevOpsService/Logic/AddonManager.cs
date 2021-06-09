@@ -62,7 +62,7 @@ namespace OneIdentity.DevOps.Logic
             return Task.CompletedTask;
         }
 
-        private bool LoadAddonService(AddonWithCredentials addon)
+        private bool LoadAddonService(Addon addon)
         {
             var addonAssemblyPath = Path.Combine(WellKnownData.ProgramDataPath, addon.Manifest.DestinationFolder, addon.Manifest.Assembly);
 

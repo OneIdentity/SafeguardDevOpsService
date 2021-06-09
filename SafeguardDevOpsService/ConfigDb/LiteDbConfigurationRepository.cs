@@ -21,7 +21,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private ILiteCollection<Setting> _settings;
         private ILiteCollection<AccountMapping> _accountMappings;
         private ILiteCollection<Plugin> _plugins;
-        private ILiteCollection<AddonWithCredentials> _addons;
+        private ILiteCollection<Addon> _addons;
         private ILiteCollection<TrustedCertificate> _trustedCertificates;
         private string _svcId;
 
@@ -85,7 +85,7 @@ namespace OneIdentity.DevOps.ConfigDb
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
             _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
             _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
-            _addons = _configurationDb.GetCollection<AddonWithCredentials>(AddonsTableName);
+            _addons = _configurationDb.GetCollection<Addon>(AddonsTableName);
             _trustedCertificates = _configurationDb.GetCollection<TrustedCertificate>(TrustedCertificateTableName);
         }
 
@@ -200,10 +200,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public Plugin SavePluginConfiguration(Plugin plugin)
         {
-            if (!_plugins.Upsert(plugin))
-            {
-                return null;
-            }
+            _plugins.Upsert(plugin);
             return plugin;
         }
 
@@ -224,17 +221,17 @@ namespace OneIdentity.DevOps.ConfigDb
             return true;
         }
 
-        public IEnumerable<AddonWithCredentials> GetAllAddons()
+        public IEnumerable<Addon> GetAllAddons()
         {
             return _addons.FindAll();
         }
 
-        public AddonWithCredentials GetAddonByName(string name)
+        public Addon GetAddonByName(string name)
         {
             return _addons.FindById(name);
         }
 
-        public AddonWithCredentials SaveAddon(AddonWithCredentials addon)
+        public Addon SaveAddon(Addon addon)
         {
             _addons.Upsert(addon);
             return addon;
@@ -370,6 +367,12 @@ namespace OneIdentity.DevOps.ConfigDb
                 }
 
                 return _svcId;
+            }
+
+            set
+            {
+                _svcId = value;
+                File.WriteAllText(WellKnownData.SvcIdPath, value);
             }
         }
 

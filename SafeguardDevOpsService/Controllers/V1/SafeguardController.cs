@@ -471,6 +471,34 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
+        /// Get available Safeguard A2A registrations that are associated with a Safeguard Secrets Broker for DevOps.
+        /// </summary>
+        /// <remarks>
+        /// This endpoint returns a list of A2A registrations that can be registered with Safeguard Secrets Broker for DevOps.
+        ///
+        /// (see GET /service​/devops​/v1​/Safeguard​/A2ARegistration​)
+        /// (see PUT /service​/devops​/v1​/Safeguard​/A2ARegistration​/{id})
+        /// </remarks>
+        /// <param name="filter">Filter results. Available operators: eq, ne, gt, ge, lt, le, and, or, not, contains, ieq, icontains, in [ {item1}, {item2}, etc], (). Use \ to escape quotes in strings.</param>
+        /// <param name="page">Which page (starting with 0) of data to return</param>
+        /// <param name="limit">The size of a page of data</param>
+        /// <param name="orderby">List of property names (comma-separated) to sort entities by. Prepend properties with - for descending.</param>
+        /// <param name="q">Search all string fields for the specified value</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad Request</response>
+        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpGet("AvailableA2ARegistrations")]
+        public ActionResult GetAvailableA2ARegistrations([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null, 
+            [FromQuery] int? page = null, [FromQuery] bool? count = null, [FromQuery] int? limit = null, [FromQuery] string orderby = null, [FromQuery] string q = null)
+        {
+            var availableRegistrations = safeguard.GetAvailableA2ARegistrations(filter, page, count, limit, orderby, q);
+
+            return Ok(availableRegistrations);
+        }
+
+        /// <summary>
         /// Get the A2A registration used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
@@ -493,6 +521,37 @@ namespace OneIdentity.DevOps.Controllers.V1
                 return BadRequest("Invalid registration type");
 
             var registration = safeguard.GetA2ARegistration(rType);
+            if (registration == null)
+                return NotFound();
+
+            return Ok(registration);
+        }
+
+        /// <summary>
+        /// Set the A2A registration used by Safeguard Secrets Broker for DevOps.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
+        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// by Safeguard Secrets Broker for DevOps.
+        ///
+        /// This API will associate this instance of the Secrets Broker with an existing A2A registration.  All mapped account data
+        /// from the previously associated Secrets Broker will be removed.  The loaded plugins must be re-mapped to all accounts
+        /// that should be monitored through the new A2A registration.
+        /// </remarks>
+        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to assign a new A2A registration to this instance of the Secrets Broker.</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad Request</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpPut("A2ARegistration/{id}")]
+        public ActionResult<A2ARegistration> SetA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromServices] IMonitoringLogic monitoringLogic, 
+            [FromServices] IPluginsLogic pluginsLogic, [FromRoute] int id, [FromQuery] string confirm)
+        {
+            var registration = safeguard.SetA2ARegistration(monitoringLogic, pluginsLogic, id);
             if (registration == null)
                 return NotFound();
 
