@@ -48,4 +48,12 @@ Write-Output "*****"
 Get-Content $local:ProjectFile
 Write-Output "*****"
 
+Write-Host "Replacing version information in DevOpsAddonCommon project file"
+$local:ProjectFile = (Join-Path $PSScriptRoot "DevOpsAddonCommon\DevOpsAddonCommon.csproj")
+(Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
+(Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
+Write-Output "*****"
+Get-Content $local:ProjectFile
+Write-Output "*****"
+
 Write-Output "##vso[task.setvariable variable=VersionString;]$($local:AssemblyVersion)"
