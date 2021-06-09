@@ -200,10 +200,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public Plugin SavePluginConfiguration(Plugin plugin)
         {
-            if (!_plugins.Upsert(plugin))
-            {
-                return null;
-            }
+            _plugins.Upsert(plugin);
             return plugin;
         }
 
