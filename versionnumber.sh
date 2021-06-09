@@ -6,7 +6,7 @@ fi
 sourceDir=$1
 semVer=$2
 buildId=$3
-isPrerelease=$4
+isPrerelease=$(echo "$4" | tr '[:upper:]' '[:lower:]')
 
 echo "semVer = $semVer"
 echo "buildId = $buildId"
