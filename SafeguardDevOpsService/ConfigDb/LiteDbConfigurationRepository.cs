@@ -599,7 +599,7 @@ namespace OneIdentity.DevOps.ConfigDb
                 {
                     var certPass = string.IsNullOrEmpty(WebSslCertificatePassphrase) ? "" : WebSslCertificatePassphrase;
                     var cert = new CertificateData(WebSslCertificateBase64Data, certPass);
-                    return new Tuple<string,string>(cert.Base64Certificate, cert.PemEncodedUnencryptedPrivateKey);
+                    return new Tuple<string,string>(cert.PemEncodedCertificate, cert.PemEncodedUnencryptedPrivateKey);
                 }
                 catch (Exception)
                 {
