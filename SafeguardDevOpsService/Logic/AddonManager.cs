@@ -114,7 +114,9 @@ namespace OneIdentity.DevOps.Logic
 
         public void AddonPropertyChangedHandler(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            _logger.Information($"Property {e.PropertyName} just changed");
+            _logger.Information($"Addon accounts have changed.  Saving changes.");
+
+            _configDb.SaveAddon(sender as Addon);
 
             _devOpsAddon.AddOn.PropertyChanged -= AddonPropertyChangedHandler;
             _devOpsAddon.AddOn.IsDirty = false;

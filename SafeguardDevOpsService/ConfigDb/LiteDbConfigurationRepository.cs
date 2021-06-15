@@ -597,20 +597,9 @@ namespace OneIdentity.DevOps.ConfigDb
             {
                 try
                 {
-                    var bytes = Convert.FromBase64String(WebSslCertificateBase64Data);
-                    var cert = string.IsNullOrEmpty(WebSslCertificatePassphrase)
-                        ? new X509Certificate2(bytes, "", X509KeyStorageFlags.Exportable | X509KeyStorageFlags.MachineKeySet)
-                        : new X509Certificate2(bytes, WebSslCertificatePassphrase, X509KeyStorageFlags.Exportable);
-
-                    var privateKey = cert.GetRSAPrivateKey();
-
-                    var pubCert = Convert.ToBase64String(cert.Export(X509ContentType.Cert), Base64FormattingOptions.InsertLineBreaks);
-                    var privKey = Convert.ToBase64String(privateKey.ExportRSAPrivateKey(), Base64FormattingOptions.InsertLineBreaks);
-
-                    var pubPem = $"-----BEGIN CERTIFICATE-----\r\n{pubCert}\r\n-----END CERTIFICATE-----";
-                    var privPem = $"-----BEGIN RSA PRIVATE KEY-----\r\n{privKey}\r\n-----END RSA PRIVATE KEY-----";
-
-                    return new Tuple<string,string>(pubPem, privPem);
+                    var certPass = string.IsNullOrEmpty(WebSslCertificatePassphrase) ? "" : WebSslCertificatePassphrase;
+                    var cert = new CertificateData(WebSslCertificateBase64Data, certPass);
+                    return new Tuple<string,string>(cert.Base64Certificate, cert.PemEncodedUnencryptedPrivateKey);
                 }
                 catch (Exception)
                 {

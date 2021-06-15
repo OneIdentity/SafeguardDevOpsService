@@ -265,7 +265,7 @@ namespace OneIdentity.DevOps.Logic
             var result = new List<string>();
 
             var subjectAlternativeName = cert.Extensions.Cast<X509Extension>()
-                .Where(n => n.Oid.Value== "2.5.29.17") //n.Oid.FriendlyName=="Subject Alternative Name")
+                .Where(n => n.Oid.Value == "2.5.29.17") //n.Oid.FriendlyName=="Subject Alternative Name")
                 .Select(n => new AsnEncodedData(n.Oid, n.RawData))
                 .Select(n => n.Format(true))
                 .FirstOrDefault();
