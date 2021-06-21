@@ -42,7 +42,7 @@ namespace OneIdentity.DevOps.Common
         /// </summary>
         public AddonManifest Manifest { get; set; }
 
-        private bool _isDirty = false;
+        private bool _credentialsUpdated = false;
 
         /// <summary>
         /// Vault Credentials
@@ -55,18 +55,15 @@ namespace OneIdentity.DevOps.Common
         /// Current State of the Object
         /// </summary>
         [IgnoreDataMember]
-        public bool IsDirty  //TODO: See if there is a way to implement an ObservableCollection rather than using this isDirty property
+        public bool CredentialsUpdated  
         {
-            get
-            {
-                return _isDirty;
-            }
+            get => _credentialsUpdated;
 
             set
             {
-                if (value != _isDirty)
+                if (value != _credentialsUpdated)
                 {
-                    _isDirty = value;
+                    _credentialsUpdated = value;
                     OnPropertyChanged();
                 }
             }

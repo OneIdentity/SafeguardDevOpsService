@@ -32,6 +32,7 @@ namespace OneIdentity.DevOps.Logic
         private readonly IConfigurationRepository _configDb;
 
         private ServiceConfiguration _serviceConfiguration;
+        private DevOpsSecretsBroker _devOpsSecretsBroker;
 
         public SafeguardLogic(IConfigurationRepository configDb)
         {
@@ -388,6 +389,31 @@ namespace OneIdentity.DevOps.Logic
                 {
                     throw LogAndException($"Failed to create the A2A registration: {ex.Message}", ex);
                 }
+
+                var devOpsSecretsBroker = CheckOrAddSecretsBrokerInstance();
+                if (devOpsSecretsBroker == null)
+                {
+                    throw new DevOpsException($"Failed to update the Safeguard Secrets Broker instance {_configDb.SvcId}");
+                }
+
+                devOpsSecretsBroker.A2ARegistration = new A2ARegistration()
+                {
+                    Id = registration.Id
+                };
+                var devOpsInstanceBody = JsonHelper.SerializeObject(devOpsSecretsBroker);
+
+                try
+                {
+                    var result = sg.InvokeMethodFull(Service.Core, Method.Put, $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devOpsInstanceBody);
+                    if (result.StatusCode == HttpStatusCode.OK)
+                    {
+                        _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndException($"Failed to update the A2A registration associated with the Safeguard Secrets Broker instance {_configDb.SvcId}: {ex.Message}", ex);
+                }
             }
         }
 
@@ -501,6 +527,21 @@ namespace OneIdentity.DevOps.Logic
 
         private string LocalIPAddress()
         {
+
+            var addresses = GetLocalIPAddresses();
+            if (addresses != null)
+            {
+                var hostAddresses = string.Join(",", addresses.Select(x => $"\"{x}\""));
+                _logger.Debug($"Found host IP address(s) {hostAddresses}");
+
+                return hostAddresses;
+            }
+
+            return null;
+        }
+
+        private List<IPAddress> GetLocalIPAddresses()
+        {
             if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable())
             {
                 return null;
@@ -512,17 +553,26 @@ namespace OneIdentity.DevOps.Logic
                 var dockerHost = Environment.GetEnvironmentVariable("DOCKER_HOST_IP") ?? "";
                 _logger.Debug($"Found host IP address {dockerHost}");
 
-                return $"\"{dockerHost}\"";
+                try
+                {
+                    var address = IPAddress.Parse(dockerHost);
+                    return new List<IPAddress>()
+                    {
+                        address
+                    };
+                }
+                catch (Exception ex)
+                {
+                    _logger.Debug($"Failed to find or convert the IP address from the environment.");
+                    return null;
+                }
             }
 
             _logger.Debug("Running as a service and searching for local IP address");
             var host = Dns.GetHostEntry(Dns.GetHostName());
 
             var addresses = host.AddressList.Where(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-            var hostAddresses = string.Join(",", addresses.Select(x => $"\"{x}\""));
-            _logger.Debug($"Found host IP address(s) {hostAddresses}");
-
-            return hostAddresses;
+            return addresses.ToList();
         }
 
         public void RemoveClientCertificate()
@@ -1095,6 +1145,97 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteAllTrustedCertificates();
         }
 
+        private DevOpsSecretsBroker GetSecretsBrokerInstance(ISafeguardConnection sg)
+        {
+            try
+            {
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}");
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    var secretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                    if (secretsBroker != null)
+                    {
+                        return secretsBroker;
+                    }
+                }
+                _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+            }
+
+            return null;
+        }
+
+        public DevOpsSecretsBroker CheckOrAddSecretsBrokerInstance()
+        {
+            using var sg = Connect();
+
+            try
+            {
+                var filter = $"DevOpsInstanceId eq \"{_configDb.SvcId}\"";
+
+                var p = new Dictionary<string, string>();
+                JsonHelper.AddQueryParameter(p, nameof(filter), filter);
+
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "DevOps/SecretsBrokers", null, p);
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    var secretsBrokers = JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBroker>>(result.Body);
+                    if (secretsBrokers != null && secretsBrokers.Any())
+                    {
+                        _devOpsSecretsBroker = secretsBrokers.FirstOrDefault();
+                        return _devOpsSecretsBroker;
+                    }
+                }
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                    _logger.Information("DevOps Secrets Broker instance not found in Safeguard.  Creating a new instance. ", ex);
+                else 
+                    _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+            }
+
+            var addresses = GetLocalIPAddresses();
+            if (addresses != null && addresses.Any())
+            {
+                var ipAddress = addresses.FirstOrDefault();
+
+                var secretsBroker = new DevOpsSecretsBroker()
+                {
+                    Host = ipAddress.ToString(),
+                    DevOpsInstanceId = _configDb.SvcId
+                };
+
+                var secretsBrokerStr = JsonHelper.SerializeObject(secretsBroker);
+                try
+                {
+                    var result = sg.InvokeMethodFull(Service.Core, Method.Post, "DevOps/SecretsBrokers", secretsBrokerStr);
+                    if (result.StatusCode == HttpStatusCode.Created)
+                    {
+                        _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                        return _devOpsSecretsBroker;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to create the DevOps Secrets Broker instance in Safeguard: {ex.Message}", ex);
+                }
+            }
+            else
+            {
+                _logger.Error("Failed to create the DevOps Secrets Broker instance in Safeguard.  Unable to get the local IP address");
+            }
+
+            return null;
+        }
+
         public object GetAvailableAccounts(string filter, int? page, bool? count, int? limit, string orderby, string q)
         {
             using var sg = Connect();
@@ -1237,8 +1378,35 @@ namespace OneIdentity.DevOps.Logic
                 //Just making these calls with the config ids set to null will realign everything.
                 _configDb.A2aRegistrationId = null;
                 _configDb.A2aVaultRegistrationId = null;
-                GetA2ARegistration(sg, A2ARegistrationType.Account);
+                a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Account);
                 GetA2ARegistration(sg, A2ARegistrationType.Vault);
+
+                var devOpsSecretsBroker = GetSecretsBrokerInstance(sg);
+                if (devOpsSecretsBroker != null)
+                {
+                    devOpsSecretsBroker.DevOpsInstanceId = a2aRegistration.DevOpsInstanceId;
+                    devOpsSecretsBroker.A2ARegistration = new A2ARegistration()
+                    {
+                        Id = a2aRegistration.Id
+                    };
+                    var devOpsInstanceBody = JsonHelper.SerializeObject(devOpsSecretsBroker);
+
+                    try
+                    {
+                        var result = sg.InvokeMethodFull(Service.Core, Method.Put,
+                            $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devOpsInstanceBody);
+                        if (result.StatusCode == HttpStatusCode.OK)
+                        {
+                            _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw LogAndException(
+                            $"Failed to update the A2A registration associated with the Safeguard Secrets Broker instance {_configDb.SvcId}: {ex.Message}",
+                            ex);
+                    }
+                }
 
                 pluginsLogic.DeleteAccountMappings();
                 pluginsLogic.ClearMappedPluginVaultAccounts();

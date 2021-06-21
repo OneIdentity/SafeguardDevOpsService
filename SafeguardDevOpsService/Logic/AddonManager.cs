@@ -14,15 +14,15 @@ namespace OneIdentity.DevOps.Logic
     {
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
-        private readonly ISafeguardLogic _safeguardLogic;
+        private readonly IAddonLogic _addonLogic;
 
         private IAddonService _devOpsAddon;
 
-        public AddonManager(IConfigurationRepository configDb, ISafeguardLogic safeguardLogic)
+        public AddonManager(IConfigurationRepository configDb, IAddonLogic addonLogic)
         {
             _configDb = configDb;
             _logger = Serilog.Log.Logger;
-            _safeguardLogic = safeguardLogic;
+            _addonLogic = addonLogic;
         }
 
         public void Dispose()
@@ -114,14 +114,17 @@ namespace OneIdentity.DevOps.Logic
 
         public void AddonPropertyChangedHandler(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            _logger.Information($"Addon accounts have changed.  Saving changes.");
+            if (_devOpsAddon.AddOn.CredentialsUpdated)
+            {
+                _devOpsAddon.AddOn.CredentialsUpdated = false;
 
-            _configDb.SaveAddon(sender as Addon);
+                _logger.Information($"Addon accounts have changed.  Saving changes.");
+                _configDb.SaveAddon(sender as Addon);
 
-            _devOpsAddon.AddOn.PropertyChanged -= AddonPropertyChangedHandler;
-            _devOpsAddon.AddOn.IsDirty = false;
-            _devOpsAddon.AddOn.PropertyChanged += AddonPropertyChangedHandler;
-
+                // _devOpsAddon.AddOn.PropertyChanged -= AddonPropertyChangedHandler;
+                // _devOpsAddon.AddOn.CredentialsUpdated = false;
+                // _devOpsAddon.AddOn.PropertyChanged += AddonPropertyChangedHandler;
+            }
         }
 
     }

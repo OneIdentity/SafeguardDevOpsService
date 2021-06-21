@@ -188,8 +188,20 @@ namespace OneIdentity.DevOps.Logic
                 if (assembly == null)
                 {
                     _logger.Warning(
-                        $"Failed to find the reference to the loaded Add-on {addon.Manifest.AssemblyName}.  Loading the Add-on.");
-                    assembly = Assembly.LoadFrom(Path.Combine(WellKnownData.ProgramDataPath, addon.Manifest.DestinationFolder, addon.Manifest.Assembly));
+                        $"Failed to find the reference to the loaded Add-on {addon.Manifest.AssemblyName}.  Attempting to load the Add-on.");
+                    try
+                    {
+                        assembly = Assembly.LoadFrom(Path.Combine(WellKnownData.ProgramDataPath,
+                            addon.Manifest.DestinationFolder, addon.Manifest.Assembly));
+                    }
+                    catch
+                    {
+                        _logger.Error(
+                            $"Failed to load the Add-on {addon.Manifest.AssemblyName}. The Add-on code may be missing. Cleaning up the Add-on from the Secrets Broker.");
+                        _configDb.DeleteAddonByName(addon.Manifest.Name);
+                        _configDb.DeletePluginByName(addon.Manifest.PluginName);
+                        return;
+                    }
                 }
 
 
