@@ -18,6 +18,7 @@ namespace OneIdentity.DevOps.Logic
         public const string PluginInfoClassName = "PluginDescriptor";
 
         public const string DevOpsServiceName = "SafeguardDevOpsService";
+        public const string DevOpsAssetName = DevOpsServiceName;
 
         private const string DevOpsServiceUserName = "SafeguardDevOpsUser";
         private const string DevOpsA2ARegistrationName = DevOpsServiceName;

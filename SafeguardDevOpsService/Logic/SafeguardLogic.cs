@@ -1210,7 +1210,8 @@ namespace OneIdentity.DevOps.Logic
                 var secretsBroker = new DevOpsSecretsBroker()
                 {
                     Host = ipAddress.ToString(),
-                    DevOpsInstanceId = _configDb.SvcId
+                    DevOpsInstanceId = _configDb.SvcId,
+                    AssetName = WellKnownData.DevOpsAssetName+"-"+ipAddress
                 };
 
                 var secretsBrokerStr = JsonHelper.SerializeObject(secretsBroker);

@@ -18,6 +18,16 @@ namespace OneIdentity.DevOps.Data.Spp
         public string Host { get; set; }
 
         /// <summary>
+        /// The Secrets Broker asset id.
+        /// </summary>
+        public string AssetId { get; set; }
+
+        /// <summary>
+        /// The Secrets Broker asset name.
+        /// </summary>
+        public string AssetName { get; set; }
+
+        /// <summary>
         /// The accounts to plugins mapping.
         /// </summary>
         public string AccountMapping { get; set; }
