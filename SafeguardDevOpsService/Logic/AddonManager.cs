@@ -1,12 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.Data.Spp;
+using OneIdentity.SafeguardDotNet;
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -15,14 +20,16 @@ namespace OneIdentity.DevOps.Logic
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
         private readonly IAddonLogic _addonLogic;
+        private readonly ISafeguardLogic _safeguardLogic;
 
         private IAddonService _devOpsAddon;
 
-        public AddonManager(IConfigurationRepository configDb, IAddonLogic addonLogic)
+        public AddonManager(IConfigurationRepository configDb, IAddonLogic addonLogic, ISafeguardLogic safeguardLogic)
         {
             _configDb = configDb;
             _logger = Serilog.Log.Logger;
             _addonLogic = addonLogic;
+            _safeguardLogic = safeguardLogic;
         }
 
         public void Dispose()
@@ -100,6 +107,7 @@ namespace OneIdentity.DevOps.Logic
                         _devOpsAddon.AddOn.PropertyChanged += AddonPropertyChangedHandler;
 
                         _logger.Information($"Successfully loaded the Add-on Service {_devOpsAddon.DisplayName} : {_devOpsAddon.Description}.");
+
                         return true;
                     }
                 }
@@ -118,12 +126,20 @@ namespace OneIdentity.DevOps.Logic
             {
                 _devOpsAddon.AddOn.CredentialsUpdated = false;
 
-                _logger.Information($"Addon accounts have changed.  Saving changes.");
-                _configDb.SaveAddon(sender as Addon);
+                if (sender is Addon addon)
+                {
+                    _logger.Information($"Addon accounts have changed.  Saving changes.");
 
-                // _devOpsAddon.AddOn.PropertyChanged -= AddonPropertyChangedHandler;
-                // _devOpsAddon.AddOn.CredentialsUpdated = false;
-                // _devOpsAddon.AddOn.PropertyChanged += AddonPropertyChangedHandler;
+                    Dictionary<string, string> credentials = new Dictionary<string, string>();
+                    foreach (var credential in addon.VaultCredentials)
+                    {
+                        credentials.Add(WellKnownData.DevOpsCredentialName(credential.Key, _configDb.SvcId),
+                            credential.Value);
+                    }
+
+                    addon.VaultCredentials = credentials;
+                    _configDb.SaveAddon(addon);
+                }
             }
         }
 

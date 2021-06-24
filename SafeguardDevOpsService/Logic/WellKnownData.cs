@@ -97,6 +97,11 @@ namespace OneIdentity.DevOps.Logic
             return $"{DevOpsServiceWebSslCertificateSubject}-{svcId}";
         }
 
+        public static string DevOpsCredentialName(string name, string svcId)
+        {
+            return $"{name}-{svcId}";
+        }
+
         public static string DevOpsServiceVersion()
         {
             var assembly = Assembly.GetAssembly(typeof(ILoadablePlugin));

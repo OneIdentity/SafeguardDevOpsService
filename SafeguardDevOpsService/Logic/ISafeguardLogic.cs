@@ -50,6 +50,9 @@ namespace OneIdentity.DevOps.Logic
         void DeleteTrustedCertificate(string thumbPrint);
         IEnumerable<CertificateInfo> ImportTrustedCertificates();
         void DeleteAllTrustedCertificates();
+
         DevOpsSecretsBroker CheckOrAddSecretsBrokerInstance();
+        void CheckAndPushCredentials();
+
     }
 }
