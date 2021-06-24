@@ -221,6 +221,8 @@ namespace OneIdentity.DevOps.Controllers.V1
                 return NotFound("No Safeguard has not been configured");
 
             safeguard.CheckOrAddSecretsBrokerInstance();
+            safeguard.CheckAndPushCredentials();
+
 
             return Ok(safeguardConnection);
         }

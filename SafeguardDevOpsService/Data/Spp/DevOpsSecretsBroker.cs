@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace OneIdentity.DevOps.Data.Spp
 {
@@ -7,6 +9,8 @@ namespace OneIdentity.DevOps.Data.Spp
     /// </summary>
     public class DevOpsSecretsBroker
     {
+        private IEnumerable<DevOpsSecretsBrokerAccount> _accounts = Enumerable.Empty<DevOpsSecretsBrokerAccount>();
+
         /// <summary>
         /// DevOps secrets broker registration Id
         /// </summary>
@@ -16,6 +20,16 @@ namespace OneIdentity.DevOps.Data.Spp
         /// The Secrets Broker host.
         /// </summary>
         public string Host { get; set; }
+
+        /// <summary>
+        /// The Secrets Broker asset id.
+        /// </summary>
+        public int AssetId { get; set; }
+
+        /// <summary>
+        /// The Secrets Broker asset name.
+        /// </summary>
+        public string AssetName { get; set; }
 
         /// <summary>
         /// The accounts to plugins mapping.
@@ -36,6 +50,15 @@ namespace OneIdentity.DevOps.Data.Spp
         /// The A2A Registration.
         /// </summary>
         public A2ARegistration A2ARegistration { get; set; }
+
+        /// <summary>
+        /// Set of asset accounts that are assigned to this devops secrets broker
+        /// </summary>
+        public IEnumerable<DevOpsSecretsBrokerAccount> Accounts
+        {
+            get => _accounts;
+            set => _accounts = value;
+        }
 
         /// <summary>
         /// Date this entity was created

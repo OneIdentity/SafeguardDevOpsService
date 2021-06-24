@@ -1210,7 +1210,8 @@ namespace OneIdentity.DevOps.Logic
                 var secretsBroker = new DevOpsSecretsBroker()
                 {
                     Host = ipAddress.ToString(),
-                    DevOpsInstanceId = _configDb.SvcId
+                    DevOpsInstanceId = _configDb.SvcId,
+                    AssetName = WellKnownData.DevOpsAssetName+"-"+ipAddress
                 };
 
                 var secretsBrokerStr = JsonHelper.SerializeObject(secretsBroker);
@@ -1234,6 +1235,77 @@ namespace OneIdentity.DevOps.Logic
             }
 
             return null;
+        }
+
+        private List<DevOpsSecretsBrokerAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg)
+        {
+            try
+            {
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}/Accounts");
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    var secretsBrokerAccounts = JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBrokerAccount>>(result.Body).ToList();
+                    return secretsBrokerAccounts.Any() ? secretsBrokerAccounts : null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get the DevOps Secrets Broker accounts from Safeguard. ", ex);
+            }
+
+            return null;
+        }
+
+        public void CheckAndPushCredentials()
+        {
+            if (_devOpsSecretsBroker == null)
+                return;
+
+            using var sg = Connect();
+
+            var secretsBrokerAccounts = GetSecretsBrokerAccounts(sg);
+
+            if (secretsBrokerAccounts != null)
+            {
+                var addons = _configDb.GetAllAddons();
+                foreach (var addon in addons)
+                {
+                    var accounts = new List<DevOpsSecretsBrokerAccount>();
+                    foreach (var credential in addon.VaultCredentials)
+                    {
+                        if (secretsBrokerAccounts.All(x => x.AccountName != credential.Key))
+                        {
+                            accounts.Add(new DevOpsSecretsBrokerAccount()
+                            {
+                                AccountId = 0,
+                                AccountName = credential.Key,
+                                Description = addon.Manifest.DisplayName + " account",
+                                AssetId = _devOpsSecretsBroker.AssetId,
+                                Password = credential.Value
+                            });
+                        }
+                    }
+
+                    if (accounts.Any())
+                    {
+                        var secretsBrokerAccountsStr = JsonHelper.SerializeObject(accounts);
+                        try
+                        {
+                            var result = sg.InvokeMethodFull(Service.Core, Method.Post,
+                                $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}/Accounts/Add", secretsBrokerAccountsStr);
+                            if (result.StatusCode == HttpStatusCode.OK)
+                            {
+                                return;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error(
+                                $"Failed to sync the credentials for the Add-On {addon.Name}: {ex.Message}", ex);
+                        }
+                    }
+                }
+            }
         }
 
         public object GetAvailableAccounts(string filter, int? page, bool? count, int? limit, string orderby, string q)
