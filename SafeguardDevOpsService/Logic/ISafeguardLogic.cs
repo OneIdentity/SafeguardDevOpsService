@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
@@ -51,8 +52,6 @@ namespace OneIdentity.DevOps.Logic
         IEnumerable<CertificateInfo> ImportTrustedCertificates();
         void DeleteAllTrustedCertificates();
 
-        DevOpsSecretsBroker CheckOrAddSecretsBrokerInstance();
-        void CheckAndPushCredentials();
-
+        Task StartBackgroundMaintenance();
     }
 }

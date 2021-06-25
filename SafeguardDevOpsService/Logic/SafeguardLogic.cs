@@ -390,21 +390,21 @@ namespace OneIdentity.DevOps.Logic
                     throw LogAndException($"Failed to create the A2A registration: {ex.Message}", ex);
                 }
 
-                var devOpsSecretsBroker = CheckOrAddSecretsBrokerInstance();
-                if (devOpsSecretsBroker == null)
+                CheckOrAddSecretsBrokerInstance();
+                if (_devOpsSecretsBroker == null)
                 {
                     throw new DevOpsException($"Failed to update the Safeguard Secrets Broker instance {_configDb.SvcId}");
                 }
 
-                devOpsSecretsBroker.A2ARegistration = new A2ARegistration()
+                _devOpsSecretsBroker.A2ARegistration = new A2ARegistration()
                 {
                     Id = registration.Id
                 };
-                var devOpsInstanceBody = JsonHelper.SerializeObject(devOpsSecretsBroker);
+                var devOpsInstanceBody = JsonHelper.SerializeObject(_devOpsSecretsBroker);
 
                 try
                 {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Put, $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devOpsInstanceBody);
+                    var result = sg.InvokeMethodFull(Service.Core, Method.Put, $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}", devOpsInstanceBody);
                     if (result.StatusCode == HttpStatusCode.OK)
                     {
                         _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
@@ -1168,75 +1168,6 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        public DevOpsSecretsBroker CheckOrAddSecretsBrokerInstance()
-        {
-            using var sg = Connect();
-
-            try
-            {
-                var filter = $"DevOpsInstanceId eq \"{_configDb.SvcId}\"";
-
-                var p = new Dictionary<string, string>();
-                JsonHelper.AddQueryParameter(p, nameof(filter), filter);
-
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "DevOps/SecretsBrokers", null, p);
-                if (result.StatusCode == HttpStatusCode.OK)
-                {
-                    var secretsBrokers = JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBroker>>(result.Body);
-                    if (secretsBrokers != null && secretsBrokers.Any())
-                    {
-                        _devOpsSecretsBroker = secretsBrokers.FirstOrDefault();
-                        return _devOpsSecretsBroker;
-                    }
-                }
-            }
-            catch (SafeguardDotNetException ex)
-            {
-                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
-                    _logger.Information("DevOps Secrets Broker instance not found in Safeguard.  Creating a new instance. ", ex);
-                else 
-                    _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
-            }
-
-            var addresses = GetLocalIPAddresses();
-            if (addresses != null && addresses.Any())
-            {
-                var ipAddress = addresses.FirstOrDefault();
-
-                var secretsBroker = new DevOpsSecretsBroker()
-                {
-                    Host = ipAddress.ToString(),
-                    DevOpsInstanceId = _configDb.SvcId,
-                    AssetName = WellKnownData.DevOpsAssetName+"-"+ipAddress
-                };
-
-                var secretsBrokerStr = JsonHelper.SerializeObject(secretsBroker);
-                try
-                {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Post, "DevOps/SecretsBrokers", secretsBrokerStr);
-                    if (result.StatusCode == HttpStatusCode.Created)
-                    {
-                        _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
-                        return _devOpsSecretsBroker;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failed to create the DevOps Secrets Broker instance in Safeguard: {ex.Message}", ex);
-                }
-            }
-            else
-            {
-                _logger.Error("Failed to create the DevOps Secrets Broker instance in Safeguard.  Unable to get the local IP address");
-            }
-
-            return null;
-        }
-
         private List<DevOpsSecretsBrokerAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg)
         {
             try
@@ -1254,58 +1185,6 @@ namespace OneIdentity.DevOps.Logic
             }
 
             return null;
-        }
-
-        public void CheckAndPushCredentials()
-        {
-            if (_devOpsSecretsBroker == null)
-                return;
-
-            using var sg = Connect();
-
-            var secretsBrokerAccounts = GetSecretsBrokerAccounts(sg);
-
-            if (secretsBrokerAccounts != null)
-            {
-                var addons = _configDb.GetAllAddons();
-                foreach (var addon in addons)
-                {
-                    var accounts = new List<DevOpsSecretsBrokerAccount>();
-                    foreach (var credential in addon.VaultCredentials)
-                    {
-                        if (secretsBrokerAccounts.All(x => x.AccountName != credential.Key))
-                        {
-                            accounts.Add(new DevOpsSecretsBrokerAccount()
-                            {
-                                AccountId = 0,
-                                AccountName = credential.Key,
-                                Description = addon.Manifest.DisplayName + " account",
-                                AssetId = _devOpsSecretsBroker.AssetId,
-                                Password = credential.Value
-                            });
-                        }
-                    }
-
-                    if (accounts.Any())
-                    {
-                        var secretsBrokerAccountsStr = JsonHelper.SerializeObject(accounts);
-                        try
-                        {
-                            var result = sg.InvokeMethodFull(Service.Core, Method.Post,
-                                $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}/Accounts/Add", secretsBrokerAccountsStr);
-                            if (result.StatusCode == HttpStatusCode.OK)
-                            {
-                                return;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Error(
-                                $"Failed to sync the credentials for the Add-On {addon.Name}: {ex.Message}", ex);
-                        }
-                    }
-                }
-            }
         }
 
         public object GetAvailableAccounts(string filter, int? page, bool? count, int? limit, string orderby, string q)
@@ -1779,6 +1658,168 @@ namespace OneIdentity.DevOps.Logic
             _serviceConfiguration.Thumbprint = _configDb.UserCertificate?.Thumbprint;
 
             return _serviceConfiguration;
+        }
+
+#pragma warning disable 1998
+        public async Task StartBackgroundMaintenance()
+#pragma warning restore 1998
+        {
+            while (IsLoggedIn())
+            {
+                try
+                {
+                    CheckOrAddSecretsBrokerInstance();
+                    CheckAndPushCredentials();
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"[Background Maintenance] {ex.Message}");
+                }
+
+                if (IsLoggedIn())
+                    await Task.Delay(TimeSpan.FromMinutes(1));
+            }
+        }
+
+        private void CheckAndPushCredentials()
+        {
+            if (_devOpsSecretsBroker == null || !IsLoggedIn())
+                return;
+
+            using var sg = Connect();
+
+            var secretsBrokerAccounts = GetSecretsBrokerAccounts(sg);
+
+            if (secretsBrokerAccounts != null)
+            {
+                var addons = _configDb.GetAllAddons();
+                foreach (var addon in addons)
+                {
+                    var accounts = new List<DevOpsSecretsBrokerAccount>();
+                    foreach (var credential in addon.VaultCredentials)
+                    {
+                        if (secretsBrokerAccounts.All(x => x.AccountName != credential.Key))
+                        {
+                            accounts.Add(new DevOpsSecretsBrokerAccount()
+                            {
+                                AccountId = 0,
+                                AccountName = credential.Key,
+                                Description = addon.Manifest.DisplayName + " account",
+                                AssetId = _devOpsSecretsBroker.AssetId,
+                                Password = credential.Value
+                            });
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(addon.VaultAccountName))
+                    {
+                        var vaultAccount = secretsBrokerAccounts.FirstOrDefault(x => x.AccountName.StartsWith(addon.VaultAccountName));
+                        if (vaultAccount != null && addon.VaultAccountId != vaultAccount.AccountId)
+                        {
+                            addon.VaultAccountId = vaultAccount.AccountId;
+                            addon.VaultAccountName = vaultAccount.AccountName;
+                            addon.VaultAssetId = vaultAccount.AssetId;
+                            addon.VaultAssetName = vaultAccount.AssetName;
+                            _configDb.SaveAddon(addon);
+                        }
+                    }
+
+                    if (accounts.Any())
+                    {
+                        var secretsBrokerAccountsStr = JsonHelper.SerializeObject(accounts);
+                        try
+                        {
+                            var result = sg.InvokeMethodFull(Service.Core, Method.Post,
+                                $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}/Accounts/Add",
+                                secretsBrokerAccountsStr);
+                            if (result.StatusCode == HttpStatusCode.OK)
+                            {
+                                return;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error(
+                                $"Failed to sync the credentials for the Add-On {addon.Name}: {ex.Message}", ex);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void CheckOrAddSecretsBrokerInstance()
+        {
+            if (!IsLoggedIn())
+                return;
+
+            using var sg = Connect();
+
+            try
+            {
+                var filter = $"DevOpsInstanceId eq \"{_configDb.SvcId}\"";
+
+                var p = new Dictionary<string, string>();
+                JsonHelper.AddQueryParameter(p, nameof(filter), filter);
+
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "DevOps/SecretsBrokers", null, p);
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    var secretsBrokers =
+                        JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBroker>>(result.Body);
+                    if (secretsBrokers != null && secretsBrokers.Any())
+                    {
+                        _devOpsSecretsBroker = secretsBrokers.FirstOrDefault();
+                        return;
+                    }
+                }
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                    _logger.Information(
+                        "DevOps Secrets Broker instance not found in Safeguard.  Creating a new instance. ", ex);
+                else
+                    _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+            }
+
+            var addresses = GetLocalIPAddresses();
+            if (addresses != null && addresses.Any())
+            {
+                var ipAddress = addresses.FirstOrDefault();
+
+                var secretsBroker = new DevOpsSecretsBroker()
+                {
+                    Host = ipAddress.ToString(),
+                    DevOpsInstanceId = _configDb.SvcId,
+                    AssetName = WellKnownData.DevOpsAssetName + "-" + ipAddress
+                };
+
+                var secretsBrokerStr = JsonHelper.SerializeObject(secretsBroker);
+                try
+                {
+                    var result = sg.InvokeMethodFull(Service.Core, Method.Post, "DevOps/SecretsBrokers",
+                        secretsBrokerStr);
+                    if (result.StatusCode == HttpStatusCode.Created)
+                    {
+                        _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to create the DevOps Secrets Broker instance in Safeguard: {ex.Message}",
+                        ex);
+                }
+            }
+            else
+            {
+                _logger.Error(
+                    "Failed to create the DevOps Secrets Broker instance in Safeguard.  Unable to get the local IP address");
+            }
         }
 
         public void Dispose()

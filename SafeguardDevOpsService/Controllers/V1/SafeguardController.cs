@@ -220,9 +220,7 @@ namespace OneIdentity.DevOps.Controllers.V1
             if (safeguardConnection == null)
                 return NotFound("No Safeguard has not been configured");
 
-            safeguard.CheckOrAddSecretsBrokerInstance();
-            safeguard.CheckAndPushCredentials();
-
+            Task.Run( async () => await safeguard.StartBackgroundMaintenance());
 
             return Ok(safeguardConnection);
         }
