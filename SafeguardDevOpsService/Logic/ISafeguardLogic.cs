@@ -52,6 +52,6 @@ namespace OneIdentity.DevOps.Logic
         IEnumerable<CertificateInfo> ImportTrustedCertificates();
         void DeleteAllTrustedCertificates();
 
-        Task StartBackgroundMaintenance();
+        Task StartAddOnBackgroundMaintenance(IPluginsLogic pluginsLogic);
     }
 }

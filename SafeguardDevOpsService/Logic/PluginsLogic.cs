@@ -5,7 +5,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Http;
-using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
@@ -148,8 +147,16 @@ namespace OneIdentity.DevOps.Logic
 
             if (plugin == null)
             {
-                _logger.Error($"Failed to save the safeguardConnection. No plugin {name} was found.");
-                return null;
+                var msg = $"Failed to save the safeguardConnection. No plugin {name} was found.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
+            }
+
+            if (plugin.IsSystemOwned)
+            {
+                var msg = $"Failed to save the safeguardConnection. The plugin {name} is system owned.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg, HttpStatusCode.BadRequest);
             }
 
             plugin.Configuration = pluginConfiguration.Configuration;
@@ -165,8 +172,9 @@ namespace OneIdentity.DevOps.Logic
 
             if (plugin == null)
             {
-                _logger.Error($"Failed to test the safeguardConnection. No plugin {name} was found.");
-                return false;
+                var msg = $"Failed to test the safeguardConnection. No plugin {name} was found.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             return _pluginManager.TestPluginVaultConnection(name);
@@ -180,7 +188,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             return new PluginState() {Disabled = plugin.IsDisabled};
@@ -194,7 +202,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             plugin.IsDisabled = state;
@@ -209,7 +217,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             var mappings = _configDb.GetAccountMappings();
@@ -237,7 +245,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             var mappings = _configDb.GetAccountMappings();
@@ -264,7 +272,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             var retrievableAccounts = accounts.ToArray();

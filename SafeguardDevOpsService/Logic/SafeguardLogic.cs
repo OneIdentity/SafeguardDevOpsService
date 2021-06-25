@@ -390,7 +390,7 @@ namespace OneIdentity.DevOps.Logic
                     throw LogAndException($"Failed to create the A2A registration: {ex.Message}", ex);
                 }
 
-                CheckOrAddSecretsBrokerInstance();
+                CheckAndAddSecretsBrokerInstance();
                 if (_devOpsSecretsBroker == null)
                 {
                     throw new DevOpsException($"Failed to update the Safeguard Secrets Broker instance {_configDb.SvcId}");
@@ -1660,16 +1660,15 @@ namespace OneIdentity.DevOps.Logic
             return _serviceConfiguration;
         }
 
-#pragma warning disable 1998
-        public async Task StartBackgroundMaintenance()
-#pragma warning restore 1998
+        public async Task StartAddOnBackgroundMaintenance(IPluginsLogic pluginsLogic)
         {
             while (IsLoggedIn())
             {
                 try
                 {
-                    CheckOrAddSecretsBrokerInstance();
-                    CheckAndPushCredentials();
+                    CheckAndAddSecretsBrokerInstance();
+                    CheckAndPushAddOnCredentials();
+                    CheckAndConfigureAddonPlugins(pluginsLogic);
                 }
                 catch (Exception ex)
                 {
@@ -1681,7 +1680,34 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void CheckAndPushCredentials()
+        private void CheckAndConfigureAddonPlugins(IPluginsLogic pluginsLogic)
+        {
+            var addons = _configDb.GetAllAddons();
+            foreach (var addon in addons)
+            {
+                var plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
+                if (plugin != null && plugin.IsSystemOwned != addon.Manifest.IsPluginSystemOwned)
+                {
+                    plugin.IsSystemOwned = addon.Manifest.IsPluginSystemOwned;
+                    _configDb.SavePluginConfiguration(plugin);
+                }
+
+                if (!string.IsNullOrEmpty(addon.VaultAccountName) 
+                    && addon.VaultAccountId.HasValue 
+                    && addon.VaultAccountId > 0
+                    && !string.IsNullOrEmpty(addon.Manifest?.PluginName))
+                {
+                    plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
+                    if (plugin != null && plugin.VaultAccountId != addon.VaultAccountId)
+                    {
+                        plugin.VaultAccountId = addon.VaultAccountId;
+                        pluginsLogic.SavePluginVaultAccount(plugin.Name, new AssetAccount(){Id = addon.VaultAccountId.Value});
+                    }
+                }
+            }
+        }
+
+        private void CheckAndPushAddOnCredentials()
         {
             if (_devOpsSecretsBroker == null || !IsLoggedIn())
                 return;
@@ -1747,7 +1773,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void CheckOrAddSecretsBrokerInstance()
+        private void CheckAndAddSecretsBrokerInstance()
         {
             if (!IsLoggedIn())
                 return;

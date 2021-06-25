@@ -214,13 +214,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("Logon")]
-        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard, [FromServices] IPluginsLogic pluginsLogic)
         {
             var safeguardConnection = safeguard.GetSafeguardConnection();
             if (safeguardConnection == null)
                 return NotFound("No Safeguard has not been configured");
 
-            Task.Run( async () => await safeguard.StartBackgroundMaintenance());
+            Task.Run( async () => await safeguard.StartAddOnBackgroundMaintenance(pluginsLogic));
 
             return Ok(safeguardConnection);
         }

@@ -50,6 +50,11 @@ namespace OneIdentity.DevOps.Data
         public bool IsDisabled { get; set; } = false;
 
         /// <summary>
+        /// Is the plugin system owned
+        /// </summary>
+        public bool IsSystemOwned { get; set; } = false;
+
+        /// <summary>
         /// Plugin version
         /// </summary>
         public string Version { get; set; }
