@@ -15,6 +15,9 @@ namespace OneIdentity.DevOps.Common
         public string DeployClassName { get; set; }
         public string UndeployClassName { get; set; }
         public string PluginName { get; set; }
+        public bool IsPluginSystemOwned { get; set; }
+        public string VaultUrl { get; set; }
+        public string ProxyUrl { get; set; }
         public string Version { get; set; }
     }
 }
