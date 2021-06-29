@@ -330,7 +330,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
         }
 

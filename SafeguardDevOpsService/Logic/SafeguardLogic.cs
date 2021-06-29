@@ -53,8 +53,10 @@ namespace OneIdentity.DevOps.Logic
             return new DevOpsException(msg, ex);
         }
 
-        private SafeguardDevOpsConnection GetSafeguardAppliance(ISafeguardConnection sg)
+        private SafeguardDevOpsConnection GetSafeguardAppliance(ISafeguardConnection sgConnection)
         {
+            var sg = sgConnection ?? Connect();
+
             try
             {
                 var availabilityJson = sg.InvokeMethod(Service.Notification, Method.Get, "Status/Availability");
@@ -76,11 +78,16 @@ namespace OneIdentity.DevOps.Logic
             {
                 throw new DevOpsException($"Failed to get the appliance information: {ex.Message}");
             }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
         }
 
-        private SafeguardDevOpsConnection GetSafeguardAvailability(ISafeguardConnection sg, SafeguardDevOpsConnection safeguardConnection)
+        private SafeguardDevOpsConnection GetSafeguardAvailability(ISafeguardConnection sgConnection, SafeguardDevOpsConnection safeguardConnection)
         {
-            var safeguard = GetSafeguardAppliance(sg);
+            var safeguard = GetSafeguardAppliance(sgConnection);
             safeguardConnection.ApplianceId = safeguard.ApplianceId;
             safeguardConnection.ApplianceName = safeguard.ApplianceName;
             safeguardConnection.ApplianceVersion = safeguard.ApplianceVersion;
@@ -265,55 +272,66 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private A2AUser GetA2AUser(ISafeguardConnection sg)
+        private A2AUser GetA2AUser(ISafeguardConnection sgConnection)
         {
-            FullResponse result;
+            var sg = sgConnection ?? Connect();
 
-            // If we don't have a user Id then try to find the user by name
-            if (_configDb.A2aUserId == null)
+            try
             {
-                var p = new Dictionary<string, string> {{"filter", $"UserName eq '{WellKnownData.DevOpsUserName(_configDb.SvcId)}'"}};
+                FullResponse result;
 
-                try
+                // If we don't have a user Id then try to find the user by name
+                if (_configDb.A2aUserId == null)
                 {
-                    result = sg.InvokeMethodFull(Service.Core, Method.Get, "Users", null, p);
-                    if (result.StatusCode == HttpStatusCode.OK)
-                    {
-                        var foundUsers = JsonHelper.DeserializeObject<List<A2AUser>>(result.Body);
+                    var p = new Dictionary<string, string>
+                        {{"filter", $"UserName eq '{WellKnownData.DevOpsUserName(_configDb.SvcId)}'"}};
 
-                        if (foundUsers.Count > 0)
+                    try
+                    {
+                        result = sg.InvokeMethodFull(Service.Core, Method.Get, "Users", null, p);
+                        if (result.StatusCode == HttpStatusCode.OK)
                         {
-                            var a2aUser = foundUsers.FirstOrDefault();
-                            _configDb.A2aUserId = a2aUser.Id;
+                            var foundUsers = JsonHelper.DeserializeObject<List<A2AUser>>(result.Body);
+
+                            if (foundUsers.Count > 0)
+                            {
+                                var a2aUser = foundUsers.FirstOrDefault();
+                                _configDb.A2aUserId = a2aUser.Id;
+                                return a2aUser;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Failed to get the A2A user by name: {ex.Message}");
+                    }
+                }
+                else // Otherwise just get the user by id
+                {
+                    try
+                    {
+                        var a2aUser = GetA2AUser(sg, _configDb.A2aUserId);
+                        if (a2aUser != null)
+                        {
                             return a2aUser;
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failed to get the A2A user by name: {ex.Message}");
-                }
-            }
-            else // Otherwise just get the user by id
-            {
-                try
-                {
-                    var a2aUser = GetA2AUser(sg, _configDb.A2aUserId);
-                    if (a2aUser != null)
+                    catch (Exception ex)
                     {
-                        return a2aUser;
+                        _logger.Error($"Failed to get the A2A user by id {_configDb.A2aUserId}: {ex.Message}");
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failed to get the A2A user by id {_configDb.A2aUserId}: {ex.Message}");
+
+                    // Apparently the user id we have is wrong so get rid of it.
+                    _configDb.A2aUserId = null;
                 }
 
-                // Apparently the user id we have is wrong so get rid of it.
-                _configDb.A2aUserId = null;
+                return null;
             }
-
-            return null;
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
         }
 
         private A2AUser GetA2AUser(ISafeguardConnection sg, int? id)
@@ -431,7 +449,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
         }
 
@@ -525,7 +543,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
 
             return null;
@@ -1175,7 +1193,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
         }
 
@@ -1264,7 +1282,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
 
             return new List<SppAccount>();
@@ -1301,7 +1319,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
 
             return null;
@@ -1346,7 +1364,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
 
             return new List<A2ARegistration>();
@@ -1419,7 +1437,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
 
             return null;
@@ -1492,7 +1510,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
         }
 
@@ -1526,7 +1544,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
 
             return null;
@@ -1562,7 +1580,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
         }
 
@@ -1596,7 +1614,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
 
             return new List<A2ARetrievableAccount>();
@@ -1642,7 +1660,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
 
             return null;
@@ -1683,7 +1701,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
         }
 
@@ -1727,7 +1745,7 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 if (sgConnection == null)
-                    sg.LogOut();
+                    sg.Dispose();
             }
         }
 
@@ -1741,48 +1759,38 @@ namespace OneIdentity.DevOps.Logic
             _serviceConfiguration.A2AVaultRegistrationName = null;
             _serviceConfiguration.Thumbprint = null;
 
-            var sg = sgConnection ?? Connect();
-
-            try
+            var a2aUser = GetA2AUser(sgConnection);
+            if (a2aUser != null)
             {
-                var a2aUser = GetA2AUser(sg);
-                if (a2aUser != null)
-                {
-                    _serviceConfiguration.IdentityProviderName = a2aUser.IdentityProviderName;
-                    _serviceConfiguration.UserName = a2aUser.UserName;
-                    _serviceConfiguration.UserDisplayName = a2aUser.DisplayName;
-                    _serviceConfiguration.AdminRoles = a2aUser.AdminRoles;
-                }
-
-                _serviceConfiguration.Appliance = GetSafeguardAvailability(sg,
-                    new SafeguardDevOpsConnection()
-                    {
-                        ApplianceAddress = _configDb.SafeguardAddress,
-                        IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value,
-                        ApiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion
-                    });
-
-                var a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Account);
-                if (a2aRegistration != null)
-                {
-                    _serviceConfiguration.A2ARegistrationName = a2aRegistration.AppName;
-                }
-
-                a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Vault);
-                if (a2aRegistration != null)
-                {
-                    _serviceConfiguration.A2AVaultRegistrationName = a2aRegistration.AppName;
-                }
-
-                _serviceConfiguration.Thumbprint = _configDb.UserCertificate?.Thumbprint;
-
-                return _serviceConfiguration;
+                _serviceConfiguration.IdentityProviderName = a2aUser.IdentityProviderName;
+                _serviceConfiguration.UserName = a2aUser.UserName;
+                _serviceConfiguration.UserDisplayName = a2aUser.DisplayName;
+                _serviceConfiguration.AdminRoles = a2aUser.AdminRoles;
             }
-            finally
+
+            _serviceConfiguration.Appliance = GetSafeguardAvailability(sgConnection,
+                new SafeguardDevOpsConnection()
+                {
+                    ApplianceAddress = _configDb.SafeguardAddress,
+                    IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value,
+                    ApiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion
+                });
+
+            var a2aRegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Account);
+            if (a2aRegistration != null)
             {
-                if (sgConnection == null)
-                    sg.LogOut();
+                _serviceConfiguration.A2ARegistrationName = a2aRegistration.AppName;
             }
+
+            a2aRegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Vault);
+            if (a2aRegistration != null)
+            {
+                _serviceConfiguration.A2AVaultRegistrationName = a2aRegistration.AppName;
+            }
+
+            _serviceConfiguration.Thumbprint = _configDb.UserCertificate?.Thumbprint;
+
+            return _serviceConfiguration;
         }
 
         private static volatile object _secretsBrokerInstanceLock = new object();
@@ -1872,7 +1880,7 @@ namespace OneIdentity.DevOps.Logic
                 finally
                 {
                     if (sgConnection == null)
-                        sg.LogOut();
+                        sg.Dispose();
                 }
             }
         }
