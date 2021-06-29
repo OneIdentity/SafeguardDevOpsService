@@ -216,7 +216,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public bool TestPluginVaultConnection(string pluginName)
+        public bool TestPluginVaultConnection(ISafeguardConnection sgConnection, string pluginName)
         {
             var plugin = _configDb.GetPluginByName(pluginName);
 
@@ -227,7 +227,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
-                        RefreshPluginCredential(plugin);
+                        RefreshPluginCredential(sgConnection, plugin);
                         if (pluginInstance.TestVaultConnection())
                         {
                             _logger.Error($"Test connection for plugin {pluginName} successful.");
@@ -387,35 +387,37 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public void RefreshPluginCredentials()
+        public void RefreshPluginCredentials(ISafeguardConnection sgConnection)
         {
             var plugins = _configDb.GetAllPlugins();
         
             foreach (var plugin in plugins)
             {
-                RefreshPluginCredential(plugin);
+                RefreshPluginCredential(sgConnection, plugin);
             }
         }
         
-        private void RefreshPluginCredential(Plugin plugin)
+        private void RefreshPluginCredential(ISafeguardConnection sgConnection, Plugin plugin)
         {
             if (_safeguardLogic.IsLoggedIn() && plugin.VaultAccountId.HasValue)
             {
                 try
                 {
-                    var a2aAccount = _safeguardLogic.GetA2ARetrievableAccount(plugin.VaultAccountId.Value,
+                    var a2aAccount = _safeguardLogic.GetA2ARetrievableAccount(sgConnection, plugin.VaultAccountId.Value,
                         A2ARegistrationType.Vault);
                     if (a2aAccount != null)
                     {
                         SendPluginVaultCredentials(plugin.Name, a2aAccount.ApiKey);
                         return;
                     }
-        
-                    _logger.Error($"Failed to refresh the credential for plugin {plugin.Name} account {plugin.VaultAccountId}.");
+
+                    _logger.Error(
+                        $"Failed to refresh the credential for plugin {plugin.Name} account {plugin.VaultAccountId}.");
                 }
                 catch (Exception ex)
                 {
-                    var msg = $"Failed to refresh the api key for {plugin.Name} account {plugin.VaultAccountId}: {ex.Message}";
+                    var msg =
+                        $"Failed to refresh the api key for {plugin.Name} account {plugin.VaultAccountId}: {ex.Message}";
                     _logger.Error(msg);
                 }
             }

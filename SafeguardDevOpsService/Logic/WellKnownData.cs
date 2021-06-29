@@ -10,6 +10,8 @@ namespace OneIdentity.DevOps.Logic
 {
     internal static class WellKnownData
     {
+        public const int DefaultApiVersion = 3;
+
         public const string AppSettings = "appsettings";
         public const string ServiceIdentifier = "svcid";
         public const string CredentialTarget = "SSBfDbgn";

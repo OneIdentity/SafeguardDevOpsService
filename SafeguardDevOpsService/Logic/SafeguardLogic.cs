@@ -12,6 +12,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
@@ -26,13 +27,13 @@ namespace OneIdentity.DevOps.Logic
 {
     internal class SafeguardLogic : ISafeguardLogic, IDisposable
     {
-        private const int DefaultApiVersion = 3;
-
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
 
         private ServiceConfiguration _serviceConfiguration;
-        private DevOpsSecretsBroker _devOpsSecretsBroker;
+        private DevOpsSecretsBroker _devOpsSecretsBroker { get; set; }
+
+        public DevOpsSecretsBroker DevOpsSecretsBroker => _devOpsSecretsBroker;
 
         public SafeguardLogic(IConfigurationRepository configDb)
         {
@@ -228,7 +229,8 @@ namespace OneIdentity.DevOps.Logic
                 a2aUser = new A2AUser()
                 {
                     UserName = WellKnownData.DevOpsRegistrationName(_configDb.SvcId),
-                    PrimaryAuthenticationIdentity = thumbprint
+                    PrimaryAuthenticationIdentity = thumbprint,
+                    AdminRoles = new string[] {"PolicyAdmin", "AssetAdmin"}
                 };
 
                 var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
@@ -351,151 +353,179 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void CreateA2ARegistration(ISafeguardConnection sg, A2ARegistrationType registrationType)
+        private void CreateA2ARegistration(ISafeguardConnection sgConnection, A2ARegistrationType registrationType)
         {
             if (_configDb.A2aUserId == null)
                 throw new DevOpsException("Failed to create A2A registration due to missing A2A user");
 
-            var a2aRegistration = GetA2ARegistration(sg, registrationType);
-            if (a2aRegistration == null)
+            var sg = sgConnection ?? Connect();
+
+            try
             {
-                var registration = new A2ARegistration()
+                var a2aRegistration = GetA2ARegistration(sg, registrationType);
+                if (a2aRegistration == null)
                 {
-                    AppName = registrationType == A2ARegistrationType.Account ?
-                        WellKnownData.DevOpsRegistrationName(_configDb.SvcId) : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId),
-                    CertificateUserId = _configDb.A2aUserId.Value,
-                    VisibleToCertificateUsers = true
-                };
-
-                var registrationStr = JsonHelper.SerializeObject(registration);
-
-                try
-                {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Post, "A2ARegistrations", registrationStr);
-                    if (result.StatusCode == HttpStatusCode.Created)
+                    var registration = new A2ARegistration()
                     {
-                        registration = JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
-                        if (registrationType == A2ARegistrationType.Account)
+                        AppName = registrationType == A2ARegistrationType.Account
+                            ? WellKnownData.DevOpsRegistrationName(_configDb.SvcId)
+                            : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId),
+                        CertificateUserId = _configDb.A2aUserId.Value,
+                        VisibleToCertificateUsers = true
+                    };
+
+                    var registrationStr = JsonHelper.SerializeObject(registration);
+
+                    try
+                    {
+                        var result = sg.InvokeMethodFull(Service.Core, Method.Post, "A2ARegistrations",
+                            registrationStr);
+                        if (result.StatusCode == HttpStatusCode.Created)
                         {
-                            _configDb.A2aRegistrationId = registration.Id;
-                        }
-                        else
-                        {
-                            _configDb.A2aVaultRegistrationId = registration.Id;
+                            registration = JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
+                            if (registrationType == A2ARegistrationType.Account)
+                            {
+                                _configDb.A2aRegistrationId = registration.Id;
+                            }
+                            else
+                            {
+                                _configDb.A2aVaultRegistrationId = registration.Id;
+                            }
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    throw LogAndException($"Failed to create the A2A registration: {ex.Message}", ex);
-                }
-
-                CheckAndAddSecretsBrokerInstance();
-                if (_devOpsSecretsBroker == null)
-                {
-                    throw new DevOpsException($"Failed to update the Safeguard Secrets Broker instance {_configDb.SvcId}");
-                }
-
-                _devOpsSecretsBroker.A2ARegistration = new A2ARegistration()
-                {
-                    Id = registration.Id
-                };
-                var devOpsInstanceBody = JsonHelper.SerializeObject(_devOpsSecretsBroker);
-
-                try
-                {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Put, $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}", devOpsInstanceBody);
-                    if (result.StatusCode == HttpStatusCode.OK)
+                    catch (Exception ex)
                     {
-                        _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                        throw LogAndException($"Failed to create the A2A registration: {ex.Message}", ex);
+                    }
+
+                    AddSecretsBrokerInstance(sg);
+                    if (DevOpsSecretsBroker == null)
+                    {
+                        throw new DevOpsException(
+                            $"Failed to update the Safeguard Secrets Broker instance {_configDb.SvcId}");
+                    }
+
+                    DevOpsSecretsBroker.A2ARegistration = new A2ARegistration()
+                    {
+                        Id = registration.Id
+                    };
+                    var devOpsInstanceBody = JsonHelper.SerializeObject(DevOpsSecretsBroker);
+
+                    try
+                    {
+                        var result = sg.InvokeMethodFull(Service.Core, Method.Put,
+                            $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}", devOpsInstanceBody);
+                        if (result.StatusCode == HttpStatusCode.OK)
+                        {
+                            _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw LogAndException(
+                            $"Failed to update the A2A registration associated with the Safeguard Secrets Broker instance {_configDb.SvcId}: {ex.Message}",
+                            ex);
                     }
                 }
-                catch (Exception ex)
-                {
-                    throw LogAndException($"Failed to update the A2A registration associated with the Safeguard Secrets Broker instance {_configDb.SvcId}: {ex.Message}", ex);
-                }
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
             }
         }
 
-        private A2ARegistration GetA2ARegistration(ISafeguardConnection sg, A2ARegistrationType registrationType)
+        public A2ARegistration GetA2ARegistration(ISafeguardConnection sgConnection, A2ARegistrationType registrationType)
         {
-            FullResponse result;
+            var sg = sgConnection ?? Connect();
 
-            // If we don't have a registration Id then try to find the registration by name
-            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
-                (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
+            try
             {
-                var knownRegistrationName = (registrationType == A2ARegistrationType.Account)
-                    ? WellKnownData.DevOpsRegistrationName(_configDb.SvcId)
-                    : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId);
-                try
+                FullResponse result;
+
+                // If we don't have a registration Id then try to find the registration by name
+                if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
+                    (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
                 {
-                    var p = new Dictionary<string, string>
-                        {{"filter", $"AppName eq '{knownRegistrationName}'"}};
-
-                    result = sg.InvokeMethodFull(Service.Core, Method.Get, "A2ARegistrations", null, p);
-                    if (result.StatusCode == HttpStatusCode.OK)
+                    var knownRegistrationName = (registrationType == A2ARegistrationType.Account)
+                        ? WellKnownData.DevOpsRegistrationName(_configDb.SvcId)
+                        : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId);
+                    try
                     {
-                        var foundRegistrations = JsonHelper.DeserializeObject<List<A2ARegistration>>(result.Body);
+                        var p = new Dictionary<string, string>
+                            {{"filter", $"AppName eq '{knownRegistrationName}'"}};
 
-                        if (foundRegistrations.Count > 0)
+                        result = sg.InvokeMethodFull(Service.Core, Method.Get, "A2ARegistrations", null, p);
+                        if (result.StatusCode == HttpStatusCode.OK)
                         {
-                            var registration = foundRegistrations.FirstOrDefault();
-                            if (registration != null)
-                            {
-                                if (registrationType == A2ARegistrationType.Account)
-                                {
-                                    _configDb.A2aRegistrationId = registration.Id;
-                                }
-                                else
-                                {
-                                    _configDb.A2aVaultRegistrationId = registration.Id;
-                                }
-                            }
+                            var foundRegistrations = JsonHelper.DeserializeObject<List<A2ARegistration>>(result.Body);
 
-                            return registration;
+                            if (foundRegistrations.Count > 0)
+                            {
+                                var registration = foundRegistrations.FirstOrDefault();
+                                if (registration != null)
+                                {
+                                    if (registrationType == A2ARegistrationType.Account)
+                                    {
+                                        _configDb.A2aRegistrationId = registration.Id;
+                                    }
+                                    else
+                                    {
+                                        _configDb.A2aVaultRegistrationId = registration.Id;
+                                    }
+                                }
+
+                                return registration;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Failed to get the A2A user by name {knownRegistrationName}: {ex.Message}");
+                    }
+                }
+                else // Otherwise just get the registration by id
+                {
+                    var registrationId = (registrationType == A2ARegistrationType.Account)
+                        ? _configDb.A2aRegistrationId
+                        : _configDb.A2aVaultRegistrationId;
+                    try
+                    {
+                        var a2aRegistration = GetA2ARegistration(sg, registrationId);
+                        if (a2aRegistration != null)
+                        {
+                            return a2aRegistration;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex is SafeguardDotNetException &&
+                            ((SafeguardDotNetException) ex).HttpStatusCode == HttpStatusCode.NotFound)
+                        {
+                            _logger.Error($"Registration not found for id '{registrationId}': {ex.Message}");
+                        }
+                        else
+                        {
+                            throw LogAndException(
+                                $"Failed to get the registration for id '{registrationId}': {ex.Message}", ex);
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failed to get the A2A user by name {knownRegistrationName}: {ex.Message}");
-                }
-            }
-            else // Otherwise just get the registration by id
-            {
-                var registrationId = (registrationType == A2ARegistrationType.Account)
-                    ? _configDb.A2aRegistrationId
-                    : _configDb.A2aVaultRegistrationId;
-                try
-                {
-                    var a2aRegistration = GetA2ARegistration(sg, registrationId);
-                    if (a2aRegistration != null)
-                    {
-                        return a2aRegistration;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (ex is SafeguardDotNetException && ((SafeguardDotNetException)ex).HttpStatusCode == HttpStatusCode.NotFound)
-                    {
-                        _logger.Error($"Registration not found for id '{registrationId}': {ex.Message}");
-                    }
-                    else
-                    {
-                        throw LogAndException($"Failed to get the registration for id '{registrationId}': {ex.Message}", ex);
-                    }
-                }
-            }
 
-            // Apparently the registration id we have is wrong so get rid of it.
-            if (registrationType == A2ARegistrationType.Account)
-            {
-                _configDb.A2aRegistrationId = null;
+                // Apparently the registration id we have is wrong so get rid of it.
+                if (registrationType == A2ARegistrationType.Account)
+                {
+                    _configDb.A2aRegistrationId = null;
+                }
+                else
+                {
+                    _configDb.A2aVaultRegistrationId = null;
+                }
             }
-            else
+            finally
             {
-                _configDb.A2aVaultRegistrationId = null;
+                if (sgConnection == null)
+                    sg.LogOut();
             }
 
             return null;
@@ -563,7 +593,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Debug($"Failed to find or convert the IP address from the environment.");
+                    _logger.Debug("Failed to find or convert the IP address from the environment.", ex);
                     return null;
                 }
             }
@@ -616,8 +646,8 @@ namespace OneIdentity.DevOps.Logic
             {
                 _logger.Debug("Connecting to Safeguard: {address}");
                 return (ignoreSsl.HasValue && ignoreSsl.Value) ?
-                    Safeguard.Connect(address, token, version ?? DefaultApiVersion, true) :
-                    Safeguard.Connect(address, token, CertificateValidationCallback, version ?? DefaultApiVersion);
+                    Safeguard.Connect(address, token, version ?? WellKnownData.DefaultApiVersion, true) :
+                    Safeguard.Connect(address, token, CertificateValidationCallback, version ?? WellKnownData.DefaultApiVersion);
             }
             catch (SafeguardDotNetException ex)
             {
@@ -630,7 +660,7 @@ namespace OneIdentity.DevOps.Logic
 
             return ValidateLogin(token, tokenOnly ? null : new SafeguardDevOpsConnection()
             {
-                ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion,
+                ApiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion,
                 ApplianceAddress = _configDb.SafeguardAddress,
                 IgnoreSsl = _configDb.IgnoreSsl ?? false
             });
@@ -921,7 +951,7 @@ namespace OneIdentity.DevOps.Logic
             CreateA2ARegistration(sg, A2ARegistrationType.Vault);
             EnableA2AService(sg);
 
-            return GetDevOpsConfiguration();
+            return GetDevOpsConfiguration(sg);
         }
 
         public SafeguardDevOpsConnection GetAnonymousSafeguardConnection()
@@ -936,10 +966,10 @@ namespace OneIdentity.DevOps.Logic
                 {
                     ApplianceAddress = _configDb.SafeguardAddress,
                     IgnoreSsl = _configDb.IgnoreSsl,
-                    ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion
+                    ApiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion
                 };
         
-                sg = Safeguard.Connect(safeguardConnection.ApplianceAddress, safeguardConnection.ApiVersion ?? DefaultApiVersion, true);
+                sg = Safeguard.Connect(safeguardConnection.ApplianceAddress, safeguardConnection.ApiVersion ?? WellKnownData.DefaultApiVersion, true);
                 return GetSafeguardAvailability(sg, safeguardConnection);
             }
             catch (SafeguardDotNetException ex)
@@ -957,7 +987,7 @@ namespace OneIdentity.DevOps.Logic
             if (string.IsNullOrEmpty(_configDb.SafeguardAddress))
                 return new SafeguardDevOpsConnection();
 
-            return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? DefaultApiVersion, true);
+            return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion, true);
         }
 
         public SafeguardDevOpsConnection SetSafeguardData(string token, SafeguardData safeguardData)
@@ -985,12 +1015,12 @@ namespace OneIdentity.DevOps.Logic
             }
 
             var safeguardConnection = ConnectAnonymous(safeguardData.ApplianceAddress,
-                safeguardData.ApiVersion ?? DefaultApiVersion, safeguardData.IgnoreSsl ?? false);
+                safeguardData.ApiVersion ?? WellKnownData.DefaultApiVersion, safeguardData.IgnoreSsl ?? false);
 
             if (safeguardConnection != null && FetchAndStoreSignatureCertificate(token, safeguardConnection))
             {
                 _configDb.SafeguardAddress = safeguardData.ApplianceAddress;
-                _configDb.ApiVersion = safeguardData.ApiVersion ?? DefaultApiVersion;
+                _configDb.ApiVersion = safeguardData.ApiVersion ?? WellKnownData.DefaultApiVersion;
                 _configDb.IgnoreSsl = safeguardData.IgnoreSsl ?? false;
 
                 safeguardConnection.ApplianceAddress = _configDb.SafeguardAddress;
@@ -1014,10 +1044,10 @@ namespace OneIdentity.DevOps.Logic
             RestartService();
         }
 
-        public void DeleteDevOpsConfiguration()
+        public void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection)
         {
-            DeleteA2ARegistration(A2ARegistrationType.Account);
-            DeleteA2ARegistration(A2ARegistrationType.Vault);
+            DeleteA2ARegistration(sgConnection, A2ARegistrationType.Account);
+            DeleteA2ARegistration(sgConnection, A2ARegistrationType.Vault);
             RemoveClientCertificate();
             DeleteSafeguardData();
         }
@@ -1098,46 +1128,55 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteTrustedCertificateByThumbPrint(thumbPrint);
         }
 
-        public IEnumerable<CertificateInfo> ImportTrustedCertificates()
+        public IEnumerable<CertificateInfo> ImportTrustedCertificates(ISafeguardConnection sgConnection)
         {
-            using var sg = Connect();
-
-            IEnumerable<ServerCertificate> serverCertificates = null;
-            var trustedCertificates = new List<CertificateInfo>();
+            var sg = sgConnection ?? Connect();
 
             try
             {
+                IEnumerable<ServerCertificate> serverCertificates = null;
+                var trustedCertificates = new List<CertificateInfo>();
 
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "TrustedCertificates");
-                if (result.StatusCode == HttpStatusCode.OK)
+                try
                 {
-                    serverCertificates = JsonHelper.DeserializeObject<IEnumerable<ServerCertificate>>(result.Body);
-                    _logger.Debug($"Received {serverCertificates.Count()} certificates from Safeguard.");
-                }
-            }
-            catch (Exception ex)
-            {
-                throw LogAndException("Failed to get the Safeguard trusted certificates.", ex);
-            }
 
-            if (serverCertificates != null)
-            {
-                foreach (var cert in serverCertificates)
-                {
-                    try
+                    var result = sg.InvokeMethodFull(Service.Core, Method.Get, "TrustedCertificates");
+                    if (result.StatusCode == HttpStatusCode.OK)
                     {
-                        _logger.Debug($"Importing trusted certificate {cert.Subject} {cert.Thumbprint}.");
-                        var certificateInfo = AddTrustedCertificate(cert.Base64CertificateData);
-                        trustedCertificates.Add(certificateInfo);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error($"Failed to import certificate {cert.Subject} {cert.Thumbprint} from Safeguard. {ex.Message}");
+                        serverCertificates = JsonHelper.DeserializeObject<IEnumerable<ServerCertificate>>(result.Body);
+                        _logger.Debug($"Received {serverCertificates.Count()} certificates from Safeguard.");
                     }
                 }
-            }
+                catch (Exception ex)
+                {
+                    throw LogAndException("Failed to get the Safeguard trusted certificates.", ex);
+                }
 
-            return trustedCertificates;
+                if (serverCertificates != null)
+                {
+                    foreach (var cert in serverCertificates)
+                    {
+                        try
+                        {
+                            _logger.Debug($"Importing trusted certificate {cert.Subject} {cert.Thumbprint}.");
+                            var certificateInfo = AddTrustedCertificate(cert.Base64CertificateData);
+                            trustedCertificates.Add(certificateInfo);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error(
+                                $"Failed to import certificate {cert.Subject} {cert.Thumbprint} from Safeguard. {ex.Message}");
+                        }
+                    }
+                }
+
+                return trustedCertificates;
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
+            }
         }
 
         public void DeleteAllTrustedCertificates()
@@ -1149,7 +1188,7 @@ namespace OneIdentity.DevOps.Logic
         {
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}");
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     var secretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
@@ -1168,15 +1207,15 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        private List<DevOpsSecretsBrokerAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg)
+        public List<DevOpsSecretsBrokerAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg)
         {
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}/Accounts");
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}/Accounts");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     var secretsBrokerAccounts = JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBrokerAccount>>(result.Body).ToList();
-                    return secretsBrokerAccounts.Any() ? secretsBrokerAccounts : null;
+                    return secretsBrokerAccounts;
                 }
             }
             catch (Exception ex)
@@ -1184,22 +1223,22 @@ namespace OneIdentity.DevOps.Logic
                 _logger.Error("Failed to get the DevOps Secrets Broker accounts from Safeguard. ", ex);
             }
 
-            return null;
+            return new List<DevOpsSecretsBrokerAccount>();
         }
 
-        public object GetAvailableAccounts(string filter, int? page, bool? count, int? limit, string orderby, string q)
+        public object GetAvailableAccounts(ISafeguardConnection sgConnection, string filter, int? page, bool? count, int? limit, string orderby, string q)
         {
-            using var sg = Connect();
+            var sg = sgConnection ?? Connect();
 
             try
             {
                 var p = new Dictionary<string, string>();
-                JsonHelper.AddQueryParameter(p,nameof(filter), filter);
-                JsonHelper.AddQueryParameter(p,nameof(page), page?.ToString());
-                JsonHelper.AddQueryParameter(p,nameof(limit), limit?.ToString());
-                JsonHelper.AddQueryParameter(p,nameof(count), count?.ToString());
-                JsonHelper.AddQueryParameter(p,nameof(orderby), orderby);
-                JsonHelper.AddQueryParameter(p,nameof(q), q);
+                JsonHelper.AddQueryParameter(p, nameof(filter), filter);
+                JsonHelper.AddQueryParameter(p, nameof(page), page?.ToString());
+                JsonHelper.AddQueryParameter(p, nameof(limit), limit?.ToString());
+                JsonHelper.AddQueryParameter(p, nameof(count), count?.ToString());
+                JsonHelper.AddQueryParameter(p, nameof(orderby), orderby);
+                JsonHelper.AddQueryParameter(p, nameof(q), q);
 
                 var result = sg.InvokeMethodFull(Service.Core, Method.Get, "PolicyAccounts", null, p);
                 if (result.StatusCode == HttpStatusCode.OK)
@@ -1222,13 +1261,18 @@ namespace OneIdentity.DevOps.Logic
             {
                 throw LogAndException($"Get available accounts failed. {ex.Message}", ex);
             }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
+            }
 
             return new List<SppAccount>();
         }
 
-        public AssetAccount GetAccount(int id)
+        public AssetAccount GetAccount(ISafeguardConnection sgConnection, int id)
         {
-            using var sg = Connect();
+            var sg = sgConnection ?? Connect();
 
             try
             {
@@ -1244,7 +1288,8 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                if (ex is SafeguardDotNetException && ((SafeguardDotNetException)ex).HttpStatusCode == HttpStatusCode.NotFound)
+                if (ex is SafeguardDotNetException &&
+                    ((SafeguardDotNetException) ex).HttpStatusCode == HttpStatusCode.NotFound)
                 {
                     _logger.Error($"Account not found for id '{id}': {ex.Message}");
                 }
@@ -1253,23 +1298,28 @@ namespace OneIdentity.DevOps.Logic
                     throw LogAndException($"Failed to get the account for id '{id}': {ex.Message}", ex);
                 }
             }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
+            }
 
             return null;
         }
 
-        public object GetAvailableA2ARegistrations(string filter, int? page, bool? count, int? limit, string @orderby, string q)
+        public object GetAvailableA2ARegistrations(ISafeguardConnection sgConnection, string filter, int? page, bool? count, int? limit, string @orderby, string q)
         {
-            using var sg = Connect();
+            var sg = sgConnection ?? Connect();
 
             try
             {
                 var p = new Dictionary<string, string>();
-                JsonHelper.AddQueryParameter(p,nameof(filter), filter);
-                JsonHelper.AddQueryParameter(p,nameof(page), page?.ToString());
-                JsonHelper.AddQueryParameter(p,nameof(limit), limit?.ToString());
-                JsonHelper.AddQueryParameter(p,nameof(count), count?.ToString());
-                JsonHelper.AddQueryParameter(p,nameof(orderby), orderby);
-                JsonHelper.AddQueryParameter(p,nameof(q), q);
+                JsonHelper.AddQueryParameter(p, nameof(filter), filter);
+                JsonHelper.AddQueryParameter(p, nameof(page), page?.ToString());
+                JsonHelper.AddQueryParameter(p, nameof(limit), limit?.ToString());
+                JsonHelper.AddQueryParameter(p, nameof(count), count?.ToString());
+                JsonHelper.AddQueryParameter(p, nameof(orderby), orderby);
+                JsonHelper.AddQueryParameter(p, nameof(q), q);
 
                 var result = sg.InvokeMethodFull(Service.Core, Method.Get, "A2ARegistrations", null, p);
                 if (result.StatusCode == HttpStatusCode.OK)
@@ -1293,18 +1343,16 @@ namespace OneIdentity.DevOps.Logic
             {
                 throw LogAndException($"Get available accounts failed. {ex.Message}", ex);
             }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
+            }
 
             return new List<A2ARegistration>();
         }
 
-        public A2ARegistration GetA2ARegistration(A2ARegistrationType registrationType)
-        {
-            using var sg = Connect();
-
-            return GetA2ARegistration(sg, registrationType);
-        }
-
-        public A2ARegistration SetA2ARegistration(IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, int id)
+        public A2ARegistration SetA2ARegistration(ISafeguardConnection sgConnection, IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, int id)
         {
             //Turn off the monitor if it is running
             //Remove all of the mapped accounts to plugins
@@ -1313,62 +1361,71 @@ namespace OneIdentity.DevOps.Logic
             //Look up the new A2A registration to make sure that it exists in Safeguard
             //Update the configdb.svcId with the DevOpsInstanceId from the A2A registration;
 
-            using var sg = Connect();
-            var a2aRegistration = GetA2ARegistration(sg, id);
+            var sg = sgConnection ?? Connect();
 
-            if (a2aRegistration != null && !string.IsNullOrEmpty(a2aRegistration.DevOpsInstanceId))
+            try
             {
-                monitoringLogic.EnableMonitoring(false);
+                var a2aRegistration = GetA2ARegistration(sg, id);
 
-                _configDb.SvcId = a2aRegistration.DevOpsInstanceId;
-                _configDb.A2aUserId = a2aRegistration.CertificateUserId;
-
-                var a2aUser = GetA2AUser(sg, _configDb.A2aUserId);
-                _configDb.A2aUserId = a2aUser.Id;
-
-                //Just making these calls with the config ids set to null will realign everything.
-                _configDb.A2aRegistrationId = null;
-                _configDb.A2aVaultRegistrationId = null;
-                a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Account);
-                GetA2ARegistration(sg, A2ARegistrationType.Vault);
-
-                var devOpsSecretsBroker = GetSecretsBrokerInstance(sg);
-                if (devOpsSecretsBroker != null)
+                if (a2aRegistration != null && !string.IsNullOrEmpty(a2aRegistration.DevOpsInstanceId))
                 {
-                    devOpsSecretsBroker.DevOpsInstanceId = a2aRegistration.DevOpsInstanceId;
-                    devOpsSecretsBroker.A2ARegistration = new A2ARegistration()
-                    {
-                        Id = a2aRegistration.Id
-                    };
-                    var devOpsInstanceBody = JsonHelper.SerializeObject(devOpsSecretsBroker);
+                    monitoringLogic.EnableMonitoring(false);
 
-                    try
+                    _configDb.SvcId = a2aRegistration.DevOpsInstanceId;
+                    _configDb.A2aUserId = a2aRegistration.CertificateUserId;
+
+                    var a2aUser = GetA2AUser(sg, _configDb.A2aUserId);
+                    _configDb.A2aUserId = a2aUser.Id;
+
+                    //Just making these calls with the config ids set to null will realign everything.
+                    _configDb.A2aRegistrationId = null;
+                    _configDb.A2aVaultRegistrationId = null;
+                    a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Account);
+                    GetA2ARegistration(sg, A2ARegistrationType.Vault);
+
+                    var devOpsSecretsBroker = GetSecretsBrokerInstance(sg);
+                    if (devOpsSecretsBroker != null)
                     {
-                        var result = sg.InvokeMethodFull(Service.Core, Method.Put,
-                            $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devOpsInstanceBody);
-                        if (result.StatusCode == HttpStatusCode.OK)
+                        devOpsSecretsBroker.DevOpsInstanceId = a2aRegistration.DevOpsInstanceId;
+                        devOpsSecretsBroker.A2ARegistration = new A2ARegistration()
                         {
-                            _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                            Id = a2aRegistration.Id
+                        };
+                        var devOpsInstanceBody = JsonHelper.SerializeObject(devOpsSecretsBroker);
+
+                        try
+                        {
+                            var result = sg.InvokeMethodFull(Service.Core, Method.Put,
+                                $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devOpsInstanceBody);
+                            if (result.StatusCode == HttpStatusCode.OK)
+                            {
+                                _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            throw LogAndException(
+                                $"Failed to update the A2A registration associated with the Safeguard Secrets Broker instance {_configDb.SvcId}: {ex.Message}",
+                                ex);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        throw LogAndException(
-                            $"Failed to update the A2A registration associated with the Safeguard Secrets Broker instance {_configDb.SvcId}: {ex.Message}",
-                            ex);
-                    }
+
+                    pluginsLogic.DeleteAccountMappings();
+                    pluginsLogic.ClearMappedPluginVaultAccounts();
+
+                    return a2aRegistration;
                 }
-
-                pluginsLogic.DeleteAccountMappings();
-                pluginsLogic.ClearMappedPluginVaultAccounts();
-
-                return a2aRegistration;
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
             }
 
             return null;
         }
 
-        public void DeleteA2ARegistration(A2ARegistrationType registrationType)
+        public void DeleteA2ARegistration(ISafeguardConnection sgConnection, A2ARegistrationType registrationType)
         {
             if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
@@ -1378,59 +1435,68 @@ namespace OneIdentity.DevOps.Logic
                 return;
             }
 
-            using var sg = Connect();
+            var sg = sgConnection ?? Connect();
 
-            A2ARegistration registration = null;
             try
             {
-                registration = GetA2ARegistration(sg, registrationType);
-                if (registration != null)
-                {
-                    sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registration.Id}");
-                    if (registrationType == A2ARegistrationType.Account)
-                    {
-                        _configDb.DeleteAccountMappings();
-                        _configDb.A2aRegistrationId = null;
-                        _serviceConfiguration.A2ARegistrationName = null;
-                    }
-                    else
-                    {
-                        _configDb.A2aVaultRegistrationId = null;
-                        _serviceConfiguration.A2AVaultRegistrationName = null;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Failed to delete the registration {_configDb.A2aRegistrationId} - {registration?.AppName}: {ex.Message}");
-            }
-
-            // Only delete the A2A user when both A2A registrations have been deleted.
-            if (_configDb.A2aRegistrationId == null && _configDb.A2aVaultRegistrationId == null)
-            {
-                A2AUser user = null;
+                A2ARegistration registration = null;
                 try
                 {
-                    user = GetA2AUser(sg);
-                    if (user != null)
+                    registration = GetA2ARegistration(sg, registrationType);
+                    if (registration != null)
                     {
-                        sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
-                        _configDb.DeleteAccountMappings();
-                        _serviceConfiguration.UserName = null;
-                        _serviceConfiguration.UserDisplayName = null;
-                        _serviceConfiguration.IdentityProviderName = null;
-                        _serviceConfiguration.AdminRoles = null;
+                        sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registration.Id}");
+                        if (registrationType == A2ARegistrationType.Account)
+                        {
+                            _configDb.DeleteAccountMappings();
+                            _configDb.A2aRegistrationId = null;
+                            _serviceConfiguration.A2ARegistrationName = null;
+                        }
+                        else
+                        {
+                            _configDb.A2aVaultRegistrationId = null;
+                            _serviceConfiguration.A2AVaultRegistrationName = null;
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.Error(
-                        $"Failed to delete the A2A certificate user {_configDb.A2aUserId} - {user?.UserName}: {ex.Message}");
+                        $"Failed to delete the registration {_configDb.A2aRegistrationId} - {registration?.AppName}: {ex.Message}");
                 }
+
+                // Only delete the A2A user when both A2A registrations have been deleted.
+                if (_configDb.A2aRegistrationId == null && _configDb.A2aVaultRegistrationId == null)
+                {
+                    A2AUser user = null;
+                    try
+                    {
+                        user = GetA2AUser(sg);
+                        if (user != null)
+                        {
+                            sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
+                            _configDb.DeleteAccountMappings();
+                            _serviceConfiguration.UserName = null;
+                            _serviceConfiguration.UserDisplayName = null;
+                            _serviceConfiguration.IdentityProviderName = null;
+                            _serviceConfiguration.AdminRoles = null;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(
+                            $"Failed to delete the A2A certificate user {_configDb.A2aUserId} - {user?.UserName}: {ex.Message}");
+                    }
+                }
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
             }
         }
 
-        public A2ARetrievableAccount GetA2ARetrievableAccount(int id, A2ARegistrationType registrationType)
+        public A2ARetrievableAccount GetA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType)
         {
             if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
@@ -1438,14 +1504,16 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException("A2A registration not configured");
             }
 
-            using var sg = Connect();
             var registrationId = (registrationType == A2ARegistrationType.Account)
                 ? _configDb.A2aRegistrationId
                 : _configDb.A2aVaultRegistrationId;
 
+            var sg = sgConnection ?? Connect();
+
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"A2ARegistrations/{registrationId}/RetrievableAccounts/{id}");
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get,
+                    $"A2ARegistrations/{registrationId}/RetrievableAccounts/{id}");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     return JsonHelper.DeserializeObject<A2ARetrievableAccount>(result.Body);
@@ -1455,11 +1523,16 @@ namespace OneIdentity.DevOps.Logic
             {
                 throw LogAndException($"Get retrievable account failed for account {id}", ex);
             }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
+            }
 
             return null;
         }
 
-        public void DeleteA2ARetrievableAccount(int id, A2ARegistrationType registrationType)
+        public void DeleteA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType)
         {
             if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
@@ -1467,14 +1540,16 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException("A2A registration not configured");
             }
 
-            using var sg = Connect();
             var registrationId = (registrationType == A2ARegistrationType.Account)
                 ? _configDb.A2aRegistrationId
                 : _configDb.A2aVaultRegistrationId;
 
+            var sg = sgConnection ?? Connect();
+
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registrationId}/RetrievableAccounts/{id}");
+                var result = sg.InvokeMethodFull(Service.Core, Method.Delete,
+                    $"A2ARegistrations/{registrationId}/RetrievableAccounts/{id}");
                 if (result.StatusCode != HttpStatusCode.NoContent)
                 {
                     _logger.Error($"(Failed to remove A2A retrievable account {id}");
@@ -1484,9 +1559,14 @@ namespace OneIdentity.DevOps.Logic
             {
                 throw LogAndException($"Failed to remove A2A retrievable account {id}", ex);
             }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
+            }
         }
 
-        public IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts(A2ARegistrationType registrationType)
+        public IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts(ISafeguardConnection sgConnection, A2ARegistrationType registrationType)
         {
             if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
@@ -1494,14 +1574,16 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException("A2A registration not configured");
             }
 
-            using var sg = Connect();
             var registrationId = (registrationType == A2ARegistrationType.Account)
                 ? _configDb.A2aRegistrationId
                 : _configDb.A2aVaultRegistrationId;
 
+            var sg = sgConnection ?? Connect();
+
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"A2ARegistrations/{registrationId}/RetrievableAccounts");
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get,
+                    $"A2ARegistrations/{registrationId}/RetrievableAccounts");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     return JsonHelper.DeserializeObject<IEnumerable<A2ARetrievableAccount>>(result.Body);
@@ -1511,11 +1593,16 @@ namespace OneIdentity.DevOps.Logic
             {
                 _logger.Error($"Get retrievable accounts failed: {ex.Message}");
             }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
+            }
 
             return new List<A2ARetrievableAccount>();
         }
 
-        public A2ARetrievableAccount GetA2ARetrievableAccountById(A2ARegistrationType registrationType, int accountId)
+        public A2ARetrievableAccount GetA2ARetrievableAccountById(ISafeguardConnection sgConnection, A2ARegistrationType registrationType, int accountId)
         {
             if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                 (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
@@ -1523,10 +1610,11 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException("A2A registration not configured");
             }
 
-            using var sg = Connect();
             var registrationId = (registrationType == A2ARegistrationType.Account)
                 ? _configDb.A2aRegistrationId
                 : _configDb.A2aVaultRegistrationId;
+
+            var sg = sgConnection ?? Connect();
 
             try
             {
@@ -1544,46 +1632,62 @@ namespace OneIdentity.DevOps.Logic
                     _logger.Error($"Retrievable account {accountId} not found: {ex.Message}");
                     return null;
                 }
+
                 throw LogAndException($"Get retrievable account failed for account id {accountId}", ex);
             }
             catch (Exception ex)
             {
                 throw LogAndException($"Get retrievable account failed for account id {accountId}", ex);
             }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
+            }
 
             return null;
         }
 
-        public IEnumerable<A2ARetrievableAccount> AddA2ARetrievableAccounts(IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType)
+        public IEnumerable<A2ARetrievableAccount> AddA2ARetrievableAccounts(ISafeguardConnection sgConnection, IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType)
         {
             if (_configDb.A2aRegistrationId == null)
             {
                 throw LogAndException("A2A registration not configured");
             }
 
-            using var sg = Connect();
             var ipRestrictions = LocalIPAddress();
             var registrationId = (registrationType == A2ARegistrationType.Account)
                 ? _configDb.A2aRegistrationId
                 : _configDb.A2aVaultRegistrationId;
 
-            foreach (var account in accounts)
-            {
-                try
-                {
-                    sg.InvokeMethodFull(Service.Core, Method.Post, $"A2ARegistrations/{registrationId}/RetrievableAccounts",
-                        $"{{\"AccountId\":{account.Id}, \"IpRestrictions\":[{ipRestrictions}]}}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failed to add account {account.Id} - {account.Name}: {ex.Message}");
-                }
-            }
+            var sg = sgConnection ?? Connect();
 
-            return GetA2ARetrievableAccounts(registrationType);
+            try
+            {
+                foreach (var account in accounts)
+                {
+                    try
+                    {
+                        sg.InvokeMethodFull(Service.Core, Method.Post,
+                            $"A2ARegistrations/{registrationId}/RetrievableAccounts",
+                            $"{{\"AccountId\":{account.Id}, \"IpRestrictions\":[{ipRestrictions}]}}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Failed to add account {account.Id} - {account.Name}: {ex.Message}");
+                    }
+                }
+
+                return GetA2ARetrievableAccounts(sg, registrationType);
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
+            }
         }
 
-        public void RemoveA2ARetrievableAccounts(IEnumerable<A2ARetrievableAccount> accounts, A2ARegistrationType registrationType)
+        public void RemoveA2ARetrievableAccounts(ISafeguardConnection sgConnection, IEnumerable<A2ARetrievableAccount> accounts, A2ARegistrationType registrationType)
         {
             if (_configDb.A2aRegistrationId == null)
             {
@@ -1598,25 +1702,36 @@ namespace OneIdentity.DevOps.Logic
                 throw new DevOpsException(msg);
             }
 
-            using var sg = Connect();
             var registrationId = (registrationType == A2ARegistrationType.Account)
                 ? _configDb.A2aRegistrationId
                 : _configDb.A2aVaultRegistrationId;
 
-            foreach (var account in retrievableAccounts)
+            var sg = sgConnection ?? Connect();
+
+            try
             {
-                try
+                foreach (var account in retrievableAccounts)
                 {
-                    sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registrationId}/RetrievableAccounts/{account.AccountId}");
+                    try
+                    {
+                        sg.InvokeMethodFull(Service.Core, Method.Delete,
+                            $"A2ARegistrations/{registrationId}/RetrievableAccounts/{account.AccountId}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(
+                            $"Failed to remove account {account.AccountId} - {account.AccountName}: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failed to remove account {account.AccountId} - {account.AccountName}: {ex.Message}");
-                }
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.LogOut();
             }
         }
 
-        public ServiceConfiguration GetDevOpsConfiguration()
+        public ServiceConfiguration GetDevOpsConfiguration(ISafeguardConnection sgConnection)
         {
             _serviceConfiguration.IdentityProviderName = null;
             _serviceConfiguration.UserName = null;
@@ -1626,225 +1741,139 @@ namespace OneIdentity.DevOps.Logic
             _serviceConfiguration.A2AVaultRegistrationName = null;
             _serviceConfiguration.Thumbprint = null;
 
-            using var sg = Connect();
-            var a2aUser = GetA2AUser(sg);
-            if (a2aUser != null)
-            {
-                _serviceConfiguration.IdentityProviderName = a2aUser.IdentityProviderName;
-                _serviceConfiguration.UserName = a2aUser.UserName;
-                _serviceConfiguration.UserDisplayName = a2aUser.DisplayName;
-                _serviceConfiguration.AdminRoles = a2aUser.AdminRoles;
-            }
+            var sg = sgConnection ?? Connect();
 
-            _serviceConfiguration.Appliance = GetSafeguardAvailability(sg,
-                new SafeguardDevOpsConnection()
+            try
+            {
+                var a2aUser = GetA2AUser(sg);
+                if (a2aUser != null)
                 {
-                    ApplianceAddress = _configDb.SafeguardAddress,
-                    IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value,
-                    ApiVersion = _configDb.ApiVersion ?? DefaultApiVersion
-                });
+                    _serviceConfiguration.IdentityProviderName = a2aUser.IdentityProviderName;
+                    _serviceConfiguration.UserName = a2aUser.UserName;
+                    _serviceConfiguration.UserDisplayName = a2aUser.DisplayName;
+                    _serviceConfiguration.AdminRoles = a2aUser.AdminRoles;
+                }
 
-            var a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Account);
-            if (a2aRegistration != null)
-            {
-                _serviceConfiguration.A2ARegistrationName = a2aRegistration.AppName;
+                _serviceConfiguration.Appliance = GetSafeguardAvailability(sg,
+                    new SafeguardDevOpsConnection()
+                    {
+                        ApplianceAddress = _configDb.SafeguardAddress,
+                        IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value,
+                        ApiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion
+                    });
+
+                var a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Account);
+                if (a2aRegistration != null)
+                {
+                    _serviceConfiguration.A2ARegistrationName = a2aRegistration.AppName;
+                }
+
+                a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Vault);
+                if (a2aRegistration != null)
+                {
+                    _serviceConfiguration.A2AVaultRegistrationName = a2aRegistration.AppName;
+                }
+
+                _serviceConfiguration.Thumbprint = _configDb.UserCertificate?.Thumbprint;
+
+                return _serviceConfiguration;
             }
-            a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Vault);
-            if (a2aRegistration != null)
+            finally
             {
-                _serviceConfiguration.A2AVaultRegistrationName = a2aRegistration.AppName;
+                if (sgConnection == null)
+                    sg.LogOut();
             }
-
-            _serviceConfiguration.Thumbprint = _configDb.UserCertificate?.Thumbprint;
-
-            return _serviceConfiguration;
         }
 
-        public async Task StartAddOnBackgroundMaintenance(IPluginsLogic pluginsLogic)
+        private static volatile object _secretsBrokerInstanceLock = new object();
+        public void AddSecretsBrokerInstance(ISafeguardConnection sgConnection)
         {
-            while (IsLoggedIn())
+            lock (_secretsBrokerInstanceLock)
             {
+                var sg = sgConnection ?? Connect();
+
                 try
                 {
-                    CheckAndAddSecretsBrokerInstance();
-                    CheckAndPushAddOnCredentials();
-                    CheckAndConfigureAddonPlugins(pluginsLogic);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"[Background Maintenance] {ex.Message}");
-                }
-
-                if (IsLoggedIn())
-                    await Task.Delay(TimeSpan.FromMinutes(1));
-            }
-        }
-
-        private void CheckAndConfigureAddonPlugins(IPluginsLogic pluginsLogic)
-        {
-            var addons = _configDb.GetAllAddons();
-            foreach (var addon in addons)
-            {
-                var plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
-                if (plugin != null && plugin.IsSystemOwned != addon.Manifest.IsPluginSystemOwned)
-                {
-                    plugin.IsSystemOwned = addon.Manifest.IsPluginSystemOwned;
-                    _configDb.SavePluginConfiguration(plugin);
-                }
-
-                if (!string.IsNullOrEmpty(addon.VaultAccountName) 
-                    && addon.VaultAccountId.HasValue 
-                    && addon.VaultAccountId > 0
-                    && !string.IsNullOrEmpty(addon.Manifest?.PluginName))
-                {
-                    plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
-                    if (plugin != null && plugin.VaultAccountId != addon.VaultAccountId)
+                    try
                     {
-                        plugin.VaultAccountId = addon.VaultAccountId;
-                        pluginsLogic.SavePluginVaultAccount(plugin.Name, new AssetAccount(){Id = addon.VaultAccountId.Value});
-                    }
-                }
-            }
-        }
+                        var filter = $"DevOpsInstanceId eq \"{_configDb.SvcId}\"";
 
-        private void CheckAndPushAddOnCredentials()
-        {
-            if (_devOpsSecretsBroker == null || !IsLoggedIn())
-                return;
+                        var p = new Dictionary<string, string>();
+                        JsonHelper.AddQueryParameter(p, nameof(filter), filter);
 
-            using var sg = Connect();
-
-            var secretsBrokerAccounts = GetSecretsBrokerAccounts(sg);
-
-            if (secretsBrokerAccounts != null)
-            {
-                var addons = _configDb.GetAllAddons();
-                foreach (var addon in addons)
-                {
-                    var accounts = new List<DevOpsSecretsBrokerAccount>();
-                    foreach (var credential in addon.VaultCredentials)
-                    {
-                        if (secretsBrokerAccounts.All(x => x.AccountName != credential.Key))
+                        var result =
+                            sg.InvokeMethodFull(Service.Core, Method.Get, "DevOps/SecretsBrokers", null, p);
+                        if (result.StatusCode == HttpStatusCode.OK)
                         {
-                            accounts.Add(new DevOpsSecretsBrokerAccount()
+                            var secretsBroker =
+                                (JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBroker>>(result.Body))
+                                .FirstOrDefault();
+                            if (secretsBroker != null)
                             {
-                                AccountId = 0,
-                                AccountName = credential.Key,
-                                Description = addon.Manifest.DisplayName + " account",
-                                AssetId = _devOpsSecretsBroker.AssetId,
-                                Password = credential.Value
-                            });
+                                if (secretsBroker.DevOpsInstanceId != _devOpsSecretsBroker?.DevOpsInstanceId)
+                                {
+                                    _devOpsSecretsBroker = secretsBroker;
+                                }
+
+                                return;
+                            }
                         }
                     }
-
-                    if (!string.IsNullOrEmpty(addon.VaultAccountName))
+                    catch (SafeguardDotNetException ex)
                     {
-                        var vaultAccount = secretsBrokerAccounts.FirstOrDefault(x => x.AccountName.StartsWith(addon.VaultAccountName));
-                        if (vaultAccount != null && addon.VaultAccountId != vaultAccount.AccountId)
+                        if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                            _logger.Information(
+                                "DevOps Secrets Broker instance not found in Safeguard.  Creating a new instance. ",
+                                ex);
+                        else
+                            _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+                    }
+
+                    var addresses = GetLocalIPAddresses();
+                    if (addresses != null && addresses.Any())
+                    {
+                        var ipAddress = addresses.FirstOrDefault();
+
+                        var secretsBroker = new DevOpsSecretsBroker()
                         {
-                            addon.VaultAccountId = vaultAccount.AccountId;
-                            addon.VaultAccountName = vaultAccount.AccountName;
-                            addon.VaultAssetId = vaultAccount.AssetId;
-                            addon.VaultAssetName = vaultAccount.AssetName;
-                            _configDb.SaveAddon(addon);
-                        }
-                    }
+                            Host = ipAddress.ToString(),
+                            DevOpsInstanceId = _configDb.SvcId,
+                            AssetName = WellKnownData.DevOpsAssetName + "-" + ipAddress
+                        };
 
-                    if (accounts.Any())
-                    {
-                        var secretsBrokerAccountsStr = JsonHelper.SerializeObject(accounts);
+                        var secretsBrokerStr = JsonHelper.SerializeObject(secretsBroker);
                         try
                         {
-                            var result = sg.InvokeMethodFull(Service.Core, Method.Post,
-                                $"DevOps/SecretsBrokers/{_devOpsSecretsBroker.Id}/Accounts/Add",
-                                secretsBrokerAccountsStr);
-                            if (result.StatusCode == HttpStatusCode.OK)
+                            var result = sg.InvokeMethodFull(Service.Core, Method.Post, "DevOps/SecretsBrokers",
+                                secretsBrokerStr);
+                            if (result.StatusCode == HttpStatusCode.Created)
                             {
+                                _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
                                 return;
                             }
                         }
                         catch (Exception ex)
                         {
                             _logger.Error(
-                                $"Failed to sync the credentials for the Add-On {addon.Name}: {ex.Message}", ex);
+                                $"Failed to create the DevOps Secrets Broker instance in Safeguard: {ex.Message}",
+                                ex);
                         }
                     }
-                }
-            }
-        }
-
-        private void CheckAndAddSecretsBrokerInstance()
-        {
-            if (!IsLoggedIn())
-                return;
-
-            using var sg = Connect();
-
-            try
-            {
-                var filter = $"DevOpsInstanceId eq \"{_configDb.SvcId}\"";
-
-                var p = new Dictionary<string, string>();
-                JsonHelper.AddQueryParameter(p, nameof(filter), filter);
-
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "DevOps/SecretsBrokers", null, p);
-                if (result.StatusCode == HttpStatusCode.OK)
-                {
-                    var secretsBrokers =
-                        JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBroker>>(result.Body);
-                    if (secretsBrokers != null && secretsBrokers.Any())
+                    else
                     {
-                        _devOpsSecretsBroker = secretsBrokers.FirstOrDefault();
-                        return;
+                        _logger.Error(
+                            "Failed to create the DevOps Secrets Broker instance in Safeguard.  Unable to get the local IP address");
                     }
                 }
-            }
-            catch (SafeguardDotNetException ex)
-            {
-                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
-                    _logger.Information(
-                        "DevOps Secrets Broker instance not found in Safeguard.  Creating a new instance. ", ex);
-                else
-                    _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
-            }
-
-            var addresses = GetLocalIPAddresses();
-            if (addresses != null && addresses.Any())
-            {
-                var ipAddress = addresses.FirstOrDefault();
-
-                var secretsBroker = new DevOpsSecretsBroker()
+                finally
                 {
-                    Host = ipAddress.ToString(),
-                    DevOpsInstanceId = _configDb.SvcId,
-                    AssetName = WellKnownData.DevOpsAssetName + "-" + ipAddress
-                };
-
-                var secretsBrokerStr = JsonHelper.SerializeObject(secretsBroker);
-                try
-                {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Post, "DevOps/SecretsBrokers",
-                        secretsBrokerStr);
-                    if (result.StatusCode == HttpStatusCode.Created)
-                    {
-                        _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
-                        return;
-                    }
+                    if (sgConnection == null)
+                        sg.LogOut();
                 }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failed to create the DevOps Secrets Broker instance in Safeguard: {ex.Message}",
-                        ex);
-                }
-            }
-            else
-            {
-                _logger.Error(
-                    "Failed to create the DevOps Secrets Broker instance in Safeguard.  Unable to get the local IP address");
             }
         }
 

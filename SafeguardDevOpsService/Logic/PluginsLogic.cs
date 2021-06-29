@@ -166,7 +166,7 @@ namespace OneIdentity.DevOps.Logic
             return plugin;
         }
 
-        public bool TestPluginConnectionByName(string name)
+        public bool TestPluginConnectionByName(ISafeguardConnection sgConnection, string name)
         {
             var plugin = _configDb.GetPluginByName(name);
 
@@ -177,7 +177,7 @@ namespace OneIdentity.DevOps.Logic
                 throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
-            return _pluginManager.TestPluginVaultConnection(name);
+            return _pluginManager.TestPluginVaultConnection(sgConnection, name);
         }
 
         public PluginState GetPluginDisabledState(string name)
@@ -259,7 +259,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        public IEnumerable<AccountMapping> SaveAccountMappings(string name, IEnumerable<A2ARetrievableAccount> accounts)
+        public IEnumerable<AccountMapping> SaveAccountMappings(ISafeguardConnection sgConnection, string name, IEnumerable<A2ARetrievableAccount> accounts)
         {
             if (_configDb.A2aRegistrationId == null)
             {
@@ -283,46 +283,55 @@ namespace OneIdentity.DevOps.Logic
                 throw new DevOpsException(msg);
             }
 
-            using var sg = _safeguardLogic.Connect();
+            var sg = sgConnection ?? _safeguardLogic.Connect();
 
-            var newAccounts = new List<AccountMapping>();
-
-            foreach (var account in retrievableAccounts)
+            try
             {
-                try
-                {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"A2ARegistrations/{_configDb.A2aRegistrationId}/RetrievableAccounts/{account.AccountId}");
-                    if (result.StatusCode == HttpStatusCode.OK)
-                    {
-                        var retrievableAccount = JsonHelper.DeserializeObject<A2ARetrievableAccount>(result.Body);
-                        var accountMapping = new AccountMapping()
-                        {
-                            AccountName = retrievableAccount.AccountName,
-                            AccountId = retrievableAccount.AccountId,
-                            ApiKey = retrievableAccount.ApiKey,
-                            AssetName = retrievableAccount.SystemName,
-                            SystemId = retrievableAccount.SystemId,
-                            DomainName = retrievableAccount.DomainName,
-                            NetworkAddress = retrievableAccount.NetworkAddress,
-                            VaultName = name
-                        };
+                var newAccounts = new List<AccountMapping>();
 
-                        newAccounts.Add(accountMapping);
+                foreach (var account in retrievableAccounts)
+                {
+                    try
+                    {
+                        var result = sg.InvokeMethodFull(Service.Core, Method.Get,
+                            $"A2ARegistrations/{_configDb.A2aRegistrationId}/RetrievableAccounts/{account.AccountId}");
+                        if (result.StatusCode == HttpStatusCode.OK)
+                        {
+                            var retrievableAccount = JsonHelper.DeserializeObject<A2ARetrievableAccount>(result.Body);
+                            var accountMapping = new AccountMapping()
+                            {
+                                AccountName = retrievableAccount.AccountName,
+                                AccountId = retrievableAccount.AccountId,
+                                ApiKey = retrievableAccount.ApiKey,
+                                AssetName = retrievableAccount.SystemName,
+                                SystemId = retrievableAccount.SystemId,
+                                DomainName = retrievableAccount.DomainName,
+                                NetworkAddress = retrievableAccount.NetworkAddress,
+                                VaultName = name
+                            };
+
+                            newAccounts.Add(accountMapping);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        var msg = $"Failed to add account {account.AccountId} - {account.AccountName}: {ex.Message}";
+                        _logger.Error(msg);
                     }
                 }
-                catch (Exception ex)
+
+                if (newAccounts.Count > 0)
                 {
-                    var msg = $"Failed to add account {account.AccountId} - {account.AccountName}: {ex.Message}";
-                    _logger.Error(msg);
+                    _configDb.SaveAccountMappings(newAccounts);
                 }
-            }
 
-            if (newAccounts.Count > 0)
+                return GetAccountMappings(name);
+            }
+            finally
             {
-                _configDb.SaveAccountMappings(newAccounts);
+                if (sgConnection == null)
+                    sg.LogOut();
             }
-
-            return GetAccountMappings(name);
         }
 
         public void DeleteAccountMappings(string name)
@@ -371,7 +380,7 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteAccountMappings();
         }
 
-        public A2ARetrievableAccount GetPluginVaultAccount(string name)
+        public A2ARetrievableAccount GetPluginVaultAccount(ISafeguardConnection sgConnection, string name)
         {
             var plugin = _configDb.GetPluginByName(name);
             if (plugin == null)
@@ -383,7 +392,7 @@ namespace OneIdentity.DevOps.Logic
                 return null;
             }
 
-            return _safeguardLogic.GetA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+            return _safeguardLogic.GetA2ARetrievableAccount(sgConnection, plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
         }
 
         private int VaultAccountUsage(int accountId)
@@ -393,7 +402,7 @@ namespace OneIdentity.DevOps.Logic
             return usage.Length;
         }
 
-        public A2ARetrievableAccount SavePluginVaultAccount(string name, AssetAccount sppAccount)
+        public A2ARetrievableAccount SavePluginVaultAccount(ISafeguardConnection sgConnection, string name, AssetAccount sppAccount)
         {
             var plugin = _configDb.GetPluginByName(name);
             if (plugin == null)
@@ -405,7 +414,7 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException("Invalid account.");
             }
 
-            var account = _safeguardLogic.GetAccount(sppAccount.Id);
+            var account = _safeguardLogic.GetAccount(sgConnection, sppAccount.Id);
             if (account == null)
             {
                 throw LogAndException($"Account {sppAccount.Id} not found.");
@@ -414,10 +423,10 @@ namespace OneIdentity.DevOps.Logic
             // Make sure that the vault account isn't being used by another plugin before we delete it.
             if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
             {
-                _safeguardLogic.DeleteA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+                _safeguardLogic.DeleteA2ARetrievableAccount(sgConnection, plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
             }
 
-            var accounts = _safeguardLogic.AddA2ARetrievableAccounts(new List<SppAccount>() {new SppAccount() {Id = account.Id, Name = account.Name}}, A2ARegistrationType.Vault);
+            var accounts = _safeguardLogic.AddA2ARetrievableAccounts(sgConnection, new List<SppAccount>() {new SppAccount() {Id = account.Id, Name = account.Name}}, A2ARegistrationType.Vault);
 
             var a2aAccount = accounts.FirstOrDefault(x => x.AccountId == account.Id);
             if (a2aAccount != null)
@@ -444,7 +453,7 @@ namespace OneIdentity.DevOps.Logic
             // Make sure that the vault account isn't being used by another plugin before we delete it.
             if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
             {
-                _safeguardLogic.DeleteA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+                _safeguardLogic.DeleteA2ARetrievableAccount(null, plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
             }
 
             plugin.VaultAccountId = null;

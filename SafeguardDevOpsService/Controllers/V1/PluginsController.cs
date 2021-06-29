@@ -214,7 +214,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpPost("{name}/TestConnection")]
         public ActionResult TestPluginConnection([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
-            var success = pluginsLogic.TestPluginConnectionByName(name);
+            var success = pluginsLogic.TestPluginConnectionByName(null, name);
 
             if (!success)
             {
@@ -292,7 +292,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpPut("{name}/Accounts")]
         public ActionResult<IEnumerable<AccountMapping>> AddAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, IEnumerable<A2ARetrievableAccount> accounts)
         {
-            var accountMappings = pluginsLogic.SaveAccountMappings(name, accounts);
+            var accountMappings = pluginsLogic.SaveAccountMappings(null, name, accounts);
 
             return Ok(accountMappings);
         }
@@ -378,7 +378,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpGet("{name}/VaultAccount")]
         public ActionResult<AssetAccount> GetPluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
-            var account = pluginsLogic.GetPluginVaultAccount(name);
+            var account = pluginsLogic.GetPluginVaultAccount(null, name);
             if (account == null)
                 return NotFound();
 
@@ -407,7 +407,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpPut("{name}/VaultAccount")]
         public ActionResult<AssetAccount> PutPluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] AssetAccount assetAccount)
         {
-            var account = pluginsLogic.SavePluginVaultAccount(name, assetAccount);
+            var account = pluginsLogic.SavePluginVaultAccount(null, name, assetAccount);
 
             return Ok(account);
         }

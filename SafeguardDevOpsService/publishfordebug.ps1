@@ -1,0 +1,1 @@
+﻿dotnet publish C:\Projects\SafeguardDevOpsService\SafeguardDevOpsService\SafeguardDevOpsService.csproj -c Debug -o C:\Projects\SafeguardDevOpsService\SafeguardDevOpsService\bin\Debug\Publish --self-contained true -r win-x64
