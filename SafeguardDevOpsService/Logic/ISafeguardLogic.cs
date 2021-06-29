@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
@@ -10,6 +11,8 @@ namespace OneIdentity.DevOps.Logic
 {
     public interface ISafeguardLogic
     {
+        DevOpsSecretsBroker DevOpsSecretsBroker { get; }
+
         ISafeguardConnection Connect();
         SafeguardDevOpsConnection GetAnonymousSafeguardConnection();
         SafeguardDevOpsConnection GetSafeguardConnection();
@@ -25,23 +28,25 @@ namespace OneIdentity.DevOps.Logic
         void RemoveWebServerCertificate();
         string GetCSR(int? size, string subjectName, string sanDns, string sanIp, CertificateType certificateType);
 
-        object GetAvailableAccounts(string filter, int? page, bool? count, int? limit, string orderby, string q);
-        AssetAccount GetAccount(int id);
+        object GetAvailableAccounts(ISafeguardConnection sgConnection, string filter, int? page, bool? count, int? limit, string orderby, string q);
+        AssetAccount GetAccount(ISafeguardConnection sgConnection, int id);
 
-        object GetAvailableA2ARegistrations(string filter, int? page, bool? count, int? limit, string @orderby, string q);
-        A2ARegistration GetA2ARegistration(A2ARegistrationType registrationType);
-        A2ARegistration SetA2ARegistration(IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, int id);
-        // void DeleteA2ARegistration();
-        A2ARetrievableAccount GetA2ARetrievableAccount(int id, A2ARegistrationType registrationType);
-        void DeleteA2ARetrievableAccount(int id, A2ARegistrationType registrationType);
-        IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts(A2ARegistrationType registrationType);
-        A2ARetrievableAccount GetA2ARetrievableAccountById(A2ARegistrationType registrationType, int accountId);
-        IEnumerable<A2ARetrievableAccount> AddA2ARetrievableAccounts(IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType);
-        void RemoveA2ARetrievableAccounts(IEnumerable<A2ARetrievableAccount> accounts, A2ARegistrationType registrationType);
+        object GetAvailableA2ARegistrations(ISafeguardConnection sgConnection, string filter, int? page, bool? count, int? limit, string @orderby, string q);
+        A2ARegistration GetA2ARegistration(ISafeguardConnection sgConnection, A2ARegistrationType registrationType);
+        A2ARegistration SetA2ARegistration(ISafeguardConnection sgConnection, IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, int id);
+        A2ARetrievableAccount GetA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType);
+        void DeleteA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType);
+        IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts(ISafeguardConnection sgConnection, A2ARegistrationType registrationType);
+        A2ARetrievableAccount GetA2ARetrievableAccountById(ISafeguardConnection sgConnection, A2ARegistrationType registrationType, int accountId);
+        IEnumerable<A2ARetrievableAccount> AddA2ARetrievableAccounts(ISafeguardConnection sgConnection, IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType);
+        void RemoveA2ARetrievableAccounts(ISafeguardConnection sgConnection, IEnumerable<A2ARetrievableAccount> accounts, A2ARegistrationType registrationType);
 
-        ServiceConfiguration GetDevOpsConfiguration();
+        List<DevOpsSecretsBrokerAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg);
+        void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
+
+        ServiceConfiguration GetDevOpsConfiguration(ISafeguardConnection sgConnection);
         ServiceConfiguration ConfigureDevOpsService();
-        void DeleteDevOpsConfiguration();
+        void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection);
 
         void RestartService();
 
@@ -49,9 +54,7 @@ namespace OneIdentity.DevOps.Logic
         CertificateInfo GetTrustedCertificate(string thumbPrint);
         CertificateInfo AddTrustedCertificate(CertificateInfo certificate);
         void DeleteTrustedCertificate(string thumbPrint);
-        IEnumerable<CertificateInfo> ImportTrustedCertificates();
+        IEnumerable<CertificateInfo> ImportTrustedCertificates(ISafeguardConnection sgConnection);
         void DeleteAllTrustedCertificates();
-
-        Task StartAddOnBackgroundMaintenance(IPluginsLogic pluginsLogic);
     }
 }

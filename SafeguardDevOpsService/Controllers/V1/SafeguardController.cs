@@ -124,7 +124,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpGet("Configuration")]
         public ActionResult<ServiceConfiguration> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
         {
-            var serviceConfiguration = safeguard.GetDevOpsConfiguration();
+            var serviceConfiguration = safeguard.GetDevOpsConfiguration(null);
 
             return Ok(serviceConfiguration);
         }
@@ -192,7 +192,7 @@ namespace OneIdentity.DevOps.Controllers.V1
             if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
 
-            safeguard.DeleteDevOpsConfiguration();
+            safeguard.DeleteDevOpsConfiguration(null);
 
             return NoContent();
         }
@@ -219,8 +219,6 @@ namespace OneIdentity.DevOps.Controllers.V1
             var safeguardConnection = safeguard.GetSafeguardConnection();
             if (safeguardConnection == null)
                 return NotFound("No Safeguard has not been configured");
-
-            Task.Run( async () => await safeguard.StartAddOnBackgroundMaintenance(pluginsLogic));
 
             return Ok(safeguardConnection);
         }
@@ -467,7 +465,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult GetAvailableAccounts([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null, 
             [FromQuery] int? page = null, [FromQuery] bool? count = null, [FromQuery] int? limit = null, [FromQuery] string orderby = null, [FromQuery] string q = null)
         {
-            var availableAccounts = safeguard.GetAvailableAccounts(filter, page, count, limit, orderby, q);
+            var availableAccounts = safeguard.GetAvailableAccounts(null, filter, page, count, limit, orderby, q);
 
             return Ok(availableAccounts);
         }
@@ -495,7 +493,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult GetAvailableA2ARegistrations([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null, 
             [FromQuery] int? page = null, [FromQuery] bool? count = null, [FromQuery] int? limit = null, [FromQuery] string orderby = null, [FromQuery] string q = null)
         {
-            var availableRegistrations = safeguard.GetAvailableA2ARegistrations(filter, page, count, limit, orderby, q);
+            var availableRegistrations = safeguard.GetAvailableA2ARegistrations(null, filter, page, count, limit, orderby, q);
 
             return Ok(availableRegistrations);
         }
@@ -522,7 +520,7 @@ namespace OneIdentity.DevOps.Controllers.V1
             if (!Enum.TryParse(registrationType, true, out A2ARegistrationType rType))
                 return BadRequest("Invalid registration type");
 
-            var registration = safeguard.GetA2ARegistration(rType);
+            var registration = safeguard.GetA2ARegistration(null, rType);
             if (registration == null)
                 return NotFound();
 
@@ -553,7 +551,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult<A2ARegistration> SetA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromServices] IMonitoringLogic monitoringLogic, 
             [FromServices] IPluginsLogic pluginsLogic, [FromRoute] int id, [FromQuery] string confirm)
         {
-            var registration = safeguard.SetA2ARegistration(monitoringLogic, pluginsLogic, id);
+            var registration = safeguard.SetA2ARegistration(null, monitoringLogic, pluginsLogic, id);
             if (registration == null)
                 return NotFound();
 
@@ -579,7 +577,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpGet("A2ARegistration/RetrievableAccounts")]
         public ActionResult<IEnumerable<A2ARetrievableAccount>> GetRetrievableAccounts([FromServices] ISafeguardLogic safeguard)
         {
-            var retrievableAccounts = safeguard.GetA2ARetrievableAccounts(A2ARegistrationType.Account);
+            var retrievableAccounts = safeguard.GetA2ARetrievableAccounts(null, A2ARegistrationType.Account);
 
             return Ok(retrievableAccounts);
         }
@@ -604,7 +602,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpGet("A2ARegistration/RetrievableAccounts/{accountId}")]
         public ActionResult<A2ARetrievableAccount> GetRetrievableAccountById([FromServices] ISafeguardLogic safeguard, [FromRoute] int accountId)
         {
-            var retrievableAccount = safeguard.GetA2ARetrievableAccountById(A2ARegistrationType.Account, accountId);
+            var retrievableAccount = safeguard.GetA2ARetrievableAccountById(null, A2ARegistrationType.Account, accountId);
             if (retrievableAccount == null)
                 return NotFound();
 
@@ -631,7 +629,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpPut("A2ARegistration/RetrievableAccounts")]
         public ActionResult<IEnumerable<A2ARetrievableAccount>> AddRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<SppAccount> accounts)
         {
-            var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(accounts, A2ARegistrationType.Account);
+            var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(null, accounts, A2ARegistrationType.Account);
 
             return Ok(retrievableAccounts);
         }
@@ -656,7 +654,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpDelete("A2ARegistration/RetrievableAccounts")]
         public ActionResult RemoveRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<A2ARetrievableAccount> accounts)
         {
-            safeguard.RemoveA2ARetrievableAccounts(accounts, A2ARegistrationType.Account);
+            safeguard.RemoveA2ARetrievableAccounts(null, accounts, A2ARegistrationType.Account);
 
             return NoContent();
         }
@@ -786,7 +784,7 @@ namespace OneIdentity.DevOps.Controllers.V1
 
             if (importFromSafeguard)
             {
-                trustedCertificates = safeguard.ImportTrustedCertificates();
+                trustedCertificates = safeguard.ImportTrustedCertificates(null);
             }
             else
             {
@@ -931,7 +929,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </remarks>
         /// <param name="addonName">Name of the add-on to remove.</param>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the add-on.</param>
-        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after removing the add-on.</param>
         /// <response code="200">Success. Needing restart</response>
         /// <response code="204">Success</response>
         /// <response code="400">Bad request</response>

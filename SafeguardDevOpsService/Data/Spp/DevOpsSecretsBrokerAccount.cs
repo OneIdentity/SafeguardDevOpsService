@@ -83,6 +83,9 @@ namespace OneIdentity.DevOps.Data.Spp
         /// </summary>
         public string CreatedByUserDisplayName { get; set; }
 
+        /// <summary>
+        /// Convert to string.
+        /// </summary>
         public override string ToString()
         {
             return AccountName;

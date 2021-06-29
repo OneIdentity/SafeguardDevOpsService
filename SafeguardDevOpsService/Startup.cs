@@ -101,6 +101,7 @@ namespace OneIdentity.DevOps
             });
 
             services.AddHostedService<AddonManager>();
+            services.AddHostedService<BackgroundMaintenanceLogic>();
         }
 
         // This only gets called if your environment is Development. The
