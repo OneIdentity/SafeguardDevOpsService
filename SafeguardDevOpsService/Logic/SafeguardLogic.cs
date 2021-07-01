@@ -49,7 +49,7 @@ namespace OneIdentity.DevOps.Logic
 
         private DevOpsException LogAndException(string msg, Exception ex = null)
         {
-            _logger.Error(msg);
+            _logger.Error(ex, msg);
             return new DevOpsException(msg, ex);
         }
 
@@ -213,7 +213,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to get the user information: {ex.Message}", ex);
+                _logger.Error(ex, $"Failed to get the user information: {ex.Message}");
             }
             finally
             {
@@ -303,7 +303,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Failed to get the A2A user by name: {ex.Message}");
+                        _logger.Error(ex, $"Failed to get the A2A user by name: {ex.Message}");
                     }
                 }
                 else // Otherwise just get the user by id
@@ -318,7 +318,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Failed to get the A2A user by id {_configDb.A2aUserId}: {ex.Message}");
+                        _logger.Error(ex, $"Failed to get the A2A user by id {_configDb.A2aUserId}: {ex.Message}");
                     }
 
                     // Apparently the user id we have is wrong so get rid of it.
@@ -367,7 +367,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to start the A2A service: {ex.Message}");
+                _logger.Error(ex, $"Failed to start the A2A service: {ex.Message}");
             }
         }
 
@@ -499,7 +499,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Failed to get the A2A user by name {knownRegistrationName}: {ex.Message}");
+                        _logger.Error(ex, $"Failed to get the A2A user by name {knownRegistrationName}: {ex.Message}");
                     }
                 }
                 else // Otherwise just get the registration by id
@@ -517,16 +517,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        if (ex is SafeguardDotNetException &&
-                            ((SafeguardDotNetException) ex).HttpStatusCode == HttpStatusCode.NotFound)
-                        {
-                            _logger.Error($"Registration not found for id '{registrationId}': {ex.Message}");
-                        }
-                        else
-                        {
-                            throw LogAndException(
-                                $"Failed to get the registration for id '{registrationId}': {ex.Message}", ex);
-                        }
+                        throw LogAndException($"Failed to get the registration for id '{registrationId}'", ex);
                     }
                 }
 
@@ -564,9 +555,20 @@ namespace OneIdentity.DevOps.Logic
                         return JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
                     }
                 }
+                catch (SafeguardDotNetException ex)
+                {
+                    if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                    {
+                        _logger.Error($"Registration not found for id '{id}'", ex);
+                    }
+                    else
+                    {
+                        throw LogAndException($"Failed to get the registration for id '{id}'", ex);
+                    }
+                }
                 catch (Exception ex)
                 {
-                    throw LogAndException($"Failed to get the registration for id '{id}': {ex.Message}", ex);
+                    throw LogAndException($"Failed to get the registration for id '{id}'", ex);
                 }
             }
 
@@ -611,7 +613,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Debug("Failed to find or convert the IP address from the environment.", ex);
+                    _logger.Debug(ex, "Failed to find or convert the IP address from the environment.", ex);
                     return null;
                 }
             }
@@ -713,7 +715,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error(ex.Message);
+                _logger.Error(ex, ex.Message);
             }
 
             return false;
@@ -1182,7 +1184,7 @@ namespace OneIdentity.DevOps.Logic
                         }
                         catch (Exception ex)
                         {
-                            _logger.Error(
+                            _logger.Error(ex, 
                                 $"Failed to import certificate {cert.Subject} {cert.Thumbprint} from Safeguard. {ex.Message}");
                         }
                     }
@@ -1219,7 +1221,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+                _logger.Error(ex, "Failed to get the DevOps Secrets Broker instance from Safeguard. ");
             }
 
             return null;
@@ -1238,7 +1240,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error("Failed to get the DevOps Secrets Broker accounts from Safeguard. ", ex);
+                _logger.Error(ex, "Failed to get the DevOps Secrets Broker accounts from Safeguard. ");
             }
 
             return new List<DevOpsSecretsBrokerAccount>();
@@ -1479,7 +1481,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(
+                    _logger.Error(ex, 
                         $"Failed to delete the registration {_configDb.A2aRegistrationId} - {registration?.AppName}: {ex.Message}");
                 }
 
@@ -1502,7 +1504,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(
+                        _logger.Error(ex, 
                             $"Failed to delete the A2A certificate user {_configDb.A2aUserId} - {user?.UserName}: {ex.Message}");
                     }
                 }
@@ -1609,7 +1611,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error($"Get retrievable accounts failed: {ex.Message}");
+                _logger.Error(ex, $"Get retrievable accounts failed: {ex.Message}");
             }
             finally
             {
@@ -1692,7 +1694,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Failed to add account {account.Id} - {account.Name}: {ex.Message}");
+                        _logger.Error(ex, $"Failed to add account {account.Id} - {account.Name}: {ex.Message}");
                     }
                 }
 
@@ -1737,7 +1739,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(
+                        _logger.Error(ex, 
                             $"Failed to remove account {account.AccountId} - {account.AccountName}: {ex.Message}");
                     }
                 }
@@ -1830,15 +1832,14 @@ namespace OneIdentity.DevOps.Logic
                     catch (SafeguardDotNetException ex)
                     {
                         if (ex.HttpStatusCode == HttpStatusCode.NotFound)
-                            _logger.Information(
-                                "DevOps Secrets Broker instance not found in Safeguard.  Creating a new instance. ",
-                                ex);
+                            _logger.Information(ex, 
+                                "DevOps Secrets Broker instance not found in Safeguard.  Creating a new instance. ");
                         else
-                            _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+                            _logger.Error(ex, "Failed to get the DevOps Secrets Broker instance from Safeguard. ");
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard. ", ex);
+                        _logger.Error(ex, "Failed to get the DevOps Secrets Broker instance from Safeguard. ");
                     }
 
                     var addresses = GetLocalIPAddresses();
@@ -1866,9 +1867,8 @@ namespace OneIdentity.DevOps.Logic
                         }
                         catch (Exception ex)
                         {
-                            _logger.Error(
-                                $"Failed to create the DevOps Secrets Broker instance in Safeguard: {ex.Message}",
-                                ex);
+                            _logger.Error(ex,
+                                $"Failed to create the DevOps Secrets Broker instance in Safeguard: {ex.Message}");
                         }
                     }
                     else
@@ -1884,6 +1884,99 @@ namespace OneIdentity.DevOps.Logic
                 }
             }
         }
+
+        public void UpdateSecretsBrokerInstance(ISafeguardConnection sg, DevOpsSecretsBroker devOpsSecretsBroker)
+        {
+            if (devOpsSecretsBroker == null)
+                throw LogAndException("Unable to update the devOps secrets broker instance.  The devOpsSecretsBroker cannot be null.");
+
+            if (devOpsSecretsBroker.Host == null)
+                throw LogAndException("Invalid devOps secrets broker instance.  The host cannot be null.");
+
+            if (devOpsSecretsBroker.AssetId == 0)
+                devOpsSecretsBroker.AssetName = WellKnownData.DevOpsAssetName + "-" + devOpsSecretsBroker.Host;
+
+            var devopsSecretsBrokerStr = JsonHelper.SerializeObject(devOpsSecretsBroker);
+            try
+            {
+                var result = sg.InvokeMethodFull(Service.Core, Method.Put, 
+                    $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devopsSecretsBrokerStr);
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to update the devops instance.", ex);
+            }
+        }
+
+
+        public Asset GetAsset(ISafeguardConnection sg, int id)
+        {
+            FullResponse result;
+
+            if (id >= 0)
+            {
+                try
+                {
+                    result = sg.InvokeMethodFull(Service.Core, Method.Get, $"Assets/{id}");
+                    if (result.StatusCode == HttpStatusCode.OK)
+                    {
+                        return JsonHelper.DeserializeObject<Asset>(result.Body);
+                    }
+                }
+                catch (SafeguardDotNetException ex)
+                {
+                    if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                    {
+                        _logger.Error(ex, $"Asset not found for id '{id}'");
+                    }
+                    else
+                    {
+                        throw LogAndException($"Failed to get the asset for id '{id}'", ex);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndException($"Failed to get the asset for id '{id}'", ex);
+                }
+            }
+
+            return null;
+        }
+
+        public Asset GetAssetByName(ISafeguardConnection sg, string assetName)
+        {
+            FullResponse result;
+
+            if (assetName != null)
+            {
+                var p = new Dictionary<string, string>
+                    {{"filter", $"Name eq '{assetName}'"}};
+
+                try
+                {
+                    result = sg.InvokeMethodFull(Service.Core, Method.Get, "Assets", null, p);
+                    if (result.StatusCode == HttpStatusCode.OK)
+                    {
+                        var foundAssets = JsonHelper.DeserializeObject<List<Asset>>(result.Body);
+                        if (foundAssets.Any())
+                        {
+                            return foundAssets.FirstOrDefault();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, $"Failed to get the asset by name: {ex.Message}");
+                }
+            }
+
+            return null;
+        }
+
 
         public void Dispose()
         {

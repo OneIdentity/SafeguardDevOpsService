@@ -1,19 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
-using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
-using OneIdentity.DevOps.Exceptions;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
@@ -48,15 +42,12 @@ namespace OneIdentity.DevOps.Logic
                 try
                 {
                     _logger.Debug("Connecting to Safeguard: {address}");
-
-                    var a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion, ignoreSsl);
                     var connection = Safeguard.Connect(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion, ignoreSsl);
-
                     return connection;
                 }
                 catch (SafeguardDotNetException ex)
                 {
-                    _logger.Error($"Failed to connect to Safeguard at '{sppAddress}': {ex.Message}", ex);
+                    _logger.Error(ex, $"Failed to connect to Safeguard at '{sppAddress}': {ex.Message}");
                 }
             }
 
@@ -76,14 +67,12 @@ namespace OneIdentity.DevOps.Logic
                 try
                 {
                     _logger.Debug("Connecting to Safeguard A2A context: {address}");
-
                     var a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion, ignoreSsl);
-
                     return a2AContext;
                 }
                 catch (SafeguardDotNetException ex)
                 {
-                    _logger.Error($"Failed to connect to Safeguard A2A context at '{sppAddress}': {ex.Message}", ex);
+                    _logger.Error(ex, $"Failed to connect to Safeguard A2A context at '{sppAddress}': {ex.Message}");
                 }
             }
 
@@ -100,8 +89,6 @@ namespace OneIdentity.DevOps.Logic
         {
             return Task.CompletedTask;
         }
-
-
 
         public async Task StartAddOnBackgroundMaintenance(CancellationToken cancellationToken)
         {
@@ -121,7 +108,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"[Background Maintenance] {ex.Message}");
+                    _logger.Error(ex, $"[Background Maintenance] {ex.Message}");
                 }
 
                 await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
@@ -169,6 +156,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 foreach (var addon in addons)
                 {
+                    // Determine if there are any accounts that need to be pushed to Safeguard.
                     var accounts = new List<DevOpsSecretsBrokerAccount>();
                     foreach (var credential in addon.VaultCredentials)
                     {
@@ -185,6 +173,7 @@ namespace OneIdentity.DevOps.Logic
                         }
                     }
 
+                    // Add any missing accounts to Safeguard through the DevOps/SecretsBroker APIs which will also create an asset to tie them together.
                     if (accounts.Any())
                     {
                         var secretsBrokerAccountsStr = JsonHelper.SerializeObject(accounts);
@@ -201,11 +190,12 @@ namespace OneIdentity.DevOps.Logic
                         }
                         catch (Exception ex)
                         {
-                            _logger.Error(
-                                $"Failed to sync the credentials for the Add-On {addon.Name}: {ex.Message}", ex);
+                            _logger.Error(ex, 
+                                $"Failed to sync the credentials for the Add-On {addon.Name}: {ex.Message}");
                         }
                     }
 
+                    // Make sure that the vault account and asset information has been saved to the AddOn object in the database.
                     if (!string.IsNullOrEmpty(addon.VaultAccountName))
                     {
                         var vaultAccount = secretsBrokerAccounts.FirstOrDefault(x => x.AccountName.StartsWith(addon.VaultAccountName));
@@ -218,6 +208,17 @@ namespace OneIdentity.DevOps.Logic
                             _configDb.SaveAddon(addon);
                         }
                     }
+
+                    // Make sure that all vault accounts have been added to the assigned vault A2A registration.
+                    if (_configDb.A2aVaultRegistrationId != null && secretsBrokerAccounts.Any())
+                    {
+                        var a2aAccounts = _safeguardLogic.GetA2ARetrievableAccounts(sgConnection, A2ARegistrationType.Vault);
+
+                        var accountsToPush = secretsBrokerAccounts.Where(x => a2aAccounts.All(y => !y.AccountName.Equals(x.AccountName, StringComparison.InvariantCultureIgnoreCase)))
+                            .Select(x => new SppAccount() {Id = x.AccountId, Name = x.AccountName});
+
+                        _safeguardLogic.AddA2ARetrievableAccounts(sgConnection, accountsToPush, A2ARegistrationType.Vault);
+                    }
                 }
             }
         }
@@ -225,6 +226,26 @@ namespace OneIdentity.DevOps.Logic
         private void CheckAndAddSecretsBrokerInstance(ISafeguardConnection sgConnection)
         {
             _safeguardLogic.AddSecretsBrokerInstance(sgConnection);
+
+            if (_safeguardLogic.DevOpsSecretsBroker != null)
+            {
+                var devopsInstance = _safeguardLogic.DevOpsSecretsBroker;
+                var devopsAsset = _safeguardLogic.GetAsset(sgConnection, _safeguardLogic.DevOpsSecretsBroker.AssetId) 
+                                  ?? _safeguardLogic.GetAssetByName(sgConnection, 
+                                      WellKnownData.DevOpsAssetName + "-" + _safeguardLogic.DevOpsSecretsBroker.Host);
+                if (devopsAsset == null)
+                {
+                    // By setting the asset id to 0 and updating the devops instance, Safeguard will regenerate the asset.
+                    devopsInstance.AssetId = 0;
+                    _safeguardLogic.UpdateSecretsBrokerInstance(sgConnection, devopsInstance);
+                } 
+                else if (_safeguardLogic.DevOpsSecretsBroker.AssetId != devopsAsset.Id || _safeguardLogic.DevOpsSecretsBroker.AssetName != devopsAsset.Name)
+                {
+                    devopsInstance.AssetId = devopsAsset.Id;
+                    devopsInstance.AssetName = devopsAsset.Name;
+                    _safeguardLogic.UpdateSecretsBrokerInstance(sgConnection, devopsInstance);
+                }
+            }
         }
 
 
@@ -259,7 +280,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Information($"Failed to check the password for account {account.AccountName} ", ex);
+                        _logger.Information(ex, $"Failed to check the password for account {account.AccountName} ");
                         continue;
                     }
 

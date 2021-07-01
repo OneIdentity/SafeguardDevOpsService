@@ -173,7 +173,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to deploy the Add-on service {addonManifest.Name}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to deploy the Add-on service {addonManifest.Name}: {ex.Message}.");
             }
 
         }
