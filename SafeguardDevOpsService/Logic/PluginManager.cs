@@ -109,7 +109,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed to clean up the external plugins directory. {ex.Message}");
+                    _logger.Error(ex, $"Failed to clean up the external plugins directory. {ex.Message}");
                 }
                 return;
             }
@@ -129,7 +129,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Failed to clean up the external plugin {plugin.Name}. {ex.Message}");
+                        _logger.Error(ex, $"Failed to clean up the external plugin {plugin.Name}. {ex.Message}");
                     }
                 }
 
@@ -236,7 +236,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Failed to test the connection for plugin {pluginName}.  {ex.Message}");
+                        _logger.Error(ex, $"Failed to test the connection for plugin {pluginName}.  {ex.Message}");
                     }
                 }
                 else
@@ -293,7 +293,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed to read the manifest file for {pluginPath}. {ex.Message}");
+                    _logger.Error(ex, $"Failed to read the manifest file for {pluginPath}. {ex.Message}");
                 }
             }
 
@@ -377,13 +377,13 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Warning($"Failed to configure plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
+                        _logger.Warning(ex, $"Failed to configure plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to load plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to load plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
             }
         }
 
@@ -418,7 +418,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     var msg =
                         $"Failed to refresh the api key for {plugin.Name} account {plugin.VaultAccountId}: {ex.Message}";
-                    _logger.Error(msg);
+                    _logger.Error(ex, msg);
                 }
             }
         }

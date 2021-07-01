@@ -316,7 +316,7 @@ namespace OneIdentity.DevOps.Logic
                     catch (Exception ex)
                     {
                         var msg = $"Failed to add account {account.AccountId} - {account.AccountName}: {ex.Message}";
-                        _logger.Error(msg);
+                        _logger.Error(ex, msg);
                     }
                 }
 
@@ -346,7 +346,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
+                    _logger.Error(ex, $"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
                 }
             }
         }
@@ -370,7 +370,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
+                    _logger.Error(ex, $"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
                 }
             }
         }

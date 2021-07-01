@@ -78,7 +78,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error($"Could not restore the last known running state of the monitor. {ex.Message}");
+                _logger.Error(ex, $"Could not restore the last known running state of the monitor. {ex.Message}");
             }
         }
 
@@ -193,7 +193,7 @@ namespace OneIdentity.DevOps.Logic
                             }
                             catch (Exception ex)
                             {
-                                _logger.Error(
+                                _logger.Error(ex, 
                                     $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
                                 monitorEvent.Result = WellKnownData.SentPasswordFailure;
                             }
@@ -205,7 +205,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error($"Password change handler failed: {ex.Message}.");
+                _logger.Error(ex, $"Password change handler failed: {ex.Message}.");
             }
         }
     }

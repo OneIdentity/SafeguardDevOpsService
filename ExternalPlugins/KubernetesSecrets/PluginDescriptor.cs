@@ -84,7 +84,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
         }
@@ -145,7 +145,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to set the secret for {asset}-{account}: {ex.Message}.");
                 return false;
             }
         }

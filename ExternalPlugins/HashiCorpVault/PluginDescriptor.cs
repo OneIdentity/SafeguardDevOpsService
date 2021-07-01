@@ -62,7 +62,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 }
                 catch (Exception ex)
                 {
-                    _logger.Information($"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
+                    _logger.Information(ex, $"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
                 }
             }
             else
@@ -86,7 +86,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
 
@@ -115,7 +115,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to set the secret for {asset}-{account}: {ex.Message}.");
                 return false;
             }
         }

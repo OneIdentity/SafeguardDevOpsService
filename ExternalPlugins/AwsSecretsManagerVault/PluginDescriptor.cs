@@ -68,12 +68,12 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             {
                 if (ex.Message.Contains("Secrets Manager can't find the specified secret"))
                 {
-                    _logger.Information($"Account does not exist in vault; attempting to create account.");
+                    _logger.Information(ex, "Account does not exist in vault; attempting to create account.");
                     return CreateAwsAccount(asset, account, password);
                 }
                 else
                 {
-                    _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
+                    _logger.Error(ex, $"Failed to set the secret for {asset}-{account}: {ex.Message}.");
                     return false;
                 }
             }
@@ -116,7 +116,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                 }
                 catch(Exception ex)
                 {
-                    _logger.Error($"Plugin configuration failed: {ex.Message}");
+                    _logger.Error(ex, $"Plugin configuration failed: {ex.Message}");
                 }
             }
             else
@@ -148,7 +148,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
         }
@@ -189,7 +189,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             }
             catch (Exception createEx)
             {
-                _logger.Error($"Failed to create account {name} in vault. Message: {createEx.Message}");
+                _logger.Error(createEx, $"Failed to create account {name} in vault. Message: {createEx.Message}");
                 return false;
             }
         }

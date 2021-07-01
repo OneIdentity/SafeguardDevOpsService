@@ -114,7 +114,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to load the add-on service {addon.Manifest.Name}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to load the add-on service {addon.Manifest.Name}: {ex.Message}.");
             }
 
             return false;
