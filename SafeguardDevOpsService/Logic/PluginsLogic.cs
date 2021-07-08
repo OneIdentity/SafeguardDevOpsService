@@ -64,12 +64,14 @@ namespace OneIdentity.DevOps.Logic
                     var extractLocation = Path.Combine(WellKnownData.PluginDirPath, pluginManifest.Name);
                     if (_pluginManager.IsLoadedPlugin(pluginManifest.Name) || Directory.Exists(extractLocation))
                     {
+                        _logger.Debug("Plugin is already loaded, setting restart flag.");
                         RestartManager.Instance.ShouldRestart = true;
 
                         if (!Directory.Exists(WellKnownData.PluginStageDirPath))
                             Directory.CreateDirectory(WellKnownData.PluginStageDirPath);
                         extractLocation = Path.Combine(WellKnownData.PluginStageDirPath, pluginManifest.Name);
                     }
+                    _logger.Debug($"Extracting plugin ZIP to {extractLocation}.");
                     zipArchive.ExtractToDirectory(extractLocation, true);
                 }
                 else
