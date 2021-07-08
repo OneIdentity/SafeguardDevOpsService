@@ -379,6 +379,12 @@ update this list.
 - Enable-SgDevOpsMonitor
 - Get-SgDevOpsMonitor
 
+### Addons
+
+- Get-SgDevOpsAddon
+- Install-SgDevOpsAddon
+- Remove-SgDevOpsAddon
+
 ### Plugins
 
 - Get-SgDevOpsPlugin
