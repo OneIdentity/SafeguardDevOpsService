@@ -3,7 +3,9 @@ Param(
     [Parameter(Mandatory=$false,Position=0)]
     [string]$ImageType = "alpine",
     [Parameter(Mandatory=$false,Position=1)]
-    [string]$Version
+    [string]$Version,
+    [Parameter(Mandatory=$false)]
+    [switch]$Rebuild
 )
 
 if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
@@ -40,15 +42,21 @@ $ImageName = "oneidentity/safeguard-devops:$Version$ImageType"
 try
 {
     Push-Location $PSScriptRoot
-    Write-Host -ForegroundColor Yellow "Cleaning up all build directories ..."
-    (Get-ChildItem -Recurse -Filter obj -EA SilentlyContinue) | Where-Object { $_.FullName -inotmatch "node_modules" } | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
-    (Get-ChildItem -Recurse -Filter bin -EA SilentlyContinue) | Where-Object { $_.FullName -inotmatch "node_modules" } | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
+
+    if ($Rebuild)
+    {
+        Write-Host -ForegroundColor Yellow "Cleaning up all build directories ..."
+        (Get-ChildItem -Recurse -Filter obj -EA SilentlyContinue) | Where-Object { $_.FullName -inotmatch "node_modules" } | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
+        (Get-ChildItem -Recurse -Filter bin -EA SilentlyContinue) | Where-Object { $_.FullName -inotmatch "node_modules" } | ForEach-Object { Remove-Item -Recurse -Force $_.FullName }
+    }
+
     Write-Host -ForegroundColor Yellow "Building for full-size Linux distros ..."
     dotnet publish -v d -r linux-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
     if ($LASTEXITCODE -ne 0)
     {
         throw "dotnet publish command failed"
     }
+
     Write-Host -ForegroundColor Yellow "Building for tiny Linux distros ..."
     dotnet publish -v d -r linux-musl-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj
     if ($LASTEXITCODE -ne 0)
