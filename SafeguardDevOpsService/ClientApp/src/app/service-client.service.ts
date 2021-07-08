@@ -163,6 +163,30 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('getLogFile')));
   }
 
+  getAddons(): Observable<any> {
+    return this.http.get(this.BASE + 'Safeguard/Addons', this.authHeader())
+      .pipe(catchError(this.error<any>('getAddons')));
+  }
+
+  postAddonFile(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('formFile', file);
+    formData.append('type', file.type);
+
+    const options = Object.assign({ responseType: 'text' }, this.authHeader());
+
+    // TODO: API will change to match Plugins/File
+    return this.http.post(this.BASE + 'Safeguard/Addons', formData, options)
+      .pipe(catchError(this.error<any>('postAddonFile')));
+  }
+
+  deleteAddonConfiguration(name: string): Observable<any> {
+    const options = Object.assign({ responseType: 'text' }, this.authHeader());
+
+    return this.http.delete(this.BASE + 'Safeguard/Addons/' + encodeURIComponent(name), options)
+      .pipe(catchError(this.error<any>('deleteAddonConfiguration')));
+  }
+
   getPlugins(): Observable<any> {
     return this.http.get(this.BASE + 'Plugins', this.authHeader())
       .pipe(catchError(this.error<any>('getPlugins')));

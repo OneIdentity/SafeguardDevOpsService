@@ -54,6 +54,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   error: any = null;
 
   plugins = [];
+  addons = [];
   isLoading: boolean;
   openDrawer: string;
 
@@ -75,9 +76,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   footerAbsolute: boolean = true;
 
   @ViewChild('drawer', { static: false }) drawer: MatDrawer;
-
-  @ViewChild('fileSelectInputDialog', { static: false }) fileSelectInputDialog: ElementRef;
-
+  
   @ViewChild('unconfigured', { static: false }) set contentUnconfigured(content: ElementRef) {
     if (content && !this.isLoading) {
       this.unconfiguredDiv = content;
@@ -116,7 +115,8 @@ export class MainComponent implements OnInit, AfterViewInit {
           this.initializeMonitoring(),
           this.initializeTrustedCertificates(),
           this.initializeWebServerCertificate(),
-          this.initializePlugins()
+          this.initializePlugins(),
+          this.initializeAddons()
         ])),
         finalize(() => this.isLoading = false)
       ).subscribe(() => {
@@ -169,6 +169,30 @@ export class MainComponent implements OnInit, AfterViewInit {
         });
 
         this.updateMonitoringAvailable();
+      }));
+  }
+
+  private initializeAddons(): Observable<any> {
+    this.error = null;
+    if (!this.Thumbprint) {
+      return of({});
+    }
+
+    this.addons.splice(0);
+    const custom = {
+      Manifest: {
+        DisplayName: 'Upload'
+      },
+      IsUploadCustom: true
+    };
+    this.addons.push(custom);
+
+    return this.serviceClient.getAddons().pipe(
+      tap((addons: any[]) => {
+        addons.forEach(addon => {
+          addon.IsConfigurationSetup = true;
+          this.addons.push(addon);
+        });
       }));
   }
 
@@ -407,13 +431,18 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.openDrawer = 'monitorevents';
     this.drawer.open();
 
-    if (this.viewMonitorEventsRef)
+    if (this.viewMonitorEventsRef) {
       this.viewMonitorEventsRef.refresh();
+    }
     this.editPluginService.notifyEvent$.subscribe((data) => {
       if (data.mode === EditPluginMode.ViewMonitorEvents) {
         this.drawer.close();
       }
     });
+  }
+
+  editAddon(addon: any): void {
+    this.error = null;
   }
 
   editPlugin(plugin: any): void {
@@ -471,39 +500,68 @@ export class MainComponent implements OnInit, AfterViewInit {
 
   uploadPlugin(): void {
     this.error = null;
-    const e: HTMLElement = this.fileSelectInputDialog.nativeElement;
-    e.click();
+    var fileInput = $('<input type="file" accept=".zip" />');
+
+    fileInput.on('change', () => {
+      var file = fileInput.prop('files')[0];
+
+      if (!file) {
+        return;
+      }
+
+      this.snackBar.open('Uploading plugin...');
+
+      this.serviceClient.postPluginFile(file)
+        .subscribe((x: any) => {
+        if (typeof x === 'string') {
+          this.snackBar.open(x, 'OK', { duration: 10000 });
+        } else {
+          // This is a hack: if you call too quickly after uploading plugin, it returns zero
+          setTimeout(() => {
+            this.initializePlugins().subscribe();
+            this.snackBar.dismiss();
+          }, 2000);
+        }
+      },
+        error => {
+          this.error = error;
+        });
+    });
+
+    fileInput.trigger('click');
   }
 
-  onChangeFile(files: FileList): void {
-    if (!files[0]) {
-      return;
-    }
+  uploadAddon() {
+    this.error = null;
+    var fileInput = $('<input type="file" accept=".zip" />');
 
-    const fileSelected = files[0];
+    fileInput.on('change', () => {
+      var file = fileInput.prop('files')[0];
 
-    this.snackBar.open('Uploading plugin...');
-
-    this.serviceClient.postPluginFile(fileSelected).pipe(
-      finalize(() => {
-        // Clear the selection
-        const input = this.fileSelectInputDialog.nativeElement as HTMLInputElement;
-        input.value = null;
-      })
-    ).subscribe((x: any) => {
-      if (typeof x === 'string') {
-        this.snackBar.open(x, 'OK', { duration: 10000 });
-      } else {
-        // This is a hack: if you call too quickly after uploading plugin, it returns zero
-        setTimeout(() => {
-          this.initializePlugins().subscribe();
-          this.snackBar.dismiss();
-        }, 2000);
+      if (!file) {
+        return;
       }
-    },
-      error => {
-        this.error = error;
-      });
+
+      this.snackBar.open('Uploading addon...');
+
+      this.serviceClient.postAddonFile(file)
+        .subscribe((x: any) => {
+          if (typeof x === 'string') {
+            this.snackBar.open(x, 'OK', { duration: 10000 });
+          } else {
+            // This is a hack: if you call too quickly after uploading addon, it returns zero
+            setTimeout(() => {
+              this.initializeAddons().subscribe();
+              this.snackBar.dismiss();
+            }, 2000);
+          }
+        },
+          error => {
+            this.error = error;
+          });
+    });
+
+    fileInput.trigger('click');
   }
 
   updateMonitoringAvailable(): void {

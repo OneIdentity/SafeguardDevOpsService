@@ -171,29 +171,45 @@ export class EditPluginComponent implements OnInit {
         this.serviceClient.putPluginAccounts(this.plugin.Name, this.plugin.Accounts) : of([]))
     );
 
-    const obs2 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
+    if (!this.plugin.IsSystemOwned) {
+      const obs2 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
 
-    const obs3 = this.plugin.VaultAccount ?
-      this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.plugin.VaultAccount) :
-      this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
+      const obs3 = this.plugin.VaultAccount ?
+        this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.plugin.VaultAccount) :
+        this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
 
-    const obs4 = this.serviceClient.postPluginDisableState(this.plugin.Name, this.plugin.IsDisabled);
+      const obs4 = this.serviceClient.postPluginDisableState(this.plugin.Name, this.plugin.IsDisabled);
 
-    forkJoin([obs1, obs2, obs3, obs4]).pipe(
-      untilDestroyed(this)
-    ).subscribe(
-      (data) => {
-        this.plugin = data[1];
-        this.plugin.Accounts =  data[0];
-        this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
-        this.plugin.IsDisabled = data[3].Disabled;
+      forkJoin([obs1, obs2, obs3, obs4]).pipe(
+        untilDestroyed(this)
+      ).subscribe(
+        (data) => {
+          this.plugin = data[1];
+          this.plugin.Accounts = data[0];
+          this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
+          this.plugin.IsDisabled = data[3].Disabled;
 
-        this.editPluginService.closeProperties(this.plugin);
-      },
-      (error) => {
-        this.error = SCH.parseError(error);
-      }
-    );
+          this.editPluginService.closeProperties(this.plugin);
+        },
+        (error) => {
+          this.error = SCH.parseError(error);
+        }
+      );
+    } else {
+      forkJoin([obs1]).pipe(
+        untilDestroyed(this)
+      ).subscribe(
+        (data) => {
+          this.plugin.Accounts = data[0];
+          this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
+
+          this.editPluginService.closeProperties(this.plugin);
+        },
+        (error) => {
+          this.error = SCH.parseError(error);
+        }
+      );
+    }
   }
 
   saveConfiguration(): Observable<any> {
