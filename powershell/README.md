@@ -350,6 +350,7 @@ update this list.
 - Get-SgDevOpsAvailableAssetAccount
 - Get-SgDevOpsClientCertificate
 - Get-SgDevOpsConfiguration
+- Get-SgDevOpsLog
 - Get-SgDevOpsMappedAssetAccount
 - Get-SgDevOpsRegisteredAssetAccount
 - Get-SgDevOpsSslCertificate
