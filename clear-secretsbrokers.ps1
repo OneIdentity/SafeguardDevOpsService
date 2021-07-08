@@ -17,9 +17,8 @@ if (-not $SafeguardSession)
 }
 
 $local:DevOps = (Invoke-SafeguardMethod Core GET DevOps/SecretsBrokers)
-Write-Host ($local:DevOps | Format-Table Id,AssetId,AssetName | Out-String)
 Write-Host "Cleaning up DevOps entries:"
-Write-host ($local:DevOps | Format-Table | Out-String)
+Write-Host ($local:DevOps | Format-Table Id,AssetId,AssetName | Out-String)
 $local:DevOps | ForEach-Object {
     Invoke-SafeguardMethod Core DELETE "DevOps/SecretsBrokers/$($_.Id)"
 }
