@@ -10,6 +10,7 @@ namespace OneIdentity.DevOps.Data.Spp
     public class DevOpsSecretsBroker
     {
         private IEnumerable<DevOpsSecretsBrokerAccount> _accounts = Enumerable.Empty<DevOpsSecretsBrokerAccount>();
+        private IEnumerable<DevOpsSecretsBrokerPlugin> _plugins = Enumerable.Empty<DevOpsSecretsBrokerPlugin>();
 
         /// <summary>
         /// DevOps secrets broker registration Id
@@ -58,6 +59,15 @@ namespace OneIdentity.DevOps.Data.Spp
         {
             get => _accounts;
             set => _accounts = value;
+        }
+
+        /// <summary>
+        /// Set of plugins that are assigned to this devops secrets broker
+        /// </summary>
+        public IEnumerable<DevOpsSecretsBrokerPlugin> Plugins
+        {
+            get => _plugins;
+            set => _plugins = value;
         }
 
         /// <summary>
