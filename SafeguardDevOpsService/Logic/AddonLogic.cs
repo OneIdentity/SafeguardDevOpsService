@@ -31,6 +31,26 @@ namespace OneIdentity.DevOps.Logic
             return new DevOpsException(msg, ex);
         }
 
+        public void InstallAddon(string base64Addon, bool force)
+        {
+            if (base64Addon == null)
+                throw LogAndException("Addon cannot be null");
+
+            var bytes = Convert.FromBase64String(base64Addon);
+
+            try
+            {
+                using (var inputStream = new MemoryStream(bytes))
+                using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
+                {
+                    InstallAddon(zipArchive, force);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to install the vault plugin. {ex.Message}");
+            }
+        }
 
         public void InstallAddon(IFormFile formFile, bool force)
         {

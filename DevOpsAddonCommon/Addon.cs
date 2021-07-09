@@ -18,6 +18,11 @@ namespace OneIdentity.DevOps.Common
         public string Name { get; set; }
 
         /// <summary>
+        /// Base64 representation of the addon (write-only)
+        /// </summary>
+        public string Base64AddonData { get; set; }
+
+        /// <summary>
         /// A2A registration vault account id
         /// </summary>
         public int? VaultAccountId { get; set; }

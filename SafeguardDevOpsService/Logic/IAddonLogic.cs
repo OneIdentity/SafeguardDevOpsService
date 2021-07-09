@@ -8,6 +8,7 @@ namespace OneIdentity.DevOps.Logic
 {
     public interface IAddonLogic
     {
+        void InstallAddon(string base64Addon, bool force);
         void InstallAddon(IFormFile formFile, bool force);
         void RemoveAddon(string name);
         IEnumerable<Addon> GetAddons();
