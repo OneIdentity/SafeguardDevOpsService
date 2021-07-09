@@ -175,8 +175,7 @@ export class DevOpsServiceClient {
 
     const options = Object.assign({ responseType: 'text' }, this.authHeader());
 
-    // TODO: API will change to match Plugins/File
-    return this.http.post(this.BASE + 'Safeguard/Addons', formData, options)
+    return this.http.post(this.BASE + 'Safeguard/Addons/File', formData, options)
       .pipe(catchError(this.error<any>('postAddonFile')));
   }
 
