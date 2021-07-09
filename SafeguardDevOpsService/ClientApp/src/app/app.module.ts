@@ -35,6 +35,7 @@ import { DevOpsServiceClient } from './service-client.service';
 import { EnterPassphraseComponent } from './upload-certificate/enter-passphrase/enter-passphrase.component';
 import { SelectAccountsComponent } from './select-accounts/select-accounts.component';
 import { EditPluginComponent } from './edit-plugin/edit-plugin.component';
+import { EditAddonComponent } from './edit-addon/edit-addon.component';
 import { CreateCsrComponent } from './create-csr/create-csr.component';
 import { ViewCertificateComponent } from './view-certificate/view-certificate.component';
 import { SaveCsrComponent } from './save-csr/save-csr.component';
@@ -53,6 +54,7 @@ import { ViewMonitorEventsComponent } from './view-monitor-events/view-monitor-e
     EnterPassphraseComponent,
     SelectAccountsComponent,
     EditPluginComponent,
+    EditAddonComponent,
     CreateCsrComponent,
     ViewCertificateComponent,
     SaveCsrComponent,

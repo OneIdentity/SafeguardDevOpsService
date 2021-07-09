@@ -11,12 +11,13 @@ import { ViewCertificateComponent, ViewCertificateResult } from '../view-certifi
 import * as $ from 'jquery';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EditPluginService, EditPluginMode } from '../edit-plugin.service';
+import { EditAddonService, EditAddonMode } from '../edit-addon.service';
 import { MatDrawer } from '@angular/material/sidenav';
 import { AuthService } from '../auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { EditTrustedCertificatesComponent } from '../edit-trusted-certificates/edit-trusted-certificates.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
-import { HttpEventType, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ViewMonitorEventsComponent } from '../view-monitor-events/view-monitor-events.component';
 
 @UntilDestroy()
@@ -37,6 +38,7 @@ export class MainComponent implements OnInit, AfterViewInit {
     private router: Router,
     private renderer: Renderer2,
     public editPluginService: EditPluginService,
+    public editAddonService: EditAddonService,
     private authService: AuthService,
     private snackBar: MatSnackBar
   ) { }
@@ -57,6 +59,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   addons = [];
   isLoading: boolean;
   openDrawer: string;
+  openWhat: string;
 
   certificateUploading = {
     Client: false,
@@ -443,11 +446,39 @@ export class MainComponent implements OnInit, AfterViewInit {
 
   editAddon(addon: any): void {
     this.error = null;
+    this.editAddonService.openProperties(addon);
+    this.openWhat = 'addon';
+    this.openDrawer = 'properties';
+    this.drawer.open();
+
+    this.editAddonService.notifyEvent$.subscribe((data) => {
+      switch (data.mode) {
+        case EditAddonMode.Properties:
+          this.drawer.close();
+          this.openDrawer = 'properties';
+          this.drawer.open();
+          break;
+
+        case EditAddonMode.None:
+          this.drawer.close();
+          this.openDrawer = '';
+          const indx = this.addons.findIndex(x => x.Name === addon.Name);
+          if (indx > -1) {
+            if (data.addon) {
+              this.addons[indx] = data.addon;
+            } else {
+              this.addons.splice(indx, 1);
+            }
+          }
+          break;
+      }
+    });
   }
 
   editPlugin(plugin: any): void {
     this.error = null;
     this.editPluginService.openProperties(plugin);
+    this.openWhat = 'plugin';
     this.openDrawer = 'properties';
     this.drawer.open();
 

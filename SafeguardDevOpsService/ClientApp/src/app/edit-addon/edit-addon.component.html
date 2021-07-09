@@ -1,0 +1,51 @@
+<div class="root-container">
+  <mat-toolbar class="header">
+    <span>Addon Settings</span>
+    <div class="spacer"></div>
+    <button mat-icon-button (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="main-container">
+    <mat-card>
+      <div class="basic-info-header">
+        <h2>Basic Info</h2>
+        <div class="spacer"></div>
+        <div class="sub-title">Version {{addon?.Manifest.Version}}</div>
+      </div>
+      <div class="info-label">Name</div>
+      <div>{{addon?.Manifest.DisplayName}}</div>
+      <div class="info-label">({{addon?.Manifest.Name}})</div>
+      <p></p>
+      <div>
+        <div class="info-label">Description</div>
+        <div>{{addon?.Manifest.Description}}</div>
+      </div>
+    </mat-card>
+
+    <mat-card>
+      <h2>Configuration</h2>
+      <p></p>
+      <div>
+        <div class="info-label">Vault's Account in Safeguard</div>
+        <div>{{addon?.VaultAccountName}}</div>
+      </div>
+      <p></p>
+      <div>
+        <div class="info-label">Vault's Asset in Safeguard</div>
+        <div>{{addon?.VaultAssetName}}</div>
+      </div>
+    </mat-card>
+
+    <div *ngIf="error" class="error">
+      <mat-icon>error</mat-icon>{{error}}
+    </div>
+  </div>
+
+  <mat-toolbar class="selection-footer">
+    <button mat-button (click)="delete()"
+      class="link-button" disableRipple>Delete Addon</button>
+    <div class="spacer"></div>
+  </mat-toolbar>
+</div>
