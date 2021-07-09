@@ -42,7 +42,39 @@ function Get-SgDevOpsAddon
     }
 }
 
+<#
+.SYNOPSIS
+Upload and install a new addon.
 
+.DESCRIPTION
+Secrets Broker functionality can be extended via addons available from
+One Identity. Each addon must be installed and configured individually.
+
+The plugin must be a zip compressed file. The plugin is installed into
+the \ProgramData\SafeguardDevOpsService\ExternalPlugins folder.
+
+If a new plugin is being installed, restarting the service may not be
+necessary. However, if an existing plugin is being upgraded, the service
+does not have the ability to unload a loaded plugin. Therefore all plugin
+updates will be installed to a staging folder. The next time that the
+Secrets Broker service is restarted, all staged plugins will be moved
+to the external plugin folder and loaded. To restart automatically after
+installing a plugin, set the restart flag to true.
+
+.PARAMETER AddonFile
+The full path and file name of the addon to be installed.
+
+.PARAMETER Restart
+A boolean that indicates whether the Secrets Broker should be restarted
+after installing the addon.
+
+.PARAMETER Force
+A boolean that indicates whether to force a re-install of an addon.
+
+.EXAMPLE
+Install-SgDevOpsAddon c:\my\addon\path\addonfile.zip
+
+#>
 function Install-SgDevOpsAddon
 {
     [CmdletBinding()]
