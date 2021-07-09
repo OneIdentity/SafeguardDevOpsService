@@ -230,7 +230,8 @@
 
 
   <mat-drawer mode="over" position="end" disableClose="true" autosize #drawer>
-    <app-edit-plugin *ngIf="openDrawer=='properties'"></app-edit-plugin>
+    <app-edit-plugin *ngIf="openWhat=='plugin' && openDrawer=='properties'"></app-edit-plugin>
+    <app-edit-addon *ngIf="openWhat=='addon' && openDrawer=='properties'"></app-edit-addon>
     <app-select-accounts *ngIf="openDrawer=='accounts'" [selectVaultAccount]="false"></app-select-accounts>
     <app-select-accounts *ngIf="openDrawer=='vaultaccount'" [selectVaultAccount]="true"></app-select-accounts>
     <app-view-monitor-events *ngIf="openDrawer=='monitorevents'"></app-view-monitor-events>
