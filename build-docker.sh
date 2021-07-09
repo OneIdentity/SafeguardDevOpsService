@@ -29,8 +29,8 @@ fi
 
 cd $ScriptDir
 echo "Cleaning up all build directories ..."
-find . -name obj | xargs rm -rf
-find . -name bin | xargs rm -rf
+find . -name obj | grep -v node_modules | xargs rm -rf
+find . -name bin | grep -v node_modules | xargs rm -rf
 set -e
 echo "Building for full-size Linux distros ..."
 dotnet publish -v d -r linux-x64 -c Release --self-contained --force /p:PublishSingleFile=true SafeguardDevOpsService/SafeguardDevOpsService.csproj

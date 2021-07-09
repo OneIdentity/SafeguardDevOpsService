@@ -77,6 +77,7 @@ NestedModules = @(
      'certificates.psm1',
      'configuration.psm1',
      'plugins.psm1',
+     'addons.psm1',
      'monitor.psm1'
 )
 
@@ -89,6 +90,7 @@ FunctionsToExport = @(
      'Get-SgDevOpsApplianceStatus', 'Initialize-SgDevOpsAppliance', 'Clear-SgDevOpsAppliance',
      'Get-SgDevOpsTlsValidation', 'Enable-SgDevOpsTlsValidation', 'Disable-SgDevOpsTlsValidation',
      'Connect-SgDevOps', 'Disconnect-SgDevOps',  'Restart-SgDevOps', # <-- session init / deinit
+     'Get-SgDevOpsLog',
      'Invoke-SgDevOpsMethod', # <-- this is the function used to implement most of the others
 
      # help.psm1
@@ -113,7 +115,10 @@ FunctionsToExport = @(
      'Get-SgDevOpsPlugin', 'Install-SgDevOpsPlugin', 'Remove-SgDevOpsPlugin',
      'Get-SgDevOpsPluginVaultAccount', 'Set-SgDevOpsPluginVaultAccount',
      'Get-SgDevOpsPluginSetting', 'Set-SgDevOpsPluginSetting',
-     'Get-SgDevOpsMappedAssetAccount', 'Add-SgDevOpsMappedAssetAccount', 'Remove-SgDevOpsMappedAssetAccount'
+     'Get-SgDevOpsMappedAssetAccount', 'Add-SgDevOpsMappedAssetAccount', 'Remove-SgDevOpsMappedAssetAccount',
+
+     # addons.psm1
+     'Get-SgDevOpsAddon', 'Install-SgDevOpsAddon', 'Remove-SgDevOpsAddon',
 
      # monitor.psm1
      'Get-SgDevOpsMonitor', 'Enable-SgDevOpsMonitor', 'Disable-SgDevOpsMonitor'

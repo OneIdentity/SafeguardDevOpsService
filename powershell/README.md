@@ -350,6 +350,7 @@ update this list.
 - Get-SgDevOpsAvailableAssetAccount
 - Get-SgDevOpsClientCertificate
 - Get-SgDevOpsConfiguration
+- Get-SgDevOpsLog
 - Get-SgDevOpsMappedAssetAccount
 - Get-SgDevOpsRegisteredAssetAccount
 - Get-SgDevOpsSslCertificate
@@ -377,6 +378,12 @@ update this list.
 - Disable-SgDevOpsMonitor
 - Enable-SgDevOpsMonitor
 - Get-SgDevOpsMonitor
+
+### Addons
+
+- Get-SgDevOpsAddon
+- Install-SgDevOpsAddon
+- Remove-SgDevOpsAddon
 
 ### Plugins
 

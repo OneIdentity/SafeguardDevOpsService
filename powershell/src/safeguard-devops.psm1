@@ -1206,3 +1206,49 @@ function Restart-SgDevOps
         Write-Host -ForegroundColor Yellow "Operation canceled."
     }
 }
+<#
+.SYNOPSIS
+Get Secrets Broker logs.
+
+.DESCRIPTION
+Get Secrets Broker logs and write them to a file or display them to stdout.
+
+.PARAMETER StdOut
+This option will cause logs to be written to stdout.
+
+.PARAMETER OutFile
+File location to write the logs to.
+
+.EXAMPLE
+Get-SgDevOpsLog
+
+.EXAMPLE
+Get-SgDevOpsLog -OutFile mysecretsbroker.log
+#>
+function Get-SgDevOpsLog
+{
+    [CmdletBinding(DefaultParameterSetName="File")]
+    Param(
+        [Parameter(ParameterSetName="StdOut",Mandatory=$false)]
+        [switch]$StdOut,
+        [Parameter(ParameterSetName="File",Mandatory=$false,Position=0)]
+        [string]$OutFile
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if ($StdOut)
+    {
+        Invoke-SgDevOpsMethod Get "Safeguard/Log"
+    }
+    else
+    {
+        if (-not $OutFile)
+        {
+            $OutFile = "sgdevops-$((Get-Date).ToString("yyyyMMddTHHmmssZz")).log"
+        }
+        Invoke-SgDevOpsMethod Get "Safeguard/Log" | Out-File -Force -Encoding utf8 -FilePath $OutFile
+        Write-Host "Log file written to $OutFile."
+    }
+}
