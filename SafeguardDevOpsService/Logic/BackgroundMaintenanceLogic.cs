@@ -229,22 +229,38 @@ namespace OneIdentity.DevOps.Logic
 
             if (_safeguardLogic.DevOpsSecretsBroker != null)
             {
+                var needsUpdate = false;
                 var devopsInstance = _safeguardLogic.DevOpsSecretsBroker;
                 var devopsAsset = _safeguardLogic.GetAsset(sgConnection, _safeguardLogic.DevOpsSecretsBroker.AssetId) 
                                   ?? _safeguardLogic.GetAssetByName(sgConnection, 
                                       WellKnownData.DevOpsAssetName + "-" + _safeguardLogic.DevOpsSecretsBroker.Host);
+                var plugins = _configDb.GetAllPlugins();
+
                 if (devopsAsset == null)
                 {
                     // By setting the asset id to 0 and updating the devops instance, Safeguard will regenerate the asset.
                     devopsInstance.AssetId = 0;
-                    _safeguardLogic.UpdateSecretsBrokerInstance(sgConnection, devopsInstance);
+                    needsUpdate = true;
                 } 
                 else if (_safeguardLogic.DevOpsSecretsBroker.AssetId != devopsAsset.Id || _safeguardLogic.DevOpsSecretsBroker.AssetName != devopsAsset.Name)
                 {
                     devopsInstance.AssetId = devopsAsset.Id;
                     devopsInstance.AssetName = devopsAsset.Name;
-                    _safeguardLogic.UpdateSecretsBrokerInstance(sgConnection, devopsInstance);
+                    needsUpdate = true;
                 }
+
+                if (plugins != null)
+                {
+                    var devopsPlugins = plugins.Select(x => x.ToDevOpsSecretsBrokerPlugin(_pluginsLogic)).ToList();
+                    if (!devopsPlugins.SequenceEqual(devopsInstance.Plugins))
+                    {
+                        devopsInstance.Plugins = devopsPlugins;
+                        needsUpdate = true;
+                    }
+                }
+
+                if (needsUpdate)
+                    _safeguardLogic.UpdateSecretsBrokerInstance(sgConnection, devopsInstance);
             }
         }
 

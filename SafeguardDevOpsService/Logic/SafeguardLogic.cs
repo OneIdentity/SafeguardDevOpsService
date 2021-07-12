@@ -12,13 +12,11 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
 using Microsoft.AspNetCore.WebUtilities;
-using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Extensions;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
@@ -1912,7 +1910,6 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-
         public Asset GetAsset(ISafeguardConnection sg, int id)
         {
             FullResponse result;
@@ -1976,7 +1973,6 @@ namespace OneIdentity.DevOps.Logic
 
             return null;
         }
-
 
         public void Dispose()
         {

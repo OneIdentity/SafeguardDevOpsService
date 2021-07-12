@@ -1,5 +1,8 @@
 ﻿
 using LiteDB;
+using OneIdentity.DevOps.Data.Spp;
+using OneIdentity.DevOps.Logic;
+using OneIdentity.SafeguardDotNet;
 
 namespace OneIdentity.DevOps.Data
 {
@@ -63,5 +66,27 @@ namespace OneIdentity.DevOps.Data
         /// Mapped accounts count
         /// </summary>
         public int MappedAccountsCount { get; set; }
+
+        /// <summary>
+        /// Convert to DevOpsSecretsBrokerPlugin
+        /// </summary>
+        /// <param name="pluginsLogic"></param>
+        /// <returns></returns>
+        public DevOpsSecretsBrokerPlugin ToDevOpsSecretsBrokerPlugin(IPluginsLogic pluginsLogic)
+        {
+            var devOpsSecretsBrokerPlugin = new DevOpsSecretsBrokerPlugin
+            {
+                Name = Name, 
+                Version = Version, 
+                Configuration = JsonHelper.SerializeObject(Configuration),
+                MappedVaultAccounts = VaultAccountId.ToString()
+            };
+
+            var accountMappings = pluginsLogic.GetAccountMappings(Name);
+            if (accountMappings != null)
+                devOpsSecretsBrokerPlugin.MappedAccounts = JsonHelper.SerializeObject(accountMappings);
+
+            return devOpsSecretsBrokerPlugin;
+        }
     }
 }
