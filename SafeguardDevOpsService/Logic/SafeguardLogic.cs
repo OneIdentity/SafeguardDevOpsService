@@ -233,7 +233,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 a2aUser = new A2AUser()
                 {
-                    UserName = WellKnownData.DevOpsRegistrationName(_configDb.SvcId),
+                    UserName = WellKnownData.DevOpsUserName(_configDb.SvcId),
                     PrimaryAuthenticationIdentity = thumbprint,
                     AdminRoles = new string[] {"PolicyAdmin", "AssetAdmin"}
                 };
