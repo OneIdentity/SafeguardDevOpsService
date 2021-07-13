@@ -10,7 +10,7 @@
         <mat-icon>login</mat-icon>Log Out
       </button>
       <button mat-menu-item (click)="uploadAddon()">
-        <mat-icon>cloud_upload</mat-icon>Upload Addon
+        <mat-icon>cloud_upload</mat-icon>Upload Add-on
       </button>
       <button mat-menu-item (click)="downloadLog()">
         <mat-icon>cloud_download</mat-icon>Download Log
@@ -137,9 +137,9 @@
           </div>
         </ng-container>
       </div>
-      <div class="vertical-line" *ngIf="addons.length > 0 && !isLoading"></div>
-      <div class="info-column" *ngIf="Thumbprint && !isLoading">
-        <div class="info-label">Addons</div>
+      <div class="vertical-line" *ngIf="Thumbprint && !isLoading && addons.length > 0"></div>
+      <div class="info-column" *ngIf="Thumbprint && !isLoading && addons.length > 0">
+        <div class="info-label">Add-ons</div>
         <ng-container *ngFor="let addon of addons">
           <div>
             <button *ngIf="!addon.IsUploadCustom" mat-button class="link-button cert-link" (click)='editAddon(addon)'
