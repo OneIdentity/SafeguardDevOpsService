@@ -554,7 +554,8 @@ export class MainComponent implements OnInit, AfterViewInit {
           }, 2000);
         }
       },
-        error => {
+          error => {
+          this.snackBar.dismiss();
           this.error = error;
         });
     });
@@ -573,7 +574,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         return;
       }
 
-      this.snackBar.open('Uploading addon...');
+      this.snackBar.open('Uploading add-on...');
 
       this.serviceClient.postAddonFile(file)
         .subscribe((x: any) => {
@@ -588,6 +589,7 @@ export class MainComponent implements OnInit, AfterViewInit {
           }
         },
           error => {
+            this.snackBar.dismiss();
             this.error = error;
           });
     });

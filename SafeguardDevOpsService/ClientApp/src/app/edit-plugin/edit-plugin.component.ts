@@ -30,6 +30,7 @@ export class EditPluginComponent implements OnInit {
   error: any;
   isSaving = false;
   isTesting = false;
+  isRestarting = false;
   displayedColumns: string[] = ['asset', 'account', 'delete'];
   isPluginDisabled: boolean;
 
@@ -85,34 +86,37 @@ export class EditPluginComponent implements OnInit {
   delete(): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
+        showRestart: true,
         title: 'Delete Plugin',
         message:
           '<p>Are you sure you want to remove the configuration for this plugin and unregister the plugin from Safeguard Secrets Broker for DevOps?</p>' +
           '<p>This does not remove the plugin from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder at this point.</p>' +
-          '<p>The Safeguard Secrets Broker for DevOps service must be restarted to completely remove the deleted plugin. Select the "Restart Secrets Broker" option from the settings menu.</p>',
+          '<p>The Safeguard Secrets Broker for DevOps service must be restarted to completely remove the deleted plugin.</p>',
         confirmText: 'Delete Plugin'
       }
     });
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK'),
-      tap(() => {
+      tap((dlgResult) => {
+        this.isRestarting = dlgResult?.restart;
         this.editPluginService.deletePlugin();
         this.snackBar.open('Deleting plugin...');
       }),
-      switchMap(() => this.serviceClient.deletePluginConfiguration(this.plugin.Name))
-    ).subscribe(
-      () => {
+      switchMap((dlgResult) => this.serviceClient.deletePluginConfiguration(this.plugin.Name, dlgResult?.restart))
+    ).subscribe(() => {
         this.snackBar.dismiss();
-        this.dialog.open(ConfirmDialogComponent, {
-          data: {
-            title: 'Next Steps',
-            message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
-            showCancel: false,
-            confirmText: 'OK'
-        }});
-      }
-    );
+      if (!this.isRestarting) {
+          this.dialog.open(ConfirmDialogComponent, {
+            data: {
+              title: 'Next Steps',
+              message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
+              showCancel: false,
+              confirmText: 'OK'
+            }
+          });
+        }
+      });
   }
 
   testConnection(): void {

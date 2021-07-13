@@ -21,10 +21,11 @@ export class EditAddonComponent implements OnInit {
     private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
-    ) { }
+  ) { }
 
   addon: any;
   error: any;
+  isRestarting = false;
 
   ngOnInit(): void {
     this.addon = this.editAddonService.addon;
@@ -37,33 +38,36 @@ export class EditAddonComponent implements OnInit {
   delete(): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Delete Addon',
+        showRestart: true,
+        title: 'Delete Add-on',
         message:
-          '<p>Are you sure you want to remove the configuration for this system owned plugin and unregister the addon from Safeguard Secrets Broker for DevOps?</p>' +
+          '<p>Are you sure you want to remove the configuration for this system owned plugin and unregister the add-on from Safeguard Secrets Broker for DevOps?</p>' +
           '<p>This does not remove the plugin from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder at this point.</p>' +
-          '<p>The Safeguard Secrets Broker for DevOps service must be restarted to completely remove the deleted addon. Select the "Restart Secrets Broker" option from the settings menu.</p>',
-        confirmText: 'Delete Addon'
+          '<p>The Safeguard Secrets Broker for DevOps service must be restarted to completely remove the deleted add-on.</p>',
+        confirmText: 'Delete Add-on'
       }
     });
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK'),
-      tap(() => {
+      tap((dlgResult) => {
+        this.isRestarting = dlgResult?.restart;
         this.editAddonService.deleteAddon();
-        this.snackBar.open('Deleting addon...');
+        this.snackBar.open('Deleting add-on...');
       }),
-      switchMap(() => this.serviceClient.deleteAddonConfiguration(this.addon.Name))
-    ).subscribe(
-      () => {
-        this.snackBar.dismiss();
+      switchMap((dlgResult) => this.serviceClient.deleteAddonConfiguration(this.addon.Name, dlgResult?.restart))
+    ).subscribe(() => {
+      this.snackBar.dismiss();
+      if (!this.isRestarting) {
         this.dialog.open(ConfirmDialogComponent, {
           data: {
             title: 'Next Steps',
-            message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the addon and plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
+            message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the add-on and plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
             showCancel: false,
             confirmText: 'OK'
-        }});
+          }
+        });
       }
-    );
+    });
   }
 }

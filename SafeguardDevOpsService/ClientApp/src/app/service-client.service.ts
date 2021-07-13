@@ -179,8 +179,8 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('postAddonFile')));
   }
 
-  deleteAddonConfiguration(name: string): Observable<any> {
-    const options = Object.assign({ responseType: 'text' }, this.authHeader());
+  deleteAddonConfiguration(name: string, restartService: boolean): Observable<any> {
+    const options = Object.assign({ responseType: 'text', params: { confirm: 'yes', restart: restartService } }, this.authHeader());
 
     return this.http.delete(this.BASE + 'Safeguard/Addons/' + encodeURIComponent(name), options)
       .pipe(catchError(this.error<any>('deleteAddonConfiguration')));
@@ -254,8 +254,8 @@ export class DevOpsServiceClient {
     .pipe(catchError(this.error<any>('putPluginConfiguration')));
   }
 
-  deletePluginConfiguration(name: string): Observable<any> {
-    const options = Object.assign({ responseType: 'text' }, this.authHeader());
+  deletePluginConfiguration(name: string, restartService: boolean): Observable<any> {
+    const options = Object.assign({ responseType: 'text', params: { restart: restartService } }, this.authHeader());
 
     return this.http.delete(this.BASE + 'Plugins/' + encodeURIComponent(name), options)
     .pipe(catchError(this.error<any>('deletePluginConfiguration')));
