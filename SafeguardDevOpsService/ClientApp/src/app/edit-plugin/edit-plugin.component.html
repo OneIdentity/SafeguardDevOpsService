@@ -56,8 +56,10 @@
           </div>
         </ng-container>
       </div>
+      <app-progress-spinner color="accent" diameter="20" message='Testing Configuration' [visible]="isTesting">
+      </app-progress-spinner>
       <button mat-button (click)="testConnection()" [disabled]="isSaving || plugin.LoadingPluginAccounts"
-        color="primary" class="link-button" disableRipple>Test Configuration</button>
+        *ngIf="!isTesting" color="primary" class="link-button" disableRipple>Test Configuration</button>
     </mat-card>
 
     <mat-card *ngIf="!plugin.LoadingPluginAccounts">
@@ -105,12 +107,14 @@
   </div>
 
   <mat-toolbar class="selection-footer">
-    <button mat-button *ngIf="!plugin.IsSystemOwned" (click)="delete()"
+    <app-progress-spinner color="accent" diameter="20" message='Deleting Plugin' [visible]="isDeleting">
+    </app-progress-spinner>
+    <button mat-button *ngIf="!isDeleting && !plugin.IsSystemOwned" (click)="delete()"
       [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts" class="link-button" disableRipple>Delete
       Plugin</button>
     <div class="spacer"></div>
     <app-progress-spinner color="accent" diameter="20" [visible]="isSaving"></app-progress-spinner>
-    <button mat-flat-button color="primary" (click)="save()"
+    <button mat-flat-button color="primary" (click)="save()" *ngIf="!isDeleting"
       [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts"><span *ngIf="!isSaving">Save</span><span
         *ngIf="isSaving">Saving</span></button>
   </mat-toolbar>
