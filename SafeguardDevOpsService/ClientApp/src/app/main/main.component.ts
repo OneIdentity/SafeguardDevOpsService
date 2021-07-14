@@ -29,7 +29,8 @@ import { ViewMonitorEventsComponent } from '../view-monitor-events/view-monitor-
 export class MainComponent implements OnInit, AfterViewInit {
 
   private snackBarDuration: number = 5000;
-  private viewMonitorEventsRef : ViewMonitorEventsComponent;
+  private maxPostAddonRefreshCount: number = 15;
+  private viewMonitorEventsRef: ViewMonitorEventsComponent;
 
   constructor(
     private window: Window,
@@ -79,7 +80,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   footerAbsolute: boolean = true;
 
   @ViewChild('drawer', { static: false }) drawer: MatDrawer;
-  
+
   @ViewChild('unconfigured', { static: false }) set contentUnconfigured(content: ElementRef) {
     if (content && !this.isLoading) {
       this.unconfiguredDiv = content;
@@ -124,15 +125,14 @@ export class MainComponent implements OnInit, AfterViewInit {
         finalize(() => this.isLoading = false)
       ).subscribe(() => {
       },
-      error => {
-        this.error = error;
-      });
+        error => {
+          this.error = error;
+        });
   }
 
   ngAfterViewInit(): void {
-    this.viewMonitorEventsRefs.changes.subscribe((comps: QueryList <ViewMonitorEventsComponent>) =>
-    {
-        this.viewMonitorEventsRef = comps.first;
+    this.viewMonitorEventsRefs.changes.subscribe((comps: QueryList<ViewMonitorEventsComponent>) => {
+      this.viewMonitorEventsRef = comps.first;
     });
   }
 
@@ -247,12 +247,12 @@ export class MainComponent implements OnInit, AfterViewInit {
   }
 
   private setArrows(): void {
-    const colors = [ 'CorbinOrange', 'MauiSunset', 'AspenGreen', 'AzaleaPink' ];
+    const colors = ['CorbinOrange', 'MauiSunset', 'AspenGreen', 'AzaleaPink'];
 
     try {
       const configured = $('.configured');
       const unconfigured = $('.unconfigured')[0];
-      const startEl =  $('.info-container')[0];
+      const startEl = $('.info-container')[0];
       const pathGroup = $('#svgGroup')[0];
 
       $('#svgGroup path').remove();
@@ -270,18 +270,18 @@ export class MainComponent implements OnInit, AfterViewInit {
         pathEl.setAttribute('d', dStr);
 
         const isUnconfigured = index === total - 1;
-        const color =  isUnconfigured || isDisabled || !this.isMonitoring ? 'Black9' :  colors[index % colors.length];
+        const color = isUnconfigured || isDisabled || !this.isMonitoring ? 'Black9' : colors[index % colors.length];
 
         pathEl.setAttribute('class', isUnconfigured || isDisabled || !this.isMonitoring ? 'arrow-unconfigured' : 'arrow');
         pathEl.setAttribute('marker-end', `url(${this.window.location.href}#marker${color})`);
 
         this.renderer.appendChild(pathGroup, pathEl);
       });
-    } catch {}
+    } catch { }
   }
 
   initializeConfig(config: any): void {
-    this.ApplianceAddress =  config.Appliance.ApplianceAddress;
+    this.ApplianceAddress = config.Appliance.ApplianceAddress;
     this.DevOpsInstanceId = config.Appliance.DevOpsInstanceId;
     this.DevOpsVersion = config.Appliance.Version;
     this.UserName = config.UserName;
@@ -297,7 +297,7 @@ export class MainComponent implements OnInit, AfterViewInit {
 
     return this.serviceClient.getSafeguard().pipe(
       tap((safeguardData) => {
-        this.ApplianceAddress =  safeguardData?.ApplianceAddress;
+        this.ApplianceAddress = safeguardData?.ApplianceAddress;
         this.DevOpsVersion = safeguardData?.Version;
 
         if (!this.ApplianceAddress) {
@@ -327,7 +327,7 @@ export class MainComponent implements OnInit, AfterViewInit {
 
   createCSR(certificateType: string): void {
     const dialogRef = this.dialog.open(CreateCsrComponent, {
-      data:  { certificateType }
+      data: { certificateType }
     });
 
     dialogRef.afterClosed().subscribe(
@@ -345,8 +345,10 @@ export class MainComponent implements OnInit, AfterViewInit {
     e?.preventDefault();
 
     const dialogRef = this.dialog.open(UploadCertificateComponent, {
-      data: { certificateType,
-        certificate: certificateType === 'Web Server' ? this.webServerCert : null }
+      data: {
+        certificateType,
+        certificate: certificateType === 'Web Server' ? this.webServerCert : null
+      }
     });
 
     dialogRef.afterClosed().pipe(
@@ -404,9 +406,12 @@ export class MainComponent implements OnInit, AfterViewInit {
           this.initializeConfig(config);
           // This is a hack: if you call too quickly after client cert upload, it returns zero
           setTimeout(() => {
-            this.initializePlugins().subscribe();
+            forkJoin([
+              this.initializeMonitoring(),
+              this.initializePlugins(),
+              this.initializeAddons()
+            ]).subscribe();
           }, 2000);
-          this.initializeMonitoring().subscribe();
           this.viewCertificate(null, 'Client');
         } else {
           this.webServerCertAdded = true;
@@ -420,7 +425,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         if (error.error?.Message?.includes('specified network password is not correct')) {
           // bad password, have another try?
           // it's all we get
-          this.snackBar.open('The password for the certificate in ' + certificateFileName + ' was not correct.', 'Dismiss', {duration: this.snackBarDuration});
+          this.snackBar.open('The password for the certificate in ' + certificateFileName + ' was not correct.', 'Dismiss', { duration: this.snackBarDuration });
         } else if (error.error?.Message) {
           this.error = 'Unexpected error uploading ' + certificateType + ' certificate: ' + error.error.Message;
         }
@@ -521,7 +526,8 @@ export class MainComponent implements OnInit, AfterViewInit {
                   message: 'Restart the monitor to apply the new plugin configuration.',
                   showCancel: false,
                   confirmText: 'OK'
-              }});
+                }
+              });
             }
           }
           break;
@@ -544,20 +550,20 @@ export class MainComponent implements OnInit, AfterViewInit {
 
       this.serviceClient.postPluginFile(file)
         .subscribe((x: any) => {
-        if (typeof x === 'string') {
-          this.snackBar.open(x, 'OK', { duration: 10000 });
-        } else {
-          // This is a hack: if you call too quickly after uploading plugin, it returns zero
-          setTimeout(() => {
-            this.initializePlugins().subscribe();
-            this.snackBar.dismiss();
-          }, 2000);
-        }
-      },
+          if (typeof x === 'string') {
+            this.snackBar.open(x, 'OK', { duration: 10000 });
+          } else {
+            // This is a hack: if you call too quickly after uploading plugin, it returns zero
+            setTimeout(() => {
+              this.snackBar.dismiss();
+              this.initializePlugins().subscribe();
+            }, 3000);
+          }
+        },
           error => {
-          this.snackBar.dismiss();
-          this.error = error;
-        });
+            this.snackBar.dismiss();
+            this.error = error;
+          });
     });
 
     fileInput.trigger('click');
@@ -581,11 +587,13 @@ export class MainComponent implements OnInit, AfterViewInit {
           if (typeof x === 'string') {
             this.snackBar.open(x, 'OK', { duration: 10000 });
           } else {
-            // This is a hack: if you call too quickly after uploading addon, it returns zero
+            this.snackBar.dismiss();
+            this.snackBar.open('Restarting Safeguard Secrets Broker for DevOps service...');
+            // Show overlay to disable clicking on anything
+            this.drawer.open();
             setTimeout(() => {
-              this.initializeAddons().subscribe();
-              this.snackBar.dismiss();
-            }, 2000);
+              this.postAddonRefresh(0);
+            }, 3000);
           }
         },
           error => {
@@ -595,6 +603,35 @@ export class MainComponent implements OnInit, AfterViewInit {
     });
 
     fileInput.trigger('click');
+  }
+
+  // The service restarts in 2-3 seconds but it's 10+ seconds before Logon is not 504
+  private postAddonRefresh(postAddonRefreshTries: number) {
+    this.serviceClient.logon()
+      .subscribe(() => {
+        this.snackBar.dismiss();
+        this.drawer.close();
+        this.window.location.reload();
+      },
+        error => {
+          if (error.status == 504) {
+            postAddonRefreshTries += 1;
+            if (postAddonRefreshTries < this.maxPostAddonRefreshCount) {
+              setTimeout(() => {
+                this.postAddonRefresh(postAddonRefreshTries);
+              }, 1000);
+            } else {
+              this.snackBar.dismiss();
+              this.drawer.close();
+              this.window.location.reload();
+            }
+          } else {
+            this.snackBar.dismiss();
+            this.drawer.close();
+            this.error = error;
+          }
+        }
+      );
   }
 
   updateMonitoringAvailable(): void {
@@ -638,10 +675,10 @@ export class MainComponent implements OnInit, AfterViewInit {
       })
     ).subscribe((data) => {
       this.downloadFile(data);
-      this.snackBar.open('Download complete.', 'Dismiss', {duration: this.snackBarDuration});
+      this.snackBar.open('Download complete.', 'Dismiss', { duration: this.snackBarDuration });
     },
       error => {
-        this.snackBar.open('Download failed.', 'Dismiss', {duration: this.snackBarDuration});
+        this.snackBar.open('Download failed.', 'Dismiss', { duration: this.snackBarDuration });
         this.error = error;
       });
   }
@@ -731,7 +768,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       (result) => {
         if (result?.result === ViewCertificateResult.RemovedCertificate) {
           if (certType === 'Client') {
-            window.location.reload();
+            this.window.location.reload();
           } else {
             // Service restarts after removing web server cert; need to login again
             // Reload is needed to accept new web server cert
