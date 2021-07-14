@@ -4,7 +4,6 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { switchMap, filter, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { EditAddonService } from '../edit-addon.service';
 
 @Component({
@@ -20,13 +19,13 @@ export class EditAddonComponent implements OnInit {
     private window: Window,
     private editAddonService: EditAddonService,
     private serviceClient: DevOpsServiceClient,
-    private dialog: MatDialog,
-    private snackBar: MatSnackBar
+    private dialog: MatDialog
   ) { }
 
   addon: any;
   error: any;
   isRestarting = false;
+  isDeleting = false;
 
   ngOnInit(): void {
     this.addon = this.editAddonService.addon;
@@ -53,12 +52,10 @@ export class EditAddonComponent implements OnInit {
       filter((dlgResult) => dlgResult?.result === 'OK'),
       tap((dlgResult) => {
         this.isRestarting = dlgResult?.restart;
-        this.editAddonService.deleteAddon();
-        this.snackBar.open('Deleting add-on...');
+        this.isDeleting = true;
       }),
       switchMap((dlgResult) => this.serviceClient.deleteAddonConfiguration(this.addon.Name, dlgResult?.restart))
     ).subscribe(() => {
-      this.snackBar.dismiss();
       if (!this.isRestarting) {
         this.dialog.open(ConfirmDialogComponent, {
           data: {
@@ -72,7 +69,6 @@ export class EditAddonComponent implements OnInit {
     },
       error => {
         setTimeout(() => {
-          this.snackBar.dismiss();
           this.window.location.reload();
         }, 3000);
     });

@@ -44,8 +44,8 @@
   </div>
 
   <mat-toolbar class="selection-footer">
-    <button mat-button (click)="delete()"
-      class="link-button" disableRipple>Delete Add-on</button>
-    <div class="spacer"></div>
+    <app-progress-spinner color="accent" diameter="20" message='Deleting Add-on' [visible]="isDeleting">
+    </app-progress-spinner>
+    <button mat-button *ngIf="!isDeleting" (click)="delete()" class="link-button" disableRipple>Delete Add-on</button>
   </mat-toolbar>
 </div>

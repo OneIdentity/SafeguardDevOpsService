@@ -27,6 +27,50 @@ import { ViewMonitorEventsComponent } from '../view-monitor-events/view-monitor-
   styleUrls: ['./main.component.scss']
 })
 export class MainComponent implements OnInit, AfterViewInit {
+  @ViewChild('drawer', { static: false }) drawer: MatDrawer;
+  @ViewChild('unconfigured', { static: false }) set contentUnconfigured(content: ElementRef) {
+    if (content && !this.isLoading) {
+      this.unconfiguredDiv = content;
+      setTimeout(() => {
+        this.setArrows();
+        this.setFooter();
+      }, 500);
+    }
+  }
+  @ViewChildren(ViewMonitorEventsComponent) viewMonitorEventsRefs: QueryList<ViewMonitorEventsComponent>;
+
+  UserName: string;
+  UserDisplayName: string;
+  IdentityProviderName: string;
+  A2ARegistrationName: string;
+  A2AVaultRegistrationName: string;
+  Thumbprint: string;
+  DevOpsInstanceId: string;
+  ApplianceAddress: string;
+  DevOpsVersion: string;
+  error: any = null;
+  plugins = [];
+  addons = [];
+  isLoading: boolean = false;
+  isUploading = { Plugin: false, Addon: false };
+  isRestarting: boolean = false;
+  openDrawer: string;
+  openWhat: string;
+  webServerCertAdded: boolean = false;
+  webServerCert: any;
+  config: any;
+  trustedCertificates = [];
+  isMonitoring: boolean;
+  isMonitoringAvailable: boolean;
+  unconfiguredDiv: any;
+  footerAbsolute: boolean = true;
+  restartingProgress: string = 'Restarting Service';
+
+  certificateUploading = {
+    Client: false,
+    WebServer: false,
+    trusted: false
+  };
 
   private snackBarDuration: number = 5000;
   private maxPostAddonRefreshCount: number = 15;
@@ -44,62 +88,13 @@ export class MainComponent implements OnInit, AfterViewInit {
     private snackBar: MatSnackBar
   ) { }
 
-  UserName: string;
-  UserDisplayName: string;
-  IdentityProviderName: string;
-  A2ARegistrationName: string;
-  A2AVaultRegistrationName: string;
-  Thumbprint: string;
-  DevOpsInstanceId: string;
-  ApplianceAddress: string;
-  DevOpsVersion: string;
-
-  error: any = null;
-
-  plugins = [];
-  addons = [];
-  isLoading: boolean;
-  openDrawer: string;
-  openWhat: string;
-
-  certificateUploading = {
-    Client: false,
-    WebServer: false,
-    trusted: false
-  };
-  webServerCertAdded: boolean = false;
-  webServerCert: any;
-
-  config: any;
-  trustedCertificates = [];
-
-  isMonitoring: boolean;
-  isMonitoringAvailable: boolean;
-
-  unconfiguredDiv: any;
-  footerAbsolute: boolean = true;
-
-  @ViewChild('drawer', { static: false }) drawer: MatDrawer;
-
-  @ViewChild('unconfigured', { static: false }) set contentUnconfigured(content: ElementRef) {
-    if (content && !this.isLoading) {
-      this.unconfiguredDiv = content;
-      setTimeout(() => {
-        this.setArrows();
-        this.setFooter();
-      }, 500);
-    }
-  }
-
-  @ViewChildren(ViewMonitorEventsComponent) viewMonitorEventsRefs: QueryList<ViewMonitorEventsComponent>;
-
   @HostListener('window:resize', ['$event'])
   onResize() {
     setTimeout(() => {
       this.setFooter();
     }, 500);
   }
-
+  
   ngOnInit(): void {
     this.isLoading = true;
     this.error = null;
@@ -450,6 +445,10 @@ export class MainComponent implements OnInit, AfterViewInit {
   }
 
   editAddon(addon: any): void {
+    if (this.isUploading.Plugin || this.isUploading.Addon || this.isRestarting) {
+      return;
+    }
+
     this.error = null;
     this.editAddonService.openProperties(addon);
     this.openWhat = 'addon';
@@ -481,6 +480,10 @@ export class MainComponent implements OnInit, AfterViewInit {
   }
 
   editPlugin(plugin: any): void {
+    if (this.isUploading.Plugin || this.isUploading.Addon || this.isRestarting) {
+      return;
+    }
+
     this.error = null;
     this.editPluginService.openProperties(plugin);
     this.openWhat = 'plugin';
@@ -546,22 +549,21 @@ export class MainComponent implements OnInit, AfterViewInit {
         return;
       }
 
-      this.snackBar.open('Uploading plugin...');
+      this.isUploading.Plugin = true;
 
       this.serviceClient.postPluginFile(file)
         .subscribe((x: any) => {
           if (typeof x === 'string') {
             this.snackBar.open(x, 'OK', { duration: 10000 });
           } else {
-            // This is a hack: if you call too quickly after uploading plugin, it returns zero
             setTimeout(() => {
-              this.snackBar.dismiss();
+              this.isUploading.Plugin = false;
               this.initializePlugins().subscribe();
             }, 3000);
           }
         },
           error => {
-            this.snackBar.dismiss();
+            this.isUploading.Plugin = false;
             this.error = error;
           });
     });
@@ -580,24 +582,22 @@ export class MainComponent implements OnInit, AfterViewInit {
         return;
       }
 
-      this.snackBar.open('Uploading add-on...');
+      this.isUploading.Addon = true;
 
       this.serviceClient.postAddonFile(file)
         .subscribe((x: any) => {
           if (typeof x === 'string') {
             this.snackBar.open(x, 'OK', { duration: 10000 });
           } else {
-            this.snackBar.dismiss();
-            this.snackBar.open('Restarting Safeguard Secrets Broker for DevOps service...');
-            // Show overlay to disable clicking on anything
-            this.drawer.open();
+            this.isUploading.Addon = false;
+            this.isRestarting = true;
             setTimeout(() => {
               this.postAddonRefresh(0);
             }, 3000);
           }
         },
           error => {
-            this.snackBar.dismiss();
+            this.isUploading.Addon = false;
             this.error = error;
           });
     });
@@ -609,25 +609,21 @@ export class MainComponent implements OnInit, AfterViewInit {
   private postAddonRefresh(postAddonRefreshTries: number) {
     this.serviceClient.logon()
       .subscribe(() => {
-        this.snackBar.dismiss();
-        this.drawer.close();
         this.window.location.reload();
       },
         error => {
           if (error.status == 504) {
+            this.restartingProgress += '.';
             postAddonRefreshTries += 1;
             if (postAddonRefreshTries < this.maxPostAddonRefreshCount) {
               setTimeout(() => {
                 this.postAddonRefresh(postAddonRefreshTries);
               }, 1000);
             } else {
-              this.snackBar.dismiss();
-              this.drawer.close();
               this.window.location.reload();
             }
           } else {
-            this.snackBar.dismiss();
-            this.drawer.close();
+            this.isRestarting = false;
             this.error = error;
           }
         }

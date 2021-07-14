@@ -32,6 +32,7 @@ export class EditPluginComponent implements OnInit {
   isSaving = false;
   isTesting = false;
   isRestarting = false;
+  isDeleting = false;
   displayedColumns: string[] = ['asset', 'account', 'delete'];
   isPluginDisabled: boolean;
 
@@ -101,12 +102,11 @@ export class EditPluginComponent implements OnInit {
       filter((dlgResult) => dlgResult?.result === 'OK'),
       tap((dlgResult) => {
         this.isRestarting = dlgResult?.restart;
-        this.editPluginService.deletePlugin();
-        this.snackBar.open('Deleting plugin...');
+        this.isDeleting = true;
       }),
       switchMap((dlgResult) => this.serviceClient.deletePluginConfiguration(this.plugin.Name, dlgResult?.restart))
     ).subscribe(() => {
-        this.snackBar.dismiss();
+      this.editPluginService.deletePlugin();
       if (!this.isRestarting) {
           this.dialog.open(ConfirmDialogComponent, {
             data: {
@@ -119,16 +119,18 @@ export class EditPluginComponent implements OnInit {
         }
     },
       error => {
-        setTimeout(() => {
-          this.snackBar.dismiss();
-          this.window.location.reload();
-        }, 3000);
+        if (this.isRestarting) {
+          setTimeout(() => {
+            this.window.location.reload();
+          }, 3000);
+        } else {
+          this.error = SCH.parseError(error);
+        }
     });
   }
 
   testConnection(): void {
     this.isTesting = true;
-    this.snackBar.open('Testing Configuration...');
     this.saveConfiguration().pipe(
       switchMap(() =>
         this.serviceClient.postPluginTestConnection(this.plugin.Name)
@@ -137,7 +139,6 @@ export class EditPluginComponent implements OnInit {
         this.isTesting = false;
       },
       (error) => {
-        this.snackBar.open('Test configuration failed.', 'Dismiss', { duration: 5000 });
         this.isTesting = false;
         this.error = SCH.parseError(error);
       });
