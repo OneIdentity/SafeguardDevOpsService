@@ -19,6 +19,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class EditPluginComponent implements OnInit {
 
   constructor(
+    private window: Window,
     private editPluginService: EditPluginService,
     private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
@@ -116,7 +117,13 @@ export class EditPluginComponent implements OnInit {
             }
           });
         }
-      });
+    },
+      error => {
+        setTimeout(() => {
+          this.snackBar.dismiss();
+          this.window.location.reload();
+        }, 3000);
+    });
   }
 
   testConnection(): void {

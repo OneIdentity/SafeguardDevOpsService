@@ -173,7 +173,7 @@ export class DevOpsServiceClient {
     formData.append('formFile', file);
     formData.append('type', file.type);
 
-    const options = Object.assign({ responseType: 'text' }, this.authHeader());
+    const options = Object.assign({ responseType: 'text', params: { restart: true } }, this.authHeader());
 
     return this.http.post(this.BASE + 'Safeguard/Addons/File', formData, options)
       .pipe(catchError(this.error<any>('postAddonFile')));

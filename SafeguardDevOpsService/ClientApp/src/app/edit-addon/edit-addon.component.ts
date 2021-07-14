@@ -17,6 +17,7 @@ import { EditAddonService } from '../edit-addon.service';
 export class EditAddonComponent implements OnInit {
 
   constructor(
+    private window: Window,
     private editAddonService: EditAddonService,
     private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
@@ -68,6 +69,12 @@ export class EditAddonComponent implements OnInit {
           }
         });
       }
+    },
+      error => {
+        setTimeout(() => {
+          this.snackBar.dismiss();
+          this.window.location.reload();
+        }, 3000);
     });
   }
 }
