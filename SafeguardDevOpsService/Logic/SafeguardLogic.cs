@@ -387,7 +387,8 @@ namespace OneIdentity.DevOps.Logic
                             ? WellKnownData.DevOpsRegistrationName(_configDb.SvcId)
                             : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId),
                         CertificateUserId = _configDb.A2aUserId.Value,
-                        VisibleToCertificateUsers = true
+                        VisibleToCertificateUsers = true,
+                        DevOpsInstanceId = _configDb.SvcId
                     };
 
                     var registrationStr = JsonHelper.SerializeObject(registration);
