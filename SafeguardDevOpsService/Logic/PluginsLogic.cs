@@ -295,7 +295,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
-                        var result = sg.InvokeMethodFull(Service.Core, Method.Get,
+                        var result = SafeguardLogic.DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                             $"A2ARegistrations/{_configDb.A2aRegistrationId}/RetrievableAccounts/{account.AccountId}");
                         if (result.StatusCode == HttpStatusCode.OK)
                         {

@@ -179,7 +179,7 @@ namespace OneIdentity.DevOps.Logic
                         var secretsBrokerAccountsStr = JsonHelper.SerializeObject(accounts);
                         try
                         {
-                            var result = sgConnection.InvokeMethodFull(Service.Core, Method.Post,
+                            var result = SafeguardLogic.DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Post,
                                 $"DevOps/SecretsBrokers/{_safeguardLogic.DevOpsSecretsBroker.Id}/Accounts/Add",
                                 secretsBrokerAccountsStr);
                             if (result.StatusCode == HttpStatusCode.OK)
@@ -231,9 +231,10 @@ namespace OneIdentity.DevOps.Logic
             {
                 var needsUpdate = false;
                 var devopsInstance = _safeguardLogic.DevOpsSecretsBroker;
-                var devopsAsset = _safeguardLogic.GetAsset(sgConnection, _safeguardLogic.DevOpsSecretsBroker.AssetId) 
-                                  ?? _safeguardLogic.GetAssetByName(sgConnection, 
-                                      WellKnownData.DevOpsAssetName + "-" + _safeguardLogic.DevOpsSecretsBroker.Host);
+                // var devopsAsset = _safeguardLogic.GetAsset(sgConnection, _safeguardLogic.DevOpsSecretsBroker.Id) 
+                //                   ?? _safeguardLogic.GetAssetByName(sgConnection, 
+                //                       WellKnownData.DevOpsAssetName + "-" + _safeguardLogic.DevOpsSecretsBroker.Host);
+                var devopsAsset = _safeguardLogic.GetAsset(sgConnection, _safeguardLogic.DevOpsSecretsBroker.Id);
                 var plugins = _configDb.GetAllPlugins();
 
                 if (devopsAsset == null)
@@ -275,7 +276,7 @@ namespace OneIdentity.DevOps.Logic
 
             var accounts = new List<A2ARetrievableAccount>();
 
-            var result = sgConnection.InvokeMethodFull(Service.Core, Method.Get, $"A2ARegistrations/{a2aRegistration.Id}/RetrievableAccounts");
+            var result = SafeguardLogic.DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Get, $"A2ARegistrations/{a2aRegistration.Id}/RetrievableAccounts");
             if (result.StatusCode == HttpStatusCode.OK)
             {
                 accounts = JsonHelper.DeserializeObject<List<A2ARetrievableAccount>>(result.Body);
@@ -306,7 +307,7 @@ namespace OneIdentity.DevOps.Logic
                             addon.VaultCredentials.FirstOrDefault(x => account.AccountName.StartsWith(x.Key) && !pp.Equals(x.Value));
                         if (!string.IsNullOrEmpty(addonAccount.Value))
                         {
-                            result = sgConnection.InvokeMethodFull(Service.Core, Method.Put, $"AssetAccounts/{account.AccountId}/Password", $"\"{addonAccount.Value}\"");
+                            result = SafeguardLogic.DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Put, $"AssetAccounts/{account.AccountId}/Password", $"\"{addonAccount.Value}\"");
                             if (result.StatusCode != HttpStatusCode.OK)
                             {
                                 _logger.Error($"Failed to sync the password for account {account.AccountName} ");

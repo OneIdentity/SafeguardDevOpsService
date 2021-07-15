@@ -14,6 +14,7 @@ namespace OneIdentity.DevOps.Logic
         DevOpsSecretsBroker DevOpsSecretsBroker { get; }
 
         ISafeguardConnection Connect();
+        ISafeguardConnection CertConnect();
         SafeguardDevOpsConnection GetAnonymousSafeguardConnection();
         SafeguardDevOpsConnection GetSafeguardConnection();
         SafeguardDevOpsConnection SetSafeguardData(string token, SafeguardData safeguardData);
@@ -45,7 +46,7 @@ namespace OneIdentity.DevOps.Logic
         void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void UpdateSecretsBrokerInstance(ISafeguardConnection sg, DevOpsSecretsBroker devOpsSecretsBroker);
         Asset GetAsset(ISafeguardConnection sg, int id);
-        Asset GetAssetByName(ISafeguardConnection sg, string assetName);
+//        Asset GetAssetByName(ISafeguardConnection sg, string assetName);
 
         ServiceConfiguration GetDevOpsConfiguration(ISafeguardConnection sgConnection);
         ServiceConfiguration ConfigureDevOpsService();
@@ -59,5 +60,8 @@ namespace OneIdentity.DevOps.Logic
         void DeleteTrustedCertificate(string thumbPrint);
         IEnumerable<CertificateInfo> ImportTrustedCertificates(ISafeguardConnection sgConnection);
         void DeleteAllTrustedCertificates();
+
+//TODO: Delete me when done testing
+        void TestCertConnection();
     }
 }
