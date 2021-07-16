@@ -1113,10 +1113,37 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection)
         {
-            DeleteA2ARegistration(sgConnection, A2ARegistrationType.Account);
-            DeleteA2ARegistration(sgConnection, A2ARegistrationType.Vault);
+            var sg = sgConnection ?? Connect();
+
+            DeleteDevOpsInstance(sg);
+            DeleteA2ARegistration(sg, A2ARegistrationType.Account);
+            DeleteA2ARegistration(sg, A2ARegistrationType.Vault);
             RemoveClientCertificate();
             DeleteSafeguardData();
+        }
+
+        private void DeleteDevOpsInstance(ISafeguardConnection sgConnection)
+        {
+            try
+            {
+                var devOpsInstance = GetSecretsBrokerInstance(sgConnection);
+                if (devOpsInstance != null)
+                {
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, 
+                        $"DevOps/SecretsBrokers/{devOpsInstance.Id}");
+                    if (result.StatusCode != HttpStatusCode.NoContent)
+                    {
+                        var errorMessage = JsonHelper.DeserializeObject<ErrorMessage>(result.Body);
+                        throw LogAndException($"Failed to delete the DevOps Secrets Broker Instance. {errorMessage.Message}");
+                    }
+
+                    _devOpsSecretsBroker = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException("Failed to delete the DevOps Secrets Broker Instance.", ex);
+            }
         }
 
         public void RestartService()
