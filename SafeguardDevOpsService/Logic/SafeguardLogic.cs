@@ -1111,12 +1111,46 @@ namespace OneIdentity.DevOps.Logic
             RestartService();
         }
 
-        public void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection)
+        public void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection, IAddonLogic addonLogic, bool secretsBrokerOnly)
         {
-            DeleteA2ARegistration(sgConnection, A2ARegistrationType.Account);
-            DeleteA2ARegistration(sgConnection, A2ARegistrationType.Vault);
-            RemoveClientCertificate();
+            var sg = sgConnection ?? Connect();
+
+            foreach (var addon in _configDb.GetAllAddons())
+            {
+                addonLogic.RemoveAddon(addon.Name);
+            }
+
+            if (!secretsBrokerOnly)
+            {
+                DeleteDevOpsInstance(sg);
+            }
+
             DeleteSafeguardData();
+            _devOpsSecretsBroker = null;
+            DisconnectWithAccessToken();
+        }
+
+        private void DeleteDevOpsInstance(ISafeguardConnection sgConnection)
+        {
+            try
+            {
+                var devOpsInstance = GetSecretsBrokerInstance(sgConnection);
+                if (devOpsInstance != null)
+                {
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete,
+                        $"DevOps/SecretsBrokers/{devOpsInstance.Id}");
+                    if (result.StatusCode != HttpStatusCode.NoContent)
+                    {
+                        var errorMessage = JsonHelper.DeserializeObject<ErrorMessage>(result.Body);
+                        throw LogAndException(
+                            $"Failed to delete the DevOps Secrets Broker Instance. {errorMessage.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException("Failed to delete the DevOps Secrets Broker Instance.", ex);
+            }
         }
 
         public void RestartService()
@@ -1490,77 +1524,6 @@ namespace OneIdentity.DevOps.Logic
             }
 
             return null;
-        }
-
-        public void DeleteA2ARegistration(ISafeguardConnection sgConnection, A2ARegistrationType registrationType)
-        {
-            if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
-                (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
-            {
-                var msg = "A2A registration not configured. Skipping...";
-                _logger.Error(msg);
-                return;
-            }
-
-            var sg = sgConnection ?? Connect();
-
-            try
-            {
-                A2ARegistration registration = null;
-                try
-                {
-                    registration = GetA2ARegistration(sg, registrationType);
-                    if (registration != null)
-                    {
-                        DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Delete, $"A2ARegistrations/{registration.Id}");
-                        if (registrationType == A2ARegistrationType.Account)
-                        {
-                            _configDb.DeleteAccountMappings();
-                            _configDb.A2aRegistrationId = null;
-                            _serviceConfiguration.A2ARegistrationName = null;
-                        }
-                        else
-                        {
-                            _configDb.A2aVaultRegistrationId = null;
-                            _serviceConfiguration.A2AVaultRegistrationName = null;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, 
-                        $"Failed to delete the registration {_configDb.A2aRegistrationId} - {registration?.AppName}: {ex.Message}");
-                }
-
-                // Only delete the A2A user when both A2A registrations have been deleted.
-                if (_configDb.A2aRegistrationId == null && _configDb.A2aVaultRegistrationId == null)
-                {
-                    A2AUser user = null;
-                    try
-                    {
-                        user = GetA2AUser(sg);
-                        if (user != null)
-                        {
-                            DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Delete, $"Users/{user.Id}");
-                            _configDb.DeleteAccountMappings();
-                            _serviceConfiguration.UserName = null;
-                            _serviceConfiguration.UserDisplayName = null;
-                            _serviceConfiguration.IdentityProviderName = null;
-                            _serviceConfiguration.AdminRoles = null;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error(ex, 
-                            $"Failed to delete the A2A certificate user {_configDb.A2aUserId} - {user?.UserName}: {ex.Message}");
-                    }
-                }
-            }
-            finally
-            {
-                if (sgConnection == null)
-                    sg.Dispose();
-            }
         }
 
         public A2ARetrievableAccount GetA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType)
