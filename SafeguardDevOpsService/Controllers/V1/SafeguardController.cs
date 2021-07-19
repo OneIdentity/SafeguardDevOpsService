@@ -180,19 +180,29 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// 
         /// To help prevent unintended Safeguard client configuration removal, the confirm query param is required and must be set to "yes".
         /// </remarks>
+        /// <param name="secretsBrokerOnly">If set to true (default) then reset the Secrets Broker database only and leave all related devops instance data elements in Safeguard, as is.
+        /// If set to false then the Secrets Broker database will be reset and all related data elements in Safeguard will also be removed.</param>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the Safeguard client configuration.</param>
-        /// <response code="204">No Content.</response>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps when complete.</param>
+        /// <response code="200">Success. Restart required.</response>
+        /// <response code="204">Success. No Content.</response>
         /// <response code="400">Bad request.</response>
         [SafeguardSessionKeyAuthorization]
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete("Configuration")]
-        public ActionResult DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
+        public ActionResult DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard, [FromServices] IAddonLogic addonLogic, 
+            [FromQuery] string confirm, [FromQuery] bool secretsBrokerOnly = true, [FromQuery] bool restart = true)
         {
             if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
 
-            safeguard.DeleteDevOpsConfiguration(null);
+            safeguard.DeleteDevOpsConfiguration(null, addonLogic, secretsBrokerOnly);
+
+            if (restart)
+                safeguard.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok(WellKnownData.RestartNotice);
 
             return NoContent();
         }

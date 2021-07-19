@@ -46,11 +46,10 @@ namespace OneIdentity.DevOps.Logic
         void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void UpdateSecretsBrokerInstance(ISafeguardConnection sg, DevOpsSecretsBroker devOpsSecretsBroker);
         Asset GetAsset(ISafeguardConnection sg, int id);
-//        Asset GetAssetByName(ISafeguardConnection sg, string assetName);
 
         ServiceConfiguration GetDevOpsConfiguration(ISafeguardConnection sgConnection);
         ServiceConfiguration ConfigureDevOpsService();
-        void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection);
+        void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection, IAddonLogic addonLogic, bool secretsBrokerOnly);
 
         void RestartService();
 
@@ -60,8 +59,5 @@ namespace OneIdentity.DevOps.Logic
         void DeleteTrustedCertificate(string thumbPrint);
         IEnumerable<CertificateInfo> ImportTrustedCertificates(ISafeguardConnection sgConnection);
         void DeleteAllTrustedCertificates();
-
-//TODO: Delete me when done testing
-        void TestCertConnection();
     }
 }
