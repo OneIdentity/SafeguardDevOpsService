@@ -984,6 +984,27 @@ namespace OneIdentity.DevOps.Controllers.V1
             return NoContent();
         }
 
+        // /// <summary>
+        // /// Get a list of the known add-ons.
+        // /// </summary>
+        // /// <remarks>
+        // /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        // /// capability that is compatible with the HashiCorp API.  
+        // ///
+        // /// </remarks>
+        // /// <param name="addonName">Name of the add-on to retrieve.</param>
+        // /// <response code="200">Success</response>
+        // /// <response code="400">Bad request</response>
+        // /// <response code="404">Not Found</response>
+        // [SafeguardSessionKeyAuthorization]
+        // [UnhandledExceptionError]
+        // [HttpGet("TestCertConnection")]
+        // public ActionResult<Addon> GetTestCertConnection([FromServices] ISafeguardLogic safeguard)
+        // {
+        //     safeguard.TestCertConnection();
+        //
+        //     return Ok();
+        // }
 
     }
 }

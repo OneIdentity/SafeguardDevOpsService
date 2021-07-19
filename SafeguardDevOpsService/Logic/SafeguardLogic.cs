@@ -51,13 +51,37 @@ namespace OneIdentity.DevOps.Logic
             return new DevOpsException(msg, ex);
         }
 
+        private static IDictionary<string, string> AddDevOpsHeader(string devOpsInstanceId, IDictionary<string, string> additionalHeaders)
+        {
+            if (additionalHeaders == null)
+                return new Dictionary<string, string> {{"devOpsInstanceId", devOpsInstanceId}};
+
+            additionalHeaders.Add("devOpsInstanceId", devOpsInstanceId);
+            return additionalHeaders;
+        }
+
+        public static string DevOpsInvokeMethod(string devOpsInstanceId, ISafeguardConnection sgConnection, Service service, Method method, 
+            string relativeUrl, string body = null, IDictionary<string,string> parameters = null, 
+            IDictionary<string,string> additionalHeaders = null, TimeSpan? timeout = null)
+        {
+            return sgConnection.InvokeMethod(service, method, relativeUrl, body, parameters, AddDevOpsHeader(devOpsInstanceId, additionalHeaders), timeout);
+        } 
+
+        public static FullResponse DevOpsInvokeMethodFull(string devOpsInstanceId, ISafeguardConnection sgConnection, Service service, Method method, 
+            string relativeUrl, string body = null, IDictionary<string,string> parameters = null, 
+            IDictionary<string,string> additionalHeaders = null, TimeSpan? timeout = null)
+        {
+            return sgConnection.InvokeMethodFull(service, method, relativeUrl, body, parameters, AddDevOpsHeader(devOpsInstanceId, additionalHeaders), timeout);
+        } 
+
+
         private SafeguardDevOpsConnection GetSafeguardAppliance(ISafeguardConnection sgConnection)
         {
             var sg = sgConnection ?? Connect();
 
             try
             {
-                var availabilityJson = sg.InvokeMethod(Service.Notification, Method.Get, "Status/Availability");
+                var availabilityJson = DevOpsInvokeMethod(_configDb.SvcId, sg, Service.Notification, Method.Get, "Status/Availability");
                 var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
 
                 return new SafeguardDevOpsConnection()
@@ -241,7 +265,7 @@ namespace OneIdentity.DevOps.Logic
                 var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
                 try
                 {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Post, "Users", a2aUserStr);
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Post, "Users", a2aUserStr);
                     if (result.StatusCode == HttpStatusCode.Created)
                     {
                         a2aUser = JsonHelper.DeserializeObject<A2AUser>(result.Body);
@@ -260,7 +284,7 @@ namespace OneIdentity.DevOps.Logic
                     try {
                         a2aUser.PrimaryAuthenticationIdentity = thumbprint;
                         var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
-                        sg.InvokeMethodFull(Service.Core, Method.Put, $"Users/{a2aUser.Id}", a2aUserStr);
+                        DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put, $"Users/{a2aUser.Id}", a2aUserStr);
                     }
                     catch (Exception ex)
                     {
@@ -286,7 +310,7 @@ namespace OneIdentity.DevOps.Logic
 
                     try
                     {
-                        result = sg.InvokeMethodFull(Service.Core, Method.Get, "Users", null, p);
+                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "Users", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
                             var foundUsers = JsonHelper.DeserializeObject<List<A2AUser>>(result.Body);
@@ -338,7 +362,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"Users/{id.Value}");
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"Users/{id.Value}");
                     if (result.StatusCode == HttpStatusCode.OK)
                     {
                         return JsonHelper.DeserializeObject<A2AUser>(result.Body);
@@ -357,7 +381,7 @@ namespace OneIdentity.DevOps.Logic
         {
             try
             {
-                var result = sg.InvokeMethodFull(Service.Appliance, Method.Post, "A2AService/Enable");
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Appliance, Method.Post, "A2AService/Enable");
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
                     _logger.Error("Failed to start the A2A service.");
@@ -395,7 +419,7 @@ namespace OneIdentity.DevOps.Logic
 
                     try
                     {
-                        var result = sg.InvokeMethodFull(Service.Core, Method.Post, "A2ARegistrations",
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Post, "A2ARegistrations",
                             registrationStr);
                         if (result.StatusCode == HttpStatusCode.Created)
                         {
@@ -430,7 +454,7 @@ namespace OneIdentity.DevOps.Logic
 
                     try
                     {
-                        var result = sg.InvokeMethodFull(Service.Core, Method.Put,
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put,
                             $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}", devOpsInstanceBody);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
@@ -472,7 +496,7 @@ namespace OneIdentity.DevOps.Logic
                         var p = new Dictionary<string, string>
                             {{"filter", $"AppName eq '{knownRegistrationName}'"}};
 
-                        result = sg.InvokeMethodFull(Service.Core, Method.Get, "A2ARegistrations", null, p);
+                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "A2ARegistrations", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
                             var foundRegistrations = JsonHelper.DeserializeObject<List<A2ARegistration>>(result.Body);
@@ -547,8 +571,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    result = sg.InvokeMethodFull(Service.Core, Method.Get,
-                        $"A2ARegistrations/{id}");
+                    result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"A2ARegistrations/{id}");
                     if (result.StatusCode == HttpStatusCode.OK)
                     {
                         return JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
@@ -672,6 +695,31 @@ namespace OneIdentity.DevOps.Logic
             {
                 throw LogAndException($"Failed to connect to Safeguard at '{address}': {ex.Message}", ex);
             }
+        }
+
+        public ISafeguardConnection CertConnect()
+        {
+            var sppAddress = _configDb.SafeguardAddress;
+            var userCertificate = _configDb.UserCertificateBase64Data;
+            var passPhrase = _configDb.UserCertificatePassphrase?.ToSecureString();
+            var apiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion;
+            var ignoreSsl = _configDb.IgnoreSsl ?? true;
+
+            if (sppAddress != null && userCertificate != null)
+            {
+                try
+                {
+                    _logger.Debug("Connecting to Safeguard: {address}");
+                    var connection = Safeguard.Connect(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion, ignoreSsl);
+                    return connection;
+                }
+                catch (SafeguardDotNetException ex)
+                {
+                    _logger.Error(ex, $"Failed to connect to Safeguard at '{sppAddress}': {ex.Message}");
+                }
+            }
+
+            return null;
         }
 
         public bool ValidateLogin(string token, bool tokenOnly = false)
@@ -1159,7 +1207,7 @@ namespace OneIdentity.DevOps.Logic
                 try
                 {
 
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Get, "TrustedCertificates");
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "TrustedCertificates");
                     if (result.StatusCode == HttpStatusCode.OK)
                     {
                         serverCertificates = JsonHelper.DeserializeObject<IEnumerable<ServerCertificate>>(result.Body);
@@ -1207,7 +1255,7 @@ namespace OneIdentity.DevOps.Logic
         {
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}");
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     var secretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
@@ -1230,7 +1278,7 @@ namespace OneIdentity.DevOps.Logic
         {
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}/Accounts");
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}/Accounts");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     var secretsBrokerAccounts = JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBrokerAccount>>(result.Body).ToList();
@@ -1259,7 +1307,7 @@ namespace OneIdentity.DevOps.Logic
                 JsonHelper.AddQueryParameter(p, nameof(orderby), orderby);
                 JsonHelper.AddQueryParameter(p, nameof(q), q);
 
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "PolicyAccounts", null, p);
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "PolicyAccounts", null, p);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     if (count == null || count.Value == false)
@@ -1295,7 +1343,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"AssetAccounts/{id}");
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"AssetAccounts/{id}");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     var account = JsonHelper.DeserializeObject<AssetAccount>(result.Body);
@@ -1340,7 +1388,7 @@ namespace OneIdentity.DevOps.Logic
                 JsonHelper.AddQueryParameter(p, nameof(orderby), orderby);
                 JsonHelper.AddQueryParameter(p, nameof(q), q);
 
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, "A2ARegistrations", null, p);
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "A2ARegistrations", null, p);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     if (count == null || count.Value == false)
@@ -1414,7 +1462,7 @@ namespace OneIdentity.DevOps.Logic
 
                         try
                         {
-                            var result = sg.InvokeMethodFull(Service.Core, Method.Put,
+                            var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put,
                                 $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devOpsInstanceBody);
                             if (result.StatusCode == HttpStatusCode.OK)
                             {
@@ -1464,7 +1512,7 @@ namespace OneIdentity.DevOps.Logic
                     registration = GetA2ARegistration(sg, registrationType);
                     if (registration != null)
                     {
-                        sg.InvokeMethodFull(Service.Core, Method.Delete, $"A2ARegistrations/{registration.Id}");
+                        DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Delete, $"A2ARegistrations/{registration.Id}");
                         if (registrationType == A2ARegistrationType.Account)
                         {
                             _configDb.DeleteAccountMappings();
@@ -1493,7 +1541,7 @@ namespace OneIdentity.DevOps.Logic
                         user = GetA2AUser(sg);
                         if (user != null)
                         {
-                            sg.InvokeMethodFull(Service.Core, Method.Delete, $"Users/{user.Id}");
+                            DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Delete, $"Users/{user.Id}");
                             _configDb.DeleteAccountMappings();
                             _serviceConfiguration.UserName = null;
                             _serviceConfiguration.UserDisplayName = null;
@@ -1531,7 +1579,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get,
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                     $"A2ARegistrations/{registrationId}/RetrievableAccounts/{id}");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
@@ -1567,7 +1615,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Delete,
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Delete,
                     $"A2ARegistrations/{registrationId}/RetrievableAccounts/{id}");
                 if (result.StatusCode != HttpStatusCode.NoContent)
                 {
@@ -1601,7 +1649,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get,
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                     $"A2ARegistrations/{registrationId}/RetrievableAccounts");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
@@ -1637,7 +1685,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get,
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                     $"A2ARegistrations/{registrationId}/RetrievableAccounts/{accountId}");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
@@ -1687,7 +1735,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
-                        sg.InvokeMethodFull(Service.Core, Method.Post,
+                        DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Post,
                             $"A2ARegistrations/{registrationId}/RetrievableAccounts",
                             $"{{\"AccountId\":{account.Id}, \"IpRestrictions\":[{ipRestrictions}]}}");
                     }
@@ -1733,7 +1781,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
-                        sg.InvokeMethodFull(Service.Core, Method.Delete,
+                        DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Delete,
                             $"A2ARegistrations/{registrationId}/RetrievableAccounts/{account.AccountId}");
                     }
                     catch (Exception ex)
@@ -1811,7 +1859,7 @@ namespace OneIdentity.DevOps.Logic
                         JsonHelper.AddQueryParameter(p, nameof(filter), filter);
 
                         var result =
-                            sg.InvokeMethodFull(Service.Core, Method.Get, "DevOps/SecretsBrokers", null, p);
+                            DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "DevOps/SecretsBrokers", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
                             var secretsBroker =
@@ -1856,7 +1904,7 @@ namespace OneIdentity.DevOps.Logic
                         var secretsBrokerStr = JsonHelper.SerializeObject(secretsBroker);
                         try
                         {
-                            var result = sg.InvokeMethodFull(Service.Core, Method.Post, "DevOps/SecretsBrokers",
+                            var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Post, "DevOps/SecretsBrokers",
                                 secretsBrokerStr);
                             if (result.StatusCode == HttpStatusCode.Created)
                             {
@@ -1898,7 +1946,7 @@ namespace OneIdentity.DevOps.Logic
             var devopsSecretsBrokerStr = JsonHelper.SerializeObject(devOpsSecretsBroker);
             try
             {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Put, 
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put, 
                     $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devopsSecretsBrokerStr);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
@@ -1919,7 +1967,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    result = sg.InvokeMethodFull(Service.Core, Method.Get, $"Assets/{id}");
+                    result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"DevOps/SecretsBrokers/{id}/Asset");
                     if (result.StatusCode == HttpStatusCode.OK)
                     {
                         return JsonHelper.DeserializeObject<Asset>(result.Body);
@@ -1945,39 +1993,65 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        public Asset GetAssetByName(ISafeguardConnection sg, string assetName)
-        {
-            FullResponse result;
-
-            if (assetName != null)
-            {
-                var p = new Dictionary<string, string>
-                    {{"filter", $"Name eq '{assetName}'"}};
-
-                try
-                {
-                    result = sg.InvokeMethodFull(Service.Core, Method.Get, "Assets", null, p);
-                    if (result.StatusCode == HttpStatusCode.OK)
-                    {
-                        var foundAssets = JsonHelper.DeserializeObject<List<Asset>>(result.Body);
-                        if (foundAssets.Any())
-                        {
-                            return foundAssets.FirstOrDefault();
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, $"Failed to get the asset by name: {ex.Message}");
-                }
-            }
-
-            return null;
-        }
+        // public Asset GetAssetByName(ISafeguardConnection sg, string assetName)
+        // {
+        //     FullResponse result;
+        //
+        //     if (assetName != null)
+        //     {
+        //         var p = new Dictionary<string, string>
+        //             {{"filter", $"Name eq '{assetName}'"}};
+        //
+        //         try
+        //         {
+        //             result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "Assets", null, p);
+        //             if (result.StatusCode == HttpStatusCode.OK)
+        //             {
+        //                 var foundAssets = JsonHelper.DeserializeObject<List<Asset>>(result.Body);
+        //                 if (foundAssets.Any())
+        //                 {
+        //                     return foundAssets.FirstOrDefault();
+        //                 }
+        //             }
+        //         }
+        //         catch (Exception ex)
+        //         {
+        //             _logger.Error(ex, $"Failed to get the asset by name: {ex.Message}");
+        //         }
+        //     }
+        //
+        //     return null;
+        // }
 
         public void Dispose()
         {
             DisconnectWithAccessToken();
+        }
+
+//TODO: Delete me when done testing the authorization scheme.
+        public void TestCertConnection()
+        {
+            var sg = CertConnect();
+
+            try
+            {
+                if (sg == null)
+                    return;
+
+                var h = new Dictionary<string, string>
+                    {{"devOpsInstanceId", _configDb.SvcId}};
+
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "DevOps/SecretsBrokers/TestEndPoint", null, null, h);
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Failed to call the test endpoint: {ex.Message}");
+            }
+            finally
+            {
+                sg?.Dispose();
+            }
         }
     }
 }
