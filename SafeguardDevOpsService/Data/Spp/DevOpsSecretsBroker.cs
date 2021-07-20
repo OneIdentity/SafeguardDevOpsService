@@ -48,9 +48,14 @@ namespace OneIdentity.DevOps.Data.Spp
         public string DevOpsInstanceId { get; set; }
 
         /// <summary>
-        /// The A2A Registration.
+        /// The A2A registration.
         /// </summary>
         public A2ARegistration A2ARegistration { get; set; }
+
+        /// <summary>
+        /// The asset partition.
+        /// </summary>
+        public AssetPartition AssetPartition { get; set; }
 
         /// <summary>
         /// Set of asset accounts that are assigned to this devops secrets broker
