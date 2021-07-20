@@ -334,7 +334,7 @@ export class MainComponent implements OnInit, AfterViewInit {
               this.hasAvailableRegistrations = false;
               this.window.location.reload();
             },
-              error => this.error = error)
+              error => this.error = error);
         },
           error => this.error = error);
     } else {
