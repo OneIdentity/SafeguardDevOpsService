@@ -50,6 +50,16 @@ mat-drawer-container {
   right: 15px;
 }
 
+.registrations-container {
+  display: flex;
+  margin: 50px;
+
+  .grid-list {
+    width: 100%;
+    height: 100%;
+  }
+}
+
 .info-container {
   display: flex;
   margin: 50px;

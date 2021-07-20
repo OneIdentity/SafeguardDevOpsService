@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ViewChildren, ElementRef, Renderer2, HostListener, AfterViewInit, QueryList } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
-import { switchMap, map, tap, finalize, filter } from 'rxjs/operators';
+import { switchMap, map, tap, finalize, filter, catchError } from 'rxjs/operators';
 import { of, Observable, forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -52,7 +52,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   plugins = [];
   addons = [];
   isLoading: boolean = false;
-  isUploading = { Plugin: false, Addon: false };
+  isUploading = { Plugin: false, Addon: false, Certificate: false };
   isRestarting: boolean = false;
   openDrawer: string;
   openWhat: string;
@@ -65,6 +65,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   unconfiguredDiv: any;
   footerAbsolute: boolean = true;
   restartingProgress: string = 'Restarting Service';
+  hasAvailableRegistrations: boolean = false;
 
   certificateUploading = {
     Client: false,
@@ -94,7 +95,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       this.setFooter();
     }, 500);
   }
-  
+
   ngOnInit(): void {
     this.isLoading = true;
     this.error = null;
@@ -312,12 +313,59 @@ export class MainComponent implements OnInit, AfterViewInit {
         }
       }),
       switchMap(() => this.serviceClient.logon()),
+      switchMap(() => this.checkA2ARegistration()),
+      tap((hasAvailable: any) => {
+        this.hasAvailableRegistrations = typeof hasAvailable === 'boolean' && hasAvailable;
+      }),
       finalize(() => {
         if (!this.ApplianceAddress || this.ApplianceAddress === 'null') {
           this.router.navigate(['/login']);
         }
       })
     );
+  }
+
+  createRegistration(registrationId: number) {
+    if (registrationId > 0) {
+      this.serviceClient.logon()
+        .subscribe((configuration) => {
+          this.serviceClient.putA2ARegistration(registrationId)
+            .subscribe((registration) => {
+              this.hasAvailableRegistrations = false;
+              this.window.location.reload();
+            },
+              error => this.error = error);
+        },
+          error => this.error = error);
+    } else {
+      this.hasAvailableRegistrations = false;
+    }
+  }
+  
+  // If we already have an A2A registration then just return nothing, else
+  // if 404 then get available A2A registrations to choose from.
+  checkA2ARegistration(): Observable<any> {
+    return this.serviceClient.getA2ARegistration()
+      .pipe(
+        map(() => {
+          return of(false);
+        }),
+        catchError((error) => {
+          return of(error.status === 404);
+        })
+      );
+  }
+
+  checkAvailableA2ARegistrations(): Observable<any> {
+    return this.serviceClient.getAvailableA2ARegistrations()
+      .pipe(
+        map((registrations) => {
+          return registrations;
+        }),
+        catchError(() => {
+          return of();
+        })
+      );
   }
 
   createCSR(certificateType: string): void {
@@ -387,8 +435,8 @@ export class MainComponent implements OnInit, AfterViewInit {
 
           var passphrase = resultArray.length > 1 ? resultArray[1] : '';
           this.certificateUploading[certificateType] = true;
+          this.isUploading.Certificate = true;
 
-          this.snackBar.open('Uploading certificate...');
           return certificateType === 'Client' ?
             this.serviceClient.postConfiguration(fileContents, passphrase) :
             this.serviceClient.postWebServerCertificate(fileContents, passphrase);
@@ -396,7 +444,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       )
     ).subscribe(
       config => {
-        this.snackBar.dismiss();
+        this.isUploading.Certificate = false;
         if (certificateType === 'Client') {
           this.initializeConfig(config);
           // This is a hack: if you call too quickly after client cert upload, it returns zero
@@ -417,6 +465,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         }
       },
       error => {
+        this.isUploading.Certificate = false;
         if (error.error?.Message?.includes('specified network password is not correct')) {
           // bad password, have another try?
           // it's all we get
@@ -726,6 +775,8 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.error = null;
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
+        showSecretsBrokerOnly: true,
+        showRestart: true,
         title: 'Delete Configuration',
         message: '<p>Are you sure you want to remove all configuration for Safeguard Secrets Broker for DevOps?</p?>' +
           '<p>This removes all A2A credential retrievals, the A2A registration and the A2A user from Safeguard for Privileged Passwords.</p>' +
@@ -734,22 +785,26 @@ export class MainComponent implements OnInit, AfterViewInit {
     });
 
     dialogRef.afterClosed().pipe(
-      filter((dlgResult) => dlgResult.result === 'OK'),
-      tap(() => {
+      filter((dlgResult) => dlgResult?.result === 'OK'),
+      tap((dlgResult) => {
+        this.isRestarting = dlgResult?.restart;
         this.snackBar.open('Deleting configuration...');
         // Show overlay to disable clicking on anything
         this.drawer.open();
       }),
-      switchMap(() => this.serviceClient.deleteConfiguration())
+      switchMap((dlgResult) => this.serviceClient.deleteConfiguration(dlgResult?.secretsBrokerOnly, dlgResult?.restart))
     ).subscribe(() => {
       this.drawer.close();
       this.snackBar.dismiss();
       this.window.sessionStorage.setItem('ApplianceAddress', '');
-      // Reload is needed to accept new web server cert
-      this.window.sessionStorage.setItem('reload', 'true');
-      this.router.navigate(['/login']);
+      if (this.isRestarting) {
+        // Reload is needed to accept new web server cert
+        this.window.sessionStorage.setItem('reload', 'true');
+        this.router.navigate(['/login']);
+      }
     },
       error => {
+        this.isRestarting = false;
         this.error = error;
       });
   }
