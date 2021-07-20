@@ -136,8 +136,10 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('deleteSafeguard')));
   }
 
-  deleteConfiguration(): Observable<any> {
-    return this.http.delete(this.BASE + 'Safeguard/Configuration?confirm=yes', this.authHeader())
+  deleteConfiguration(secretsBrokerOnly: boolean, restartService: boolean): Observable<any> {
+    const options = Object.assign({ responseType: 'text', params: { confirm: 'yes', secretsBrokerOnly: secretsBrokerOnly, restart: restartService } }, this.authHeader());
+
+    return this.http.delete(this.BASE + 'Safeguard/Configuration', options)
       .pipe(catchError(this.error<any>('deleteConfiguration')));
   }
 
@@ -286,6 +288,28 @@ export class DevOpsServiceClient {
   getRetrievableAccounts(): Observable<any[]> {
     return this.http.get(this.BASE + 'Safeguard/A2ARegistration/RetrievableAccounts', this.authHeader())
       .pipe(catchError(this.error<any>('getRetrievableAccounts')));
+  }
+
+  getA2ARegistration(): Observable<any> {
+    return this.http.get(this.BASE + 'Safeguard/A2ARegistration', this.authHeader())
+      .pipe(catchError(this.error<any>('getA2ARegistration')));
+  }
+
+  putA2ARegistration(id: number): Observable<any> {
+    return this.http.put(this.BASE + 'Safeguard/A2ARegistration/' + id + '?confirm=yes', null, this.authHeader())
+      .pipe(catchError(this.error<any>('putA2ARegistration')));
+  }
+
+  getAvailableA2ARegistrationsCount(filter?: string, orderby?: string, page?: number, pageSize?: number): Observable<number> {
+    const url = this.BASE + 'Safeguard/AvailableA2ARegistrations' + this.buildQueryArguments(true, filter, orderby, page, pageSize);
+    return this.http.get(url, this.authHeader())
+      .pipe(catchError(this.error<any>('getAvailableA2ARegistrationsCount')));
+  }
+
+  getAvailableA2ARegistrations(filter?: string, orderby?: string, page?: number, pageSize?: number): Observable<any[]> {
+    const url = this.BASE + 'Safeguard/AvailableA2ARegistrations' + this.buildQueryArguments(false, filter, orderby, page, pageSize);
+    return this.http.get(url, this.authHeader())
+      .pipe(catchError(this.error<any>('getAvailableA2ARegistrations')));
   }
 
   getClientCertificate(): Observable<any> {

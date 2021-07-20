@@ -88,8 +88,11 @@
                 Signing Request (CSR)</button>
             </div>
             <div class='right'>
+              <app-progress-spinner color="accent" diameter="20" message='Uploading Certificate'
+                [visible]="isUploading.Certificate">
+              </app-progress-spinner>
               <button mat-flat-button class='link-button' cdkFocusInitial (click)="addCertificate($event, 'Client')"
-                color="primary">Upload Certificate</button>
+                color="primary" *ngIf="!isUploading.Certificate">Upload Certificate</button>
             </div>
           </div>
         </div>
@@ -165,6 +168,10 @@
           </ng-container>
         </div>
       </div>
+    </mat-card>
+
+    <mat-card class="registrations-container" *ngIf="hasAvailableRegistrations">
+      <app-registrations class="grid-list" (createNew)="createRegistration($event)"></app-registrations>
     </mat-card>
 
     <ng-container *ngFor="let plugin of plugins">
