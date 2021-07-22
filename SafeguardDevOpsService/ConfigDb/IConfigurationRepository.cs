@@ -27,6 +27,8 @@ namespace OneIdentity.DevOps.ConfigDb
         int? A2aUserId { get; set; }
         int? A2aRegistrationId { get; set; }
         int? A2aVaultRegistrationId { get; set; }
+        int? AssetId { get; set; }
+        int? AssetPartitionId { get; set; }
         string SigningCertificate { get; set; }
         string LastKnownMonitorState { get; set; }
 

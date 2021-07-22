@@ -23,16 +23,6 @@ namespace OneIdentity.DevOps.Data.Spp
         public string Host { get; set; }
 
         /// <summary>
-        /// The Secrets Broker asset id.
-        /// </summary>
-        public int AssetId { get; set; }
-
-        /// <summary>
-        /// The Secrets Broker asset name.
-        /// </summary>
-        public string AssetName { get; set; }
-
-        /// <summary>
         /// The accounts to plugins mapping.
         /// </summary>
         public string AccountMapping { get; set; }
@@ -55,7 +45,17 @@ namespace OneIdentity.DevOps.Data.Spp
         /// <summary>
         /// The asset partition.
         /// </summary>
+        public Asset Asset { get; set; }
+
+        /// <summary>
+        /// The asset partition.
+        /// </summary>
         public AssetPartition AssetPartition { get; set; }
+
+        /// <summary>
+        /// The A2A user.
+        /// </summary>
+        public A2AUser A2AUser { get; set; }
 
         /// <summary>
         /// Set of asset accounts that are assigned to this devops secrets broker

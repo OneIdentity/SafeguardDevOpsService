@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -29,9 +30,18 @@ namespace OneIdentity.DevOps.Logic
         private readonly IConfigurationRepository _configDb;
 
         private ServiceConfiguration _serviceConfiguration;
-        private DevOpsSecretsBroker _devOpsSecretsBroker { get; set; }
+        private DevOpsSecretsBroker _devOpsSecretsBroker;
 
-        public DevOpsSecretsBroker DevOpsSecretsBroker => _devOpsSecretsBroker;
+        public DevOpsSecretsBroker DevOpsSecretsBroker
+        {
+            get => _devOpsSecretsBroker;
+            private set
+            {
+                _devOpsSecretsBroker = value;
+                _configDb.AssetId = _devOpsSecretsBroker?.Asset?.Id;
+                _configDb.A2aUserId = _devOpsSecretsBroker?.A2AUser?.Id;
+            }
+        }
 
         public SafeguardLogic(IConfigurationRepository configDb)
         {
@@ -274,12 +284,16 @@ namespace OneIdentity.DevOps.Logic
                 var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
                 try
                 {
-                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Post, "Users",
-                        a2aUserStr);
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Post, "Users", a2aUserStr);
                     if (result.StatusCode == HttpStatusCode.Created)
                     {
                         a2aUser = JsonHelper.DeserializeObject<A2AUser>(result.Body);
-                        _configDb.A2aUserId = a2aUser.Id;
+                        if (DevOpsSecretsBroker?.A2AUser == null ||
+                            DevOpsSecretsBroker.A2AUser.Id != a2aUser.Id)
+                        {
+                            DevOpsSecretsBroker.A2AUser = a2aUser;
+                            UpdateSecretsBrokerInstance(sg, DevOpsSecretsBroker);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -296,13 +310,23 @@ namespace OneIdentity.DevOps.Logic
                     {
                         a2aUser.PrimaryAuthenticationIdentity = thumbprint;
                         var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
-                        DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put, $"Users/{a2aUser.Id}",
-                            a2aUserStr);
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put, $"Users/{a2aUser.Id}", a2aUserStr);
+                        if (result.StatusCode == HttpStatusCode.OK)
+                        {
+                            a2aUser = JsonHelper.DeserializeObject<A2AUser>(result.Body);
+                        }
                     }
                     catch (Exception ex)
                     {
                         throw LogAndException($"Failed to update the A2A user: {ex.Message}", ex);
                     }
+                }
+
+                if (DevOpsSecretsBroker?.A2AUser == null ||
+                    DevOpsSecretsBroker.A2AUser.Id != a2aUser.Id)
+                {
+                    DevOpsSecretsBroker.A2AUser = a2aUser;
+                    UpdateSecretsBrokerInstance(sg, DevOpsSecretsBroker);
                 }
             }
         }
@@ -332,7 +356,12 @@ namespace OneIdentity.DevOps.Logic
                             if (foundUsers.Count > 0)
                             {
                                 var a2aUser = foundUsers.FirstOrDefault();
-                                _configDb.A2aUserId = a2aUser.Id;
+                                if (a2aUser != null && _configDb.A2aUserId != a2aUser.Id)
+                                {
+                                    _configDb.A2aUserId = a2aUser.Id;
+                                    DevOpsSecretsBroker.A2AUser = a2aUser;
+                                }
+
                                 return a2aUser;
                             }
                         }
@@ -455,34 +484,12 @@ namespace OneIdentity.DevOps.Logic
                         throw LogAndException($"Failed to create the A2A registration: {ex.Message}", ex);
                     }
 
-                    AddSecretsBrokerInstance(sg);
-                    if (DevOpsSecretsBroker == null)
-                    {
-                        throw new DevOpsException(
-                            $"Failed to update the Safeguard Secrets Broker instance {_configDb.SvcId}");
-                    }
-
                     DevOpsSecretsBroker.A2ARegistration = new A2ARegistration()
                     {
                         Id = registration.Id
                     };
-                    var devOpsInstanceBody = JsonHelper.SerializeObject(DevOpsSecretsBroker);
 
-                    try
-                    {
-                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put,
-                            $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}", devOpsInstanceBody);
-                        if (result.StatusCode == HttpStatusCode.OK)
-                        {
-                            _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        throw LogAndException(
-                            $"Failed to update the A2A registration associated with the Safeguard Secrets Broker instance {_configDb.SvcId}: {ex.Message}",
-                            ex);
-                    }
+                    UpdateSecretsBrokerInstance(sg, DevOpsSecretsBroker);
                 }
             }
             finally
@@ -557,7 +564,9 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        throw LogAndException($"Failed to get the registration for id '{registrationId}'", ex);
+                        // Just log the exception and set the registration id in the databsae to null.  If there is a
+                        //  registration that matches, it will find it the next time.
+                        _logger.Error(ex, $"Failed to get the registration for id '{registrationId}': {ex.Message}");
                     }
                 }
 
@@ -1089,6 +1098,25 @@ namespace OneIdentity.DevOps.Logic
             return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion, true);
         }
 
+        public void RetrieveDevOpsSecretsBrokerInstance(ISafeguardConnection sgConnection)
+        {
+            var sg = sgConnection ?? Connect();
+
+            try {
+                var secretsBroker = GetSecretsBrokerInstanceByName(sg);
+                if (secretsBroker != null)
+                {
+                    DevOpsSecretsBroker = secretsBroker;
+                }
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
+
+        }
+
         public SafeguardDevOpsConnection SetSafeguardData(string token, SafeguardData safeguardData)
         {
             if (token == null)
@@ -1144,6 +1172,7 @@ namespace OneIdentity.DevOps.Logic
             }
 
             _configDb.DropDatabase();
+            _configDb.SvcId = WellKnownData.ServiceIdentitifierRegenerate;
             RestartService();
         }
 
@@ -1162,7 +1191,7 @@ namespace OneIdentity.DevOps.Logic
             }
 
             DeleteSafeguardData();
-            _devOpsSecretsBroker = null;
+            DevOpsSecretsBroker = null;
             DisconnectWithAccessToken();
         }
 
@@ -1573,6 +1602,8 @@ namespace OneIdentity.DevOps.Logic
                         {
                             Id = a2aRegistration.Id
                         };
+                        devOpsSecretsBroker.A2AUser = a2aUser;
+
                         var devOpsInstanceBody = JsonHelper.SerializeObject(devOpsSecretsBroker);
 
                         try
@@ -1581,7 +1612,7 @@ namespace OneIdentity.DevOps.Logic
                                 $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devOpsInstanceBody);
                             if (result.StatusCode == HttpStatusCode.OK)
                             {
-                                _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                                DevOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
                             }
                         }
                         catch (Exception ex)
@@ -1844,22 +1875,9 @@ namespace OneIdentity.DevOps.Logic
 
         public ServiceConfiguration GetDevOpsConfiguration(ISafeguardConnection sgConnection)
         {
-            _serviceConfiguration.IdentityProviderName = null;
-            _serviceConfiguration.UserName = null;
-            _serviceConfiguration.UserDisplayName = null;
-            _serviceConfiguration.AdminRoles = null;
-            _serviceConfiguration.A2ARegistrationName = null;
-            _serviceConfiguration.A2AVaultRegistrationName = null;
-            _serviceConfiguration.Thumbprint = null;
+            _serviceConfiguration.Clear();
 
-            var a2aUser = GetA2AUser(sgConnection);
-            if (a2aUser != null)
-            {
-                _serviceConfiguration.IdentityProviderName = a2aUser.IdentityProviderName;
-                _serviceConfiguration.UserName = a2aUser.UserName;
-                _serviceConfiguration.UserDisplayName = a2aUser.DisplayName;
-                _serviceConfiguration.AdminRoles = a2aUser.AdminRoles;
-            }
+            _serviceConfiguration.A2AUser = GetA2AUser(sgConnection);
 
             _serviceConfiguration.Appliance = GetSafeguardAvailability(sgConnection,
                 new SafeguardDevOpsConnection()
@@ -1869,19 +1887,10 @@ namespace OneIdentity.DevOps.Logic
                     ApiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion
                 });
 
-            var a2aRegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Account);
-            if (a2aRegistration != null)
-            {
-                _serviceConfiguration.A2ARegistrationName = a2aRegistration.AppName;
-            }
-
-            a2aRegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Vault);
-            if (a2aRegistration != null)
-            {
-                _serviceConfiguration.A2AVaultRegistrationName = a2aRegistration.AppName;
-            }
-
-            _serviceConfiguration.Thumbprint = _configDb.UserCertificate?.Thumbprint;
+            _serviceConfiguration.A2ARegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Account);
+            _serviceConfiguration.A2AVaultRegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Vault);
+            _serviceConfiguration.Asset = GetAsset(sgConnection);
+            _serviceConfiguration.AssetPartition = GetAssetPartition(sgConnection);
 
             return _serviceConfiguration;
         }
@@ -1895,10 +1904,11 @@ namespace OneIdentity.DevOps.Logic
 
                 try
                 {
-                    var secretsBroker = GetSecretsBrokerInstanceByName(sgConnection);
+                    var secretsBroker = GetSecretsBrokerInstanceByName(sg);
                     if (secretsBroker != null)
                     {
-                        _devOpsSecretsBroker = secretsBroker;
+                        DevOpsSecretsBroker = secretsBroker;
+                        return;
                     }
 
                     var addresses = GetLocalIPAddresses();
@@ -1910,8 +1920,8 @@ namespace OneIdentity.DevOps.Logic
                         {
                             Host = ipAddress.ToString(),
                             DevOpsInstanceId = _configDb.SvcId,
-                            AssetName = WellKnownData.DevOpsAssetName + "-" + ipAddress,
-                            AssetPartition = new AssetPartition() {Name = WellKnownData.DevOpsAssetName + "-" + _configDb.SvcId}
+                            Asset = new Asset() {Name = WellKnownData.DevOpsAssetName(_configDb.SvcId)},
+                            AssetPartition = new AssetPartition() {Name = WellKnownData.DevOpsAssetPartitionName(_configDb.SvcId)}
                         };
 
                         var secretsBrokerStr = JsonHelper.SerializeObject(secretsBroker);
@@ -1921,7 +1931,7 @@ namespace OneIdentity.DevOps.Logic
                                 secretsBrokerStr);
                             if (result.StatusCode == HttpStatusCode.Created)
                             {
-                                _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                                DevOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
                                 return;
                             }
                         }
@@ -1953,14 +1963,17 @@ namespace OneIdentity.DevOps.Logic
             if (devOpsSecretsBroker.Host == null)
                 throw LogAndException("Invalid devOps secrets broker instance.  The host cannot be null.");
 
-            if (devOpsSecretsBroker.AssetId == 0)
-                devOpsSecretsBroker.AssetName = WellKnownData.DevOpsAssetName + "-" + devOpsSecretsBroker.Host;
+            if (devOpsSecretsBroker.Asset == null)
+                devOpsSecretsBroker.Asset = new Asset();
+
+            if (devOpsSecretsBroker.Asset.Id == 0)
+                devOpsSecretsBroker.Asset.Name = WellKnownData.DevOpsAssetName(_configDb.SvcId);
 
             if (devOpsSecretsBroker.AssetPartition == null)
                 devOpsSecretsBroker.AssetPartition = new AssetPartition();
 
-            if (devOpsSecretsBroker.AssetId == 0)
-                devOpsSecretsBroker.AssetName = WellKnownData.DevOpsAssetName + "-" + devOpsSecretsBroker.DevOpsInstanceId;
+            if (devOpsSecretsBroker.AssetPartition.Id == 0)
+                devOpsSecretsBroker.AssetPartition.Name = WellKnownData.DevOpsAssetPartitionName(_configDb.SvcId);
 
             var devopsSecretsBrokerStr = JsonHelper.SerializeObject(devOpsSecretsBroker);
             try
@@ -1969,7 +1982,7 @@ namespace OneIdentity.DevOps.Logic
                     $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devopsSecretsBrokerStr);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
-                    _devOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                    DevOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
                 }
             }
             catch (Exception ex)
@@ -1978,15 +1991,84 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public Asset GetAsset(ISafeguardConnection sg, int id)
+        public Asset GetAsset(ISafeguardConnection sgConnection)
         {
-            FullResponse result;
+            var sg = sgConnection ?? Connect();
 
-            if (id >= 0)
+            try
+            {
+                FullResponse result;
+
+                // If we don't have an asset Id then try to find the asset by name
+                if (_configDb.AssetId == null)
+                {
+                    var ipAddress = LocalIPAddress();
+                    var knownAssetName = WellKnownData.DevOpsAssetName(_configDb.SvcId);
+                    try
+                    {
+                        var p = new Dictionary<string, string>
+                            {{"filter", $"Name eq '{knownAssetName}'"}};
+
+                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "Assets", null, p);
+                        if (result.StatusCode == HttpStatusCode.OK)
+                        {
+                            var foundAssets = JsonHelper.DeserializeObject<List<Asset>>(result.Body);
+
+                            if (foundAssets.Count > 0)
+                            {
+                                var asset = foundAssets.FirstOrDefault();
+                                if (asset != null)
+                                {
+                                    _configDb.AssetId = asset.Id;
+                                }
+
+                                return asset;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex, $"Failed to get the asset by name {knownAssetName}: {ex.Message}");
+                    }
+                }
+                else // Otherwise just get the asset by id
+                {
+                    var assetId = _configDb.AssetId;
+                    try
+                    {
+                        var asset = GetAsset(sg, DevOpsSecretsBroker.Id);
+                        if (asset != null)
+                        {
+                            return asset;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Just log the error and move on.  This will set the asset id in the database to null.
+                        //  If there is actually an asset that matches, it will find it the next time.
+                        _logger.Error(ex, $"Failed to get the asset for id '{assetId}': {ex.Message}");
+                    }
+                }
+
+                // Apparently the asset id we have is wrong so get rid of it.
+                _configDb.AssetId = null;
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
+
+            return null;
+        }
+
+        private Asset GetAsset(ISafeguardConnection sg, int? id)
+        {
+            if (id != null)
             {
                 try
                 {
-                    result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"DevOps/SecretsBrokers/{id}/Asset");
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"DevOps/SecretsBrokers/{id}/Asset");
                     if (result.StatusCode == HttpStatusCode.OK)
                     {
                         return JsonHelper.DeserializeObject<Asset>(result.Body);
@@ -2012,35 +2094,107 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        // public Asset GetAssetByName(ISafeguardConnection sg, string assetName)
-        // {
-        //     FullResponse result;
-        //
-        //     if (assetName != null)
-        //     {
-        //         var p = new Dictionary<string, string>
-        //             {{"filter", $"Name eq '{assetName}'"}};
-        //
-        //         try
-        //         {
-        //             result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "Assets", null, p);
-        //             if (result.StatusCode == HttpStatusCode.OK)
-        //             {
-        //                 var foundAssets = JsonHelper.DeserializeObject<List<Asset>>(result.Body);
-        //                 if (foundAssets.Any())
-        //                 {
-        //                     return foundAssets.FirstOrDefault();
-        //                 }
-        //             }
-        //         }
-        //         catch (Exception ex)
-        //         {
-        //             _logger.Error(ex, $"Failed to get the asset by name: {ex.Message}");
-        //         }
-        //     }
-        //
-        //     return null;
-        // }
+        public AssetPartition GetAssetPartition(ISafeguardConnection sgConnection)
+        {
+            var sg = sgConnection ?? Connect();
+
+            try
+            {
+                FullResponse result;
+
+                // If we don't have an asset partition Id then try to find the asset partition by name
+                if (_configDb.AssetPartitionId == null)
+                {
+                    var knownAssetPartitionName = WellKnownData.DevOpsAssetPartitionName(_configDb.SvcId);
+                    try
+                    {
+                        var p = new Dictionary<string, string>
+                            {{"filter", $"Name eq '{knownAssetPartitionName}'"}};
+
+                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "AssetPartitions", null, p);
+                        if (result.StatusCode == HttpStatusCode.OK)
+                        {
+                            var foundAssetPartitions = JsonHelper.DeserializeObject<List<AssetPartition>>(result.Body);
+
+                            if (foundAssetPartitions.Count > 0)
+                            {
+                                var assetPartition = foundAssetPartitions.FirstOrDefault();
+                                if (assetPartition != null)
+                                {
+                                    _configDb.AssetPartitionId = assetPartition.Id;
+                                }
+
+                                return assetPartition;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex, $"Failed to get the asset partition by name {knownAssetPartitionName}: {ex.Message}");
+                    }
+                }
+                else // Otherwise just get the registration by id
+                {
+                    var assetPartitionId = _configDb.AssetPartitionId;
+                    try
+                    {
+                        var assetPartition = GetAssetPartition(sg, assetPartitionId);
+                        if (assetPartition != null)
+                        {
+                            return assetPartition;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Just log the error and move on. If there is an asset partition that matches, Secrets Broker will find it
+                        //  the next time.
+                        _logger.Error(ex, $"Failed to get the asset partition for id '{assetPartitionId}': {ex.Message}");
+                    }
+                }
+
+                // Apparently the asset partition id we have is wrong so get rid of it.
+                _configDb.AssetPartitionId = null;
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
+
+            return null;
+        }
+
+        private AssetPartition GetAssetPartition(ISafeguardConnection sg, int? id)
+        {
+            if (id != null)
+            {
+                try
+                {
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"AssetPartitions/{id}");
+                    if (result.StatusCode == HttpStatusCode.OK)
+                    {
+                        return JsonHelper.DeserializeObject<AssetPartition>(result.Body);
+                    }
+                }
+                catch (SafeguardDotNetException ex)
+                {
+                    if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                    {
+                        _logger.Error($"Asset partition not found for id '{id}'", ex);
+                    }
+                    else
+                    {
+                        throw LogAndException($"Failed to get the asset partition for id '{id}'", ex);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndException($"Failed to get the asset partition for id '{id}'", ex);
+                }
+            }
+
+            return null;
+        }
 
         public void Dispose()
         {

@@ -43,9 +43,11 @@ namespace OneIdentity.DevOps.Logic
         void RemoveA2ARetrievableAccounts(ISafeguardConnection sgConnection, IEnumerable<A2ARetrievableAccount> accounts, A2ARegistrationType registrationType);
 
         List<DevOpsSecretsBrokerAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg);
+        void RetrieveDevOpsSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void UpdateSecretsBrokerInstance(ISafeguardConnection sg, DevOpsSecretsBroker devOpsSecretsBroker);
-        Asset GetAsset(ISafeguardConnection sg, int id);
+        Asset GetAsset(ISafeguardConnection sg);
+        AssetPartition GetAssetPartition(ISafeguardConnection sg);
 
         ServiceConfiguration GetDevOpsConfiguration(ISafeguardConnection sgConnection);
         ServiceConfiguration ConfigureDevOpsService();

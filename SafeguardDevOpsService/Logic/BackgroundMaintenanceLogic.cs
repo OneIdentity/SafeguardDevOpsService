@@ -97,7 +97,7 @@ namespace OneIdentity.DevOps.Logic
                 try
                 {
                     using var sgConnection = GetSgConnection();
-
+                    
                     if (sgConnection != null)
                     {
                         CheckAndAddSecretsBrokerInstance(sgConnection);
@@ -144,7 +144,7 @@ namespace OneIdentity.DevOps.Logic
 
         private void CheckAndPushAddOnCredentials(ISafeguardConnection sgConnection)
         {
-            if (_safeguardLogic.DevOpsSecretsBroker == null)
+            if (_safeguardLogic.DevOpsSecretsBroker?.Asset == null)
                 return;
 
             var addons = _configDb.GetAllAddons().ToList();
@@ -167,7 +167,7 @@ namespace OneIdentity.DevOps.Logic
                                 AccountId = 0,
                                 AccountName = credential.Key,
                                 Description = addon.Manifest.DisplayName + " account",
-                                AssetId = _safeguardLogic.DevOpsSecretsBroker.AssetId,
+                                AssetId = _safeguardLogic.DevOpsSecretsBroker.Asset.Id,
                                 Password = credential.Value
                             });
                         }
@@ -225,28 +225,28 @@ namespace OneIdentity.DevOps.Logic
 
         private void CheckAndAddSecretsBrokerInstance(ISafeguardConnection sgConnection)
         {
-            _safeguardLogic.AddSecretsBrokerInstance(sgConnection);
+            if (_safeguardLogic.DevOpsSecretsBroker == null)
+            {
+                // This call just gets the latest Secrets Broker instance from SPP and caches it.
+                _safeguardLogic.RetrieveDevOpsSecretsBrokerInstance(sgConnection);
+            }
 
             if (_safeguardLogic.DevOpsSecretsBroker != null)
             {
                 var needsUpdate = false;
                 var devopsInstance = _safeguardLogic.DevOpsSecretsBroker;
-                // var devopsAsset = _safeguardLogic.GetAsset(sgConnection, _safeguardLogic.DevOpsSecretsBroker.Id) 
-                //                   ?? _safeguardLogic.GetAssetByName(sgConnection, 
-                //                       WellKnownData.DevOpsAssetName + "-" + _safeguardLogic.DevOpsSecretsBroker.Host);
-                var devopsAsset = _safeguardLogic.GetAsset(sgConnection, _safeguardLogic.DevOpsSecretsBroker.Id);
+                var devopsAsset = _safeguardLogic.DevOpsSecretsBroker.Asset ?? _safeguardLogic.GetAsset(sgConnection);
                 var plugins = _configDb.GetAllPlugins();
 
                 if (devopsAsset == null)
                 {
                     // By setting the asset id to 0 and updating the devops instance, Safeguard will regenerate the asset.
-                    devopsInstance.AssetId = 0;
+                    devopsInstance.Asset.Id = 0;
                     needsUpdate = true;
                 } 
-                else if (_safeguardLogic.DevOpsSecretsBroker.AssetId != devopsAsset.Id || _safeguardLogic.DevOpsSecretsBroker.AssetName != devopsAsset.Name)
+                else if (_safeguardLogic.DevOpsSecretsBroker.Asset.Id != devopsAsset.Id)
                 {
-                    devopsInstance.AssetId = devopsAsset.Id;
-                    devopsInstance.AssetName = devopsAsset.Name;
+                    devopsInstance.Asset = devopsAsset;
                     needsUpdate = true;
                 }
 

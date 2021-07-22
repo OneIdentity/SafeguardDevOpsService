@@ -20,7 +20,6 @@ namespace OneIdentity.DevOps.Logic
         public const string PluginInfoClassName = "PluginDescriptor";
 
         public const string DevOpsServiceName = "SafeguardDevOpsService";
-        public const string DevOpsAssetName = DevOpsServiceName;
 
         private const string DevOpsServiceUserName = "SafeguardDevOpsUser";
         private const string DevOpsA2ARegistrationName = DevOpsServiceName;
@@ -44,6 +43,8 @@ namespace OneIdentity.DevOps.Logic
 
         public const string PluginsDeleteFile = "DeletePlugins.all";
         public const string AddonDeleteFile = "DeleteAddon.all";
+
+        public const string ServiceIdentitifierRegenerate = "NEVER-INSTALLED";
 
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
@@ -87,6 +88,16 @@ namespace OneIdentity.DevOps.Logic
         public static string DevOpsVaultRegistrationName(string svcId)
         {
             return $"{DevOpsVaultA2ARegistrationName}-{svcId}";
+        }
+
+        public static string DevOpsAssetName(string svcId)
+        {
+            return $"{DevOpsServiceName}-{svcId}";
+        }
+
+        public static string DevOpsAssetPartitionName(string svcId)
+        {
+            return $"{DevOpsServiceName}-{svcId}";
         }
 
         public static string DevOpsServiceClientCertificate(string svcId)

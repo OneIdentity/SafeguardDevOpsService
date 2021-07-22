@@ -13,6 +13,11 @@ namespace OneIdentity.DevOps.Data
     {
         private SecureString _accessToken;
         private string _sessionKey = Guid.NewGuid().ToString();
+        private A2ARegistration _a2ARegistration;
+        private A2ARegistration _a2AVaultRegistration;
+        private A2AUser _a2AUser;
+        private Asset _asset;
+        private AssetPartition _assetPartition;
 
         /// <summary>
         /// Service is authenticated
@@ -32,34 +37,86 @@ namespace OneIdentity.DevOps.Data
             get => _accessToken;
             set => _accessToken = value.Copy();
         }
+
         /// <summary>
         /// Identity provider name
         /// </summary>
-        public string IdentityProviderName { get; set; }
+        public string IdentityProviderName => _a2AUser?.IdentityProviderName;
+
         /// <summary>
         /// User name
         /// </summary>
-        public string UserName { get; set; }
+        public string UserName => _a2AUser?.UserName;
+
         /// <summary>
         /// User display name
         /// </summary>
-        public string UserDisplayName { get; set; }
-        /// <summary>
-        /// Admin roles
-        /// </summary>
-        public string[] AdminRoles { get; set; }
-        /// <summary>
-        /// A2A registration name
-        /// </summary>
-        public string A2ARegistrationName { get; set; }
-        /// <summary>
-        /// A2A vault registration name
-        /// </summary>
-        public string A2AVaultRegistrationName { get; set; }
+        public string UserDisplayName => _a2AUser?.DisplayName;
+
         /// <summary>
         /// Thumb print
         /// </summary>
-        public string Thumbprint { get; set; }
+        public string Thumbprint => _a2AUser?.PrimaryAuthenticationIdentity;
+
+        /// <summary>
+        /// Admin roles
+        /// </summary>
+        public string[] AdminRoles => _a2AUser?.AdminRoles;
+
+        /// <summary>
+        /// A2A Certificate User
+        /// </summary>
+        public A2AUser A2AUser
+        {
+            get => _a2AUser; 
+            set => _a2AUser = value;
+        }
+
+        /// <summary>
+        /// A2A registration name
+        /// </summary>
+        public string A2ARegistrationName => _a2ARegistration?.AppName;
+
+        /// <summary>
+        /// A2A vault registration name
+        /// </summary>
+        public string A2AVaultRegistrationName => _a2AVaultRegistration?.AppName;
+
+        /// <summary>
+        /// A2A registration
+        /// </summary>
+        public A2ARegistration A2ARegistration
+        {
+            get => _a2ARegistration; 
+            set => _a2ARegistration = value;
+        }
+
+        /// <summary>
+        /// A2A vault registration
+        /// </summary>
+        public A2ARegistration A2AVaultRegistration
+        {
+            get => _a2AVaultRegistration; 
+            set => _a2AVaultRegistration = value;
+        }
+
+        /// <summary>
+        /// Asset
+        /// </summary>
+        public Asset Asset
+        {
+            get => _asset; 
+            set => _asset = value;
+        }
+
+        /// <summary>
+        /// Asset partition
+        /// </summary>
+        public AssetPartition AssetPartition
+        {
+            get => _assetPartition; 
+            set => _assetPartition = value;
+        }
 
         /// <summary>
         /// Session key
@@ -82,9 +139,13 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public ServiceConfiguration(LoggedInUser loggedInUser)
         {
-            AdminRoles = loggedInUser.AdminRoles;
-            UserName = loggedInUser.UserName;
-            IdentityProviderName = loggedInUser.IdentityProviderName;
+            _a2AUser = new A2AUser()
+            {
+                AdminRoles = loggedInUser.AdminRoles,
+                UserName = loggedInUser.UserName,
+                IdentityProviderName = loggedInUser.IdentityProviderName,
+                Id = loggedInUser.Id
+            };
         }
 
         /// <summary>
@@ -93,6 +154,18 @@ namespace OneIdentity.DevOps.Data
         public bool Compare(string token)
         {
             return token.Equals(_accessToken.ToInsecureString());
+        }
+
+        /// <summary>
+        /// Clear properties
+        /// </summary>
+        public void Clear()
+        {
+            _a2AUser = null;
+            _a2ARegistration = null;
+            _a2AVaultRegistration = null;
+            _asset = null;
+            _assetPartition = null;
         }
 
         /// <summary>
