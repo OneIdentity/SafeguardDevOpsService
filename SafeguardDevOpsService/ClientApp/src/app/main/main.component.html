@@ -34,7 +34,7 @@
   <app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
 
   <div class="main-container">
-    <mat-card class="info-container">
+    <mat-card class="info-container" *ngIf="!hasAvailableRegistrations">
       <div class="info-column">
         <div class="general-info-container">
           <img src="/assets/SafeguardLogo.png" width="80" height="80" />

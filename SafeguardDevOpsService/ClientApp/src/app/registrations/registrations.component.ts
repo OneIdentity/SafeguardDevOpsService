@@ -77,7 +77,7 @@ export class RegistrationsComponent implements OnInit, AfterViewInit {
     let sortby = '';
 
     if (this.registrationSearchVal?.length > 0) {
-      //filterStr += ` and (AppName icontains '${this.registrationSearchVal}' or CreatedByUserDisplayName icontains '${this.registrationSearchVal}')`;
+      filterStr += ` and (AppName icontains '${this.registrationSearchVal}' or CreatedByUserDisplayName icontains '${this.registrationSearchVal}')`;
     }
 
     if (this.sort.active && this.sort.direction) {

@@ -4,6 +4,9 @@
   </mat-toolbar>
 
   <div class="main-container">
+    <p>Existing Safeguard A2A registrations were found. Choose one below to reuse it or click Continue to create a new
+      one.
+    </p>
     <div class="search-container">
       <mat-form-field appearance="outline">
         <mat-label>Search</mat-label>
@@ -54,10 +57,11 @@
     </div>
 
     <mat-toolbar class="selection-footer">
-      <button mat-flat-button color="primary" [disabled]="selection.selected.length == 0"
-        (click)="selectRegistration(false)">Select Existing Registration</button>
-        <button mat-button color="primary" class="createNew"
-          (click)="selectRegistration(true)">Create New Registration</button>
+      <div class="right">
+        <button mat-button color="primary" class="createNew" (click)="selectRegistration(true)">Continue</button>
+        <button mat-flat-button color="primary" [disabled]="selection.selected.length == 0"
+          (click)="selectRegistration(false)">Use Existing Registration</button>
+      </div>
     </mat-toolbar>
   </div>
 </div>
