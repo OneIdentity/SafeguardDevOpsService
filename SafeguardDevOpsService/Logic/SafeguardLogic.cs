@@ -1493,8 +1493,11 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
+                var f = "(not DevOpsInstanceId eq null)";
+                f += filter != null ? " and " + filter : "";
+
                 var p = new Dictionary<string, string>();
-                JsonHelper.AddQueryParameter(p, nameof(filter), filter);
+                JsonHelper.AddQueryParameter(p, nameof(filter), f);
                 JsonHelper.AddQueryParameter(p, nameof(page), page?.ToString());
                 JsonHelper.AddQueryParameter(p, nameof(limit), limit?.ToString());
                 JsonHelper.AddQueryParameter(p, nameof(count), count?.ToString());
@@ -1509,7 +1512,6 @@ namespace OneIdentity.DevOps.Logic
                         var registrations = JsonHelper.DeserializeObject<IEnumerable<A2ARegistration>>(result.Body);
                         if (registrations != null)
                         {
-                            registrations = registrations.Where(x => !string.IsNullOrEmpty(x.DevOpsInstanceId));
                             return registrations;
                         }
                     }
