@@ -70,6 +70,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         {
             var token = WellKnownData.GetSppToken(HttpContext);
             var appliance = safeguard.SetSafeguardData(token, safeguardData);
+            safeguard.AddSecretsBrokerInstance(null);
 
             return Ok(appliance);
         }
@@ -229,6 +230,8 @@ namespace OneIdentity.DevOps.Controllers.V1
             var safeguardConnection = safeguard.GetSafeguardConnection();
             if (safeguardConnection == null)
                 return NotFound("No Safeguard has not been configured");
+
+            safeguard.RetrieveDevOpsSecretsBrokerInstance(null);
 
             return Ok(safeguardConnection);
         }
@@ -907,8 +910,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         ///
         /// (See POST /service/devops/{version}/Plugins/File to upload a plugin file using multipart-form-data)
         /// </remarks>
-        /// <param name="formFile">Zip compressed add-on file.</param>
+        /// <param name="addonInfo">Secrets Broker add-on containing the base64 encoded zip file.</param>
         /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
+        /// <param name="force">Force add-on to installed even if another with the same name already exists.</param>
         /// <response code="200">Success. Needing restart</response>
         /// <response code="204">Success</response>
         /// <response code="400">Bad request</response>
@@ -940,6 +944,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </remarks>
         /// <param name="formFile">Zip compressed add-on file.</param>
         /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
+        /// <param name="force">Force add-on to installed even if another with the same name already exists.</param>
         /// <response code="200">Success. Needing restart</response>
         /// <response code="204">Success</response>
         /// <response code="400">Bad request</response>
