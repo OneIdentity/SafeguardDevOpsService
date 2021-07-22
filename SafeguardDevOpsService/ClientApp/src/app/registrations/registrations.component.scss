@@ -3,17 +3,11 @@
 .root-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
   width: 100%;
 }
 
 table {
   width: 100%;
-}
-
-.detail-row {
-  font-size: .85em;
-  color: $black-9;
 }
 
 .main-container {
@@ -42,6 +36,7 @@ table {
   background-color: $iris-blue;
   color: #ffffff;
   display: flex;
+  height: 48px;
 
   .spacer {
     flex: 1;
@@ -50,9 +45,16 @@ table {
 
 .selection-footer {
   width: 100%;
+  height: 48px;
   background-color: #ffffff;
   color: #ffffff;
   display: flex;
+
+  .right {
+    position:absolute;
+    margin: 0 16px;
+    right: 0;
+  }
 
   .spacer {
     flex: 1;
@@ -70,10 +72,13 @@ table {
 
 .table-container {
   position: relative;
-  min-height: 200px;
   display: flex;
   flex-direction: column;
   width: 100%;
+
+  tr.mat-header-row {
+    height: 20px !important;
+  }
 
   .mat-table {
     flex: 1;
