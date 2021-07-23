@@ -347,7 +347,7 @@ namespace OneIdentity.DevOps.Logic
 
                     try
                     {
-                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, 
+                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                             "Users", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
@@ -1384,7 +1384,7 @@ namespace OneIdentity.DevOps.Logic
             catch (Exception ex) //Throw away any exception
             {
                 _logger.Error(ex, $"Pinging Safeguard at {_configDb.SafeguardAddress} failed.");
-            }  
+            }
             finally
             {
                 if (sgConnection == null)
@@ -1424,7 +1424,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        private DevOpsSecretsBroker GetSecretsBrokerInstanceByName(ISafeguardConnection sg) 
+        private DevOpsSecretsBroker GetSecretsBrokerInstanceByName(ISafeguardConnection sg)
         {
             try
             {
@@ -1459,7 +1459,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        private IEnumerable<DevOpsSecretsBroker> GetAvailableSecretsBrokerInstances(ISafeguardConnection sg) 
+        private IEnumerable<DevOpsSecretsBroker> GetAvailableSecretsBrokerInstances(ISafeguardConnection sg)
         {
             try
             {
@@ -1941,7 +1941,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(ex, 
+                        _logger.Error(ex,
                             $"Failed to remove account {account.AccountId} - {account.AccountName}: {ex.Message}");
                     }
                 }
@@ -2058,7 +2058,7 @@ namespace OneIdentity.DevOps.Logic
             var devopsSecretsBrokerStr = JsonHelper.SerializeObject(devOpsSecretsBroker);
             try
             {
-                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put, 
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put,
                     $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devopsSecretsBrokerStr);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
