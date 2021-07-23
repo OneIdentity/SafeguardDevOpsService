@@ -39,31 +39,6 @@ namespace OneIdentity.DevOps.Data
         }
 
         /// <summary>
-        /// Identity provider name
-        /// </summary>
-        public string IdentityProviderName => _a2AUser?.IdentityProviderName;
-
-        /// <summary>
-        /// User name
-        /// </summary>
-        public string UserName => _a2AUser?.UserName;
-
-        /// <summary>
-        /// User display name
-        /// </summary>
-        public string UserDisplayName => _a2AUser?.DisplayName;
-
-        /// <summary>
-        /// Thumb print
-        /// </summary>
-        public string Thumbprint => _a2AUser?.PrimaryAuthenticationIdentity;
-
-        /// <summary>
-        /// Admin roles
-        /// </summary>
-        public string[] AdminRoles => _a2AUser?.AdminRoles;
-
-        /// <summary>
         /// A2A Certificate User
         /// </summary>
         public A2AUser A2AUser
@@ -71,16 +46,6 @@ namespace OneIdentity.DevOps.Data
             get => _a2AUser; 
             set => _a2AUser = value;
         }
-
-        /// <summary>
-        /// A2A registration name
-        /// </summary>
-        public string A2ARegistrationName => _a2ARegistration?.AppName;
-
-        /// <summary>
-        /// A2A vault registration name
-        /// </summary>
-        public string A2AVaultRegistrationName => _a2AVaultRegistration?.AppName;
 
         /// <summary>
         /// A2A registration

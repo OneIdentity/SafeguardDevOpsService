@@ -51,9 +51,10 @@ namespace OneIdentity.DevOps.Logic
         public ServiceConfiguration Find(ServiceConfiguration managementConnection)
         {
             return Cache.Values.FirstOrDefault(x =>
-                x.Appliance.ApplianceAddress.Equals(managementConnection.Appliance.ApplianceAddress)
-                && x.IdentityProviderName.Equals(managementConnection.IdentityProviderName) &&
-                x.UserName.Equals(managementConnection.UserName));
+                x.Appliance.ApplianceAddress.Equals(managementConnection.Appliance.ApplianceAddress) 
+                && x.A2AUser != null  
+                && x.A2AUser.IdentityProviderName.Equals(managementConnection.A2AUser?.IdentityProviderName) 
+                && x.A2AUser.UserName.Equals(managementConnection.A2AUser?.UserName));
         }
 
         public void Remove(string sessionKey)
