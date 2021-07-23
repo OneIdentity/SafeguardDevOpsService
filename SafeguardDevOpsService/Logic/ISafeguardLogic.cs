@@ -17,6 +17,7 @@ namespace OneIdentity.DevOps.Logic
         ISafeguardConnection CertConnect();
         SafeguardDevOpsConnection GetAnonymousSafeguardConnection();
         SafeguardDevOpsConnection GetSafeguardConnection();
+        SafeguardDevOpsLogon GetSafeguardLogon();
         SafeguardDevOpsConnection SetSafeguardData(string token, SafeguardData safeguardData);
         void DeleteSafeguardData();
 
@@ -61,5 +62,6 @@ namespace OneIdentity.DevOps.Logic
         void DeleteTrustedCertificate(string thumbPrint);
         IEnumerable<CertificateInfo> ImportTrustedCertificates(ISafeguardConnection sgConnection);
         void DeleteAllTrustedCertificates();
+        void PingSpp(ISafeguardConnection sgConnection);
     }
 }

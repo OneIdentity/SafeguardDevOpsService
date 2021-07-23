@@ -225,15 +225,15 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("Logon")]
-        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard, [FromServices] IPluginsLogic pluginsLogic)
+        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
         {
-            var safeguardConnection = safeguard.GetSafeguardConnection();
-            if (safeguardConnection == null)
+            var safeguardLogon = safeguard.GetSafeguardLogon();
+            if (safeguardLogon == null)
                 return NotFound("No Safeguard has not been configured");
 
             safeguard.RetrieveDevOpsSecretsBrokerInstance(null);
 
-            return Ok(safeguardConnection);
+            return Ok(safeguardLogon);
         }
 
         /// <summary>
@@ -998,6 +998,27 @@ namespace OneIdentity.DevOps.Controllers.V1
 
             return NoContent();
         }
+
+        // /// <summary>
+        // /// This is a test endpoint and should be removed before release
+        // /// </summary>
+        // /// <remarks>
+        // /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        // /// capability that is compatible with the HashiCorp API.  
+        // ///
+        // /// </remarks>
+        // /// <response code="200">Success</response>
+        // /// <response code="204">Success</response>
+        // /// <response code="400">Bad request</response>
+        // //[SafeguardSessionKeyAuthorization]
+        // [UnhandledExceptionError]
+        // [HttpPost("Ping")]
+        // public ActionResult PingSpp([FromServices] ISafeguardLogic safeguard)
+        // {
+        //     safeguard.PingSpp(null);
+        //
+        //     return NoContent();
+        // }
 
         // /// <summary>
         // /// Get a list of the known add-ons.

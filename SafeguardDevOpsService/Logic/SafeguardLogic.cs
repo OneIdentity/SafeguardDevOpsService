@@ -347,7 +347,7 @@ namespace OneIdentity.DevOps.Logic
 
                     try
                     {
-                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, 
+                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                             "Users", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
@@ -1098,6 +1098,23 @@ namespace OneIdentity.DevOps.Logic
             return ConnectAnonymous(_configDb.SafeguardAddress, _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion, true);
         }
 
+        public SafeguardDevOpsLogon GetSafeguardLogon()
+        {
+            var safeguardConnection = GetSafeguardConnection();
+            if (safeguardConnection == null)
+                return null;
+
+            var availableA2aRegistrationIds = GetAvailableA2ARegistrationIds(null);
+
+            var safeguardLogon = new SafeguardDevOpsLogon()
+            {
+                SafeguardDevOpsConnection = safeguardConnection,
+                HasAvailableA2ARegistrations = availableA2aRegistrationIds.Any()
+            };
+
+            return safeguardLogon;
+        }
+
         public void RetrieveDevOpsSecretsBrokerInstance(ISafeguardConnection sgConnection)
         {
             var sg = sgConnection ?? Connect();
@@ -1351,6 +1368,30 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteAllTrustedCertificates();
         }
 
+        public void PingSpp(ISafeguardConnection sgConnection)
+        {
+            var sg = sgConnection ?? CertConnect();
+
+            try
+            {
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core,
+                    Method.Post, "DevOps/SecretsBrokers/Ping");
+                if (result.StatusCode != HttpStatusCode.OK && result.StatusCode != HttpStatusCode.NoContent)
+                {
+                    _logger.Information($"Pinging Safeguard at {_configDb.SafeguardAddress} failed.");
+                }
+            }
+            catch (Exception ex) //Throw away any exception
+            {
+                _logger.Error(ex, $"Pinging Safeguard at {_configDb.SafeguardAddress} failed.");
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
+        }
+
         private DevOpsSecretsBroker GetSecretsBrokerInstance(ISafeguardConnection sg)
         {
             try
@@ -1368,6 +1409,7 @@ namespace OneIdentity.DevOps.Logic
                     var secretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
                     if (secretsBroker != null)
                     {
+                        PingSpp(sg);
                         return secretsBroker;
                     }
                 }
@@ -1382,7 +1424,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        private DevOpsSecretsBroker GetSecretsBrokerInstanceByName(ISafeguardConnection sg) 
+        private DevOpsSecretsBroker GetSecretsBrokerInstanceByName(ISafeguardConnection sg)
         {
             try
             {
@@ -1399,6 +1441,7 @@ namespace OneIdentity.DevOps.Logic
                         (JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBroker>>(result.Body)).FirstOrDefault();
                     if (secretsBroker != null)
                     {
+                        PingSpp(sg);
                         return secretsBroker;
                     }
                 }
@@ -1414,6 +1457,40 @@ namespace OneIdentity.DevOps.Logic
             }
 
             return null;
+        }
+
+        private IEnumerable<DevOpsSecretsBroker> GetAvailableSecretsBrokerInstances(ISafeguardConnection sg)
+        {
+            try
+            {
+                var filter = "InUse eq \"false\"";
+
+                var p = new Dictionary<string, string>();
+                JsonHelper.AddQueryParameter(p, nameof(filter), filter);
+
+                var result =
+                    DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "DevOps/SecretsBrokers", null, p);
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    var secretsBrokers =
+                        (JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBroker>>(result.Body));
+                    if (secretsBrokers != null)
+                    {
+                        return secretsBrokers;
+                    }
+                }
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                if (ex.HttpStatusCode != HttpStatusCode.NotFound)
+                    _logger.Error(ex, "Failed to get the available DevOps Secrets Broker instances from Safeguard. ");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed to get the available DevOps Secrets Broker instances from Safeguard. ");
+            }
+
+            return new List<DevOpsSecretsBroker>();
         }
 
         public List<DevOpsSecretsBrokerAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg)
@@ -1522,31 +1599,34 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var f = "(not DevOpsInstanceId eq null)";
-                f += filter != null ? " and " + filter : "";
+                var registrationIds = GetAvailableA2ARegistrationIds(sg);
 
-                var p = new Dictionary<string, string>();
-                JsonHelper.AddQueryParameter(p, nameof(filter), f);
-                JsonHelper.AddQueryParameter(p, nameof(page), page?.ToString());
-                JsonHelper.AddQueryParameter(p, nameof(limit), limit?.ToString());
-                JsonHelper.AddQueryParameter(p, nameof(count), count?.ToString());
-                JsonHelper.AddQueryParameter(p, nameof(orderby), orderby);
-                JsonHelper.AddQueryParameter(p, nameof(q), q);
-
-                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "A2ARegistrations", null, p);
-                if (result.StatusCode == HttpStatusCode.OK)
+                if (registrationIds.Any())
                 {
-                    if (count == null || count.Value == false)
+                    var p = new Dictionary<string, string>();
+                    JsonHelper.AddQueryParameter(p, nameof(filter), filter);
+                    JsonHelper.AddQueryParameter(p, nameof(page), page?.ToString());
+                    JsonHelper.AddQueryParameter(p, nameof(limit), limit?.ToString());
+                    JsonHelper.AddQueryParameter(p, nameof(count), count?.ToString());
+                    JsonHelper.AddQueryParameter(p, nameof(orderby), orderby);
+                    JsonHelper.AddQueryParameter(p, nameof(q), q);
+
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "A2ARegistrations", null, p);
+                    if (result.StatusCode == HttpStatusCode.OK)
                     {
-                        var registrations = JsonHelper.DeserializeObject<IEnumerable<A2ARegistration>>(result.Body);
-                        if (registrations != null)
+                        if (count == null || count.Value == false)
                         {
-                            return registrations;
+                            var registrations = JsonHelper.DeserializeObject<IEnumerable<A2ARegistration>>(result.Body);
+                            if (registrations != null)
+                            {
+                                registrations = registrations.Where(x => !string.IsNullOrEmpty(x.DevOpsInstanceId) && registrationIds.Contains(x.Id));
+                                return registrations;
+                            }
                         }
-                    }
-                    else
-                    {
-                        return result.Body;
+                        else
+                        {
+                            return result.Body;
+                        }
                     }
                 }
             }
@@ -1861,7 +1941,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(ex, 
+                        _logger.Error(ex,
                             $"Failed to remove account {account.AccountId} - {account.AccountName}: {ex.Message}");
                     }
                 }
@@ -1978,11 +2058,12 @@ namespace OneIdentity.DevOps.Logic
             var devopsSecretsBrokerStr = JsonHelper.SerializeObject(devOpsSecretsBroker);
             try
             {
-                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put, 
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put,
                     $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devopsSecretsBrokerStr);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     DevOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                    PingSpp(sg);
                 }
             }
             catch (Exception ex)
@@ -2194,6 +2275,35 @@ namespace OneIdentity.DevOps.Logic
             }
 
             return null;
+        }
+
+        private List<int> GetAvailableA2ARegistrationIds(ISafeguardConnection sgConnection)
+        {
+            var sg = sgConnection ?? Connect();
+
+            try
+            {
+                var devOpsInstances = GetAvailableSecretsBrokerInstances(sg).ToList();
+
+                if (devOpsInstances.Any())
+                {
+                    var registrationIds = devOpsInstances.Where(x => x.A2ARegistration != null)
+                        .Select(x => x.A2ARegistration.Id).ToList();
+                    if (registrationIds.Any())
+                        return registrationIds;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Get available A2A registration Ids failed. {ex.Message}", ex);
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
+
+            return new List<int>();
         }
 
         public void Dispose()
