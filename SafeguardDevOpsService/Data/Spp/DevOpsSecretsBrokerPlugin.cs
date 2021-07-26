@@ -43,6 +43,11 @@ namespace OneIdentity.DevOps.Data.Spp
             return Name;
         }
 
+        /// <summary>
+        /// Override Equals
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
@@ -50,7 +55,12 @@ namespace OneIdentity.DevOps.Data.Spp
             if (obj.GetType() != GetType()) return false;
             return Equals((DevOpsSecretsBrokerPlugin) obj);
         }
-
+        
+        /// <summary>
+        /// Override Equals
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
         protected bool Equals(DevOpsSecretsBrokerPlugin other)
         {
             return (Name.Equals(other.Name, StringComparison.InvariantCultureIgnoreCase) 
@@ -60,6 +70,10 @@ namespace OneIdentity.DevOps.Data.Spp
                     && MappedVaultAccounts.Equals(other.MappedVaultAccounts, StringComparison.InvariantCultureIgnoreCase));
         }
 
+        /// <summary>
+        /// Override GetHashCode
+        /// </summary>
+        /// <returns></returns>
         [SuppressMessage("ReSharper", "NonReadonlyMemberInGetHashCode")]
         public override int GetHashCode()
         {

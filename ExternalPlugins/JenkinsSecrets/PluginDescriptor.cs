@@ -114,7 +114,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
             }
         }
 
-        public bool SetPassword(string asset, string account, string password)
+        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
             if (_secretsClient == null)
             {
@@ -124,8 +124,8 @@ namespace OneIdentity.DevOps.JenkinsSecrets
 
             try
             {
-                var name = _rgx.Replace($"{asset}-{account}", "-");
-                var id = $"{asset}{account}";
+                var name = _rgx.Replace($"{asset}-{altAccountName ?? account}", "-");
+                var id = $"{asset}{altAccountName ?? account}";
 
                 var response = _secretsClient.GetAsync($"credentials/store/system/domain/_/credential/{id}/").Result;
                 if (response.IsSuccessStatusCode)
@@ -152,12 +152,12 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                 response = _secretsClient.GetAsync($"credentials/store/system/domain/_/credential/{id}/").Result;
                 response.EnsureSuccessStatusCode();
 
-                _logger.Information($"Password for {asset}-{account} has been successfully stored in the vault.");
+                _logger.Information($"Password for {asset}-{altAccountName ?? account} has been successfully stored in the vault.");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to set the secret for {asset}-{account}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return false;
             }
         }

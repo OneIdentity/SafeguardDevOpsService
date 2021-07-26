@@ -57,6 +57,11 @@ namespace OneIdentity.DevOps.Data
         [DataMember]
         public string AccountName { get; set; }
         /// <summary>
+        /// Alternate Account name
+        /// </summary>
+        [DataMember]
+        public string AltAccountName { get; set; }
+        /// <summary>
         /// Domain name
         /// </summary>
         [DataMember]

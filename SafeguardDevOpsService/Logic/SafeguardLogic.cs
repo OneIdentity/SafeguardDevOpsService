@@ -2035,7 +2035,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public void UpdateSecretsBrokerInstance(ISafeguardConnection sg, DevOpsSecretsBroker devOpsSecretsBroker)
+        public void UpdateSecretsBrokerInstance(ISafeguardConnection sgConnection, DevOpsSecretsBroker devOpsSecretsBroker)
         {
             if (devOpsSecretsBroker == null)
                 throw LogAndException("Unable to update the devOps secrets broker instance.  The devOpsSecretsBroker cannot be null.");
@@ -2058,12 +2058,12 @@ namespace OneIdentity.DevOps.Logic
             var devopsSecretsBrokerStr = JsonHelper.SerializeObject(devOpsSecretsBroker);
             try
             {
-                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put,
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Put,
                     $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devopsSecretsBrokerStr);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
                     DevOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
-                    PingSpp(sg);
+                    PingSpp(sgConnection);
                 }
             }
             catch (Exception ex)
@@ -2083,7 +2083,6 @@ namespace OneIdentity.DevOps.Logic
                 // If we don't have an asset Id then try to find the asset by name
                 if (_configDb.AssetId == null)
                 {
-                    var ipAddress = LocalIPAddress();
                     var knownAssetName = WellKnownData.DevOpsAssetName(_configDb.SvcId);
                     try
                     {
@@ -2311,7 +2310,7 @@ namespace OneIdentity.DevOps.Logic
             DisconnectWithAccessToken();
         }
 
-//TODO: Delete me when done testing the authorization scheme.
+        //TODO: Delete me when done testing the authorization scheme.
         public void TestCertConnection()
         {
             var sg = CertConnect();

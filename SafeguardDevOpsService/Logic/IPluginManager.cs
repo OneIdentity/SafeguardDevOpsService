@@ -11,7 +11,7 @@ namespace OneIdentity.DevOps.Logic
         void SetConfigurationForPlugin(string name);
         void SendPluginVaultCredentials(string plugin, string apiKey);
         bool TestPluginVaultConnection(ISafeguardConnection sgConnection, string plugin);
-        bool SendPassword(string name, string assetName, string accountName, SecureString password);
+        bool SendPassword(string name, string assetName, string accountName, SecureString password, string altAccountName = null);
         bool IsLoadedPlugin(string name);
         bool IsDisabledPlugin(string name);
 

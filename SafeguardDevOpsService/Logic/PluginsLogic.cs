@@ -303,6 +303,7 @@ namespace OneIdentity.DevOps.Logic
                             var accountMapping = new AccountMapping()
                             {
                                 AccountName = retrievableAccount.AccountName,
+                                AltAccountName = account.AltAccountName,
                                 AccountId = retrievableAccount.AccountId,
                                 ApiKey = retrievableAccount.ApiKey,
                                 AssetName = retrievableAccount.SystemName,
