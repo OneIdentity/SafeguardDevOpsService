@@ -335,14 +335,14 @@ export class MainComponent implements OnInit, AfterViewInit {
         .subscribe(() => {
           this.serviceClient.putA2ARegistration(registrationId)
             .subscribe(() => {
-              this.hasAvailableRegistrations = false;
+              this.showAvailableRegistrations = false;
               this.window.location.reload();
             },
               error => this.error = error);
         },
           error => this.error = error);
     } else {
-      this.hasAvailableRegistrations = false;
+      this.showAvailableRegistrations = false;
     }
   }
   
