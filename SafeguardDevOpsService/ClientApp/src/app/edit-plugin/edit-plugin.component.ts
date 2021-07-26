@@ -33,7 +33,7 @@ export class EditPluginComponent implements OnInit {
   isTesting = false;
   isRestarting = false;
   isDeleting = false;
-  displayedColumns: string[] = ['asset', 'account', 'delete'];
+  displayedColumns: string[] = ['asset', 'account', 'altaccount', 'delete'];
   isPluginDisabled: boolean;
 
   ngOnInit(): void {
