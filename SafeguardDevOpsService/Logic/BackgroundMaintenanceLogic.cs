@@ -94,21 +94,24 @@ namespace OneIdentity.DevOps.Logic
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                try
+                if (!_safeguardLogic.PauseBackgroudMaintenance)
                 {
-                    using var sgConnection = GetSgConnection();
-                    
-                    if (sgConnection != null)
+                    try
                     {
-                        CheckAndAddSecretsBrokerInstance(sgConnection);
-                        CheckAndPushAddOnCredentials(sgConnection);
-                        CheckAndConfigureAddonPlugins(sgConnection);
-                        CheckAndSyncVaultCredentials(sgConnection);
+                        using var sgConnection = GetSgConnection();
+
+                        if (sgConnection != null)
+                        {
+                            CheckAndAddSecretsBrokerInstance(sgConnection);
+                            CheckAndPushAddOnCredentials(sgConnection);
+                            CheckAndConfigureAddonPlugins(sgConnection);
+                            CheckAndSyncVaultCredentials(sgConnection);
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, $"[Background Maintenance] {ex.Message}");
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex, $"[Background Maintenance] {ex.Message}");
+                    }
                 }
 
                 await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);

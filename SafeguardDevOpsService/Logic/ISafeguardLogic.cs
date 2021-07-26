@@ -23,6 +23,7 @@ namespace OneIdentity.DevOps.Logic
 
         bool IsLoggedIn();
         bool ValidateLogin(string token, bool tokenOnly = false);
+        bool PauseBackgroudMaintenance { get; set; }
 
         CertificateInfo GetCertificateInfo(CertificateType certificateType);
         void InstallCertificate(CertificateInfo certificatePfx, CertificateType certificateType);
@@ -35,7 +36,7 @@ namespace OneIdentity.DevOps.Logic
 
         object GetAvailableA2ARegistrations(ISafeguardConnection sgConnection, string filter, int? page, bool? count, int? limit, string @orderby, string q);
         A2ARegistration GetA2ARegistration(ISafeguardConnection sgConnection, A2ARegistrationType registrationType);
-        A2ARegistration SetA2ARegistration(ISafeguardConnection sgConnection, IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, int id);
+        A2ARegistration SetA2ARegistration(ISafeguardConnection sgConnection, IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, IAddonLogic addonLogic, int id);
         A2ARetrievableAccount GetA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType);
         void DeleteA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType);
         IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts(ISafeguardConnection sgConnection, A2ARegistrationType registrationType);
