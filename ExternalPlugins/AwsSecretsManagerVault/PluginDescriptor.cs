@@ -35,7 +35,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             };
         }
 
-        public bool SetPassword(string asset, string account, string password)
+        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
             if (_awsClient == null || !ConfigurationIsValid)
             {
@@ -45,7 +45,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
 
             try
             {
-                var name = $"{asset}-{account}";
+                var name = $"{asset}-{altAccountName ?? account}";
               
                 var request = new PutSecretValueRequest()
                 {
@@ -69,11 +69,11 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                 if (ex.Message.Contains("Secrets Manager can't find the specified secret"))
                 {
                     _logger.Information(ex, "Account does not exist in vault; attempting to create account.");
-                    return CreateAwsAccount(asset, account, password);
+                    return CreateAwsAccount(asset, altAccountName ?? account, password);
                 }
                 else
                 {
-                    _logger.Error(ex, $"Failed to set the secret for {asset}-{account}: {ex.Message}.");
+                    _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                     return false;
                 }
             }

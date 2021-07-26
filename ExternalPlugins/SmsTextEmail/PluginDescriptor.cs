@@ -59,13 +59,13 @@ namespace OneIdentity.DevOps.SmsTextEmail
             _logger.Information($"Plugin {Name} successfully authenticated.");
         }
 
-        public bool SetPassword(string asset, string account, string password)
+        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
             var message = new MailMessage()
             {
                 From = new MailAddress(_configuration[FromAddressName]),
                 Subject = "Message from Safeguard Secrets Broker for DevOps",
-                Body = $"{asset} - {account}\n{password}"
+                Body = $"{asset} - {altAccountName ?? account}\n{password}"
             };
 
             foreach (var address in _toAddresses)

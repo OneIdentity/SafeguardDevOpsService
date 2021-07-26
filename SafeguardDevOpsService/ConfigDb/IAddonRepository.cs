@@ -9,7 +9,7 @@ namespace OneIdentity.DevOps.ConfigDb
     {
         IEnumerable<Addon> GetAllAddons();
         Addon GetAddonByName(string name);
-        Addon SaveAddon(Addon plugin);
+        Addon SaveAddon(Addon addon);
         void DeleteAddonByName(string name);
     }
 }

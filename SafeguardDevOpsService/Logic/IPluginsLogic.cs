@@ -21,7 +21,7 @@ namespace OneIdentity.DevOps.Logic
 
         IEnumerable<AccountMapping> GetAccountMappings(string name);
         AccountMapping GetAccountMappingById(string name, int accountId);
-        IEnumerable<AccountMapping> SaveAccountMappings(ISafeguardConnection sgConnection, string name, IEnumerable<A2ARetrievableAccount> mappings);
+        IEnumerable<AccountMapping> SaveAccountMappings(ISafeguardConnection sgConnection, string name, IEnumerable<A2ARetrievableAccount> accounts);
         void DeleteAccountMappings(string name);
         void DeleteAccountMappings(string name, IEnumerable<AccountMapping> accounts);
         void DeleteAccountMappings();

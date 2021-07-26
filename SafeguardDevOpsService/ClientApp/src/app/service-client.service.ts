@@ -354,7 +354,7 @@ export class DevOpsServiceClient {
 
   putRetrievableAccounts(accounts: any[]): Observable<any[]> {
     return this.http.put(this.BASE + 'Safeguard/A2ARegistration/RetrievableAccounts', accounts, this.authHeader())
-      .pipe(catchError(this.error<any>('putPluginAccounts')));
+      .pipe(catchError(this.error<any>('putRetrievableAccounts')));
   }
 
   getMonitor(): Observable<any> {
