@@ -66,6 +66,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   footerAbsolute: boolean = true;
   restartingProgress: string = 'Restarting Service';
   hasAvailableRegistrations: boolean = false;
+  showAvailableRegistrations: boolean = false;
 
   certificateUploading = {
     Client: false,
@@ -280,12 +281,12 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.ApplianceAddress = config.Appliance.ApplianceAddress;
     this.DevOpsInstanceId = config.Appliance.DevOpsInstanceId;
     this.DevOpsVersion = config.Appliance.Version;
-    this.UserName = config.UserName;
-    this.UserDisplayName = config.UserDisplayName;
-    this.IdentityProviderName = config.IdentityProviderName;
-    this.A2ARegistrationName = config.A2ARegistrationName;
-    this.A2AVaultRegistrationName = config.A2AVaultRegistrationName;
-    this.Thumbprint = config.Thumbprint;
+    this.UserName = config.A2AUser?.UserName;
+    this.UserDisplayName = config.A2AUser?.DisplayName;
+    this.IdentityProviderName = config.A2AUser?.IdentityProviderName;
+    this.A2ARegistrationName = config.A2ARegistration?.AppName;
+    this.A2AVaultRegistrationName = config.A2AVaultRegistration?.AppName;
+    this.Thumbprint = config.A2ARegistration?.CertificateUserThumbPrint;
   }
 
   initializeApplianceAddressAndLogin(): Observable<any> {
@@ -313,9 +314,12 @@ export class MainComponent implements OnInit, AfterViewInit {
         }
       }),
       switchMap(() => this.serviceClient.logon()),
+      tap((logon: any) => {
+        this.hasAvailableRegistrations = logon.HasAvailableA2ARegistrations;
+      }),
       switchMap(() => this.checkA2ARegistration()),
-      tap((hasAvailable: any) => {
-        this.hasAvailableRegistrations = typeof hasAvailable === 'boolean' && hasAvailable;
+      tap((nullRegistration: any) => {
+        this.showAvailableRegistrations = typeof nullRegistration === 'boolean' && nullRegistration && this.hasAvailableRegistrations;
       }),
       finalize(() => {
         if (!this.ApplianceAddress || this.ApplianceAddress === 'null') {
@@ -328,9 +332,9 @@ export class MainComponent implements OnInit, AfterViewInit {
   createRegistration(registrationId: number) {
     if (registrationId > 0) {
       this.serviceClient.logon()
-        .subscribe((configuration) => {
+        .subscribe(() => {
           this.serviceClient.putA2ARegistration(registrationId)
-            .subscribe((registration) => {
+            .subscribe(() => {
               this.hasAvailableRegistrations = false;
               this.window.location.reload();
             },
@@ -657,9 +661,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   // The service restarts in 2-3 seconds but it's 10+ seconds before Logon is not 504
   private postAddonRefresh(postAddonRefreshTries: number) {
     this.serviceClient.logon()
-      .subscribe(() => {
-        this.window.location.reload();
-      },
+      .subscribe(() => this.window.location.reload(),
         error => {
           if (error.status == 504) {
             this.restartingProgress += '.';

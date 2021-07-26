@@ -36,19 +36,21 @@ export class RegistrationsComponent implements OnInit, AfterViewInit {
   currFilterStr: string;
   currSortby: string;
   page = 0;
-  filter = `(not AppName contains 'VaultCredentials')`;
 
   ngOnInit(): void {
     this.isLoading = true;
-    this.serviceClient.getAvailableA2ARegistrations(this.filter).pipe(
+    this.serviceClient.getAvailableA2ARegistrations().pipe(
       untilDestroyed(this)
     ).subscribe((data: any[]) => {
       this.isLoading = false;
       this.registrations = [...data];
       this.totalCount = data.length;
       this.dataSource.data = this.registrations;
-    }
-    );
+
+      if (this.totalCount == 0) {
+        this.createNew.emit(0);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -73,11 +75,11 @@ export class RegistrationsComponent implements OnInit, AfterViewInit {
     this.dataSource.data = [];
     this.isLoading = true;
 
-    let filterStr = this.filter;
+    let filterStr = '';
     let sortby = '';
 
     if (this.registrationSearchVal?.length > 0) {
-      filterStr += ` and (AppName icontains '${this.registrationSearchVal}' or CreatedByUserDisplayName icontains '${this.registrationSearchVal}')`;
+      filterStr = `(AppName icontains '${this.registrationSearchVal}' or CreatedByUserDisplayName icontains '${this.registrationSearchVal}')`;
     }
 
     if (this.sort.active && this.sort.direction) {
