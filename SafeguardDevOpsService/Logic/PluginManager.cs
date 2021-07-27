@@ -368,9 +368,16 @@ namespace OneIdentity.DevOps.Logic
                                 pluginInstance.SetPluginConfiguration(configuration);
                             }
 
-                            if (pluginInfo.Version == null || !pluginInfo.Version.Equals(pluginVersion, StringComparison.InvariantCultureIgnoreCase))
+                            if (!string.Equals(pluginInfo.Name, name, StringComparison.OrdinalIgnoreCase) 
+                                || !string.Equals(pluginInfo.Description, description, StringComparison.OrdinalIgnoreCase) 
+                                || !string.Equals(pluginInfo.DisplayName, displayName, StringComparison.OrdinalIgnoreCase)
+                                || !string.Equals(pluginInfo.Version, pluginVersion, StringComparison.OrdinalIgnoreCase))
                             {
+                                pluginInfo.Name = name;
+                                pluginInfo.DisplayName = displayName;
+                                pluginInfo.Description = description;
                                 pluginInfo.Version = pluginVersion;
+
                                 _configDb.SavePluginConfiguration(pluginInfo);
                             }
                         }

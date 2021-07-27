@@ -76,6 +76,8 @@ namespace OneIdentity.DevOps.Data
             var devOpsSecretsBrokerPlugin = new DevOpsSecretsBrokerPlugin
             {
                 Name = Name, 
+                DisplayName = DisplayName,
+                Description = Description,
                 Version = Version, 
                 Configuration = JsonHelper.SerializeObject(Configuration),
                 MappedVaultAccounts = VaultAccountId.ToString()
@@ -95,6 +97,8 @@ namespace OneIdentity.DevOps.Data
         public Plugin(DevOpsSecretsBrokerPlugin devOpsPlugin)
         {
             Name = devOpsPlugin.Name;
+            DisplayName = devOpsPlugin.DisplayName;
+            Description = devOpsPlugin.Description;
             Version = devOpsPlugin.Version;
             Configuration = JsonHelper.DeserializeObject<Dictionary<string,string>>(devOpsPlugin.Configuration);
             if (int.TryParse(devOpsPlugin.MappedVaultAccounts, out var x))

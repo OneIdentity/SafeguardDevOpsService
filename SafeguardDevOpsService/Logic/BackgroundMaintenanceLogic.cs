@@ -255,7 +255,7 @@ namespace OneIdentity.DevOps.Logic
 
                 if (plugins != null)
                 {
-                    var devopsPlugins = plugins.Select(x => x.ToDevOpsSecretsBrokerPlugin(_pluginsLogic)).ToList();
+                     var devopsPlugins = plugins.Select(x => x.ToDevOpsSecretsBrokerPlugin(_pluginsLogic)).ToList();
                     if (!devopsPlugins.SequenceEqual(devopsInstance.Plugins))
                     {
                         devopsInstance.Plugins = devopsPlugins;
