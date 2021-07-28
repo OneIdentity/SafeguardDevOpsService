@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -16,6 +18,7 @@ namespace OneIdentity.DevOps.ConfigDb
     internal class LiteDbConfigurationRepository : IConfigurationRepository, IDisposable
     {
         private bool _disposed;
+        private readonly Serilog.ILogger _logger;
         private LiteDatabase _configurationDb;
         private X509Certificate2Collection _trustedCertificateCollection;
         private ILiteCollection<Setting> _settings;
@@ -58,6 +61,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public LiteDbConfigurationRepository()
         {
+            _logger = Serilog.Log.Logger;
             _isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
             InitializeDatabase();
         }
@@ -67,7 +71,7 @@ namespace OneIdentity.DevOps.ConfigDb
             if (!Directory.Exists(WellKnownData.ProgramDataPath))
                 Directory.CreateDirectory(WellKnownData.ProgramDataPath);
             var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
-            Serilog.Log.Logger.Information($"Loading configuration database at {dbPath}.");
+            _logger.Information($"Loading configuration database at {dbPath}.");
 
             var passwd = GetPassword();
             if (string.IsNullOrEmpty(passwd) && !_isLinux)
@@ -77,7 +81,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
             if (!string.IsNullOrEmpty(passwd))
             {
-                Serilog.Log.Logger.Information("The database is encrypted.");
+                _logger.Information("The database is encrypted.");
             }
 
             var connectionString = $"Filename={dbPath}";
@@ -117,7 +121,7 @@ namespace OneIdentity.DevOps.ConfigDb
             catch (Exception ex)
             {
                 var msg = $"Failed to get the credential needed to open the database. {ex.Message}";
-                Serilog.Log.Logger.Error(msg);
+                _logger.Error(msg);
                 throw new DevOpsException(msg);
             }
         }
@@ -249,6 +253,22 @@ namespace OneIdentity.DevOps.ConfigDb
             return _accountMappings.FindAll();
         }
 
+        public IEnumerable<AccountMapping> GetAccountMappings(string name)
+        {
+            if (GetPluginByName(name) == null)
+            {
+                var msg = $"Plugin {name} not found";
+                _logger.Error(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
+            }
+
+            var mappings = GetAccountMappings();
+
+            var accountMappings = mappings.Where(x => x.VaultName.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+            return accountMappings;
+        }
+
+
         public void GetAccountMappingsByKey(string key)
         {
             _accountMappings.FindById(key);
@@ -363,7 +383,7 @@ namespace OneIdentity.DevOps.ConfigDb
                     catch (Exception ex)
                     {
                         var msg = $"Failed to read the service instance identifier: {WellKnownData.SvcIdPath}";
-                        Serilog.Log.Logger.Error(msg, ex);
+                        _logger.Error(msg, ex);
                         throw new DevOpsException(msg, ex);
                     }
                 }
@@ -652,7 +672,7 @@ namespace OneIdentity.DevOps.ConfigDb
             var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
             File.Delete(dbPath);
             DeletePassword();
-            Serilog.Log.Logger.Information($"Dropped the database at {dbPath}.");
+            _logger.Information($"Dropped the database at {dbPath}.");
 
             InitializeDatabase();
         }

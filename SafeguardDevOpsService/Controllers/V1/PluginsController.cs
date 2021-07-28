@@ -154,7 +154,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPut("{name}")]
-        public ActionResult<Plugin> GetPlugins([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginConfiguration pluginConfiguration)
+        public ActionResult<Plugin> UpdatePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginConfiguration pluginConfiguration)
         {
             var plugin = pluginsLogic.SavePluginConfigurationByName(pluginConfiguration, name);
             if (plugin == null)
