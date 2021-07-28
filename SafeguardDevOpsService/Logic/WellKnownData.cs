@@ -27,6 +27,7 @@ namespace OneIdentity.DevOps.Logic
 
         private const string DevOpsServiceClientCertificateSubject = "CN=DevOpsServiceClientCertificate";
         private const string DevOpsServiceWebSslCertificateSubject = "CN=DevOpsServiceWebSslCertificate";
+        public const string DevOpsServiceDefaultWebSslCertificateSubject = "CN=DefaultDevOpsServiceServerSSL";
 
         public const string ManifestPattern = "Manifest.json";
         public const string DllPattern = "*.dll";
