@@ -911,8 +911,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// (See POST /service/devops/{version}/Plugins/File to upload a plugin file using multipart-form-data)
         /// </remarks>
         /// <param name="addonInfo">Secrets Broker add-on containing the base64 encoded zip file.</param>
-        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after addon install.</param>
-        /// <param name="force">Force add-on to installed even if another with the same name already exists.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after add-on install.</param>
+        /// <param name="force">>Force Safeguard Secrets Broker for DevOps to re-install add-on.</param>
         /// <response code="200">Success. Needing restart</response>
         /// <response code="204">Success</response>
         /// <response code="400">Bad request</response>
