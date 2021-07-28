@@ -1107,11 +1107,17 @@ namespace OneIdentity.DevOps.Logic
                 return null;
 
             var availableA2aRegistrationIds = GetAvailableA2ARegistrationIds(null);
-
+            var webSslCertificate = _configDb.WebSslCertificate;
+            
             var safeguardLogon = new SafeguardDevOpsLogon()
             {
                 SafeguardDevOpsConnection = safeguardConnection,
-                HasAvailableA2ARegistrations = availableA2aRegistrationIds.Any()
+                HasAvailableA2ARegistrations = availableA2aRegistrationIds.Any(),
+                HasMissingPlugins = _configDb.GetAllPlugins().Any(x => !x.IsLoaded),
+                NeedsClientCertificate = _configDb.UserCertificate == null,
+                NeedsSSLEnabled = safeguardConnection.IgnoreSsl ?? true,
+                NeedsTrustedCertificates = !_configDb.GetAllTrustedCertificates().Any(),
+                NeedsWebCertificate = webSslCertificate?.SubjectName.Name != null && webSslCertificate.SubjectName.Name.Equals(WellKnownData.DevOpsServiceDefaultWebSslCertificateSubject)
             };
 
             return safeguardLogon;

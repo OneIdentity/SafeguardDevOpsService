@@ -100,7 +100,7 @@ namespace OneIdentity.DevOps.Logic
         public static X509Certificate2 CreateDefaultSslCertificate()
         {
             var certSize = 2048;
-            var certSubjectName = "CN=DevOpsServiceServerSSL";
+            var certSubjectName = WellKnownData.DevOpsServiceDefaultWebSslCertificateSubject;
 
             using (RSA rsa = RSA.Create(certSize))
             {
