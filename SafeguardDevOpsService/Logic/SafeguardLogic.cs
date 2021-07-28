@@ -43,6 +43,8 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        public bool PauseBackgroudMaintenance { get; set; } = false;
+
         public SafeguardLogic(IConfigurationRepository configDb)
         {
             _configDb = configDb;
@@ -1212,11 +1214,11 @@ namespace OneIdentity.DevOps.Logic
             DisconnectWithAccessToken();
         }
 
-        private void DeleteDevOpsInstance(ISafeguardConnection sgConnection)
+        private void DeleteDevOpsInstance(ISafeguardConnection sgConnection, int id = 0)
         {
             try
             {
-                var devOpsInstance = GetSecretsBrokerInstance(sgConnection);
+                var devOpsInstance = id == 0 ? GetSecretsBrokerInstance(sgConnection) : GetSecretsBrokerInstance(sgConnection, id);
                 if (devOpsInstance != null)
                 {
                     var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete,
@@ -1394,41 +1396,20 @@ namespace OneIdentity.DevOps.Logic
 
         private DevOpsSecretsBroker GetSecretsBrokerInstance(ISafeguardConnection sg)
         {
-            try
+            if (DevOpsSecretsBroker == null)
             {
-                if (DevOpsSecretsBroker == null)
-                {
-                    return GetSecretsBrokerInstanceByName(sg);
-                }
-
-                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
-                    $"DevOps/SecretsBrokers/{DevOpsSecretsBroker.Id}");
-
-                if (result.StatusCode == HttpStatusCode.OK)
-                {
-                    var secretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
-                    if (secretsBroker != null)
-                    {
-                        PingSpp(sg);
-                        return secretsBroker;
-                    }
-                }
-
-                _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard.");
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Failed to get the DevOps Secrets Broker instance from Safeguard. ");
+                return GetSecretsBrokerInstanceByName(sg);
             }
 
-            return null;
+            return GetSecretsBrokerInstance(sg, DevOpsSecretsBroker.Id);
         }
 
-        private DevOpsSecretsBroker GetSecretsBrokerInstanceByName(ISafeguardConnection sg)
+        private DevOpsSecretsBroker GetSecretsBrokerInstanceByName(ISafeguardConnection sg, string devOpsInstanceId = null)
         {
             try
             {
-                var filter = $"DevOpsInstanceId eq \"{_configDb.SvcId}\"";
+                var svcId = devOpsInstanceId ?? _configDb.SvcId;
+                var filter = $"DevOpsInstanceId eq \"{svcId}\"";
 
                 var p = new Dictionary<string, string>();
                 JsonHelper.AddQueryParameter(p, nameof(filter), filter);
@@ -1441,7 +1422,9 @@ namespace OneIdentity.DevOps.Logic
                         (JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBroker>>(result.Body)).FirstOrDefault();
                     if (secretsBroker != null)
                     {
-                        PingSpp(sg);
+                        // Only ping SPP for the devops instance that is currently in use. Not one that is about to be used.
+                        if (devOpsInstanceId == null)
+                            PingSpp(sg);
                         return secretsBroker;
                     }
                 }
@@ -1450,6 +1433,33 @@ namespace OneIdentity.DevOps.Logic
             {
                 if (ex.HttpStatusCode != HttpStatusCode.NotFound)
                     _logger.Error(ex, "Failed to get the DevOps Secrets Broker instance from Safeguard. ");
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed to get the DevOps Secrets Broker instance from Safeguard. ");
+            }
+
+            return null;
+        }
+
+        private DevOpsSecretsBroker GetSecretsBrokerInstance(ISafeguardConnection sg, int id)
+        {
+            try
+            {
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
+                    $"DevOps/SecretsBrokers/{id}");
+
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    var secretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                    if (secretsBroker != null)
+                    {
+                        PingSpp(sg);
+                        return secretsBroker;
+                    }
+                }
+
+                _logger.Error("Failed to get the DevOps Secrets Broker instance from Safeguard.");
             }
             catch (Exception ex)
             {
@@ -1643,9 +1653,11 @@ namespace OneIdentity.DevOps.Logic
             return new List<A2ARegistration>();
         }
 
-        public A2ARegistration SetA2ARegistration(ISafeguardConnection sgConnection, IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, int id)
+        public A2ARegistration SetA2ARegistration(ISafeguardConnection sgConnection, IMonitoringLogic monitoringLogic, 
+            IPluginsLogic pluginsLogic, IAddonLogic addonLogic, int id)
         {
             //Turn off the monitor if it is running
+            //Remove all addons
             //Remove all of the mapped accounts to plugins
             //Remove all of the mapped vault accounts to plugins
 
@@ -1657,60 +1669,71 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 var a2aRegistration = GetA2ARegistration(sg, id);
+                if (a2aRegistration == null || string.IsNullOrEmpty(a2aRegistration.DevOpsInstanceId))
+                    throw LogAndException(
+                        "Failed to find the A2A registration or the associated Safeguard Secrets Broker instance.");
 
-                if (a2aRegistration != null && !string.IsNullOrEmpty(a2aRegistration.DevOpsInstanceId))
+                var devOpsSecretsBroker = GetSecretsBrokerInstanceByName(sg, a2aRegistration.DevOpsInstanceId);
+                if (devOpsSecretsBroker == null)
+                    throw LogAndException(
+                        $"Failed to find the associated Safeguard Secrets Broker instance {a2aRegistration.DevOpsInstanceId}.");
+
+                //Determine if we need to remove an unused DevOpsInstance from SPP.  An A2A registration has not been
+                //  created yet, then the devops instance is useless so delete it.
+                int devOpsSecretsBrokerToDelete = 0;
+                if (devOpsSecretsBroker.A2AVaultRegistration != null)
                 {
-                    monitoringLogic.EnableMonitoring(false);
-
-                    _configDb.SvcId = a2aRegistration.DevOpsInstanceId;
-                    _configDb.A2aUserId = a2aRegistration.CertificateUserId;
-
-                    var a2aUser = GetA2AUser(sg, _configDb.A2aUserId);
-                    _configDb.A2aUserId = a2aUser.Id;
-
-                    //Just making these calls with the config ids set to null will realign everything.
-                    _configDb.A2aRegistrationId = null;
-                    _configDb.A2aVaultRegistrationId = null;
-                    a2aRegistration = GetA2ARegistration(sg, A2ARegistrationType.Account);
-                    GetA2ARegistration(sg, A2ARegistrationType.Vault);
-
-                    var devOpsSecretsBroker = GetSecretsBrokerInstance(sg);
-                    if (devOpsSecretsBroker != null)
-                    {
-                        devOpsSecretsBroker.DevOpsInstanceId = a2aRegistration.DevOpsInstanceId;
-                        devOpsSecretsBroker.A2ARegistration = new A2ARegistration()
-                        {
-                            Id = a2aRegistration.Id
-                        };
-                        devOpsSecretsBroker.A2AUser = a2aUser;
-
-                        var devOpsInstanceBody = JsonHelper.SerializeObject(devOpsSecretsBroker);
-
-                        try
-                        {
-                            var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put,
-                                $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devOpsInstanceBody);
-                            if (result.StatusCode == HttpStatusCode.OK)
-                            {
-                                DevOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            throw LogAndException(
-                                $"Failed to update the A2A registration associated with the Safeguard Secrets Broker instance {_configDb.SvcId}: {ex.Message}",
-                                ex);
-                        }
-                    }
-
-                    pluginsLogic.DeleteAccountMappings();
-                    pluginsLogic.ClearMappedPluginVaultAccounts();
-
-                    return a2aRegistration;
+                    devOpsSecretsBrokerToDelete = DevOpsSecretsBroker.Id;
                 }
+
+                PauseBackgroudMaintenance = true;
+                monitoringLogic.EnableMonitoring(false);
+                foreach (var addon in _configDb.GetAllAddons())
+                {
+                    addonLogic.RemoveAddon(addon.Name);
+                }
+
+                _configDb.SvcId = devOpsSecretsBroker.DevOpsInstanceId;
+                _configDb.A2aUserId = devOpsSecretsBroker.A2AUser?.Id;
+                _configDb.AssetId = devOpsSecretsBroker.Asset?.Id;
+                _configDb.AssetPartitionId = devOpsSecretsBroker.AssetPartition?.Id;
+
+                //Just making these calls with the config ids set to null will realign everything.
+                _configDb.A2aRegistrationId = devOpsSecretsBroker.A2ARegistration?.Id ?? 0;
+                _configDb.A2aVaultRegistrationId = devOpsSecretsBroker.A2AVaultRegistration?.Id ?? 0;
+
+                pluginsLogic.DeleteAccountMappings();
+                pluginsLogic.ClearMappedPluginVaultAccounts();
+
+                foreach (var p in devOpsSecretsBroker.Plugins)
+                {
+                    var plugin = new Plugin(p);
+                    _configDb.SavePluginConfiguration(plugin);
+                    if (p.MappedAccounts != null)
+                    {
+                        var accountMappings = JsonHelper.DeserializeObject<IEnumerable<AccountMapping>>(p.MappedAccounts);
+                        _configDb.SaveAccountMappings(accountMappings);
+                    }
+                }
+
+                //Cache the new secrets broker instance.
+                DevOpsSecretsBroker = devOpsSecretsBroker;
+
+                try
+                {
+                    if (devOpsSecretsBrokerToDelete > 0)
+                        DeleteDevOpsInstance(sg, devOpsSecretsBrokerToDelete);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Information(ex, ex.Message);
+                }
+
+                return a2aRegistration;
             }
             finally
             {
+                PauseBackgroudMaintenance = false;
                 if (sgConnection == null)
                     sg.Dispose();
             }

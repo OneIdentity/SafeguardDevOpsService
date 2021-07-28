@@ -23,16 +23,6 @@ namespace OneIdentity.DevOps.Data.Spp
         public string Host { get; set; }
 
         /// <summary>
-        /// The accounts to plugins mapping.
-        /// </summary>
-        public string AccountMapping { get; set; }
-
-        /// <summary>
-        /// The accounts to plugins mapping.
-        /// </summary>
-        public string VaultAccountMapping { get; set; }
-
-        /// <summary>
         /// The devops instance id.
         /// </summary>
         public string DevOpsInstanceId { get; set; }
@@ -41,6 +31,11 @@ namespace OneIdentity.DevOps.Data.Spp
         /// The A2A registration.
         /// </summary>
         public A2ARegistration A2ARegistration { get; set; }
+
+        /// <summary>
+        /// The A2A vault registration.
+        /// </summary>
+        public A2ARegistration A2AVaultRegistration { get; set; }
 
         /// <summary>
         /// The asset partition.

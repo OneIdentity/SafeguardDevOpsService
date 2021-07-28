@@ -1,7 +1,6 @@
 ﻿
 using System;
 using System.Diagnostics.CodeAnalysis;
-using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.Data.Spp
 {
@@ -14,6 +13,16 @@ namespace OneIdentity.DevOps.Data.Spp
         /// Name of the plugin
         /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// Display name of the plugin
+        /// </summary>
+        public string DisplayName { get; set; }
+
+        /// <summary>
+        /// Description of the plugin
+        /// </summary>
+        public string Description { get; set; }
 
         /// <summary>
         /// Plugin configuration
@@ -63,11 +72,13 @@ namespace OneIdentity.DevOps.Data.Spp
         /// <returns></returns>
         protected bool Equals(DevOpsSecretsBrokerPlugin other)
         {
-            return (Name.Equals(other.Name, StringComparison.InvariantCultureIgnoreCase) 
-                    && Version.Equals(other.Version, StringComparison.InvariantCultureIgnoreCase)
-                    && Configuration.Equals(other.Configuration, StringComparison.InvariantCultureIgnoreCase)
-                    && MappedAccounts.Equals(other.MappedAccounts, StringComparison.InvariantCultureIgnoreCase)
-                    && MappedVaultAccounts.Equals(other.MappedVaultAccounts, StringComparison.InvariantCultureIgnoreCase));
+            return (string.Equals(Name, other.Name, StringComparison.InvariantCultureIgnoreCase) 
+                    && string.Equals(DisplayName, other.DisplayName, StringComparison.InvariantCultureIgnoreCase)
+                    && string.Equals(Description, other.Description, StringComparison.InvariantCultureIgnoreCase)
+                    && string.Equals(Version, other.Version, StringComparison.InvariantCultureIgnoreCase)
+                    && string.Equals(Configuration, other.Configuration, StringComparison.InvariantCultureIgnoreCase)
+                    && string.Equals(MappedAccounts, other.MappedAccounts, StringComparison.InvariantCultureIgnoreCase)
+                    && string.Equals(MappedVaultAccounts, other.MappedVaultAccounts, StringComparison.InvariantCultureIgnoreCase));
         }
 
         /// <summary>

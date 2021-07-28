@@ -1,5 +1,7 @@
 ﻿
+using System.Collections.Generic;
 using LiteDB;
+using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
 using OneIdentity.SafeguardDotNet;
@@ -67,16 +69,15 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public int MappedAccountsCount { get; set; }
 
-        /// <summary>
-        /// Convert to DevOpsSecretsBrokerPlugin
-        /// </summary>
-        /// <param name="pluginsLogic"></param>
-        /// <returns></returns>
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public DevOpsSecretsBrokerPlugin ToDevOpsSecretsBrokerPlugin(IPluginsLogic pluginsLogic)
         {
             var devOpsSecretsBrokerPlugin = new DevOpsSecretsBrokerPlugin
             {
                 Name = Name, 
+                DisplayName = DisplayName,
+                Description = Description,
                 Version = Version, 
                 Configuration = JsonHelper.SerializeObject(Configuration),
                 MappedVaultAccounts = VaultAccountId.ToString()
@@ -88,5 +89,22 @@ namespace OneIdentity.DevOps.Data
 
             return devOpsSecretsBrokerPlugin;
         }
+
+        public Plugin()
+        {
+        }
+
+        public Plugin(DevOpsSecretsBrokerPlugin devOpsPlugin)
+        {
+            Name = devOpsPlugin.Name;
+            DisplayName = devOpsPlugin.DisplayName;
+            Description = devOpsPlugin.Description;
+            Version = devOpsPlugin.Version;
+            Configuration = JsonHelper.DeserializeObject<Dictionary<string,string>>(devOpsPlugin.Configuration);
+            if (int.TryParse(devOpsPlugin.MappedVaultAccounts, out var x))
+                VaultAccountId = x;
+        }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+
     }
 }

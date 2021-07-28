@@ -562,9 +562,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         [UnhandledExceptionError]
         [HttpPut("A2ARegistration/{id}")]
         public ActionResult<A2ARegistration> SetA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromServices] IMonitoringLogic monitoringLogic, 
-            [FromServices] IPluginsLogic pluginsLogic, [FromRoute] int id, [FromQuery] string confirm)
+            [FromServices] IPluginsLogic pluginsLogic, [FromServices] IAddonLogic addonLogic, [FromRoute] int id, [FromQuery] string confirm)
         {
-            var registration = safeguard.SetA2ARegistration(null, monitoringLogic, pluginsLogic, id);
+            var registration = safeguard.SetA2ARegistration(null, monitoringLogic, pluginsLogic, addonLogic, id);
             if (registration == null)
                 return NotFound();
 
