@@ -71,10 +71,16 @@ namespace OneIdentity.DevOps.Logic
 
         private bool LoadAddonService(Addon addon)
         {
-            var addonAssemblyPath = Path.Combine(WellKnownData.ProgramDataPath, addon.Manifest.DestinationFolder, addon.Manifest.Assembly);
+            if (addon?.Manifest?.DestinationFolder == null || addon.Manifest.Assembly == null)
+            {
+                _logger.Information("Found an invalid add-on path. Failed to load the add-on.");
+                return false;
+            }
 
             try
             {
+                var addonAssemblyPath = Path.Combine(WellKnownData.ProgramDataPath, addon.Manifest.DestinationFolder, addon.Manifest.Assembly);
+
                 if (!File.Exists(addonAssemblyPath))
                     return false;
 

@@ -1,6 +1,7 @@
 {
-	"Name": "JenkinsSecrets",
+  "Type": "Plugin",
+  "Name": "JenkinsSecrets",
 	"DisplayName": "Jenkins Secrets",
-  "Assembly": "JenkinsSecrets.dll",
+	"Assembly": "JenkinsSecrets.dll",
 	"Version": "1.0"
 }

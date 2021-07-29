@@ -120,7 +120,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var manifest = reader.ReadToEnd();
                 var addonManifest = JsonHelper.DeserializeObject<AddonManifest>(manifest);
-                if (addonManifest != null)
+                if (addonManifest != null && ValidateManifest(addonManifest))
                 {
                     var addon = _configDb.GetAddonByName(addonManifest.Name);
                     if (addon != null)
@@ -151,9 +151,19 @@ namespace OneIdentity.DevOps.Logic
                 else
                 {
                     throw LogAndException(
-                        $"Add-on package does not contain a {WellKnownData.ManifestPattern} file.");
+                        $"Add-on package does not contain a valid {WellKnownData.ManifestPattern} file.");
                 }
             }
+        }
+
+        private bool ValidateManifest(AddonManifest addonManifest)
+        {
+            return addonManifest != null 
+                   && addonManifest.GetType().GetProperties()
+                       .Where(pi => pi.PropertyType == typeof(string))
+                       .Select(pi => (string) pi.GetValue(addonManifest))
+                       .All(value => !string.IsNullOrEmpty(value)) 
+                   && addonManifest.Type.Equals(WellKnownData.AddOnUploadType, StringComparison.OrdinalIgnoreCase);
         }
 
         private void DeployAddon(AddonManifest addonManifest, string tempFolder)
@@ -218,7 +228,9 @@ namespace OneIdentity.DevOps.Logic
                     {
                         _logger.Error(
                             $"Failed to load the Add-on {addon.Manifest.AssemblyName}. The Add-on code may be missing. Cleaning up the Add-on from the Secrets Broker.");
-                        _configDb.DeleteAddonByName(addon.Manifest.Name);
+                        if (addon.Manifest?.Name != null)
+                            _configDb.DeleteAddonByName(addon.Manifest.Name);
+                        if (addon.Manifest?.PluginName != null)
                         _configDb.DeletePluginByName(addon.Manifest.PluginName);
                         return;
                     }
@@ -244,8 +256,10 @@ namespace OneIdentity.DevOps.Logic
                         _undeployAddon.SetLogger(_logger);
 
                         _undeployAddon.Undeploy(addon.Manifest);
-                        _configDb.DeleteAddonByName(addon.Manifest.Name);
-                        _configDb.DeletePluginByName(addon.Manifest.PluginName);
+                        if (addon.Manifest?.Name != null)
+                            _configDb.DeleteAddonByName(addon.Manifest.Name);
+                        if (addon.Manifest?.PluginName != null)
+                            _configDb.DeletePluginByName(addon.Manifest.PluginName);
                     }
                 }
             }

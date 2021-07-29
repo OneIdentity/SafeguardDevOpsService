@@ -1,6 +1,7 @@
 {
-	"Name": "AwsSecretsManagerVault",
+  "Type": "Plugin",
+  "Name": "AwsSecretsManagerVault",
 	"DisplayName": "AWS Secrets Vault",
-  "Assembly": "AwsSecretsManagerVault.dll",
+	"Assembly": "AwsSecretsManagerVault.dll",
 	"Version": "1.0"
 }
