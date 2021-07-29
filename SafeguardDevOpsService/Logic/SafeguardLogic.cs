@@ -349,8 +349,6 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                FullResponse result;
-
                 // If we don't have a user Id then try to find the user by name
                 if (_configDb.A2aUserId == null || _configDb.A2aUserId == 0)
                 {
@@ -359,7 +357,7 @@ namespace OneIdentity.DevOps.Logic
 
                     try
                     {
-                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                             "Users", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
@@ -517,8 +515,6 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                FullResponse result;
-
                 // If we don't have a registration Id then try to find the registration by name
                 if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                     (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
@@ -531,7 +527,7 @@ namespace OneIdentity.DevOps.Logic
                         var p = new Dictionary<string, string>
                             {{"filter", $"AppName eq '{knownRegistrationName}'"}};
 
-                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                             "A2ARegistrations", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
@@ -2012,13 +2008,24 @@ namespace OneIdentity.DevOps.Logic
                     IgnoreSsl = _configDb.IgnoreSsl != null && _configDb.IgnoreSsl.Value,
                     ApiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion
                 });
-            
-            _serviceConfiguration.A2AUser = GetA2AUser(sgConnection);
-            
-            _serviceConfiguration.A2ARegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Account);
-            _serviceConfiguration.A2AVaultRegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Vault);
-            _serviceConfiguration.Asset = GetAsset(sgConnection);
-            _serviceConfiguration.AssetPartition = GetAssetPartition(sgConnection);
+
+            // Run these requests in parallel -- should really make Async methods for them instead, but
+            // the underlying SafeguardDotNet library doesn't support that yet.
+            // All of the methods for these requests catch exceptions and log.
+            var tasks = new Task[]
+            {
+                Task.Run(() => _serviceConfiguration.A2AUser = GetA2AUser(sgConnection)),
+                Task.Run(() =>
+                    _serviceConfiguration.A2ARegistration =
+                        GetA2ARegistration(sgConnection, A2ARegistrationType.Account)),
+                Task.Run(() =>
+                    _serviceConfiguration.A2AVaultRegistration =
+                        GetA2ARegistration(sgConnection, A2ARegistrationType.Vault)),
+                Task.Run(() => _serviceConfiguration.Asset = GetAsset(sgConnection)),
+                Task.Run(() => _serviceConfiguration.AssetPartition = GetAssetPartition(sgConnection))
+            };
+
+            Task.WaitAll(tasks);
 
             return _serviceConfiguration;
         }
@@ -2301,8 +2308,6 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                FullResponse result;
-
                 // If we don't have an asset partition Id then try to find the asset partition by name
                 if (_configDb.AssetPartitionId == null)
                 {
@@ -2312,7 +2317,7 @@ namespace OneIdentity.DevOps.Logic
                         var p = new Dictionary<string, string>
                             {{"filter", $"Name eq '{knownAssetPartitionName}'"}};
 
-                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "AssetPartitions", null, p);
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "AssetPartitions", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
                             var foundAssetPartitions = JsonHelper.DeserializeObject<List<AssetPartition>>(result.Body);
