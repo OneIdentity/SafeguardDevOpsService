@@ -4,7 +4,6 @@ using LiteDB;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
-using OneIdentity.SafeguardDotNet;
 
 namespace OneIdentity.DevOps.Data
 {
@@ -71,7 +70,7 @@ namespace OneIdentity.DevOps.Data
 
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-        public DevOpsSecretsBrokerPlugin ToDevOpsSecretsBrokerPlugin(IPluginsLogic pluginsLogic)
+        public DevOpsSecretsBrokerPlugin ToDevOpsSecretsBrokerPlugin(IConfigurationRepository configDb)
         {
             var devOpsSecretsBrokerPlugin = new DevOpsSecretsBrokerPlugin
             {
@@ -83,7 +82,7 @@ namespace OneIdentity.DevOps.Data
                 MappedVaultAccounts = VaultAccountId.ToString()
             };
 
-            var accountMappings = pluginsLogic.GetAccountMappings(Name);
+            var accountMappings = configDb.GetAccountMappings(Name);
             if (accountMappings != null)
                 devOpsSecretsBrokerPlugin.MappedAccounts = JsonHelper.SerializeObject(accountMappings);
 

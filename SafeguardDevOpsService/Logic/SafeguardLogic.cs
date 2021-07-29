@@ -1059,6 +1059,8 @@ namespace OneIdentity.DevOps.Logic
             CreateA2ARegistration(sg, A2ARegistrationType.Vault);
             EnableA2AService(sg);
 
+            CheckAndSyncSecretsBrokerInstance(null);
+
             return GetDevOpsConfiguration(sg);
         }
 
@@ -1210,7 +1212,13 @@ namespace OneIdentity.DevOps.Logic
                 addonLogic.RemoveAddon(addon.Name);
             }
 
-            if (!secretsBrokerOnly)
+            if (secretsBrokerOnly)
+            {
+                // If not just deleting the DevOpsSecretsBroker instance from
+                // SPP, at least update it before wiping out the local database.
+                CheckAndSyncSecretsBrokerInstance(sg);
+            }
+            else
             {
                 DeleteDevOpsInstance(sg);
             }
@@ -2066,38 +2074,111 @@ namespace OneIdentity.DevOps.Logic
 
         public void UpdateSecretsBrokerInstance(ISafeguardConnection sgConnection, DevOpsSecretsBroker devOpsSecretsBroker)
         {
-            if (devOpsSecretsBroker == null)
-                throw LogAndException("Unable to update the devOps secrets broker instance.  The devOpsSecretsBroker cannot be null.");
-
-            if (devOpsSecretsBroker.Host == null)
-                throw LogAndException("Invalid devOps secrets broker instance.  The host cannot be null.");
-
-            if (devOpsSecretsBroker.Asset == null)
-                devOpsSecretsBroker.Asset = new Asset();
-
-            if (devOpsSecretsBroker.Asset.Id == 0)
-                devOpsSecretsBroker.Asset.Name = WellKnownData.DevOpsAssetName(_configDb.SvcId);
-
-            if (devOpsSecretsBroker.AssetPartition == null)
-                devOpsSecretsBroker.AssetPartition = new AssetPartition();
-
-            if (devOpsSecretsBroker.AssetPartition.Id == 0)
-                devOpsSecretsBroker.AssetPartition.Name = WellKnownData.DevOpsAssetPartitionName(_configDb.SvcId);
-
-            var devopsSecretsBrokerStr = JsonHelper.SerializeObject(devOpsSecretsBroker);
-            try
+            lock (_secretsBrokerInstanceLock)
             {
-                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Put,
-                    $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devopsSecretsBrokerStr);
-                if (result.StatusCode == HttpStatusCode.OK)
+                if (devOpsSecretsBroker == null)
+                    throw LogAndException(
+                        "Unable to update the devOps secrets broker instance.  The devOpsSecretsBroker cannot be null.");
+
+                if (devOpsSecretsBroker.Host == null)
+                    throw LogAndException("Invalid devOps secrets broker instance.  The host cannot be null.");
+
+                if (devOpsSecretsBroker.Asset == null)
+                    devOpsSecretsBroker.Asset = new Asset();
+
+                if (devOpsSecretsBroker.Asset.Id == 0)
+                    devOpsSecretsBroker.Asset.Name = WellKnownData.DevOpsAssetName(_configDb.SvcId);
+
+                if (devOpsSecretsBroker.AssetPartition == null)
+                    devOpsSecretsBroker.AssetPartition = new AssetPartition();
+
+                if (devOpsSecretsBroker.AssetPartition.Id == 0)
+                    devOpsSecretsBroker.AssetPartition.Name = WellKnownData.DevOpsAssetPartitionName(_configDb.SvcId);
+
+                var devopsSecretsBrokerStr = JsonHelper.SerializeObject(devOpsSecretsBroker);
+                try
                 {
-                    DevOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
-                    PingSpp(sgConnection);
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Put,
+                        $"DevOps/SecretsBrokers/{devOpsSecretsBroker.Id}", devopsSecretsBrokerStr);
+                    if (result.StatusCode == HttpStatusCode.OK)
+                    {
+                        DevOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
+                        PingSpp(sgConnection);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndException($"Failed to update the devops instance.", ex);
                 }
             }
-            catch (Exception ex)
+        }
+
+        public void CheckAndSyncSecretsBrokerInstance(ISafeguardConnection sgConnection)
+        {
+            lock (_secretsBrokerInstanceLock)
             {
-                throw LogAndException($"Failed to update the devops instance.", ex);
+                var sg = sgConnection ?? Connect();
+
+                try
+                {
+                    if (DevOpsSecretsBroker == null)
+                    {
+                        // This call just gets the latest Secrets Broker instance from SPP and caches it.
+                        RetrieveDevOpsSecretsBrokerInstance(sg);
+                    }
+
+                    if (DevOpsSecretsBroker != null)
+                    {
+                        var needsUpdate = false;
+                        var devOpsInstance = DevOpsSecretsBroker;
+                        var devOpsAsset = DevOpsSecretsBroker.Asset ?? GetAsset(sg);
+                        var devOpsAssetPartition = DevOpsSecretsBroker.AssetPartition ?? GetAssetPartition(sg);
+                        var plugins = _configDb.GetAllPlugins();
+
+                        if (devOpsAsset == null)
+                        {
+                            // By setting the asset id to 0 and updating the devops instance, Safeguard will regenerate the asset.
+                            devOpsInstance.Asset.Id = 0;
+                            needsUpdate = true;
+                        }
+                        else if (DevOpsSecretsBroker.Asset == null || DevOpsSecretsBroker.Asset.Id != devOpsAsset.Id)
+                        {
+                            devOpsInstance.Asset = devOpsAsset;
+                            needsUpdate = true;
+                        }
+
+                        if (devOpsAssetPartition == null)
+                        {
+                            // By setting the asset partition id to 0 and updating the devops instance, Safeguard will regenerate the asset partition.
+                            devOpsInstance.AssetPartition.Id = 0;
+                            needsUpdate = true;
+                        }
+                        else if (DevOpsSecretsBroker.AssetPartition == null ||
+                                 DevOpsSecretsBroker.AssetPartition.Id != devOpsAssetPartition.Id)
+                        {
+                            devOpsInstance.AssetPartition = devOpsAssetPartition;
+                            needsUpdate = true;
+                        }
+
+                        if (plugins != null)
+                        {
+                            var devOpsPlugins = plugins.Select(x => x.ToDevOpsSecretsBrokerPlugin(_configDb)).ToList();
+                            if (!devOpsPlugins.SequenceEqual(devOpsInstance.Plugins))
+                            {
+                                devOpsInstance.Plugins = devOpsPlugins;
+                                needsUpdate = true;
+                            }
+                        }
+
+                        if (needsUpdate)
+                            UpdateSecretsBrokerInstance(sg, devOpsInstance);
+                    }
+                }
+                finally
+                {
+                    if (sgConnection == null)
+                        sg.Dispose();
+                }
             }
         }
 

@@ -48,6 +48,7 @@ namespace OneIdentity.DevOps.Logic
         void RetrieveDevOpsSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void UpdateSecretsBrokerInstance(ISafeguardConnection sgConnection, DevOpsSecretsBroker devOpsSecretsBroker);
+        void CheckAndSyncSecretsBrokerInstance(ISafeguardConnection sgConnection);
         Asset GetAsset(ISafeguardConnection sgConnection);
         AssetPartition GetAssetPartition(ISafeguardConnection sgConnection);
 

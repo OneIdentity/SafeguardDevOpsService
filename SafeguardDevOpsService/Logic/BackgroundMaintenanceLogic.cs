@@ -102,7 +102,7 @@ namespace OneIdentity.DevOps.Logic
 
                         if (sgConnection != null)
                         {
-                            CheckAndAddSecretsBrokerInstance(sgConnection);
+                            CheckAndSyncSecretsBrokerInstance(sgConnection);
                             CheckAndPushAddOnCredentials(sgConnection);
                             CheckAndConfigureAddonPlugins(sgConnection);
                             CheckAndSyncVaultCredentials(sgConnection);
@@ -116,6 +116,11 @@ namespace OneIdentity.DevOps.Logic
 
                 await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
             }
+        }
+
+        private void CheckAndSyncSecretsBrokerInstance(ISafeguardConnection sgConnection)
+        {
+            _safeguardLogic.CheckAndSyncSecretsBrokerInstance(sgConnection);
         }
 
         private void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection)
@@ -225,49 +230,6 @@ namespace OneIdentity.DevOps.Logic
                 }
             }
         }
-
-        private void CheckAndAddSecretsBrokerInstance(ISafeguardConnection sgConnection)
-        {
-            if (_safeguardLogic.DevOpsSecretsBroker == null)
-            {
-                // This call just gets the latest Secrets Broker instance from SPP and caches it.
-                _safeguardLogic.RetrieveDevOpsSecretsBrokerInstance(sgConnection);
-            }
-
-            if (_safeguardLogic.DevOpsSecretsBroker != null)
-            {
-                var needsUpdate = false;
-                var devopsInstance = _safeguardLogic.DevOpsSecretsBroker;
-                var devopsAsset = _safeguardLogic.DevOpsSecretsBroker.Asset ?? _safeguardLogic.GetAsset(sgConnection);
-                var plugins = _configDb.GetAllPlugins();
-
-                if (devopsAsset == null)
-                {
-                    // By setting the asset id to 0 and updating the devops instance, Safeguard will regenerate the asset.
-                    devopsInstance.Asset.Id = 0;
-                    needsUpdate = true;
-                } 
-                else if (_safeguardLogic.DevOpsSecretsBroker.Asset.Id != devopsAsset.Id)
-                {
-                    devopsInstance.Asset = devopsAsset;
-                    needsUpdate = true;
-                }
-
-                if (plugins != null)
-                {
-                     var devopsPlugins = plugins.Select(x => x.ToDevOpsSecretsBrokerPlugin(_pluginsLogic)).ToList();
-                    if (!devopsPlugins.SequenceEqual(devopsInstance.Plugins))
-                    {
-                        devopsInstance.Plugins = devopsPlugins;
-                        needsUpdate = true;
-                    }
-                }
-
-                if (needsUpdate)
-                    _safeguardLogic.UpdateSecretsBrokerInstance(sgConnection, devopsInstance);
-            }
-        }
-
 
         private void CheckAndSyncVaultCredentials(ISafeguardConnection sgConnection)
         {

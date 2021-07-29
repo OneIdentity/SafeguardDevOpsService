@@ -9,6 +9,7 @@ namespace OneIdentity.DevOps.ConfigDb
     public interface IConfigurationRepository : ISettingsRepository, IPluginRepository, IAddonRepository
     {
         IEnumerable<AccountMapping> GetAccountMappings();
+        IEnumerable<AccountMapping> GetAccountMappings(string name);
         void SaveAccountMappings(IEnumerable<AccountMapping> accounts);
         void DeleteAccountMappingsByKey(string key);
         void DeleteAccountMappings();
