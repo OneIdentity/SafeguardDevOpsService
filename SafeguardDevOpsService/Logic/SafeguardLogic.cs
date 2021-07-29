@@ -474,24 +474,27 @@ namespace OneIdentity.DevOps.Logic
                             if (registrationType == A2ARegistrationType.Account)
                             {
                                 _configDb.A2aRegistrationId = registration.Id;
+                                DevOpsSecretsBroker.A2ARegistration = new A2ARegistration()
+                                {
+                                    Id = registration.Id
+                                };
                             }
                             else
                             {
                                 _configDb.A2aVaultRegistrationId = registration.Id;
+                                DevOpsSecretsBroker.A2AVaultRegistration = new A2ARegistration()
+                                {
+                                    Id = registration.Id
+                                };
                             }
+
+                            UpdateSecretsBrokerInstance(sg, DevOpsSecretsBroker);
                         }
                     }
                     catch (Exception ex)
                     {
                         throw LogAndException($"Failed to create the A2A registration: {ex.Message}", ex);
                     }
-
-                    DevOpsSecretsBroker.A2ARegistration = new A2ARegistration()
-                    {
-                        Id = registration.Id
-                    };
-
-                    UpdateSecretsBrokerInstance(sg, DevOpsSecretsBroker);
                 }
             }
             finally
