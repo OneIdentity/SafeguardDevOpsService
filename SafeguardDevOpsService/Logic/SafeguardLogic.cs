@@ -1758,8 +1758,6 @@ namespace OneIdentity.DevOps.Logic
                 if (sgConnection == null)
                     sg.Dispose();
             }
-
-            return null;
         }
 
         public A2ARetrievableAccount GetA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType)
