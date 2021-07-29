@@ -28,6 +28,8 @@ namespace OneIdentity.DevOps.Logic
     {
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
+        private ApplianceAvailability _applianceAvailabilityCache;
+        private DateTime _applianceAvailabilityLastCheck = DateTime.MinValue;
 
         private ServiceConfiguration _serviceConfiguration;
         private DevOpsSecretsBroker _devOpsSecretsBroker;
@@ -43,7 +45,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public bool PauseBackgroudMaintenance { get; set; } = false;
+        public bool PauseBackgroundMaintenance { get; set; }
 
         public SafeguardLogic(IConfigurationRepository configDb)
         {
@@ -97,33 +99,35 @@ namespace OneIdentity.DevOps.Logic
         {
             var sg = sgConnection ?? Connect();
 
-            try
+            if (_applianceAvailabilityCache == null || DateTime.Now - _applianceAvailabilityLastCheck > TimeSpan.FromMinutes(5))
             {
-                var availabilityJson = DevOpsInvokeMethod(_configDb.SvcId, sg, Service.Notification, Method.Get,
-                    "Status/Availability");
-                var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
-
-                return new SafeguardDevOpsConnection()
+                try
                 {
-                    ApplianceAddress = _configDb.SafeguardAddress,
-                    ApplianceId = applianceAvailability.ApplianceId,
-                    ApplianceName = applianceAvailability.ApplianceName,
-                    ApplianceVersion = applianceAvailability.ApplianceVersion,
-                    ApplianceState = applianceAvailability.ApplianceCurrentState,
-                    DevOpsInstanceId = _configDb.SvcId,
-                    Version = WellKnownData.DevOpsServiceVersion()
-                };
-
+                    var availabilityJson = DevOpsInvokeMethod(_configDb.SvcId, sg, Service.Notification, Method.Get,
+                        "Status/Availability");
+                    _applianceAvailabilityCache = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
+                    _applianceAvailabilityLastCheck = DateTime.Now;
+                }
+                catch (SafeguardDotNetException ex)
+                {
+                    throw new DevOpsException($"Failed to get the appliance information: {ex.Message}");
+                }
+                finally
+                {
+                    if (sgConnection == null)
+                        sg.Dispose();
+                }
             }
-            catch (SafeguardDotNetException ex)
+            return new SafeguardDevOpsConnection()
             {
-                throw new DevOpsException($"Failed to get the appliance information: {ex.Message}");
-            }
-            finally
-            {
-                if (sgConnection == null)
-                    sg.Dispose();
-            }
+                ApplianceAddress = _configDb.SafeguardAddress,
+                ApplianceId = _applianceAvailabilityCache.ApplianceId,
+                ApplianceName = _applianceAvailabilityCache.ApplianceName,
+                ApplianceVersion = _applianceAvailabilityCache.ApplianceVersion,
+                ApplianceState = _applianceAvailabilityCache.ApplianceCurrentState,
+                DevOpsInstanceId = _configDb.SvcId,
+                Version = WellKnownData.DevOpsServiceVersion()
+            };
         }
 
         private SafeguardDevOpsConnection GetSafeguardAvailability(ISafeguardConnection sgConnection,
@@ -1180,6 +1184,7 @@ namespace OneIdentity.DevOps.Logic
             var safeguardConnection = ConnectAnonymous(safeguardData.ApplianceAddress,
                 safeguardData.ApiVersion ?? WellKnownData.DefaultApiVersion, safeguardData.IgnoreSsl ?? false);
 
+            _applianceAvailabilityCache = null;
             if (safeguardConnection != null && FetchAndStoreSignatureCertificate(token, safeguardConnection))
             {
                 _configDb.SafeguardAddress = safeguardData.ApplianceAddress;
@@ -1198,6 +1203,7 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeleteSafeguardData()
         {
+            _applianceAvailabilityCache = null;
             // Since the database is about to be dropped, we can't store deleted plugins in the database.
             // Write an empty file in the plugins dir to indicate on startup that the plugins need to be deleted.
             if (Directory.Exists(WellKnownData.PluginDirPath))
@@ -1707,7 +1713,7 @@ namespace OneIdentity.DevOps.Logic
                     devOpsSecretsBrokerToDelete = DevOpsSecretsBroker.Id;
                 }
 
-                PauseBackgroudMaintenance = true;
+                PauseBackgroundMaintenance = true;
                 monitoringLogic.EnableMonitoring(false);
                 foreach (var addon in _configDb.GetAllAddons())
                 {
@@ -1754,7 +1760,7 @@ namespace OneIdentity.DevOps.Logic
             }
             finally
             {
-                PauseBackgroudMaintenance = false;
+                PauseBackgroundMaintenance = false;
                 if (sgConnection == null)
                     sg.Dispose();
             }

@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Net;
-using System.Threading.Tasks;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
@@ -23,7 +21,7 @@ namespace OneIdentity.DevOps.Logic
 
         bool IsLoggedIn();
         bool ValidateLogin(string token, bool tokenOnly = false);
-        bool PauseBackgroudMaintenance { get; set; }
+        bool PauseBackgroundMaintenance { get; set; }
 
         CertificateInfo GetCertificateInfo(CertificateType certificateType);
         void InstallCertificate(CertificateInfo certificatePfx, CertificateType certificateType);

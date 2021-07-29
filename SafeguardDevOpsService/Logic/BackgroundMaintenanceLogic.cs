@@ -94,7 +94,7 @@ namespace OneIdentity.DevOps.Logic
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (!_safeguardLogic.PauseBackgroudMaintenance)
+                if (!_safeguardLogic.PauseBackgroundMaintenance)
                 {
                     try
                     {
