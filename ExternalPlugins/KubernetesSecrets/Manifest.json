@@ -1,6 +1,7 @@
 {
-	"Name": "KubernetesSecrets",
+  "Type": "Plugin",
+  "Name": "KubernetesSecrets",
 	"DisplayName": "Kubernetes Secrets",
-  "Assembly": "KubernetesSecrets.dll",
+	"Assembly": "KubernetesSecrets.dll",
 	"Version": "1.0"
 }

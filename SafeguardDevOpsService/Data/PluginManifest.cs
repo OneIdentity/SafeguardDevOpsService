@@ -4,6 +4,7 @@ namespace OneIdentity.DevOps.Data
 {
     public class PluginManifest
     {
+        public string Type { get; set; }
         public string Name { get; set; }
         public string DisplayName { get; set; }
         public string Assembly { get; set; }

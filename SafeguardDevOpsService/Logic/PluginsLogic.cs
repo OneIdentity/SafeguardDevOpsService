@@ -59,7 +59,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var manifest = reader.ReadToEnd();
                 var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
-                if (pluginManifest != null)
+                if (pluginManifest != null && ValidateManifest(pluginManifest))
                 {
                     var extractLocation = Path.Combine(WellKnownData.PluginDirPath, pluginManifest.Name);
                     if (_pluginManager.IsLoadedPlugin(pluginManifest.Name) || Directory.Exists(extractLocation))
@@ -76,10 +76,21 @@ namespace OneIdentity.DevOps.Logic
                 }
                 else
                 {
-                    throw LogAndException($"Plugin package does not contain a {WellKnownData.ManifestPattern} file.");
+                    throw LogAndException($"Plugin package does not contain a valid {WellKnownData.ManifestPattern} file.");
                 }
             }
         }
+
+        private bool ValidateManifest(PluginManifest pluginManifest)
+        {
+            return pluginManifest != null 
+                   && pluginManifest.GetType().GetProperties()
+                       .Where(pi => pi.PropertyType == typeof(string))
+                       .Select(pi => (string) pi.GetValue(pluginManifest))
+                       .All(value => !string.IsNullOrEmpty(value)) 
+                   && pluginManifest.Type.Equals(WellKnownData.PluginUploadType, StringComparison.OrdinalIgnoreCase);
+        }
+
         public void InstallPlugin(IFormFile formFile)
         {
             if (formFile.Length <= 0)

@@ -1,6 +1,7 @@
 {
-	"Name": "HashiCorpVault",
+  "Type": "Plugin",
+ 	"Name": "HashiCorpVault",
 	"DisplayName": "HashiCorp Vault",
-  "Assembly": "HashiCorpVault.dll",
+	"Assembly": "HashiCorpVault.dll",
 	"Version": "1.0"
 }

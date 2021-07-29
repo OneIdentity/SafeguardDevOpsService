@@ -47,6 +47,9 @@ namespace OneIdentity.DevOps.Logic
 
         public const string ServiceIdentitifierRegenerate = "NEVER-INSTALLED";
 
+        public const string PluginUploadType = "plugin";
+        public const string AddOnUploadType = "addon";
+
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
