@@ -34,7 +34,7 @@ namespace OneIdentity.DevOps.Logic
         public void InstallAddon(string base64Addon, bool force)
         {
             if (base64Addon == null)
-                throw LogAndException("Addon cannot be null");
+                throw LogAndException("Add-on cannot be null");
 
             var bytes = Convert.FromBase64String(base64Addon);
 
@@ -76,7 +76,7 @@ namespace OneIdentity.DevOps.Logic
             var addon = _configDb.GetAddonByName(name);
             if (addon == null)
             {
-                throw LogAndException("Failed to find the add-on in the database.");
+                throw LogAndException("Failed to find the Add-on in the database.");
             }
 
             _logger.Information("Saving the remove token to disk. The Add-on will be delete after a reboot.");
@@ -88,7 +88,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch
             {
-                _logger.Warning("Unable to create addon delete file.");
+                _logger.Warning("Unable to create Add-on delete file.");
             }
 
             UndeployAddon(addon);
@@ -113,7 +113,7 @@ namespace OneIdentity.DevOps.Logic
             var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
             if (manifestEntry == null)
             {
-                throw LogAndException("Failed to find the manifest for the add-on.");
+                throw LogAndException("Failed to find the manifest for the Add-on.");
             }
 
             using (var reader = new StreamReader(manifestEntry.Open()))
@@ -137,8 +137,10 @@ namespace OneIdentity.DevOps.Logic
                     }
 
                     RestartManager.Instance.ShouldRestart = true;
+                    _logger.Debug($"Extracting Add-on to {WellKnownData.AddonServiceStageDirPath}");
                     zipArchive.ExtractToDirectory(WellKnownData.AddonServiceStageDirPath, true);
 
+                    _logger.Debug($"Add-on manifest name: {addon.Manifest}");
                     addon = new Addon()
                     {
                         Name = addonManifest.Name,
@@ -163,9 +165,10 @@ namespace OneIdentity.DevOps.Logic
                 var addonPath = Path.Combine(WellKnownData.AddonServiceStageDirPath, addonManifest.SourceFolder, addonManifest.Assembly);
                 if (!File.Exists(addonPath))
                 {
-                    throw LogAndException("Failed to find the add-on module.");
+                    throw LogAndException("Failed to find the Add-on module.");
                 }
 
+                _logger.Debug($"Loading Add-on assembly from {addonPath}");
                 var assembly = Assembly.LoadFrom(addonPath);
 
                 var deployAddonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
