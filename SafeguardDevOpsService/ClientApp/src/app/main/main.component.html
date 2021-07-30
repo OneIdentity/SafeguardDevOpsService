@@ -72,7 +72,8 @@
         <div>{{A2AVaultRegistrationName}}</div>
       </div>
       <div class="info-column certificate-container" *ngIf="!isLoading">
-        <div *ngIf="!Thumbprint" class='no-client-certificate'>
+        <div *ngIf="!Thumbprint || (needsClientCertificate && !showAvailableRegistrations)"
+          class='no-client-certificate'>
           <p class='bold'>Before we begin you must upload a Client Certificate</p>
           <p>Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A
             service in Safeguard for Privileged Passwords. The most secure way to create this certificate
@@ -88,7 +89,7 @@
                 Signing Request (CSR)</button>
             </div>
             <div class='right'>
-              <app-progress-spinner color="accent" diameter="20" message='Uploading Certificate'
+              <app-progress-spinner color="accent" diameter="30" message='Uploading Certificate'
                 [visible]="isUploading.Certificate">
               </app-progress-spinner>
               <button mat-flat-button class='link-button' cdkFocusInitial (click)="addCertificate($event, 'Client')"
@@ -97,13 +98,13 @@
           </div>
         </div>
 
-        <ng-container *ngIf='Thumbprint'>
+        <ng-container *ngIf='Thumbprint && !needsClientCertificate && !showAvailableRegistrations'>
           <div>
             <div class="info-label">Client Certificate</div>
             <app-progress-spinner color="accent" diameter="30" message="Uploading"
               [visible]="certificateUploading['Client']"></app-progress-spinner>
 
-            <div *ngIf="Thumbprint">
+            <div>
               <button mat-button class="link-button cert-link" color="primary"
                 (click)="viewCertificate($event, 'Client')"
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' disableRipple>
@@ -148,8 +149,11 @@
           </div>
         </ng-container>
       </div>
-      <div class="vertical-line" *ngIf="Thumbprint && !isLoading && addons.length > 0"></div>
-      <div class="info-column" *ngIf="Thumbprint && !isLoading && addons.length > 0">
+      <div class="vertical-line"
+        *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations && !isLoading && addons.length > 0">
+      </div>
+      <div class="info-column"
+        *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations && !isLoading && addons.length > 0">
         <div class="info-label">Add-ons</div>
         <app-progress-spinner color="accent" diameter="30" message='Uploading Add-on' [visible]="isUploading.Addon">
         </app-progress-spinner>
@@ -171,57 +175,89 @@
     </mat-card>
 
     <mat-card class="registrations-container" *ngIf="showAvailableRegistrations">
-      <app-registrations class="grid-list" (createNew)="createRegistration($event)"></app-registrations>
+      <app-registrations class="grid-list" [isUploading]="isUploading.Registration"
+        (createNew)="createRegistration($event)"></app-registrations>
     </mat-card>
 
-    <ng-container *ngFor="let plugin of plugins">
-      <div [ngClass]="['plugin-container','configured',isMonitoring?'monitored':'','disabled:'+plugin.IsDisabled]"
-        (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup">
-        <div class="accounts-container">
-          <div class="count">{{plugin.MappedAccountsCount}}</div>
-          <div>
-            <div>Managed</div>
-            <div *ngIf="plugin.MappedAccountsCount == 1">Account</div>
-            <div *ngIf="plugin.MappedAccountsCount != 1">Accounts</div>
+    <ng-container *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations">
+      <ng-container *ngFor="let plugin of plugins">
+        <div [ngClass]="['plugin-container','configured',isMonitoring?'monitored':'','disabled:'+plugin.IsDisabled]"
+          (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup">
+
+          <ng-container *ngIf="plugin.IsLoaded">
+            <div class="accounts-container">
+              <div class="count">{{plugin.MappedAccountsCount}}</div>
+              <div>
+                <div>Managed</div>
+                <div *ngIf="plugin.MappedAccountsCount == 1">Account</div>
+                <div *ngIf="plugin.MappedAccountsCount != 1">Accounts</div>
+              </div>
+            </div>
+            <div class="header">{{plugin.DisplayName}}</div>
+            <div *ngIf="!plugin.IsSystemOwned" class="edit-text">Edit Configuration</div>
+            <div *ngIf="plugin.IsSystemOwned" class="edit-text">Manage Accounts</div>
+          </ng-container>
+
+          <ng-container *ngIf="!plugin.IsLoaded">
+            <div class="accounts-container pointer">
+              <div class="count">{{plugin.MappedAccountsCount}}</div>
+              <div>
+                <div>Managed</div>
+                <div *ngIf="plugin.MappedAccountsCount == 1">Account</div>
+                <div *ngIf="plugin.MappedAccountsCount != 1">Accounts</div>
+              </div>
+            </div>
+            <div class="restore-container pointer">
+              <div class="header">{{plugin.DisplayName}}</div>
+              <div class="plugin-button-container">
+                <div class='button-container'>
+                  <app-progress-spinner color="accent" diameter="30" message='Uploading Plugin'
+                    [visible]="isUploading.Plugin">
+                  </app-progress-spinner>
+                  <button mat-stroked-button class="plugin-button" (click)="uploadPlugin()" *ngIf="!isUploading.Plugin"
+                    [disabled]="isUploading.Addon || isRestarting">
+                    Upload Plugin
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="edit-text pointer">This plugin needs to be restored or upgraded.</div>
+          </ng-container>
+        </div>
+      </ng-container>
+
+      <div class="plugin-container unconfigured" *ngIf="plugins.length > 0" #unconfigured>
+        <div class="header">
+          <p>What would you like to plug in?</p>
+          <div *ngIf="!isUploading.Plugin && !isUploading.Addon && !isRestarting">
+            <a href='https://github.com/OneIdentity/SafeguardDevOpsService/releases/' target='_blank'
+              title="This will open a new tab to an external site.">View plugin repository</a>
           </div>
         </div>
-        <div class="header">{{plugin.DisplayName}}</div>
-        <div *ngIf="!plugin.IsSystemOwned" class="edit-text">Edit Configuration</div>
-        <div *ngIf="plugin.IsSystemOwned" class="edit-text">Manage Accounts</div>
-      </div>
-    </ng-container>
-
-    <div class="plugin-container unconfigured" *ngIf="plugins.length > 0" #unconfigured>
-      <div class="header">
-        <p>What would you like to plug in?</p>
-        <div *ngIf="!isUploading.Plugin && !isUploading.Addon && !isRestarting">
-          <a href='https://github.com/OneIdentity/SafeguardDevOpsService/releases/' target='_blank'
-            title="This will open a new tab to an external site.">View plugin repository</a>
-        </div>
-      </div>
-      <div class="plugin-button-container">
-        <ng-container *ngFor="let plugin of plugins">
-          <ng-container *ngIf="!plugin.IsConfigurationSetup && plugin.IsUploadCustom">
+        <div class="plugin-button-container">
+          <ng-container *ngFor="let plugin of plugins">
+            <ng-container *ngIf="!plugin.IsConfigurationSetup && plugin.IsUploadCustom">
+              <div class='button-container'>
+                <app-progress-spinner color="accent" diameter="30" message='Uploading Plugin'
+                  [visible]="isUploading.Plugin">
+                </app-progress-spinner>
+                <button mat-stroked-button class="plugin-button" (click)="uploadPlugin()" *ngIf="!isUploading.Plugin"
+                  [disabled]="isUploading.Addon || isRestarting">
+                  {{plugin.DisplayName}}
+                </button>
+              </div>
+            </ng-container>
             <div class='button-container'>
-              <app-progress-spinner color="accent" diameter="30" message='Uploading Plugin'
-                [visible]="isUploading.Plugin">
-              </app-progress-spinner>
-              <button mat-stroked-button class="plugin-button" (click)="uploadPlugin()" *ngIf="!isUploading.Plugin"
-                [disabled]="isUploading.Addon || isRestarting">
+              <button mat-stroked-button class="plugin-button" (click)="editPlugin(plugin)"
+                *ngIf="!plugin.IsConfigurationSetup && !plugin.IsUploadCustom"
+                [disabled]="isUploading.Plugin || isUploading.Addon || isRestarting">
                 {{plugin.DisplayName}}
               </button>
             </div>
           </ng-container>
-          <div class='button-container'>
-            <button mat-stroked-button class="plugin-button" (click)="editPlugin(plugin)"
-              *ngIf="!plugin.IsConfigurationSetup && !plugin.IsUploadCustom"
-              [disabled]="isUploading.Plugin || isUploading.Addon || isRestarting">
-              {{plugin.DisplayName}}
-            </button>
-          </div>
-        </ng-container>
+        </div>
       </div>
-    </div>
+    </ng-container>
 
     <div [ngClass]="{'footer': true, 'footer-absolute': footerAbsolute}">Version: {{DevOpsVersion}}</div>
 

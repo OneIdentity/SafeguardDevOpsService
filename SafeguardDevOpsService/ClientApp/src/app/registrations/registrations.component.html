@@ -51,6 +51,7 @@
 
       <mat-paginator [pageSizeOptions]="[25, 50, 100, 200]" showFirstLastButtons [length]="totalCount"
         [pageIndex]="page"></mat-paginator>
+
       <div class="spinner-container">
         <mat-spinner *ngIf="isLoading" diameter="30" color="primary"></mat-spinner>
       </div>
@@ -58,9 +59,13 @@
 
     <mat-toolbar class="selection-footer">
       <div class="right">
-        <button mat-button color="primary" class="createNew" (click)="selectRegistration(true)">Continue</button>
-        <button mat-flat-button color="primary" [disabled]="selection.selected.length == 0"
-          (click)="selectRegistration(false)">Use Existing Registration</button>
+        <button mat-button color="primary" class="createNew" (click)="selectRegistration(true)"
+          [disabled]="isUploading">Continue</button>
+        <button mat-flat-button color="primary" [disabled]="selection.selected.length == 0 || isUploading"
+          (click)="selectRegistration(false)">
+          <span *ngIf="!isUploading">Use Existing Registration</span>
+          <span *ngIf="isUploading">Using Existing Registration</span>
+          </button>
       </div>
     </mat-toolbar>
   </div>

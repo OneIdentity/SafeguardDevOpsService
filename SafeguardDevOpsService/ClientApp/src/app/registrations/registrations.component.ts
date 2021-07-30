@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, Output, EventEmitter, Input } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
 import { SelectionModel } from '@angular/cdk/collections';
 import { fromEvent, Observable, merge, of } from 'rxjs';
@@ -19,6 +19,7 @@ export class RegistrationsComponent implements OnInit, AfterViewInit {
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @Output() createNew: EventEmitter<number> = new EventEmitter();
+  @Input() isUploading: boolean = false;
 
   constructor(
     private serviceClient: DevOpsServiceClient
@@ -118,6 +119,7 @@ export class RegistrationsComponent implements OnInit, AfterViewInit {
       this.createNew.emit(0);
     }
     else if (this.selection.selected.length == 1) {
+      this.isUploading = true;
       this.createNew.emit(this.selection.selected[0].Id);
     }
   }
