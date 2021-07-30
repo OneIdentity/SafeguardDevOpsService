@@ -144,11 +144,29 @@ namespace OneIdentity.DevOps.Logic
 
                     zipArchive.ExtractToDirectory(WellKnownData.AddonServiceStageDirPath, true);
 
+                    // TODO: Remove this renaming of slashes if ZipFile creation in the pipeline can be made to
+                    //       use the proper slashes and ZipArchive can properly decode them
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        var addonSubPath = Path.Combine(WellKnownData.AddonServiceStageDirPath, "Addon");
+                        if (!Directory.Exists(addonSubPath)) 
+                            Directory.CreateDirectory(addonSubPath);
+                        foreach (var entry in Directory.EnumerateFileSystemEntries(WellKnownData.AddonServiceStageDirPath))
+                        {
+                            var entryFilename = Path.GetFileName(entry);
+                            if (entryFilename.StartsWith(@"Addon\"))
+                            {
+                                File.Move(Path.Combine(WellKnownData.AddonServiceStageDirPath, entryFilename),
+                                    Path.Combine(addonSubPath, entryFilename.Substring(6)));
+                            }
+                        }
+                    }
+
                     _logger.Debug($"Add-on manifest name: {addonManifest.Name}");
                     addon = new Addon()
                     {
                         Name = addonManifest.Name,
-                        Manifest = addonManifest,
+                        Manifest = addonManifest
                     };
                     _configDb.SaveAddon(addon);
 
@@ -166,7 +184,10 @@ namespace OneIdentity.DevOps.Logic
         {
             try
             {
+                _logger.Debug($"Add-on manifest source folder: {addonManifest.SourceFolder}");
+                _logger.Debug($"Add-on manifest assembly: {addonManifest.Assembly}");
                 var addonPath = Path.Combine(WellKnownData.AddonServiceStageDirPath, addonManifest.SourceFolder, addonManifest.Assembly);
+                _logger.Debug($"Looking for Add-on module at {addonPath}");
                 if (!File.Exists(addonPath))
                 {
                     throw LogAndException("Failed to find the Add-on module.");
