@@ -1,35 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
-using OneIdentity.DevOps.Data.Spp;
-using OneIdentity.SafeguardDotNet;
+using OneIdentity.DevOps.Data;
 
 namespace OneIdentity.DevOps.Logic
 {
-    internal class AddonManager : IHostedService, IDisposable
+    internal class AddonManager : IAddonManager, IDisposable
     {
+        private static readonly Dictionary<string,IAddonService> LoadedAddons = new Dictionary<string, IAddonService>(StringComparer.OrdinalIgnoreCase);
+
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
-        private readonly IAddonLogic _addonLogic;
-        private readonly ISafeguardLogic _safeguardLogic;
 
-        private IAddonService _devOpsAddon;
-
-        public AddonManager(IConfigurationRepository configDb, IAddonLogic addonLogic, ISafeguardLogic safeguardLogic)
+        public AddonManager(IConfigurationRepository configDb)
         {
             _configDb = configDb;
             _logger = Serilog.Log.Logger;
-            _addonLogic = addonLogic;
-            _safeguardLogic = safeguardLogic;
         }
 
         public void Dispose()
@@ -37,36 +28,35 @@ namespace OneIdentity.DevOps.Logic
 
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public void Run()
         {
-            var files = Directory.GetFiles(WellKnownData.ProgramDataPath, WellKnownData.AddonDeleteFile, SearchOption.AllDirectories);
-            if (files.Any())
-            {
-                foreach (var addonPath in files)
-                {
-                    Directory.Delete(Path.GetDirectoryName(addonPath), true);
-                }
-            }
-            else
-            {
-                var addons = _configDb.GetAllAddons();
+            CleanUpDeletedAddons();
 
-                foreach (var addon in addons)
-                {
-                    if (LoadAddonService(addon))
-                    {
-                        Task.Run(async () => await _devOpsAddon.RunAddonServiceAsync(cancellationToken),
-                            cancellationToken);
-                    }
-                }
-            }
+            var addons = _configDb.GetAllAddons();
 
-            return Task.CompletedTask;
+            foreach (var addon in addons)
+            {
+                LoadAddonService(addon);
+            }
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public AddonStatus GetAddonStatus(Addon addon)
         {
-            return Task.CompletedTask;
+            if (addon != null && LoadedAddons.ContainsKey(addon.Name))
+            {
+                var addonInstance = LoadedAddons[addon.Name];
+                var status = addonInstance?.GetHealthStatus();
+                if (status != null)
+                {
+                    return new AddonStatus()
+                    {
+                        IsReady = status.Item1,
+                        HealthStatus = status.Item2
+                    };
+                }
+            }
+
+            return null;
         }
 
         private bool LoadAddonService(Addon addon)
@@ -101,18 +91,28 @@ namespace OneIdentity.DevOps.Logic
                     }
                     else
                     {
-                        _devOpsAddon = addonService;
-                        _devOpsAddon.SetLogger(_logger);
+                        addonService.SetLogger(_logger);
 
-                        _devOpsAddon.Name = addon.Manifest.Name;
-                        _devOpsAddon.DisplayName = addon.Manifest.DisplayName;
-                        _devOpsAddon.Description = addon.Manifest.Description;
-                        _devOpsAddon.AddOn = addon;
+                        addonService.Name = addon.Manifest.Name;
+                        addonService.DisplayName = addon.Manifest.DisplayName;
+                        addonService.Description = addon.Manifest.Description;
+                        addonService.AddOn = addon;
 
                         //Subscribe for property changes in the addon object
-                        _devOpsAddon.AddOn.PropertyChanged += AddonPropertyChangedHandler;
+                        addonService.AddOn.PropertyChanged += AddonPropertyChangedHandler;
 
-                        _logger.Information($"Successfully loaded the Add-on Service {_devOpsAddon.DisplayName} : {_devOpsAddon.Description}.");
+                        if (!LoadedAddons.ContainsKey(addonService.Name))
+                        {
+                            LoadedAddons.Add(addonService.Name, addonService);
+                        }
+                        else
+                        {
+                            LoadedAddons[addonService.Name] = addonService;
+                        }
+
+                        Task.Run(async () => await addonService.RunAddonServiceAsync(addonService.AddOn.ServiceCancellationToken.Token), addonService.AddOn.ServiceCancellationToken.Token);
+
+                        _logger.Information($"Successfully loaded the Add-on Service {addonService.DisplayName} : {addonService.Description}.");
 
                         return true;
                     }
@@ -126,15 +126,27 @@ namespace OneIdentity.DevOps.Logic
             return false;
         }
 
+        private void CleanUpDeletedAddons()
+        {
+            var files = Directory.GetFiles(WellKnownData.ProgramDataPath, WellKnownData.AddonDeleteFile, SearchOption.AllDirectories);
+            if (files.Any())
+            {
+                foreach (var addonPath in files)
+                {
+                    Directory.Delete(Path.GetDirectoryName(addonPath), true);
+                }
+            }
+        }
+
         public void AddonPropertyChangedHandler(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (_devOpsAddon.AddOn.CredentialsUpdated)
+            if (sender is Addon addon)
             {
-                _devOpsAddon.AddOn.CredentialsUpdated = false;
-
-                if (sender is Addon addon)
+                if (addon.CredentialsUpdated)
                 {
-                    _logger.Information($"Addon accounts have changed.  Saving changes.");
+                    addon.CredentialsUpdated = false;
+
+                    _logger.Information("Addon accounts have changed.  Saving changes.");
 
                     Dictionary<string, string> credentials = new Dictionary<string, string>();
                     foreach (var credential in addon.VaultCredentials)

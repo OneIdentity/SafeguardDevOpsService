@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+using System.Threading;
 using LiteDB;
 
 namespace OneIdentity.DevOps.Common
@@ -46,6 +47,12 @@ namespace OneIdentity.DevOps.Common
         /// Vault Credentials
         /// </summary>
         public AddonManifest Manifest { get; set; }
+
+        /// <summary>
+        /// Cancellation Token
+        /// </summary>
+        [IgnoreDataMember]
+        public CancellationTokenSource ServiceCancellationToken { get; } = new CancellationTokenSource();
 
         private bool _credentialsUpdated = false;
 

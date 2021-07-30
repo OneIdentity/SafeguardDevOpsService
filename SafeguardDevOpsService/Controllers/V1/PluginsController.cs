@@ -72,6 +72,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
+        [DisableRequestSizeLimit]
         [HttpPost]
         public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, Plugin pluginInfo, [FromQuery] bool restart = false)
         {
@@ -101,6 +102,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
+        [DisableRequestSizeLimit]
         [HttpPost("File")]
         public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, IFormFile formFile, [FromQuery] bool restart = false)
         {
