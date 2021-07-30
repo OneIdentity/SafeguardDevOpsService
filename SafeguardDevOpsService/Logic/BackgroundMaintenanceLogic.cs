@@ -41,7 +41,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    _logger.Debug("Connecting to Safeguard: {address}");
+                    _logger.Debug("Connecting to Safeguard: {address}", sppAddress);
                     var connection = Safeguard.Connect(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion, ignoreSsl);
                     return connection;
                 }
@@ -66,7 +66,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    _logger.Debug("Connecting to Safeguard A2A context: {address}");
+                    _logger.Debug("Connecting to Safeguard A2A context: {address}", sppAddress);
                     var a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion, ignoreSsl);
                     return a2AContext;
                 }

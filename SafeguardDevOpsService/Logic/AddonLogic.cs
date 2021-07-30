@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
@@ -138,9 +139,12 @@ namespace OneIdentity.DevOps.Logic
 
                     RestartManager.Instance.ShouldRestart = true;
                     _logger.Debug($"Extracting Add-on to {WellKnownData.AddonServiceStageDirPath}");
+                    if (!Directory.Exists(WellKnownData.AddonServiceStageDirPath))
+                        Directory.CreateDirectory(WellKnownData.AddonServiceStageDirPath);
+
                     zipArchive.ExtractToDirectory(WellKnownData.AddonServiceStageDirPath, true);
 
-                    _logger.Debug($"Add-on manifest name: {addon.Manifest}");
+                    _logger.Debug($"Add-on manifest name: {addonManifest.Name}");
                     addon = new Addon()
                     {
                         Name = addonManifest.Name,
@@ -196,7 +200,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to deploy the Add-on service {addonManifest.Name}: {ex.Message}.");
+                throw LogAndException($"Failed to deploy the Add-on service {addonManifest.Name}: {ex.Message}.");
             }
 
         }
