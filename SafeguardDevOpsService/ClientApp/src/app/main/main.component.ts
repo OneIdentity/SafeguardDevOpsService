@@ -52,7 +52,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   plugins = [];
   addons = [];
   isLoading: boolean = false;
-  isUploading = { Plugin: false, Addon: false, Certificate: false };
+  isUploading = { Plugin: false, Addon: false, Certificate: false, Registration: false };
   isRestarting: boolean = false;
   openDrawer: string;
   openWhat: string;
@@ -67,6 +67,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   restartingProgress: string = 'Restarting Service';
   hasAvailableRegistrations: boolean = false;
   showAvailableRegistrations: boolean = false;
+  needsClientCertificate: boolean = true;
 
   certificateUploading = {
     Client: false,
@@ -316,6 +317,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       switchMap(() => this.serviceClient.logon()),
       tap((logon: any) => {
         this.hasAvailableRegistrations = logon.HasAvailableA2ARegistrations;
+        this.needsClientCertificate = logon.NeedsClientCertificate;
       }),
       switchMap(() => this.checkA2ARegistration()),
       tap((nullRegistration: any) => {
@@ -331,21 +333,32 @@ export class MainComponent implements OnInit, AfterViewInit {
 
   createRegistration(registrationId: number) {
     if (registrationId > 0) {
+      this.isUploading.Registration = true;
+
       this.serviceClient.logon()
         .subscribe(() => {
           this.serviceClient.putA2ARegistration(registrationId)
             .subscribe(() => {
+              this.isUploading.Registration = false;
               this.showAvailableRegistrations = false;
               this.window.location.reload();
             },
-              error => this.error = error);
+              error => {
+                this.isUploading.Registration = false;
+                this.error = error;
+              }
+            );
         },
-          error => this.error = error);
+          error => {
+            this.isUploading.Registration = false;
+            this.error = error;
+          }
+        );
     } else {
       this.showAvailableRegistrations = false;
     }
   }
-  
+
   // If we already have an A2A registration then just return nothing, else
   // if 404 then get available A2A registrations to choose from.
   checkA2ARegistration(): Observable<any> {
@@ -459,7 +472,7 @@ export class MainComponent implements OnInit, AfterViewInit {
               this.initializeAddons()
             ]).subscribe();
           }, 2000);
-          this.viewCertificate(null, 'Client');
+          this.viewCertificate(null, 'Client', true);
         } else {
           this.webServerCertAdded = true;
           // Service restarts after updating web server cert; need to login again
@@ -533,7 +546,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   }
 
   editPlugin(plugin: any): void {
-    if (this.isUploading.Plugin || this.isUploading.Addon || this.isRestarting) {
+    if (this.isUploading.Plugin || this.isUploading.Addon || this.isRestarting || !plugin.IsLoaded) {
       return;
     }
 
@@ -617,7 +630,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         },
           error => {
             this.isUploading.Plugin = false;
-            this.error = error;
+            this.error = this.parseError(error);
           });
     });
 
@@ -651,7 +664,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         },
           error => {
             this.isUploading.Addon = false;
-            this.error = error;
+            this.error = this.parseError(error);
           });
     });
 
@@ -811,7 +824,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       });
   }
 
-  viewCertificate(e: Event, certType: string = 'Client'): void {
+  viewCertificate(e: Event, certType: string = 'Client', reload: boolean = false): void {
     this.error = null;
     const dialogRef = this.dialog.open(ViewCertificateComponent, {
       data: { certificateType: certType, certificate: certType === 'Web Server' ? this.webServerCert : null }
@@ -830,6 +843,8 @@ export class MainComponent implements OnInit, AfterViewInit {
           }
         } else if (result?.result === ViewCertificateResult.AddCertificate) {
           this.addCertificate(null, certType);
+        } else if (reload) {
+          this.window.location.reload();
         }
       }
     );
@@ -845,5 +860,34 @@ export class MainComponent implements OnInit, AfterViewInit {
     });
 
     dialogRef.afterClosed().subscribe();
+  }
+
+  parseError(error: any) {
+    var message = "";
+
+    if (error.error) {
+      try {
+        let e = JSON.parse(error.error);
+
+        if (e.message || e.Message) {
+          message = e.message || e.Message;
+        }
+      } catch {
+        if (error.message || error.Message) {
+          message = error.message || error.Message;
+        }
+        else {
+          message = error + '';
+        }
+      }
+    }
+    else if (error.message || error.Message) {
+      message = error.message || error.Message;
+    }
+    else {
+      message = error + '';
+    }
+
+    return message;
   }
 }

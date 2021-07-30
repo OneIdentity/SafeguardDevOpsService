@@ -166,7 +166,7 @@ mat-drawer-container {
   margin-bottom: 20px;
 
   .header {
-    width: 175px;
+    width: 330px;
     font-size: 1.5em;
     font-weight: 400;
     margin-right: 20px;
@@ -209,6 +209,10 @@ mat-drawer-container {
     color: $iris-blue;
   }
 
+  .pointer {
+    cursor: default;
+  }
+
   .accounts-container {
     float: right;
     display: flex;
@@ -219,6 +223,37 @@ mat-drawer-container {
       font-weight: 400;
       color: $black-6;
       padding: 10px 8px 0 0;
+    }
+  }
+}
+
+.restore-container {
+  display: flex;
+  align-items: center;
+
+  .header {
+    font-size: 2em;
+    font-weight: 300;
+    margin-bottom: 10px;
+  }
+
+  .plugin-button-container {
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+
+    .button-container {
+      flex: 1 1 auto;
+      width: 100%;
+
+      .plugin-button {
+        border-color: $iris-blue;
+        background-color: #ffffff;
+        color: $iris-blue;
+        font-weight: 400;
+        margin-right: 10px;
+        margin-bottom: 10px;
+      }
     }
   }
 }
