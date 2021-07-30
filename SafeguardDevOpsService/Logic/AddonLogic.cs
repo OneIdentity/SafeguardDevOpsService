@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;
 
 namespace OneIdentity.DevOps.Logic
@@ -16,14 +17,13 @@ namespace OneIdentity.DevOps.Logic
     {
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
-        private IDeployAddon _deployAddon;
-        private IUndeployAddon _undeployAddon;
+        private readonly IAddonManager _addonManager;
 
-
-        public AddonLogic(IConfigurationRepository configDb)
+        public AddonLogic(IConfigurationRepository configDb, IAddonManager addonManager)
         {
             _logger = Serilog.Log.Logger;
             _configDb = configDb;
+            _addonManager = addonManager;
         }
 
         private DevOpsException LogAndException(string msg, Exception ex = null)
@@ -92,6 +92,9 @@ namespace OneIdentity.DevOps.Logic
                 _logger.Warning("Unable to create Add-on delete file.");
             }
 
+            // Stop the addon service before undeploying the addon.
+            addon.ServiceCancellationToken.Cancel();
+
             UndeployAddon(addon);
         }
 
@@ -107,6 +110,17 @@ namespace OneIdentity.DevOps.Logic
             var addonInternal = _configDb.GetAddonByName(addonName);
             var addon = JsonHelper.DeserializeObject<Addon>(JsonHelper.SerializeObject(addonInternal));
             return addon;
+        }
+
+        public AddonStatus GetAddonStatus(string addonName)
+        {
+            var addon = GetAddon(addonName);
+            if (addon != null)
+            {
+                return _addonManager.GetAddonStatus(addon);
+            }
+
+            throw LogAndException($"Failed to find the Add-on {addonName}.");
         }
 
         private void InstallAddon(ZipArchive zipArchive, bool force)
@@ -221,11 +235,10 @@ namespace OneIdentity.DevOps.Logic
                     }
                     else
                     {
-                        _deployAddon = deployAddon;
-                        _deployAddon.SetLogger(_logger);
-                        _deployAddon.SetTempDirectory(tempFolder);
+                        deployAddon.SetLogger(_logger);
+                        deployAddon.SetTempDirectory(tempFolder);
 
-                        _deployAddon.Deploy(addonManifest, _configDb.GetWebSslPemCertificate());
+                        deployAddon.Deploy(addonManifest, _configDb.GetWebSslPemCertificate());
                     }
                 }
             }
@@ -280,10 +293,9 @@ namespace OneIdentity.DevOps.Logic
                     }
                     else
                     {
-                        _undeployAddon = undeployAddon;
-                        _undeployAddon.SetLogger(_logger);
+                        undeployAddon.SetLogger(_logger);
 
-                        _undeployAddon.Undeploy(addon.Manifest);
+                        undeployAddon.Undeploy(addon.Manifest);
                         if (addon.Manifest?.Name != null)
                             _configDb.DeleteAddonByName(addon.Manifest.Name);
                         if (addon.Manifest?.PluginName != null)

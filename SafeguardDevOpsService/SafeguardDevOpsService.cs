@@ -19,6 +19,7 @@ namespace OneIdentity.DevOps
     {
         private readonly IWebHost _host;
         private readonly IPluginManager _pluginManager;
+        private readonly IAddonManager _addonManager;
         private readonly IMonitoringLogic _monitoringLogic;
 
         public SafeguardDevOpsService()
@@ -111,6 +112,7 @@ namespace OneIdentity.DevOps
 
             _monitoringLogic = (IMonitoringLogic) _host.Services.GetService(typeof(IMonitoringLogic));
             _pluginManager = (IPluginManager)_host.Services.GetService(typeof(IPluginManager));
+            _addonManager = (IAddonManager)_host.Services.GetService(typeof(IAddonManager));
         }
 
         public void Start()
@@ -118,6 +120,9 @@ namespace OneIdentity.DevOps
             // This kicks off a function that
             // checks for and loads any staged plugins
             _pluginManager.Run();
+            // This kicks off a function that
+            // checks for and loads any staged addons
+            _addonManager.Run();
             // This kicks off a function that restores
             // the password change monitor to last known
             // running state.

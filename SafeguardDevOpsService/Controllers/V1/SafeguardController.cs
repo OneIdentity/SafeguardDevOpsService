@@ -880,7 +880,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Get a list of the known add-ons.
+        /// Get an add-on by name.
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
@@ -894,11 +894,33 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Addons/{addonName}")]
-        public ActionResult<Addon> GetAddons([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        public ActionResult<Addon> GetAddonByName([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
         {
             var addon = addonLogic.GetAddon(addonName);
 
             return Ok(addon);
+        }
+
+        /// <summary>
+        /// Get a list of the known add-ons.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// </remarks>
+        /// <param name="addonName">Name of the add-on to retrieve.</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        /// <response code="404">Not Found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("Addons/{addonName}/Status")]
+        public ActionResult<Addon> GetAddonStatusByName([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        {
+            var addonStatus = addonLogic.GetAddonStatus(addonName);
+
+            return Ok(addonStatus);
         }
 
         /// <summary>
