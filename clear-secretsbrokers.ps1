@@ -16,19 +16,19 @@ if (-not $SafeguardSession)
     throw "This script requires a Safeguard session.  Please login using Connect-Safeguard."
 }
 
-$local:DevOps = (Invoke-SafeguardMethod Core GET DevOps/SecretsBrokers)
-Write-Host "Cleaning up secrets broker entries:"
-Write-Host ($local:DevOps | Format-Table Id,AssetId,AssetName | Out-String)
-$local:DevOps | ForEach-Object {
-    Invoke-SafeguardMethod Core DELETE "DevOps/SecretsBrokers/$($_.Id)"
-}
-
 $local:Filter = "PrimaryAuthenticationProviderName eq 'Certificate' and Description eq 'Safeguard User for Safeguard Secrets Broker for DevOps'"
 $local:A2aUsers = (Find-SafeguardUser -QueryFilter $local:Filter -Fields Id,UserName,PrimaryAuthenticationIdentity)
 Write-Host "Cleaning up A2A certificate users:"
 Write-host ($local:A2aUsers | Format-Table | Out-String)
 $local:A2aUsers | ForEach-Object {
     Remove-SafeguardUser $_
+}
+
+$local:DevOps = (Invoke-SafeguardMethod Core GET DevOps/SecretsBrokers)
+Write-Host "Cleaning up secrets broker entries:"
+Write-Host ($local:DevOps | Format-Table Id,AssetId,AssetName | Out-String)
+$local:DevOps | ForEach-Object {
+    Invoke-SafeguardMethod Core DELETE "DevOps/SecretsBrokers/$($_.Id)"
 }
 
 $local:A2as = ((Get-SafeguardA2a) | Where-Object { $_.AppName -match "SafeguardDevOpsService*" })
