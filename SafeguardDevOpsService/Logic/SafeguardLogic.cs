@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -21,6 +20,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Extensions;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
+// ReSharper disable InconsistentNaming
 
 namespace OneIdentity.DevOps.Logic
 {
@@ -28,6 +28,8 @@ namespace OneIdentity.DevOps.Logic
     {
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
+        private ApplianceAvailability _applianceAvailabilityCache;
+        private DateTime _applianceAvailabilityLastCheck = DateTime.MinValue;
 
         private ServiceConfiguration _serviceConfiguration;
         private DevOpsSecretsBroker _devOpsSecretsBroker;
@@ -43,7 +45,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public bool PauseBackgroudMaintenance { get; set; } = false;
+        public bool PauseBackgroundMaintenance { get; set; }
 
         public SafeguardLogic(IConfigurationRepository configDb)
         {
@@ -97,33 +99,35 @@ namespace OneIdentity.DevOps.Logic
         {
             var sg = sgConnection ?? Connect();
 
-            try
+            if (_applianceAvailabilityCache == null || DateTime.Now - _applianceAvailabilityLastCheck > TimeSpan.FromMinutes(5))
             {
-                var availabilityJson = DevOpsInvokeMethod(_configDb.SvcId, sg, Service.Notification, Method.Get,
-                    "Status/Availability");
-                var applianceAvailability = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
-
-                return new SafeguardDevOpsConnection()
+                try
                 {
-                    ApplianceAddress = _configDb.SafeguardAddress,
-                    ApplianceId = applianceAvailability.ApplianceId,
-                    ApplianceName = applianceAvailability.ApplianceName,
-                    ApplianceVersion = applianceAvailability.ApplianceVersion,
-                    ApplianceState = applianceAvailability.ApplianceCurrentState,
-                    DevOpsInstanceId = _configDb.SvcId,
-                    Version = WellKnownData.DevOpsServiceVersion()
-                };
-
+                    var availabilityJson = DevOpsInvokeMethod(_configDb.SvcId, sg, Service.Notification, Method.Get,
+                        "Status/Availability");
+                    _applianceAvailabilityCache = JsonHelper.DeserializeObject<ApplianceAvailability>(availabilityJson);
+                    _applianceAvailabilityLastCheck = DateTime.Now;
+                }
+                catch (SafeguardDotNetException ex)
+                {
+                    throw new DevOpsException($"Failed to get the appliance information: {ex.Message}");
+                }
+                finally
+                {
+                    if (sgConnection == null)
+                        sg.Dispose();
+                }
             }
-            catch (SafeguardDotNetException ex)
+            return new SafeguardDevOpsConnection()
             {
-                throw new DevOpsException($"Failed to get the appliance information: {ex.Message}");
-            }
-            finally
-            {
-                if (sgConnection == null)
-                    sg.Dispose();
-            }
+                ApplianceAddress = _configDb.SafeguardAddress,
+                ApplianceId = _applianceAvailabilityCache.ApplianceId,
+                ApplianceName = _applianceAvailabilityCache.ApplianceName,
+                ApplianceVersion = _applianceAvailabilityCache.ApplianceVersion,
+                ApplianceState = _applianceAvailabilityCache.ApplianceCurrentState,
+                DevOpsInstanceId = _configDb.SvcId,
+                Version = WellKnownData.DevOpsServiceVersion()
+            };
         }
 
         private SafeguardDevOpsConnection GetSafeguardAvailability(ISafeguardConnection sgConnection,
@@ -142,7 +146,7 @@ namespace OneIdentity.DevOps.Logic
 
         private bool FetchAndStoreSignatureCertificate(string token, SafeguardDevOpsConnection safeguardConnection)
         {
-            var signatureCert = FetchSignatureCertificate(token, safeguardConnection.ApplianceAddress);
+            var signatureCert = FetchSignatureCertificate(safeguardConnection.ApplianceAddress);
 
             if (signatureCert != null)
             {
@@ -156,7 +160,7 @@ namespace OneIdentity.DevOps.Logic
             return false;
         }
 
-        private string FetchSignatureCertificate(string token, string applianceAddress)
+        private string FetchSignatureCertificate(string applianceAddress)
         {
             // Chicken and egg problem here. Fetching and storing the signature certificate is the first
             //  thing that has to happen on a new system.  We can't check the SSL certificate unless a certificate
@@ -293,8 +297,11 @@ namespace OneIdentity.DevOps.Logic
                         if (DevOpsSecretsBroker?.A2AUser == null ||
                             DevOpsSecretsBroker.A2AUser.Id != a2aUser.Id)
                         {
-                            DevOpsSecretsBroker.A2AUser = a2aUser;
-                            UpdateSecretsBrokerInstance(sg, DevOpsSecretsBroker);
+                            if (DevOpsSecretsBroker != null)
+                            {
+                                DevOpsSecretsBroker.A2AUser = a2aUser;
+                                UpdateSecretsBrokerInstance(sg, DevOpsSecretsBroker);
+                            }
                         }
                     }
                 }
@@ -327,8 +334,11 @@ namespace OneIdentity.DevOps.Logic
                 if (DevOpsSecretsBroker?.A2AUser == null ||
                     DevOpsSecretsBroker.A2AUser.Id != a2aUser.Id)
                 {
-                    DevOpsSecretsBroker.A2AUser = a2aUser;
-                    UpdateSecretsBrokerInstance(sg, DevOpsSecretsBroker);
+                    if (DevOpsSecretsBroker != null)
+                    {
+                        DevOpsSecretsBroker.A2AUser = a2aUser;
+                        UpdateSecretsBrokerInstance(sg, DevOpsSecretsBroker);
+                    }
                 }
             }
         }
@@ -339,17 +349,15 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                FullResponse result;
-
                 // If we don't have a user Id then try to find the user by name
-                if (_configDb.A2aUserId == null)
+                if (_configDb.A2aUserId == null || _configDb.A2aUserId == 0)
                 {
                     var p = new Dictionary<string, string>
                         {{"filter", $"UserName eq '{WellKnownData.DevOpsUserName(_configDb.SvcId)}'"}};
 
                     try
                     {
-                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                             "Users", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
@@ -510,8 +518,6 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                FullResponse result;
-
                 // If we don't have a registration Id then try to find the registration by name
                 if ((registrationType == A2ARegistrationType.Account && _configDb.A2aRegistrationId == null) ||
                     (registrationType == A2ARegistrationType.Vault && _configDb.A2aVaultRegistrationId == null))
@@ -524,7 +530,7 @@ namespace OneIdentity.DevOps.Logic
                         var p = new Dictionary<string, string>
                             {{"filter", $"AppName eq '{knownRegistrationName}'"}};
 
-                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
                             "A2ARegistrations", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
@@ -717,7 +723,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                _logger.Debug("Connecting to Safeguard: {address}");
+                _logger.Debug("Connecting to Safeguard as user: {address}", address);
                 return (ignoreSsl.HasValue && ignoreSsl.Value)
                     ? Safeguard.Connect(address, token, version ?? WellKnownData.DefaultApiVersion, true)
                     : Safeguard.Connect(address, token, CertificateValidationCallback, version ?? WellKnownData.DefaultApiVersion);
@@ -740,7 +746,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    _logger.Debug("Connecting to Safeguard: {address}");
+                    _logger.Debug("Connecting to Safeguard as cert user: {address}", sppAddress);
                     var connection = Safeguard.Connect(sppAddress, Convert.FromBase64String(userCertificate),
                         passPhrase, apiVersion, ignoreSsl);
                     return connection;
@@ -1039,6 +1045,7 @@ namespace OneIdentity.DevOps.Logic
                         _configDb.WebSslCsrPrivateKeyBase64Data = Convert.ToBase64String(rsa.ExportRSAPrivateKey());
                         break;
                     }
+                    // ReSharper disable once UnreachableSwitchCaseDueToIntegerAnalysis
                     default:
                     {
                         throw new DevOpsException("Invalid certificate type");
@@ -1154,7 +1161,7 @@ namespace OneIdentity.DevOps.Logic
 
             if (_configDb.SafeguardAddress != null)
             {
-                var signatureCert = FetchSignatureCertificate(token, _configDb.SafeguardAddress);
+                var signatureCert = FetchSignatureCertificate(_configDb.SafeguardAddress);
                 if (!ValidateLogin(token, null, signatureCert))
                 {
                     if (_configDb.SafeguardAddress.Equals(safeguardData.ApplianceAddress))
@@ -1176,6 +1183,7 @@ namespace OneIdentity.DevOps.Logic
             var safeguardConnection = ConnectAnonymous(safeguardData.ApplianceAddress,
                 safeguardData.ApiVersion ?? WellKnownData.DefaultApiVersion, safeguardData.IgnoreSsl ?? false);
 
+            _applianceAvailabilityCache = null;
             if (safeguardConnection != null && FetchAndStoreSignatureCertificate(token, safeguardConnection))
             {
                 _configDb.SafeguardAddress = safeguardData.ApplianceAddress;
@@ -1194,6 +1202,7 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeleteSafeguardData()
         {
+            _applianceAvailabilityCache = null;
             // Since the database is about to be dropped, we can't store deleted plugins in the database.
             // Write an empty file in the plugins dir to indicate on startup that the plugins need to be deleted.
             if (Directory.Exists(WellKnownData.PluginDirPath))
@@ -1337,7 +1346,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                IEnumerable<ServerCertificate> serverCertificates = null;
+                IList<ServerCertificate> serverCertificates = null;
                 var trustedCertificates = new List<CertificateInfo>();
 
                 try
@@ -1346,7 +1355,7 @@ namespace OneIdentity.DevOps.Logic
                     var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "TrustedCertificates");
                     if (result.StatusCode == HttpStatusCode.OK)
                     {
-                        serverCertificates = JsonHelper.DeserializeObject<IEnumerable<ServerCertificate>>(result.Body);
+                        serverCertificates = JsonHelper.DeserializeObject<IList<ServerCertificate>>(result.Body);
                         _logger.Debug($"Received {serverCertificates.Count()} certificates from Safeguard.");
                     }
                 }
@@ -1703,7 +1712,7 @@ namespace OneIdentity.DevOps.Logic
                     devOpsSecretsBrokerToDelete = DevOpsSecretsBroker.Id;
                 }
 
-                PauseBackgroudMaintenance = true;
+                PauseBackgroundMaintenance = true;
                 monitoringLogic.EnableMonitoring(false);
                 foreach (var addon in _configDb.GetAllAddons())
                 {
@@ -1750,12 +1759,10 @@ namespace OneIdentity.DevOps.Logic
             }
             finally
             {
-                PauseBackgroudMaintenance = false;
+                PauseBackgroundMaintenance = false;
                 if (sgConnection == null)
                     sg.Dispose();
             }
-
-            return null;
         }
 
         public A2ARetrievableAccount GetA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType)
@@ -1997,8 +2004,6 @@ namespace OneIdentity.DevOps.Logic
         {
             _serviceConfiguration.Clear();
 
-            _serviceConfiguration.A2AUser = GetA2AUser(sgConnection);
-
             _serviceConfiguration.Appliance = GetSafeguardAvailability(sgConnection,
                 new SafeguardDevOpsConnection()
                 {
@@ -2007,10 +2012,23 @@ namespace OneIdentity.DevOps.Logic
                     ApiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion
                 });
 
-            _serviceConfiguration.A2ARegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Account);
-            _serviceConfiguration.A2AVaultRegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Vault);
-            _serviceConfiguration.Asset = GetAsset(sgConnection);
-            _serviceConfiguration.AssetPartition = GetAssetPartition(sgConnection);
+            // Run these requests in parallel -- should really make Async methods for them instead, but
+            // the underlying SafeguardDotNet library doesn't support that yet.
+            // All of the methods for these requests catch exceptions and log.
+            var tasks = new Task[]
+            {
+                Task.Run(() => _serviceConfiguration.A2AUser = GetA2AUser(sgConnection)),
+                Task.Run(() =>
+                    _serviceConfiguration.A2ARegistration =
+                        GetA2ARegistration(sgConnection, A2ARegistrationType.Account)),
+                Task.Run(() =>
+                    _serviceConfiguration.A2AVaultRegistration =
+                        GetA2ARegistration(sgConnection, A2ARegistrationType.Vault)),
+                Task.Run(() => _serviceConfiguration.Asset = GetAsset(sgConnection)),
+                Task.Run(() => _serviceConfiguration.AssetPartition = GetAssetPartition(sgConnection))
+            };
+
+            Task.WaitAll(tasks);
 
             return _serviceConfiguration;
         }
@@ -2038,7 +2056,7 @@ namespace OneIdentity.DevOps.Logic
 
                         secretsBroker = new DevOpsSecretsBroker()
                         {
-                            Host = ipAddress.ToString(),
+                            Host = ipAddress?.ToString(),
                             DevOpsInstanceId = _configDb.SvcId,
                             Asset = new Asset() {Name = WellKnownData.DevOpsAssetName(_configDb.SvcId)},
                             AssetPartition = new AssetPartition() {Name = WellKnownData.DevOpsAssetPartitionName(_configDb.SvcId)}
@@ -2052,7 +2070,6 @@ namespace OneIdentity.DevOps.Logic
                             if (result.StatusCode == HttpStatusCode.Created)
                             {
                                 DevOpsSecretsBroker = JsonHelper.DeserializeObject<DevOpsSecretsBroker>(result.Body);
-                                return;
                             }
                         }
                         catch (Exception ex)
@@ -2261,7 +2278,8 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"DevOps/SecretsBrokers/{id}/Asset");
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
+                        $"DevOps/SecretsBrokers/{id}/Asset");
                     if (result.StatusCode == HttpStatusCode.OK)
                     {
                         return JsonHelper.DeserializeObject<Asset>(result.Body);
@@ -2293,8 +2311,6 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                FullResponse result;
-
                 // If we don't have an asset partition Id then try to find the asset partition by name
                 if (_configDb.AssetPartitionId == null)
                 {
@@ -2304,7 +2320,7 @@ namespace OneIdentity.DevOps.Logic
                         var p = new Dictionary<string, string>
                             {{"filter", $"Name eq '{knownAssetPartitionName}'"}};
 
-                        result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "AssetPartitions", null, p);
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "AssetPartitions", null, p);
                         if (result.StatusCode == HttpStatusCode.OK)
                         {
                             var foundAssetPartitions = JsonHelper.DeserializeObject<List<AssetPartition>>(result.Body);
