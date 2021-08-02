@@ -163,7 +163,13 @@
           <ng-container *ngFor="let addon of addons">
             <div>
               <button *ngIf="!addon.IsUploadCustom" mat-button class="link-button cert-link" (click)='editAddon(addon)'
-                [disabled]='isUploading.Plugin' color='primary' disableRipple>{{addon.Manifest.DisplayName}}</button>
+                [disabled]='isUploading.Plugin' color='primary' disableRipple>
+                <mat-icon class="green-icon" inline=true *ngIf="addon.Status?.IsReady"
+                  matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">check_circle</mat-icon>
+                <mat-icon class="yellow-icon" inline=true *ngIf="!addon.Status?.IsReady"
+                  matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">check_circle</mat-icon>
+                {{addon.Manifest.DisplayName}}
+              </button>
               <button *ngIf="addon.IsUploadCustom" mat-button class="link-button cert-link" (click)='uploadAddon()'
                 [disabled]='isUploading.Plugin' color='primary' disableRipple>
                 <mat-icon class="upload-icon" inline=true>cloud_upload</mat-icon>{{addon.Manifest.DisplayName}}

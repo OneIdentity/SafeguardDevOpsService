@@ -170,6 +170,11 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('getAddons')));
   }
 
+  getAddonStatus(name: string): Observable<any> {
+    return this.http.get(this.BASE + 'Safeguard/Addons/' + encodeURIComponent(name) + '/Status', this.authHeader())
+      .pipe(catchError(this.error<any>('getAddonStatus')));
+  }
+
   postAddonFile(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('formFile', file);
