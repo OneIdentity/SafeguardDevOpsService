@@ -121,11 +121,9 @@ export class MainComponent implements OnInit, AfterViewInit {
           this.initializeAddons()
         ])),
         finalize(() => this.isLoading = false)
-      ).subscribe(() => {
-      },
-        error => {
-          this.error = error;
-        });
+      ).subscribe(() => { },
+        error => this.error = error
+      );
   }
 
   ngAfterViewInit(): void {
@@ -192,6 +190,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       tap((addons: any[]) => {
         addons.forEach(addon => {
           addon.IsConfigurationSetup = true;
+          this.serviceClient.getAddonStatus(addon.Name).subscribe(result => addon.Status = result);
           this.addons.push(addon);
         });
       }));
