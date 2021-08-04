@@ -50,6 +50,9 @@ namespace OneIdentity.DevOps.Logic
         public const string PluginUploadType = "plugin";
         public const string AddOnUploadType = "addon";
 
+        public const string SwaggerUrl = "https://{0}/service/core/swagger/v{1}/swagger.json";
+        public const string DevOpsSecretsBrokerEndPoints = "/v3/DevOps/SecretsBrokers";
+
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(

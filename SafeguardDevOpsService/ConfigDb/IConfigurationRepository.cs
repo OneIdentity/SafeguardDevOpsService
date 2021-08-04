@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
+
 #pragma warning disable 1591
 
 namespace OneIdentity.DevOps.ConfigDb
@@ -47,6 +49,9 @@ namespace OneIdentity.DevOps.ConfigDb
         X509Certificate2 WebSslCertificate { get; set; }
 
         Tuple<string, string> GetWebSslPemCertificate();
+
+        DevOpsSecretsBroker DevOpsSecretsBroker { get; }
+
         void DropDatabase();
     }
 }
