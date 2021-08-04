@@ -10,6 +10,7 @@ using CredentialManagement;
 using LiteDB;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
 
@@ -664,6 +665,51 @@ namespace OneIdentity.DevOps.ConfigDb
             }
 
             return null;
+        }
+
+        public DevOpsSecretsBroker DevOpsSecretsBroker
+        {
+            get
+            {
+                var devOpsSecretsBroker = new DevOpsSecretsBroker()
+                {
+                    Host = SafeguardAddress,
+                    DevOpsInstanceId = SvcId,
+                    A2ARegistration = A2aRegistrationId == null || A2aRegistrationId == 0 
+                        ? null 
+                        : new A2ARegistration()
+                        {
+                            DevOpsInstanceId = SvcId,
+                            Id = A2aRegistrationId.Value,
+                            CertificateUserId = A2aUserId ?? 0,
+                            CertificateUserThumbPrint = UserCertificateThumbprint
+                        },
+                    A2AVaultRegistration = A2aVaultRegistrationId == null || A2aVaultRegistrationId == 0 
+                        ? null 
+                        : new A2ARegistration()
+                        {
+                            DevOpsInstanceId = SvcId,
+                            Id = A2aVaultRegistrationId.Value,
+                            CertificateUserId = A2aUserId ?? 0,
+                            CertificateUserThumbPrint = UserCertificateThumbprint
+                        },
+                    A2AUser = A2aUserId == null || A2aUserId == 0
+                        ? null
+                        : new A2AUser() 
+                            {Id = A2aUserId ?? 0, DisplayName = WellKnownData.DevOpsUserName(SvcId)},
+                    Plugins = GetAllPlugins().Select(x => x.ToDevOpsSecretsBrokerPlugin(this))
+                };
+
+                var accounts = new List<DevOpsSecretsBrokerAccount>();
+                var addons = GetAllAddons().ToList();
+                foreach (var addon in addons)
+                {
+                    accounts.AddRange(addon.VaultCredentials.Select(x => new DevOpsSecretsBrokerAccount() {AccountName = x.Key}));
+                }
+                devOpsSecretsBroker.Accounts = accounts;
+
+                return devOpsSecretsBroker;
+            }
         }
 
         public void DropDatabase()

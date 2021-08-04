@@ -22,6 +22,10 @@
         /// </summary>
         public string ApplianceState { get; set; }
         /// <summary>
+        /// Safeguard appliance the DevOps endpoints
+        /// </summary>
+        public bool ApplianceSupportsDevOps { get; set; } = false;
+        /// <summary>
         /// Safeguard DevOps instance Id
         /// </summary>
         public string DevOpsInstanceId { get; set; }

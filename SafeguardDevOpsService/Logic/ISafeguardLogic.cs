@@ -9,7 +9,7 @@ namespace OneIdentity.DevOps.Logic
 {
     public interface ISafeguardLogic
     {
-        DevOpsSecretsBroker DevOpsSecretsBroker { get; }
+        DevOpsSecretsBroker DevOpsSecretsBrokerCache { get; }
 
         ISafeguardConnection Connect();
         ISafeguardConnection CertConnect();
@@ -42,11 +42,13 @@ namespace OneIdentity.DevOps.Logic
         IEnumerable<A2ARetrievableAccount> AddA2ARetrievableAccounts(ISafeguardConnection sgConnection, IEnumerable<SppAccount> accounts, A2ARegistrationType registrationType);
         void RemoveA2ARetrievableAccounts(ISafeguardConnection sgConnection, IEnumerable<A2ARetrievableAccount> accounts, A2ARegistrationType registrationType);
 
-        List<DevOpsSecretsBrokerAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg);
         void RetrieveDevOpsSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
-        void UpdateSecretsBrokerInstance(ISafeguardConnection sgConnection, DevOpsSecretsBroker devOpsSecretsBroker);
         void CheckAndSyncSecretsBrokerInstance(ISafeguardConnection sgConnection);
+        void CheckAndPushAddOnCredentials(ISafeguardConnection sgConnection);
+        void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, IPluginsLogic pluginsLogic);
+        void CheckAndSyncVaultCredentials(ISafeguardConnection sgConnection);
+
         Asset GetAsset(ISafeguardConnection sgConnection);
         AssetPartition GetAssetPartition(ISafeguardConnection sgConnection);
 
