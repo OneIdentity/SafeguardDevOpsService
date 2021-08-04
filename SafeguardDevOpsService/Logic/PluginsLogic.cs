@@ -401,6 +401,26 @@ namespace OneIdentity.DevOps.Logic
             {
                 throw LogAndException($"Plugin {name} not found");
             }
+            if (plugin.IsSystemOwned && !plugin.VaultAccountId.HasValue)
+            {
+                var account = new A2ARetrievableAccount()
+                {
+                    AccountName = WellKnownData.DevOpsCredentialName(plugin.Name, _configDb.SvcId),
+                    AccountDescription = "Internal account",
+                    SystemName = WellKnownData.DevOpsAssetName(_configDb.SvcId),
+                    SystemDescription = WellKnownData.DevOpsAssetName(_configDb.SvcId)
+                };
+
+                var addon = _configDb.GetAllAddons().FirstOrDefault(a => a.Manifest.PluginName.Equals(plugin.Name));
+                if (addon != null)
+                {
+                    account.AccountName = addon.VaultAccountName;
+                    account.SystemName = addon.Name;
+                    account.SystemDescription = addon.Name;
+                }
+
+                return account;
+            }
             if (!plugin.VaultAccountId.HasValue)
             {
                 return null;

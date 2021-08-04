@@ -216,6 +216,20 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        private void SendPluginVaultCredentialOnly(string name, string credential)
+        {
+            var pluginInstance = LoadedPlugins[name];
+            if (pluginInstance != null && credential != null)
+            {
+                pluginInstance.SetVaultCredential(credential);
+            }
+            else
+            {
+                _logger.Error(
+                    $"Failed to get the plugin instance {name}.");
+            }
+        }
+
         public bool TestPluginVaultConnection(ISafeguardConnection sgConnection, string pluginName)
         {
             var plugin = _configDb.GetPluginByName(pluginName);
@@ -426,6 +440,14 @@ namespace OneIdentity.DevOps.Logic
                     var msg =
                         $"Failed to refresh the api key for {plugin.Name} account {plugin.VaultAccountId}: {ex.Message}";
                     _logger.Error(ex, msg);
+                }
+            } 
+            else if (plugin.IsSystemOwned)
+            {
+                var addon = _configDb.GetAllAddons().FirstOrDefault(a => a.Manifest.PluginName.Equals(plugin.Name));
+                if (addon != null && addon.VaultCredentials.ContainsKey(WellKnownData.DevOpsCredentialName(addon.VaultAccountName, _configDb.SvcId)))
+                {
+                    SendPluginVaultCredentialOnly(plugin.Name, addon.VaultCredentials[WellKnownData.DevOpsCredentialName(addon.VaultAccountName, _configDb.SvcId)]);
                 }
             }
         }
