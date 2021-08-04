@@ -34,7 +34,7 @@ namespace OneIdentity.DevOps.Logic
         private readonly IConfigurationRepository _configDb;
         private ApplianceAvailability _applianceAvailabilityCache;
         private DateTime _applianceAvailabilityLastCheck = DateTime.MinValue;
-        private bool? _applianceSupportsDevOps = null;
+//        private bool? _applianceSupportsDevOps = null;
 
         private ServiceConfiguration _serviceConfiguration;
         private DevOpsSecretsBroker _devOpsSecretsBrokerCache;
@@ -50,7 +50,8 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public bool PauseBackgroundMaintenance { get; set; }
+        public bool PauseBackgroundMaintenance { get; private set; }
+        public bool? ApplianceSupportsDevOps { get; private set; } = null;
 
         public SafeguardLogic(IConfigurationRepository configDb)
         {
@@ -71,28 +72,32 @@ namespace OneIdentity.DevOps.Logic
             return new DevOpsException(msg, ex);
         }
 
-        private static IDictionary<string, string> AddDevOpsHeader(string devOpsInstanceId,
+        private IDictionary<string, string> AddDevOpsHeader(string devOpsInstanceId,
             IDictionary<string, string> additionalHeaders)
         {
-            if (additionalHeaders == null)
-                return new Dictionary<string, string> {{"devOpsInstanceId", devOpsInstanceId}};
+            if (ApplianceSupportsDevOps ?? false)
+            {
+                if (additionalHeaders == null)
+                    return new Dictionary<string, string> {{"devOpsInstanceId", devOpsInstanceId}};
 
-            additionalHeaders.Add("devOpsInstanceId", devOpsInstanceId);
+                additionalHeaders.Add("devOpsInstanceId", devOpsInstanceId);
+            }
+
             return additionalHeaders;
         }
 
-        public static string DevOpsInvokeMethod(string devOpsInstanceId, ISafeguardConnection sgConnection,
-            Service service, Method method,
-            string relativeUrl, string body = null, IDictionary<string, string> parameters = null,
+        private string DevOpsInvokeMethod(string devOpsInstanceId, ISafeguardConnection sgConnection,
+            Service service, Method method, string relativeUrl, string body = null, 
+            IDictionary<string, string> parameters = null, 
             IDictionary<string, string> additionalHeaders = null, TimeSpan? timeout = null)
         {
             return sgConnection.InvokeMethod(service, method, relativeUrl, body, parameters,
                 AddDevOpsHeader(devOpsInstanceId, additionalHeaders), timeout);
         }
 
-        public static FullResponse DevOpsInvokeMethodFull(string devOpsInstanceId, ISafeguardConnection sgConnection,
-            Service service, Method method,
-            string relativeUrl, string body = null, IDictionary<string, string> parameters = null,
+        private FullResponse DevOpsInvokeMethodFull(string devOpsInstanceId, ISafeguardConnection sgConnection,
+            Service service, Method method, string relativeUrl, string body = null, 
+            IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null, TimeSpan? timeout = null)
         {
             return sgConnection.InvokeMethodFull(service, method, relativeUrl, body, parameters,
@@ -123,7 +128,7 @@ namespace OneIdentity.DevOps.Logic
                     ApplianceName = _applianceAvailabilityCache.ApplianceName,
                     ApplianceVersion = _applianceAvailabilityCache.ApplianceVersion,
                     ApplianceState = _applianceAvailabilityCache.ApplianceCurrentState,
-                    ApplianceSupportsDevOps = _applianceSupportsDevOps 
+                    ApplianceSupportsDevOps = ApplianceSupportsDevOps 
                                               ?? GetSafeguardDevOpsSupport(sg, address ?? _configDb.SafeguardAddress),
                     DevOpsInstanceId = _configDb.SvcId,
                     Version = WellKnownData.DevOpsServiceVersion()
@@ -161,8 +166,8 @@ namespace OneIdentity.DevOps.Logic
                     if (data != null)
                     {
                         var apis = data.SelectToken("paths")!.Where(x => x.Type == JTokenType.Property && ((JProperty) x).Name.StartsWith(WellKnownData.DevOpsSecretsBrokerEndPoints));
-                        _applianceSupportsDevOps = apis.Any();
-                        return _applianceSupportsDevOps.Value;
+                        ApplianceSupportsDevOps = apis.Any();
+                        return ApplianceSupportsDevOps.Value;
                     }
                 }
                 else
@@ -1685,6 +1690,33 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        public void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, IPluginsLogic pluginsLogic)
+        {
+            var addons = _configDb.GetAllAddons();
+            foreach (var addon in addons)
+            {
+                var plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
+                if (plugin != null && plugin.IsSystemOwned != addon.Manifest.IsPluginSystemOwned)
+                {
+                    plugin.IsSystemOwned = addon.Manifest.IsPluginSystemOwned;
+                    _configDb.SavePluginConfiguration(plugin);
+                }
+
+                if (!string.IsNullOrEmpty(addon.VaultAccountName) 
+                    && addon.VaultAccountId.HasValue 
+                    && addon.VaultAccountId > 0
+                    && !string.IsNullOrEmpty(addon.Manifest?.PluginName))
+                {
+                    plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
+                    if (plugin != null && plugin.VaultAccountId != addon.VaultAccountId)
+                    {
+                        plugin.VaultAccountId = addon.VaultAccountId;
+                        pluginsLogic.SavePluginVaultAccount(sgConnection, plugin.Name, new AssetAccount(){Id = addon.VaultAccountId.Value});
+                    }
+                }
+            }
+        }
+
         public void Dispose()
         {
             DisconnectWithAccessToken();
@@ -1804,7 +1836,7 @@ namespace OneIdentity.DevOps.Logic
             var sg = sgConnection ?? Connect();
 
             try {
-                if (_applianceSupportsDevOps ?? false)
+                if (ApplianceSupportsDevOps ?? false)
                 {
                     var secretsBroker = GetSecretsBrokerInstanceByName(sg);
                     if (secretsBroker != null)
@@ -1830,7 +1862,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                if (_applianceSupportsDevOps ?? false)
+                if (ApplianceSupportsDevOps ?? false)
                 {
                     var registrationIds = GetAvailableA2ARegistrationIds(sg);
 
@@ -1895,7 +1927,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                if (_applianceSupportsDevOps ?? false)
+                if (ApplianceSupportsDevOps ?? false)
                 {
                     var a2aRegistration = GetA2ARegistration(sg, id);
                     if (a2aRegistration == null || string.IsNullOrEmpty(a2aRegistration.DevOpsInstanceId))
@@ -1977,7 +2009,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                if (_applianceSupportsDevOps ?? false)
+                if (ApplianceSupportsDevOps ?? false)
                 {
                     FullResponse result;
 
@@ -2056,7 +2088,7 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                if (_applianceSupportsDevOps ?? false)
+                if (ApplianceSupportsDevOps ?? false)
                 {
                     // If we don't have an asset partition Id then try to find the asset partition by name
                     if (_configDb.AssetPartitionId == null || _configDb.AssetPartitionId == 0)
@@ -2131,7 +2163,7 @@ namespace OneIdentity.DevOps.Logic
         private static volatile object _secretsBrokerInstanceLock = new object();
         public void AddSecretsBrokerInstance(ISafeguardConnection sgConnection)
         {
-            if (_applianceSupportsDevOps ?? false)
+            if (ApplianceSupportsDevOps ?? false)
             {
                 lock (_secretsBrokerInstanceLock)
                 {
@@ -2192,7 +2224,7 @@ namespace OneIdentity.DevOps.Logic
 
         public void CheckAndSyncSecretsBrokerInstance(ISafeguardConnection sgConnection)
         {
-            if (_applianceSupportsDevOps ?? false)
+            if (ApplianceSupportsDevOps ?? false)
             {
                 lock (_secretsBrokerInstanceLock)
                 {
@@ -2264,107 +2296,88 @@ namespace OneIdentity.DevOps.Logic
 
         public void CheckAndPushAddOnCredentials(ISafeguardConnection sgConnection)
         {
-            if (DevOpsSecretsBrokerCache?.Asset == null)
-                return;
-
-            var addons = _configDb.GetAllAddons().ToList();
-            if (!addons.Any())
-                return;
-            
-            var secretsBrokerAccounts = GetSecretsBrokerAccounts(sgConnection);
-            if (secretsBrokerAccounts != null)
+            if (ApplianceSupportsDevOps ?? false)
             {
-                foreach (var addon in addons)
-                {
-                    // Determine if there are any accounts that need to be pushed to Safeguard.
-                    var accounts = new List<DevOpsSecretsBrokerAccount>();
-                    foreach (var credential in addon.VaultCredentials)
-                    {
-                        if (secretsBrokerAccounts.All(x => x.AccountName != credential.Key))
-                        {
-                            accounts.Add(new DevOpsSecretsBrokerAccount()
-                            {
-                                AccountId = 0,
-                                AccountName = credential.Key,
-                                Description = addon.Manifest.DisplayName + " account",
-                                AssetId = DevOpsSecretsBrokerCache.Asset.Id,
-                                Password = credential.Value
-                            });
-                        }
-                    }
+                if (DevOpsSecretsBrokerCache?.Asset == null)
+                    return;
 
-                    // Add any missing accounts to Safeguard through the DevOps/SecretsBroker APIs which will also create an asset to tie them together.
-                    if (accounts.Any())
+                var addons = _configDb.GetAllAddons().ToList();
+                if (!addons.Any())
+                    return;
+
+                var secretsBrokerAccounts = GetSecretsBrokerAccounts(sgConnection);
+                if (secretsBrokerAccounts != null)
+                {
+                    foreach (var addon in addons)
                     {
-                        var secretsBrokerAccountsStr = JsonHelper.SerializeObject(accounts);
-                        try
+                        // Determine if there are any accounts that need to be pushed to Safeguard.
+                        var accounts = new List<DevOpsSecretsBrokerAccount>();
+                        foreach (var credential in addon.VaultCredentials)
                         {
-                            var result = SafeguardLogic.DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Post,
-                                $"DevOps/SecretsBrokers/{DevOpsSecretsBrokerCache.Id}/Accounts/Add",
-                                secretsBrokerAccountsStr);
-                            if (result.StatusCode == HttpStatusCode.OK)
+                            if (secretsBrokerAccounts.All(x => x.AccountName != credential.Key))
                             {
-                                // Refresh the secrets broker account list after the additions
-                                secretsBrokerAccounts = GetSecretsBrokerAccounts(sgConnection);
+                                accounts.Add(new DevOpsSecretsBrokerAccount()
+                                {
+                                    AccountId = 0,
+                                    AccountName = credential.Key,
+                                    Description = addon.Manifest.DisplayName + " account",
+                                    AssetId = DevOpsSecretsBrokerCache.Asset.Id,
+                                    Password = credential.Value
+                                });
                             }
                         }
-                        catch (Exception ex)
+
+                        // Add any missing accounts to Safeguard through the DevOps/SecretsBroker APIs which will also create an asset to tie them together.
+                        if (accounts.Any())
                         {
-                            _logger.Error(ex, 
-                                $"Failed to sync the credentials for the Add-On {addon.Name}: {ex.Message}");
+                            var secretsBrokerAccountsStr = JsonHelper.SerializeObject(accounts);
+                            try
+                            {
+                                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core,
+                                    Method.Post,
+                                    $"DevOps/SecretsBrokers/{DevOpsSecretsBrokerCache.Id}/Accounts/Add",
+                                    secretsBrokerAccountsStr);
+                                if (result.StatusCode == HttpStatusCode.OK)
+                                {
+                                    // Refresh the secrets broker account list after the additions
+                                    secretsBrokerAccounts = GetSecretsBrokerAccounts(sgConnection);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.Error(ex,
+                                    $"Failed to sync the credentials for the Add-On {addon.Name}: {ex.Message}");
+                            }
                         }
-                    }
 
-                    // Make sure that the vault account and asset information has been saved to the AddOn object in the database.
-                    if (!string.IsNullOrEmpty(addon.VaultAccountName))
-                    {
-                        var vaultAccount = secretsBrokerAccounts.FirstOrDefault(x => x.AccountName.StartsWith(addon.VaultAccountName));
-                        if (vaultAccount != null && addon.VaultAccountId != vaultAccount.AccountId)
+                        // Make sure that the vault account and asset information has been saved to the AddOn object in the database.
+                        if (!string.IsNullOrEmpty(addon.VaultAccountName))
                         {
-                            addon.VaultAccountId = vaultAccount.AccountId;
-                            addon.VaultAccountName = vaultAccount.AccountName;
-                            addon.VaultAssetId = vaultAccount.AssetId;
-                            addon.VaultAssetName = vaultAccount.AssetName;
-                            _configDb.SaveAddon(addon);
+                            var vaultAccount = secretsBrokerAccounts.FirstOrDefault(x =>
+                                x.AccountName.StartsWith(addon.VaultAccountName));
+                            if (vaultAccount != null && addon.VaultAccountId != vaultAccount.AccountId)
+                            {
+                                addon.VaultAccountId = vaultAccount.AccountId;
+                                addon.VaultAccountName = vaultAccount.AccountName;
+                                addon.VaultAssetId = vaultAccount.AssetId;
+                                addon.VaultAssetName = vaultAccount.AssetName;
+                                _configDb.SaveAddon(addon);
+                            }
                         }
-                    }
 
-                    // Make sure that all vault accounts have been added to the assigned vault A2A registration.
-                    if (_configDb.A2aVaultRegistrationId != null && secretsBrokerAccounts.Any())
-                    {
-                        var a2aAccounts = GetA2ARetrievableAccounts(sgConnection, A2ARegistrationType.Vault);
+                        // Make sure that all vault accounts have been added to the assigned vault A2A registration.
+                        if (_configDb.A2aVaultRegistrationId != null && secretsBrokerAccounts.Any())
+                        {
+                            var a2aAccounts = GetA2ARetrievableAccounts(sgConnection, A2ARegistrationType.Vault);
 
-                        var accountsToPush = secretsBrokerAccounts.Where(x => a2aAccounts.All(y => !y.AccountName.Equals(x.AccountName, StringComparison.InvariantCultureIgnoreCase)))
-                            .Select(x => new SppAccount() {Id = x.AccountId, Name = x.AccountName});
+                            var accountsToPush = secretsBrokerAccounts.Where(x =>
+                                    a2aAccounts.All(y =>
+                                        !y.AccountName.Equals(x.AccountName,
+                                            StringComparison.InvariantCultureIgnoreCase)))
+                                .Select(x => new SppAccount() {Id = x.AccountId, Name = x.AccountName});
 
-                        AddA2ARetrievableAccounts(sgConnection, accountsToPush, A2ARegistrationType.Vault);
-                    }
-                }
-            }
-        }
-
-        public void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, IPluginsLogic pluginsLogic)
-        {
-            var addons = _configDb.GetAllAddons();
-            foreach (var addon in addons)
-            {
-                var plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
-                if (plugin != null && plugin.IsSystemOwned != addon.Manifest.IsPluginSystemOwned)
-                {
-                    plugin.IsSystemOwned = addon.Manifest.IsPluginSystemOwned;
-                    _configDb.SavePluginConfiguration(plugin);
-                }
-
-                if (!string.IsNullOrEmpty(addon.VaultAccountName) 
-                    && addon.VaultAccountId.HasValue 
-                    && addon.VaultAccountId > 0
-                    && !string.IsNullOrEmpty(addon.Manifest?.PluginName))
-                {
-                    plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
-                    if (plugin != null && plugin.VaultAccountId != addon.VaultAccountId)
-                    {
-                        plugin.VaultAccountId = addon.VaultAccountId;
-                        pluginsLogic.SavePluginVaultAccount(sgConnection, plugin.Name, new AssetAccount(){Id = addon.VaultAccountId.Value});
+                            AddA2ARetrievableAccounts(sgConnection, accountsToPush, A2ARegistrationType.Vault);
+                        }
                     }
                 }
             }
@@ -2372,58 +2385,65 @@ namespace OneIdentity.DevOps.Logic
 
         public void CheckAndSyncVaultCredentials(ISafeguardConnection sgConnection)
         {
-            var addons = _configDb.GetAllAddons().ToList();
-            if (!addons.Any())
-                return;
-
-            var a2aRegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Vault);
-
-            var accounts = new List<A2ARetrievableAccount>();
-
-            var result = SafeguardLogic.DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Get, $"A2ARegistrations/{a2aRegistration.Id}/RetrievableAccounts");
-            if (result.StatusCode == HttpStatusCode.OK)
+            if (ApplianceSupportsDevOps ?? false)
             {
-                accounts = JsonHelper.DeserializeObject<List<A2ARetrievableAccount>>(result.Body);
-            }
+                var addons = _configDb.GetAllAddons().ToList();
+                if (!addons.Any())
+                    return;
 
-            if (accounts.Any())
-            {
-                using var a2aContext = GetA2aContext();
-                foreach (var account in accounts)
+                var a2aRegistration = GetA2ARegistration(sgConnection, A2ARegistrationType.Vault);
+
+                var accounts = new List<A2ARetrievableAccount>();
+
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Get,
+                    $"A2ARegistrations/{a2aRegistration.Id}/RetrievableAccounts");
+                if (result.StatusCode == HttpStatusCode.OK)
                 {
-                    string pp;
-                    try
-                    {
-                        var p = a2aContext.RetrievePassword(account.ApiKey.ToSecureString());
-                        pp = p.ToInsecureString();
-                        if (string.IsNullOrEmpty(pp))
-                            continue;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Information(ex, $"Failed to check the password for account {account.AccountName} ");
-                        continue;
-                    }
+                    accounts = JsonHelper.DeserializeObject<List<A2ARetrievableAccount>>(result.Body);
+                }
 
-                    foreach (var addon in addons)
+                if (accounts.Any())
+                {
+                    using var a2aContext = GetA2aContext();
+                    foreach (var account in accounts)
                     {
-                        var addonAccount =
-                            addon.VaultCredentials.FirstOrDefault(x => account.AccountName.StartsWith(x.Key) && !pp.Equals(x.Value));
-                        if (!string.IsNullOrEmpty(addonAccount.Value))
+                        string pp;
+                        try
                         {
-                            try
+                            var p = a2aContext.RetrievePassword(account.ApiKey.ToSecureString());
+                            pp = p.ToInsecureString();
+                            if (string.IsNullOrEmpty(pp))
+                                continue;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Information(ex, $"Failed to check the password for account {account.AccountName} ");
+                            continue;
+                        }
+
+                        foreach (var addon in addons)
+                        {
+                            var addonAccount =
+                                addon.VaultCredentials.FirstOrDefault(x =>
+                                    account.AccountName.StartsWith(x.Key) && !pp.Equals(x.Value));
+                            if (!string.IsNullOrEmpty(addonAccount.Value))
                             {
-                                result = SafeguardLogic.DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection,
-                                    Service.Core, Method.Put, $"AssetAccounts/{account.AccountId}/Password",
-                                    $"\"{addonAccount.Value}\"");
-                                if (result.StatusCode != HttpStatusCode.OK)
+                                try
                                 {
-                                    _logger.Error($"Failed to sync the password for account {account.AccountName} ");
+                                    result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection,
+                                        Service.Core, Method.Put, $"AssetAccounts/{account.AccountId}/Password",
+                                        $"\"{addonAccount.Value}\"");
+                                    if (result.StatusCode != HttpStatusCode.OK)
+                                    {
+                                        _logger.Error(
+                                            $"Failed to sync the password for account {account.AccountName} ");
+                                    }
                                 }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.Error(ex, $"Failed to sync the password for account {account.AccountName} ");
+                                catch (Exception ex)
+                                {
+                                    _logger.Error(ex,
+                                        $"Failed to sync the password for account {account.AccountName} ");
+                                }
                             }
                         }
                     }
@@ -2433,7 +2453,7 @@ namespace OneIdentity.DevOps.Logic
 
         private DevOpsSecretsBroker GetSecretsBrokerInstance(ISafeguardConnection sg, bool expand)
         {
-            if (_applianceSupportsDevOps ?? false)
+            if (ApplianceSupportsDevOps ?? false)
             {
                 if (DevOpsSecretsBrokerCache == null)
                 {
@@ -2506,7 +2526,7 @@ namespace OneIdentity.DevOps.Logic
 
         private void UpdateSecretsBrokerInstance(ISafeguardConnection sgConnection, DevOpsSecretsBroker devOpsSecretsBroker, bool expand)
         {
-            if (_applianceSupportsDevOps ?? false)
+            if (ApplianceSupportsDevOps ?? false)
             {
                 lock (_secretsBrokerInstanceLock)
                 {
@@ -2609,7 +2629,7 @@ namespace OneIdentity.DevOps.Logic
 
         private DevOpsSecretsBroker GetSecretsBrokerInstanceByName(ISafeguardConnection sg, string devOpsInstanceId = null)
         {
-            if (_applianceSupportsDevOps ?? false)
+            if (ApplianceSupportsDevOps ?? false)
             {
                 try
                 {
@@ -2652,7 +2672,7 @@ namespace OneIdentity.DevOps.Logic
 
         private DevOpsSecretsBroker GetSecretsBrokerInstance(ISafeguardConnection sg, int id)
         {
-            if (_applianceSupportsDevOps ?? false)
+            if (ApplianceSupportsDevOps ?? false)
             {
                 try
                 {
@@ -2682,7 +2702,7 @@ namespace OneIdentity.DevOps.Logic
 
         private IEnumerable<DevOpsSecretsBroker> GetAvailableSecretsBrokerInstances(ISafeguardConnection sg)
         {
-            if (_applianceSupportsDevOps ?? false)
+            if (ApplianceSupportsDevOps ?? false)
             {
                 try
                 {
@@ -2719,7 +2739,7 @@ namespace OneIdentity.DevOps.Logic
 
         private void DeleteDevOpsInstance(ISafeguardConnection sgConnection, int id = 0)
         {
-            if (_applianceSupportsDevOps ?? false)
+            if (ApplianceSupportsDevOps ?? false)
             {
                 try
                 {
@@ -2747,7 +2767,7 @@ namespace OneIdentity.DevOps.Logic
 
         private Asset GetAsset(ISafeguardConnection sg, int? id)
         {
-            if (id != null && (_applianceSupportsDevOps ?? false))
+            if (id != null && (ApplianceSupportsDevOps ?? false))
             {
                 try
                 {
@@ -2780,7 +2800,7 @@ namespace OneIdentity.DevOps.Logic
 
         private AssetPartition GetAssetPartition(ISafeguardConnection sg, int? id)
         {
-            if (id != null && (_applianceSupportsDevOps ?? false))
+            if (id != null && (ApplianceSupportsDevOps ?? false))
             {
                 try
                 {

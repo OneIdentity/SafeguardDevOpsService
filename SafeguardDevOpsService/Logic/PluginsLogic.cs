@@ -306,11 +306,11 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
-                        var result = SafeguardLogic.DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
-                            $"A2ARegistrations/{_configDb.A2aRegistrationId}/RetrievableAccounts/{account.AccountId}");
-                        if (result.StatusCode == HttpStatusCode.OK)
+                        var retrievableAccount =
+                            _safeguardLogic.GetA2ARetrievableAccountById(sg, A2ARegistrationType.Account, account.AccountId);
+
+                        if (retrievableAccount != null)
                         {
-                            var retrievableAccount = JsonHelper.DeserializeObject<A2ARetrievableAccount>(result.Body);
                             var accountMapping = new AccountMapping()
                             {
                                 AccountName = retrievableAccount.AccountName,

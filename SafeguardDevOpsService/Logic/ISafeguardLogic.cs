@@ -21,7 +21,8 @@ namespace OneIdentity.DevOps.Logic
 
         bool IsLoggedIn();
         bool ValidateLogin(string token, bool tokenOnly = false);
-        bool PauseBackgroundMaintenance { get; set; }
+        bool PauseBackgroundMaintenance { get; }
+        bool? ApplianceSupportsDevOps { get; }
 
         CertificateInfo GetCertificateInfo(CertificateType certificateType);
         void InstallCertificate(CertificateInfo certificatePfx, CertificateType certificateType);
