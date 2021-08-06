@@ -59,6 +59,15 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
+        public void ShutdownAddon(Addon addon)
+        {
+            if (addon != null && LoadedAddons.ContainsKey(addon.Name))
+            {
+                var addonInstance = LoadedAddons[addon.Name];
+                addonInstance?.Unload();
+            }
+        }
+
         private bool LoadAddonService(Addon addon)
         {
             if (addon?.Manifest?.DestinationFolder == null || addon.Manifest.Assembly == null)

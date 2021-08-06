@@ -5,10 +5,12 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 
 namespace OneIdentity.DevOps.Logic
@@ -18,12 +20,14 @@ namespace OneIdentity.DevOps.Logic
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
         private readonly IAddonManager _addonManager;
+        private readonly ISafeguardLogic _safeguardLogic;
 
-        public AddonLogic(IConfigurationRepository configDb, IAddonManager addonManager)
+        public AddonLogic(IConfigurationRepository configDb, IAddonManager addonManager, ISafeguardLogic safeguardLogic)
         {
             _logger = Serilog.Log.Logger;
             _configDb = configDb;
             _addonManager = addonManager;
+            _safeguardLogic = safeguardLogic;
         }
 
         private DevOpsException LogAndException(string msg, Exception ex = null)
@@ -93,7 +97,11 @@ namespace OneIdentity.DevOps.Logic
             }
 
             // Stop the addon service before undeploying the addon.
-            addon.ServiceCancellationToken.Cancel();
+            _addonManager.ShutdownAddon(addon);
+
+            // Deleting the addon renders the asset accounts useless since the vault is being
+            //  deleted as well.
+            _safeguardLogic.DeleteAssetAccounts(null, _configDb.AssetId ?? 0);
 
             UndeployAddon(addon);
         }
@@ -114,13 +122,90 @@ namespace OneIdentity.DevOps.Logic
 
         public AddonStatus GetAddonStatus(string addonName, bool isLicensed)
         {
-            var addon = GetAddon(addonName);
+            var addon = _configDb.GetAddonByName(addonName);
             if (addon != null)
             {
-                return _addonManager.GetAddonStatus(addon, isLicensed);
+                var addonStatus = _addonManager.GetAddonStatus(addon, isLicensed);
+
+                if (!SafeguardHasVaultCredentials(addon))
+                {
+                    // If the addon reported that the addon is ready but
+                    //  the credentials have not been pushed yet, clear
+                    //  the healthy status.
+                    if (addonStatus.IsReady)
+                        addonStatus.HealthStatus.Clear();
+                    addonStatus.IsReady = false;
+                    addonStatus.HealthStatus.Add("[Configuration] The add-on needs to be configured.");
+                }
+
+                return addonStatus;
             }
 
-            throw LogAndException($"Failed to find the Add-on {addonName}.");
+            return new AddonStatus()
+            {
+                IsReady = false,
+                HealthStatus = new List<string> {"[Configuration] Unknown."}
+            };
+        }
+
+        private bool SafeguardHasVaultCredentials(Addon addon)
+        {
+            var accountsPushedToSpp = false;
+
+            var assetId = _configDb.AssetId;
+            if (assetId != null && assetId > 0)
+            {
+                var addonAccounts = addon.VaultCredentials;
+                var accounts = _safeguardLogic.GetAssetAccounts(null, assetId.Value).ToArray();
+                if (accounts.Any())
+                {
+                    accountsPushedToSpp = accounts.All(x => addonAccounts.ContainsKey(x.Name));
+                }
+            }
+
+            return accountsPushedToSpp;
+        }
+
+        public bool ConfigureDevOpsAddOn(string addonName)
+        {
+            var assetId = _configDb.AssetId;
+            if ((assetId ?? 0) == 0)
+                return false;
+
+            var sg = _safeguardLogic.Connect();
+
+            try
+            {
+                var addon = _configDb.GetAddonByName(addonName);
+                if (addon.VaultCredentials.Any() && !SafeguardHasVaultCredentials(addon))
+                {
+                    var tasks = new List<Task>();
+                    foreach (var vaultCredential in addon.VaultCredentials)
+                    {
+                        var newAccount = new AssetAccount()
+                        {
+                            Name = vaultCredential.Key,
+                            AssetId = assetId.Value
+                        };
+                        var p = addon.VaultCredentials[newAccount.Name];
+
+                        tasks.Add(Task.Run(() =>
+                        {
+                            newAccount = _safeguardLogic.AddAssetAccount(sg, newAccount);
+                            _safeguardLogic.SetAssetAccountPassword(sg, newAccount, p);
+                        }));
+                    }
+
+                    if (tasks.Any())
+                        Task.WaitAll(tasks.ToArray());
+                }
+            }
+            finally
+            {
+                sg.Dispose();
+            }
+
+            return true;
         }
 
         private void InstallAddon(ZipArchive zipArchive, bool force)
@@ -163,7 +248,7 @@ namespace OneIdentity.DevOps.Logic
                     if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                     {
                         var addonSubPath = Path.Combine(WellKnownData.AddonServiceStageDirPath, "Addon");
-                        if (!Directory.Exists(addonSubPath)) 
+                        if (!Directory.Exists(addonSubPath))
                             Directory.CreateDirectory(addonSubPath);
                         foreach (var entry in Directory.EnumerateFileSystemEntries(WellKnownData.AddonServiceStageDirPath))
                         {
@@ -196,11 +281,11 @@ namespace OneIdentity.DevOps.Logic
 
         private bool ValidateManifest(AddonManifest addonManifest)
         {
-            return addonManifest != null 
+            return addonManifest != null
                    && addonManifest.GetType().GetProperties()
                        .Where(pi => pi.PropertyType == typeof(string))
                        .Select(pi => (string) pi.GetValue(addonManifest))
-                       .All(value => !string.IsNullOrEmpty(value)) 
+                       .All(value => !string.IsNullOrEmpty(value))
                    && addonManifest.Type.Equals(WellKnownData.AddOnUploadType, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -220,8 +305,8 @@ namespace OneIdentity.DevOps.Logic
                 _logger.Debug($"Loading Add-on assembly from {addonPath}");
                 var assembly = Assembly.LoadFrom(addonPath);
 
-                var deployAddonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
-                                                                   && t.Name.Equals(addonManifest.DeployClassName) 
+                var deployAddonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass
+                                                                   && t.Name.Equals(addonManifest.DeployClassName)
                                                                    && typeof(IDeployAddon).IsAssignableFrom(t));
 
                 if (deployAddonClass != null)
@@ -278,8 +363,8 @@ namespace OneIdentity.DevOps.Logic
                 }
 
 
-                var undeployAddonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
-                                                                               && t.Name.Equals(addon.Manifest.UndeployClassName) 
+                var undeployAddonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass
+                                                                               && t.Name.Equals(addon.Manifest.UndeployClassName)
                                                                                && typeof(IUndeployAddon).IsAssignableFrom(t));
 
                 if (undeployAddonClass != null)

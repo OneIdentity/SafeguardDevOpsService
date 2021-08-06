@@ -28,6 +28,16 @@ namespace OneIdentity.DevOps.Data.Spp
         public string PlatformDisplayName { get; set; }
 
         /// <summary>
+        /// ID of asset partition
+        /// </summary>
+        public int AssetPartitionId { get; set; }
+
+        /// <summary>
+        /// Display name asset partition
+        /// </summary>
+        public string AssetPartitionDisplayName { get; set; }
+
+        /// <summary>
         /// Date this entity was created
         /// </summary>
         public DateTimeOffset CreatedDate { get; set; }

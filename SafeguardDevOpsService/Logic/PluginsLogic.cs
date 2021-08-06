@@ -448,7 +448,7 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException("Invalid account.");
             }
 
-            var account = _safeguardLogic.GetAccount(sgConnection, sppAccount.Id);
+            var account = _safeguardLogic.GetAssetAccount(sgConnection, sppAccount.Id);
             if (account == null)
             {
                 throw LogAndException($"Account {sppAccount.Id} not found.");

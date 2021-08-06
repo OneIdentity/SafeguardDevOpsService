@@ -10,5 +10,6 @@ namespace OneIdentity.DevOps.Logic
     {
         void Run();
         AddonStatus GetAddonStatus(Addon addon, bool isLicensed);
+        void ShutdownAddon(Addon addon);
     }
 }

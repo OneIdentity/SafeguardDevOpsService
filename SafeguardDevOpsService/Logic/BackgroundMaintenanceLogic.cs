@@ -12,14 +12,12 @@ namespace OneIdentity.DevOps.Logic
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
         private readonly ISafeguardLogic _safeguardLogic;
-        private readonly IPluginsLogic _pluginsLogic;
 
-        public BackgroundMaintenanceLogic(IConfigurationRepository configDb, ISafeguardLogic safeguardLogic, IPluginsLogic pluginsLogic)
+        public BackgroundMaintenanceLogic(IConfigurationRepository configDb, ISafeguardLogic safeguardLogic)
         {
             _logger = Serilog.Log.Logger;
             _configDb = configDb;
             _safeguardLogic = safeguardLogic;
-            _pluginsLogic = pluginsLogic;
         }
 
         private ISafeguardConnection GetSgConnection()
@@ -74,7 +72,7 @@ namespace OneIdentity.DevOps.Logic
 
                             _safeguardLogic.CheckAndSyncSecretsBrokerInstance(sgConnection);
                             _safeguardLogic.CheckAndPushAddOnCredentials(sgConnection);
-                            _safeguardLogic.CheckAndConfigureAddonPlugins(sgConnection, _pluginsLogic, !isLicensed);
+                            _safeguardLogic.CheckAndConfigureAddonPlugins(sgConnection, !isLicensed);
                             _safeguardLogic.CheckAndSyncVaultCredentials(sgConnection);
                         }
                     }

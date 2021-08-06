@@ -23,7 +23,6 @@ namespace OneIdentity.DevOps.Logic
         bool ValidateLicense();
         bool ValidateLogin(string token, bool tokenOnly = false);
         bool PauseBackgroundMaintenance { get; }
-        bool? ApplianceSupportsDevOps { get; }
 
         CertificateInfo GetCertificateInfo(CertificateType certificateType);
         void InstallCertificate(CertificateInfo certificatePfx, CertificateType certificateType);
@@ -32,11 +31,16 @@ namespace OneIdentity.DevOps.Logic
         string GetCSR(int? size, string subjectName, string sanDns, string sanIp, CertificateType certificateType);
 
         object GetAvailableAccounts(ISafeguardConnection sgConnection, string filter, int? page, bool? count, int? limit, string orderby, string q);
-        AssetAccount GetAccount(ISafeguardConnection sgConnection, int id);
+        IEnumerable<AssetAccount> GetAssetAccounts(ISafeguardConnection sgConnection, int assetId);
+        AssetAccount GetAssetAccount(ISafeguardConnection sgConnection, int accountId);
+        AssetAccount AddAssetAccount(ISafeguardConnection sgConnection, AssetAccount account);
+        bool DeleteAssetAccounts(ISafeguardConnection sgConnection, int assetId);
+        void SetAssetAccountPassword(ISafeguardConnection sgConnection, AssetAccount account, string password);
+
 
         object GetAvailableA2ARegistrations(ISafeguardConnection sgConnection, string filter, int? page, bool? count, int? limit, string @orderby, string q);
         A2ARegistration GetA2ARegistration(ISafeguardConnection sgConnection, A2ARegistrationType registrationType);
-        A2ARegistration SetA2ARegistration(ISafeguardConnection sgConnection, IMonitoringLogic monitoringLogic, IPluginsLogic pluginsLogic, IAddonLogic addonLogic, int id);
+        A2ARegistration SetA2ARegistration(ISafeguardConnection sgConnection, int id);
         A2ARetrievableAccount GetA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType);
         void DeleteA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType);
         IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts(ISafeguardConnection sgConnection, A2ARegistrationType registrationType);
@@ -48,15 +52,12 @@ namespace OneIdentity.DevOps.Logic
         void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void CheckAndSyncSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void CheckAndPushAddOnCredentials(ISafeguardConnection sgConnection);
-        void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, IPluginsLogic pluginsLogic, bool notLicensed);
+        void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, bool notLicensed);
         void CheckAndSyncVaultCredentials(ISafeguardConnection sgConnection);
 
-        Asset GetAsset(ISafeguardConnection sgConnection);
-        AssetPartition GetAssetPartition(ISafeguardConnection sgConnection);
-
-        ServiceConfiguration GetDevOpsConfiguration(ISafeguardConnection sgConnection);
-        ServiceConfiguration ConfigureDevOpsService();
-        void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection, IAddonLogic addonLogic, bool secretsBrokerOnly);
+        DevOpsSecretsBroker GetDevOpsConfiguration(ISafeguardConnection sgConnection);
+        DevOpsSecretsBroker ConfigureDevOpsService();
+        void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection, bool secretsBrokerOnly);
 
         void RestartService();
 
