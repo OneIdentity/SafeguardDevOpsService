@@ -127,6 +127,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         {
             var serviceConfiguration = safeguard.GetDevOpsConfiguration(null);
 
+            serviceConfiguration.IsLicensed = safeguard.ValidateLicense();
+
             return Ok(serviceConfiguration);
         }
 
@@ -916,9 +918,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Addons/{addonName}/Status")]
-        public ActionResult<Addon> GetAddonStatusByName([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        public ActionResult<AddonStatus> GetAddonStatusByName([FromServices] ISafeguardLogic safeguard, [FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
         {
-            var addonStatus = addonLogic.GetAddonStatus(addonName);
+            var addonStatus = addonLogic.GetAddonStatus(addonName, safeguard.ValidateLicense());
 
             return Ok(addonStatus);
         }
@@ -945,6 +947,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
             Addon addonInfo, [FromQuery] bool restart = false, [FromQuery] bool force = false)
         {
+            if (!safeguard.ValidateLicense())
+            {
+                return BadRequest("Invalid licenses");
+            }
+
             addonLogic.InstallAddon(addonInfo.Base64AddonData, force);
 
             if (restart)
@@ -977,6 +984,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
             IFormFile formFile, [FromQuery] bool restart = false, [FromQuery] bool force = false)
         {
+            if (!safeguard.ValidateLicense())
+            {
+                return BadRequest("Invalid licenses");
+            }
+
             addonLogic.InstallAddon(formFile, force);
 
             if (restart)

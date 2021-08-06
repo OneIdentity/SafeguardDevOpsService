@@ -9,6 +9,6 @@ namespace OneIdentity.DevOps.Logic
     public interface IAddonManager
     {
         void Run();
-        AddonStatus GetAddonStatus(Addon addon);
+        AddonStatus GetAddonStatus(Addon addon, bool isLicensed);
     }
 }

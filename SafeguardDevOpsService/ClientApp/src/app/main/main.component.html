@@ -10,7 +10,7 @@
         <mat-icon>login</mat-icon>Log Out
       </button>
       <button mat-menu-item (click)="uploadAddon()"
-        [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>
+        [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting || !isLicensed'>
         <mat-icon>cloud_upload</mat-icon>Upload Add-on
       </button>
       <button mat-menu-item (click)="downloadLog()"
@@ -154,7 +154,8 @@
       </div>
       <div class="info-column"
         *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations && !isLoading && addons.length > 0">
-        <div class="info-label">Add-ons</div>
+        <div class="info-label" *ngIf="isLicensed">Add-ons</div>
+        <div class="info-label" *ngIf="!isLicensed">Add-ons (Not Licensed)</div>
         <app-progress-spinner color="accent" diameter="30" message='Uploading Add-on' [visible]="isUploading.Addon">
         </app-progress-spinner>
         <app-progress-spinner color="accent" diameter="30" message={{restartingProgress}} [visible]="isRestarting">
@@ -171,7 +172,7 @@
                 {{addon.Manifest.DisplayName}}
               </button>
               <button *ngIf="addon.IsUploadCustom" mat-button class="link-button cert-link" (click)='uploadAddon()'
-                [disabled]='isUploading.Plugin' color='primary' disableRipple>
+                [disabled]='isUploading.Plugin || !isLicensed' color='primary' disableRipple>
                 <mat-icon class="upload-icon" inline=true>cloud_upload</mat-icon>{{addon.Manifest.DisplayName}}
               </button>
             </div>
@@ -201,7 +202,10 @@
             </div>
             <div class="header">{{plugin.DisplayName}}</div>
             <div *ngIf="!plugin.IsSystemOwned" class="edit-text">Edit Configuration</div>
-            <div *ngIf="plugin.IsSystemOwned" class="edit-text">Manage Accounts</div>
+            <div *ngIf="plugin.IsSystemOwned" class="edit-text">
+              <span *ngIf="!plugin.IsDisabled">Manage Accounts</span>
+              <span *ngIf="plugin.IsDisabled">Manage Accounts (Disabled)</span>
+            </div>
           </ng-container>
 
           <ng-container *ngIf="!plugin.IsLoaded">

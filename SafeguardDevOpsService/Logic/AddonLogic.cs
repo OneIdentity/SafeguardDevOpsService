@@ -112,12 +112,12 @@ namespace OneIdentity.DevOps.Logic
             return addon;
         }
 
-        public AddonStatus GetAddonStatus(string addonName)
+        public AddonStatus GetAddonStatus(string addonName, bool isLicensed)
         {
             var addon = GetAddon(addonName);
             if (addon != null)
             {
-                return _addonManager.GetAddonStatus(addon);
+                return _addonManager.GetAddonStatus(addon, isLicensed);
             }
 
             throw LogAndException($"Failed to find the Add-on {addonName}.");

@@ -40,7 +40,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public AddonStatus GetAddonStatus(Addon addon)
+        public AddonStatus GetAddonStatus(Addon addon, bool isLicensed)
         {
             if (addon != null && LoadedAddons.ContainsKey(addon.Name))
             {
@@ -50,8 +50,8 @@ namespace OneIdentity.DevOps.Logic
                 {
                     return new AddonStatus()
                     {
-                        IsReady = status.Item1,
-                        HealthStatus = status.Item2
+                        IsReady = isLicensed && status.Item1,
+                        HealthStatus = isLicensed ? status.Item2 : new List<string>() { "Not Licensed" }
                     };
                 }
             }

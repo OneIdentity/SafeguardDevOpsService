@@ -68,6 +68,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   hasAvailableRegistrations: boolean = false;
   showAvailableRegistrations: boolean = false;
   needsClientCertificate: boolean = true;
+  isLicensed: boolean;
 
   certificateUploading = {
     Client: false,
@@ -278,6 +279,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   }
 
   initializeConfig(config: any): void {
+    this.isLicensed = config.IsLicensed;
     this.ApplianceAddress = config.Appliance.ApplianceAddress;
     this.DevOpsInstanceId = config.Appliance.DevOpsInstanceId;
     this.DevOpsVersion = config.Appliance.Version;

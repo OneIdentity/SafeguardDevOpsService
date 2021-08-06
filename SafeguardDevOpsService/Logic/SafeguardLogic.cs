@@ -104,6 +104,29 @@ namespace OneIdentity.DevOps.Logic
                 AddDevOpsHeader(devOpsInstanceId, additionalHeaders), timeout);
         }
 
+        public bool ValidateLicense()
+        {
+            var sg = Connect();
+
+            try
+            {
+                var licensesJson = DevOpsInvokeMethod(_configDb.SvcId, sg, Service.Core, Method.Get,
+                    "Licenses/Summary");
+                var _licenses = JsonHelper.DeserializeObject<IEnumerable<LicenseSummary>>(licensesJson);
+
+                return
+                    _licenses.Any(x => x.Module == LicensableModule.PasswordManagement && x.IsValid) &&
+                    _licenses.Any(x => x.Module == LicensableModule.SecretsBroker && x.IsValid);
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                throw new DevOpsException($"Failed to validate license: {ex.Message}");
+            }
+            finally
+            {
+                sg.Dispose();
+            }
+        }
 
         private SafeguardDevOpsConnection GetSafeguardAppliance(ISafeguardConnection sgConnection, string address = null)
         {
@@ -1690,16 +1713,25 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, IPluginsLogic pluginsLogic)
+        public void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, IPluginsLogic pluginsLogic, bool notLicensed)
         {
             var addons = _configDb.GetAllAddons();
             foreach (var addon in addons)
             {
                 var plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
-                if (plugin != null && plugin.IsSystemOwned != addon.Manifest.IsPluginSystemOwned)
+                if (plugin != null)
                 {
-                    plugin.IsSystemOwned = addon.Manifest.IsPluginSystemOwned;
-                    _configDb.SavePluginConfiguration(plugin);
+                    if (plugin.IsSystemOwned != addon.Manifest.IsPluginSystemOwned)
+                    {
+                        plugin.IsSystemOwned = addon.Manifest.IsPluginSystemOwned;
+                        _configDb.SavePluginConfiguration(plugin);
+                    }
+
+                    if (plugin.IsDisabled != notLicensed)
+                    {
+                        plugin.IsDisabled = notLicensed;
+                        _configDb.SavePluginConfiguration(plugin);
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(addon.VaultAccountName) 
