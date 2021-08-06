@@ -64,7 +64,8 @@
 
     <mat-card *ngIf="!plugin.LoadingPluginAccounts">
       <h2 class="link-button">Managed Accounts</h2>
-      <div class="sub-title">They will have their passwords pushed to the vault.</div>
+      <div class="sub-title" *ngIf="!plugin.IsDisabled">They will have their passwords pushed to the vault.</div>
+      <div class="sub-title" *ngIf="plugin.IsDisabled">Passwords are not pushed to the vault while disabled.</div>
       <div>
         <table mat-table [dataSource]="plugin.Accounts">
           <ng-container matColumnDef="asset">

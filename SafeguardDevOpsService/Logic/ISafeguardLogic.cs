@@ -20,6 +20,7 @@ namespace OneIdentity.DevOps.Logic
         void DeleteSafeguardData();
 
         bool IsLoggedIn();
+        bool ValidateLicense();
         bool ValidateLogin(string token, bool tokenOnly = false);
         bool PauseBackgroundMaintenance { get; }
         bool? ApplianceSupportsDevOps { get; }
@@ -47,7 +48,7 @@ namespace OneIdentity.DevOps.Logic
         void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void CheckAndSyncSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void CheckAndPushAddOnCredentials(ISafeguardConnection sgConnection);
-        void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, IPluginsLogic pluginsLogic);
+        void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, IPluginsLogic pluginsLogic, bool notLicensed);
         void CheckAndSyncVaultCredentials(ISafeguardConnection sgConnection);
 
         Asset GetAsset(ISafeguardConnection sgConnection);

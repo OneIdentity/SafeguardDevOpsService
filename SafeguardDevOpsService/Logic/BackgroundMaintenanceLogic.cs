@@ -70,9 +70,11 @@ namespace OneIdentity.DevOps.Logic
 
                         if (sgConnection != null)
                         {
+                            var isLicensed = _safeguardLogic.ValidateLicense();
+
                             _safeguardLogic.CheckAndSyncSecretsBrokerInstance(sgConnection);
                             _safeguardLogic.CheckAndPushAddOnCredentials(sgConnection);
-                            _safeguardLogic.CheckAndConfigureAddonPlugins(sgConnection, _pluginsLogic);
+                            _safeguardLogic.CheckAndConfigureAddonPlugins(sgConnection, _pluginsLogic, !isLicensed);
                             _safeguardLogic.CheckAndSyncVaultCredentials(sgConnection);
                         }
                     }
