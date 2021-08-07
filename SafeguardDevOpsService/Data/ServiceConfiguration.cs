@@ -24,10 +24,6 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public bool IsAuthenticated => _accessToken != null;
         /// <summary>
-        /// Service is licensed
-        /// </summary>
-        public bool IsLicensed { get; set; }
-        /// <summary>
         /// Safeguard appliance information
         /// </summary>
         public SafeguardDevOpsConnection Appliance { get; set; }

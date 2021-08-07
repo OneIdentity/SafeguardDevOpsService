@@ -123,13 +123,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("Configuration")]
-        public ActionResult<ServiceConfiguration> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<DevOpsSecretsBroker> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
         {
-            var serviceConfiguration = safeguard.GetDevOpsConfiguration(null);
+            var devOpsSecretsBroker = safeguard.GetDevOpsConfiguration(null);
 
-            serviceConfiguration.IsLicensed = safeguard.ValidateLicense();
-
-            return Ok(serviceConfiguration);
+            return Ok(devOpsSecretsBroker);
         }
 
         /// <summary>
@@ -158,16 +156,16 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("Configuration")]
-        public ActionResult<ServiceConfiguration> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, CertificateInfo certFile = null)
+        public ActionResult<DevOpsSecretsBroker> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, CertificateInfo certFile = null)
         {
             if (certFile?.Base64CertificateData != null)
             {
                 safeguard.InstallCertificate(certFile, CertificateType.A2AClient);
             }
 
-            var devOpsConfiguration = safeguard.ConfigureDevOpsService();
+            var devOpsSecretsBroker = safeguard.ConfigureDevOpsService();
 
-            return Ok(devOpsConfiguration);
+            return Ok(devOpsSecretsBroker);
         }
 
         /// <summary>
@@ -194,13 +192,13 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete("Configuration")]
-        public ActionResult DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard, [FromServices] IAddonLogic addonLogic,
+        public ActionResult DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard,
             [FromQuery] string confirm, [FromQuery] bool secretsBrokerOnly = true, [FromQuery] bool restart = true)
         {
             if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
 
-            safeguard.DeleteDevOpsConfiguration(null, addonLogic, secretsBrokerOnly);
+            safeguard.DeleteDevOpsConfiguration(null, secretsBrokerOnly);
 
             if (restart)
                 safeguard.RestartService();
@@ -227,7 +225,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("Logon")]
-        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardDevOpsLogon> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
         {
             var safeguardLogon = safeguard.GetSafeguardLogon();
             if (safeguardLogon == null)
@@ -251,7 +249,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Logoff")]
-        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
+        public ActionResult GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
         {
             var sessionKey = HttpContext.Items["session-key"].ToString();
             AuthorizedCache.Instance.Remove(sessionKey);
@@ -302,7 +300,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("ClientCertificate")]
-        public ActionResult InstallClientCertificate([FromServices] ISafeguardLogic safeguard, CertificateInfo certInfo)
+        public ActionResult<CertificateInfo> InstallClientCertificate([FromServices] ISafeguardLogic safeguard, CertificateInfo certInfo)
         {
             safeguard.InstallCertificate(certInfo, CertificateType.A2AClient);
             var certificate = safeguard.GetCertificateInfo(CertificateType.A2AClient);
@@ -378,7 +376,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("WebServerCertificate")]
-        public ActionResult InstallWebServerCertificate([FromServices] ISafeguardLogic safeguard, [FromBody] CertificateInfo certInfo, [FromQuery] bool restart = true)
+        public ActionResult<CertificateInfo> InstallWebServerCertificate([FromServices] ISafeguardLogic safeguard, [FromBody] CertificateInfo certInfo, [FromQuery] bool restart = true)
         {
             safeguard.InstallCertificate(certInfo, CertificateType.WebSsl);
             var certificate = safeguard.GetCertificateInfo(CertificateType.WebSsl);
@@ -563,10 +561,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPut("A2ARegistration/{id}")]
-        public ActionResult<A2ARegistration> SetA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromServices] IMonitoringLogic monitoringLogic, 
-            [FromServices] IPluginsLogic pluginsLogic, [FromServices] IAddonLogic addonLogic, [FromRoute] int id, [FromQuery] string confirm)
+        public ActionResult<A2ARegistration> SetA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromRoute] int id, [FromQuery] string confirm)
         {
-            var registration = safeguard.SetA2ARegistration(null, monitoringLogic, pluginsLogic, addonLogic, id);
+            var registration = safeguard.SetA2ARegistration(null, id);
             if (registration == null)
                 return NotFound();
 
@@ -865,7 +862,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get a list of the known add-ons.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
         /// capability that is compatible with the HashiCorp API.
         ///
         /// </remarks>
@@ -885,7 +882,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get an add-on by name.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
         /// capability that is compatible with the HashiCorp API.
         ///
         /// </remarks>
@@ -907,7 +904,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Get a list of the known add-ons.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
         /// capability that is compatible with the HashiCorp API.
         ///
         /// </remarks>
@@ -918,18 +915,47 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Addons/{addonName}/Status")]
-        public ActionResult<AddonStatus> GetAddonStatusByName([FromServices] ISafeguardLogic safeguard, [FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        public ActionResult<AddonStatus> GetAddonStatusByName([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
         {
-            var addonStatus = addonLogic.GetAddonStatus(addonName, safeguard.ValidateLicense());
+            if (string.IsNullOrEmpty(addonName))
+                return BadRequest("Invalid add-on name.");
+
+            var addonStatus = addonLogic.GetAddonStatus(addonName);
 
             return Ok(addonStatus);
+        }
+
+        /// <summary>
+        /// Configure a specific add-on.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// </remarks>
+        /// <response code="200">Success.</response>
+        /// <response code="400">Bad request.</response>
+        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpPost("Addons/{addonName}/Configuration")]
+        public ActionResult ConfigureAddOn([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        {
+            if (string.IsNullOrEmpty(addonName))
+                return BadRequest("Invalid add-on name.");
+
+            var configured = addonLogic.ConfigureDevOpsAddOn(addonName);
+            if (!configured)
+                return BadRequest("Failed to configure the add-on.");
+
+            return Ok();
         }
 
         /// <summary>
         /// Upload and deploy a Secrets Broker add-on as a base64 string.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
         /// capability that is compatible with the HashiCorp API.  &lt;br /&gt;
         ///
         /// (See POST /service/devops/{version}/Plugins/File to upload a plugin file using multipart-form-data)
@@ -947,11 +973,6 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
             Addon addonInfo, [FromQuery] bool restart = false, [FromQuery] bool force = false)
         {
-            if (!safeguard.ValidateLicense())
-            {
-                return BadRequest("Invalid licenses");
-            }
-
             addonLogic.InstallAddon(addonInfo.Base64AddonData, force);
 
             if (restart)
@@ -966,7 +987,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Upload and deploy a Secrets Broker add-on via multipart-form-data.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
         /// capability that is compatible with the HashiCorp API.
         ///
         /// The add-on must be a zip compressed file.
@@ -984,11 +1005,6 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
             IFormFile formFile, [FromQuery] bool restart = false, [FromQuery] bool force = false)
         {
-            if (!safeguard.ValidateLicense())
-            {
-                return BadRequest("Invalid licenses");
-            }
-
             addonLogic.InstallAddon(formFile, force);
 
             if (restart)
@@ -1003,7 +1019,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Remove a Secrets Broker add-on.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
         /// capability that is compatible with the HashiCorp API.
         ///
         /// This endpoint removes the currently deployed Secrets Broker add-on.

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace OneIdentity.DevOps.Data.Spp
 {
@@ -21,6 +22,11 @@ namespace OneIdentity.DevOps.Data.Spp
         /// Description of the partition
         /// </summary>
         public string Description { get; set; }
+
+        /// <summary>
+        /// List of Identities that own this partition
+        /// </summary>
+        public IEnumerable<Identity> ManagedBy { get; set; }
 
         /// <summary>
         /// Date this entity was created (Read-only)

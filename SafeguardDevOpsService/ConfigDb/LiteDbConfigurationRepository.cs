@@ -697,6 +697,20 @@ namespace OneIdentity.DevOps.ConfigDb
                         ? null
                         : new A2AUser() 
                             {Id = A2aUserId ?? 0, DisplayName = WellKnownData.DevOpsUserName(SvcId)},
+                    AssetPartition = AssetPartitionId == null || AssetPartitionId == 0 
+                        ? null 
+                        : new AssetPartition()
+                        {
+                            Id = AssetPartitionId.Value,
+                            Name = WellKnownData.DevOpsAssetPartitionName(SvcId)
+                        },
+                    Asset = AssetId == null || AssetId == 0 
+                        ? null 
+                        : new Asset()
+                        {
+                            Id = AssetId.Value,
+                            Name = WellKnownData.DevOpsAssetName(SvcId)
+                        },
                     Plugins = GetAllPlugins().Select(x => x.ToDevOpsSecretsBrokerPlugin(this))
                 };
 

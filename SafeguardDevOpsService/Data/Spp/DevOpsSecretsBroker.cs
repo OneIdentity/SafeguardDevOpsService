@@ -28,6 +28,11 @@ namespace OneIdentity.DevOps.Data.Spp
         public string DevOpsInstanceId { get; set; }
 
         /// <summary>
+        /// Safeguard appliance information
+        /// </summary>
+        public SafeguardDevOpsConnection Appliance { get; set; }
+
+        /// <summary>
         /// The A2A registration.
         /// </summary>
         public A2ARegistration A2ARegistration { get; set; }
@@ -69,6 +74,11 @@ namespace OneIdentity.DevOps.Data.Spp
             get => _plugins;
             set => _plugins = value;
         }
+
+        /// <summary>
+        /// Service is licensed
+        /// </summary>
+        public bool IsLicensed { get; set; }
 
         /// <summary>
         /// Date this entity was created
