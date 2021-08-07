@@ -14,7 +14,7 @@ namespace OneIdentity.DevOps.Logic
         void RemoveAddon(string name);
         IEnumerable<Addon> GetAddons();
         Addon GetAddon(string addonName);
-        AddonStatus GetAddonStatus(string addonName, bool isLicensed);
+        AddonStatus GetAddonStatus(string addonName);
         bool ConfigureDevOpsAddOn(string addonName);
     }
 }

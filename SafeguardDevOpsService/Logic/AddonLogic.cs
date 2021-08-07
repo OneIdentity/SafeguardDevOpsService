@@ -38,6 +38,11 @@ namespace OneIdentity.DevOps.Logic
 
         public void InstallAddon(string base64Addon, bool force)
         {
+            if (!_safeguardLogic.ValidateLicense())
+            {
+                throw LogAndException("Invalid licenses.");
+            }
+
             if (base64Addon == null)
                 throw LogAndException("Add-on cannot be null");
 
@@ -59,6 +64,11 @@ namespace OneIdentity.DevOps.Logic
 
         public void InstallAddon(IFormFile formFile, bool force)
         {
+            if (!_safeguardLogic.ValidateLicense())
+            {
+                throw LogAndException("Invalid licenses.");
+            }
+
             if (formFile.Length <= 0)
                 throw LogAndException("Add-on cannot be null or empty");
 
@@ -120,8 +130,9 @@ namespace OneIdentity.DevOps.Logic
             return addon;
         }
 
-        public AddonStatus GetAddonStatus(string addonName, bool isLicensed)
+        public AddonStatus GetAddonStatus(string addonName)
         {
+            var isLicensed = _safeguardLogic.ValidateLicense();
             var addon = _configDb.GetAddonByName(addonName);
             if (addon != null)
             {

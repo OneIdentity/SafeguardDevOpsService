@@ -125,11 +125,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpGet("Configuration")]
         public ActionResult<DevOpsSecretsBroker> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
         {
-            var serviceConfiguration = safeguard.GetDevOpsConfiguration(null);
+            var devOpsSecretsBroker = safeguard.GetDevOpsConfiguration(null);
 
-            serviceConfiguration.IsLicensed = safeguard.ValidateLicense();
-
-            return Ok(serviceConfiguration);
+            return Ok(devOpsSecretsBroker);
         }
 
         /// <summary>
@@ -922,7 +920,7 @@ namespace OneIdentity.DevOps.Controllers.V1
             if (string.IsNullOrEmpty(addonName))
                 return BadRequest("Invalid add-on name.");
 
-            var addonStatus = addonLogic.GetAddonStatus(addonName, safeguard.ValidateLicense());
+            var addonStatus = addonLogic.GetAddonStatus(addonName);
 
             return Ok(addonStatus);
         }
@@ -975,11 +973,6 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
             Addon addonInfo, [FromQuery] bool restart = false, [FromQuery] bool force = false)
         {
-            if (!safeguard.ValidateLicense())
-            {
-                return BadRequest("Invalid licenses");
-            }
-
             addonLogic.InstallAddon(addonInfo.Base64AddonData, force);
 
             if (restart)
@@ -1012,11 +1005,6 @@ namespace OneIdentity.DevOps.Controllers.V1
         public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
             IFormFile formFile, [FromQuery] bool restart = false, [FromQuery] bool force = false)
         {
-            if (!safeguard.ValidateLicense())
-            {
-                return BadRequest("Invalid licenses");
-            }
-
             addonLogic.InstallAddon(formFile, force);
 
             if (restart)

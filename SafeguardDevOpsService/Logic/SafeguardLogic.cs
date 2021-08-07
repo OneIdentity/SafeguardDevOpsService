@@ -112,13 +112,15 @@ namespace OneIdentity.DevOps.Logic
 
         public bool ValidateLicense()
         {
-            var sg = Connect();
+            var sg = _configDb.IgnoreSsl ?? true
+                ? Safeguard.Connect(_configDb.SafeguardAddress, _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion, true)
+                : Safeguard.Connect(_configDb.SafeguardAddress, CertificateValidationCallback, _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion);
 
             try
             {
                 var licensesJson = DevOpsInvokeMethod(_configDb.SvcId, sg, Service.Core, Method.Get,
                     "Licenses/Summary");
-                var _licenses = JsonHelper.DeserializeObject<IEnumerable<LicenseSummary>>(licensesJson);
+                var _licenses = JsonHelper.DeserializeObject<IEnumerable<LicenseSummary>>(licensesJson).ToArray();
 
                 return
                     _licenses.Any(x => x.Module == LicensableModule.PasswordManagement && x.IsValid) &&
@@ -2080,8 +2082,10 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, bool notLicensed)
+        public void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection)
         {
+            var notLicensed = !ValidateLicense();
+
             var addons = _configDb.GetAllAddons();
             foreach (var addon in addons)
             {
@@ -2846,6 +2850,8 @@ namespace OneIdentity.DevOps.Logic
             }
 
             var devOpsSecretsBroker = _configDb.DevOpsSecretsBroker;
+            devOpsSecretsBroker.IsLicensed = ValidateLicense();
+            devOpsSecretsBroker.Appliance = _serviceConfiguration.Appliance;
             if (expand)
             {
                 // Don't worry about getting the asset or the assetPartition since those are only used when

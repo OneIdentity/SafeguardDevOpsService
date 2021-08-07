@@ -52,7 +52,7 @@ namespace OneIdentity.DevOps.Logic
         void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void CheckAndSyncSecretsBrokerInstance(ISafeguardConnection sgConnection);
         void CheckAndPushAddOnCredentials(ISafeguardConnection sgConnection);
-        void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection, bool notLicensed);
+        void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection);
         void CheckAndSyncVaultCredentials(ISafeguardConnection sgConnection);
 
         DevOpsSecretsBroker GetDevOpsConfiguration(ISafeguardConnection sgConnection);
