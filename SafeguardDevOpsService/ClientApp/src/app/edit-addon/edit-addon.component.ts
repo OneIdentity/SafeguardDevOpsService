@@ -35,6 +35,13 @@ export class EditAddonComponent implements OnInit {
     this.editAddonService.closeProperties();
   }
 
+  configure() {
+    this.error = null;
+    this.serviceClient.postAddonConfiguration(this.addon.Name)
+      .subscribe(() => this.close(),
+        error => this.error = error.error);
+  }
+
   delete(): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
@@ -71,6 +78,6 @@ export class EditAddonComponent implements OnInit {
         setTimeout(() => {
           this.window.location.reload();
         }, 3000);
-    });
+      });
   }
 }

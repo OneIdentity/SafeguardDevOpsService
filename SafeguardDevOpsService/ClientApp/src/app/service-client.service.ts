@@ -193,6 +193,11 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('deleteAddonConfiguration')));
   }
 
+  postAddonConfiguration(name: string): Observable<any> {
+    return this.http.post(this.BASE + 'Safeguard/Addons/' + encodeURIComponent(name) + '/Configuration', '', this.authHeader())
+      .pipe(catchError(this.error<any>('postAddonConfiguration')));
+  }
+
   getPlugins(): Observable<any> {
     return this.http.get(this.BASE + 'Plugins', this.authHeader())
       .pipe(catchError(this.error<any>('getPlugins')));
