@@ -36,6 +36,8 @@
         <div class="info-label">Vault's Asset in Safeguard</div>
         <div>{{addon?.VaultAssetName}}</div>
       </div>
+      <button mat-button *ngIf="!addon?.Status.IsReady" (click)="configure()" color="primary" class="link-button"
+        disableRipple>Configure Add-on</button>
     </mat-card>
 
     <div *ngIf="error" class="error">
