@@ -26,6 +26,8 @@ export class EditAddonComponent implements OnInit {
   error: any;
   isRestarting = false;
   isDeleting = false;
+  isConfiguring = false;
+  retryReconfigure = true;
 
   ngOnInit(): void {
     this.addon = this.editAddonService.addon;
@@ -37,9 +39,31 @@ export class EditAddonComponent implements OnInit {
 
   configure() {
     this.error = null;
+    this.isConfiguring = true;
     this.serviceClient.postAddonConfiguration(this.addon.Name)
-      .subscribe(() => this.close(),
-        error => this.error = error.error);
+      .subscribe(() => {
+        setTimeout(() => {
+          this.window.location.reload();
+        }, 2000);
+      },
+        error => {
+          if (this.retryReconfigure) {
+            this.serviceClient.postConfiguration()
+              .subscribe(() => {
+                setTimeout(() => {
+                  this.window.location.reload();
+                }, 2000);
+              },
+                error => {
+                  this.retryReconfigure = false;
+                  this.isConfiguring = false;
+                  this.error = error.error;
+                })
+          } else {
+            this.isConfiguring = false;
+            this.error = error.error;
+          }
+        });
   }
 
   delete(): void {
