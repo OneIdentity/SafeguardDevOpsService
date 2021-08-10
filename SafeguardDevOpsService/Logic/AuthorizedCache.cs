@@ -52,9 +52,9 @@ namespace OneIdentity.DevOps.Logic
         {
             return Cache.Values.FirstOrDefault(x =>
                 x.Appliance.ApplianceAddress.Equals(managementConnection.Appliance.ApplianceAddress) 
-                && x.A2AUser != null  
-                && x.A2AUser.IdentityProviderName.Equals(managementConnection.A2AUser?.IdentityProviderName) 
-                && x.A2AUser.UserName.Equals(managementConnection.A2AUser?.UserName));
+                && x.User != null  
+                && x.User.IdentityProviderName.Equals(managementConnection.User?.IdentityProviderName) 
+                && x.User.UserName.Equals(managementConnection.User?.UserName));
         }
 
         public void Remove(string sessionKey)
@@ -67,5 +67,14 @@ namespace OneIdentity.DevOps.Logic
                 }
             }
         }
+
+        public void Clear()
+        {
+            lock (InstanceLock)
+            {
+                Cache.Clear();
+            }
+        }
+
     }
 }
