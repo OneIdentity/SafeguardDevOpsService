@@ -70,8 +70,11 @@ export class MainComponent implements OnInit, AfterViewInit {
   hasAvailableRegistrations: boolean = false;
   showAvailableRegistrations: boolean = false;
   needsClientCertificate: boolean = true;
-  isLicensed: boolean;
-  isAssetAdmin: boolean;
+  needsWebCertificate: boolean = true;
+  needsTrustedCertificates: boolean = true;
+  needsSSLEnabled:boolean = true;
+  isLicensed: boolean = false;
+  isAssetAdmin: boolean = false;
 
   certificateUploading = {
     Client: false,
@@ -326,6 +329,9 @@ export class MainComponent implements OnInit, AfterViewInit {
       tap((logon: any) => {
         this.hasAvailableRegistrations = logon.HasAvailableA2ARegistrations;
         this.needsClientCertificate = logon.NeedsClientCertificate;
+        this.needsWebCertificate = logon.NeedsWebCertificate;
+        this.needsTrustedCertificates = logon.NeedsTrustedCertificates;
+        this.needsSSLEnabled = logon.NeedsSSLEnabled;
       }),
       switchMap(() => this.checkA2ARegistration()),
       tap((nullRegistration: any) => {
