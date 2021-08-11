@@ -35,11 +35,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsAddonCommon", "DevOps
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{597FFDB7-E23A-4250-B5FF-1572F597E730}"
 	ProjectSection(SolutionItems) = preProject
+		build-docker.sh = build-docker.sh
 		docker\docker-include.psm1 = docker\docker-include.psm1
 		docker\docker-include.sh = docker\docker-include.sh
 		docker\Dockerfile_alpine3.12 = docker\Dockerfile_alpine3.12
 		docker\Dockerfile_ubuntu20.04 = docker\Dockerfile_ubuntu20.04
+		invoke-docker-build.ps1 = invoke-docker-build.ps1
+		invoke-docker-run.ps1 = invoke-docker-run.ps1
 		docker\run-devops.sh = docker\run-devops.sh
+		run-docker.sh = run-docker.sh
 	EndProjectSection
 EndProject
 Global

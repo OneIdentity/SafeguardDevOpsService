@@ -24,11 +24,28 @@ $local:A2aUsers | ForEach-Object {
     Remove-SafeguardUser $_
 }
 
+<#
 $local:DevOps = (Invoke-SafeguardMethod Core GET DevOps/SecretsBrokers)
 Write-Host "Cleaning up secrets broker entries:"
 Write-Host ($local:DevOps | Format-Table Id,AssetId,AssetName | Out-String)
 $local:DevOps | ForEach-Object {
     Invoke-SafeguardMethod Core DELETE "DevOps/SecretsBrokers/$($_.Id)"
+}
+#>
+
+$local:Filter = "Name contains 'SafeguardDevOpsService'"
+$local:Assets = (Find-SafeguardAsset -QueryFilter  $local:Filter -Fields Id,Name,NetworkAddress)
+Write-Host "Cleaning up Secrets Broker Assets:"
+Write-host ($local:Assets | Format-Table | Out-String)
+$local:Assets | ForEach-Object {
+    Remove-SafeguardAsset $_
+}
+
+$local:Partitions = ((Get-SafeguardAssetPartition) | Where-Object { $_.Name -match "SafeguardDevOpsService*" })
+Write-Host "Cleaning up Secrets Broker Asset Partitions:"
+Write-host ($local:Partitions | Format-Table Id,Name | Out-String)
+$local:Partitions | ForEach-Object {
+    Remove-SafeguardAssetPartition $_
 }
 
 $local:A2as = ((Get-SafeguardA2a) | Where-Object { $_.AppName -match "SafeguardDevOpsService*" })

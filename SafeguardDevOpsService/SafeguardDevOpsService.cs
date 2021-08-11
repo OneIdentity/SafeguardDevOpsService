@@ -54,7 +54,7 @@ namespace OneIdentity.DevOps
                     optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
-            var httpsPort = configuration["HttpsPort"] ?? "443";
+            var httpsPort = configuration["HttpsPort"] ?? WellKnownData.DefaultServicePort;
             var logLevel = configuration["LogLevel"];
 
             if (logLevel != null)
@@ -98,7 +98,10 @@ namespace OneIdentity.DevOps
                 .UseKestrel(options =>
                 {
                     if (int.TryParse(httpsPort, out var port) == false)
-                        port = 443;
+                    {
+                        Log.Logger.Warning($"Failed to parse HttpsPort from appsettings.json '{httpsPort}'");
+                        port = int.Parse(WellKnownData.DefaultServicePort);
+                    }
                     Log.Logger.Information($"Binding web server to port: {port}.");
                     options.ListenAnyIP(port, listenOptions =>
                         {
