@@ -53,8 +53,17 @@
             </div>
           </div>
         </div>
+        <p></p>
+        <div *ngIf="needsSSLEnabled">
+          <b>Monitoring is unavailable.</b>
+          <p></p>
+          <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"
+            color='primary' disableRipple>
+            <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon> Verify TLS Certificate
+          </button>
+        </div>
         <button mat-flat-button class="monitoring-button start-monitoring"
-          *ngIf="!isMonitoring && isMonitoringAvailable" (click)="updateMonitoring(true)"
+          *ngIf="!isMonitoring && isMonitoringAvailable && !needsSSLEnabled" (click)="updateMonitoring(true)"
           [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>Start Monitoring</button>
         <button mat-flat-button class="monitoring-button stop-monitoring" *ngIf="isMonitoring && isMonitoringAvailable"
           (click)="updateMonitoring(false)" [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>Stop
@@ -122,7 +131,7 @@
             <app-progress-spinner color="accent" diameter="30" message="Uploading"
               [visible]="certificateUploading['WebServer']"></app-progress-spinner>
 
-            <div *ngIf="!webServerCertAdded">
+            <div *ngIf="!webServerCertAdded || needsWebCertificate">
               <button mat-button class="link-button cert-link" (click)="addCertificate($event, 'Web Server')"
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>
                 <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon>
@@ -139,7 +148,7 @@
           </div>
           <div>
             <div class="info-label">Trusted Certificates</div>
-            <div *ngIf="!trustedCertificates?.length">
+            <div *ngIf="!trustedCertificates?.length || needsTrustedCertificates">
               <button mat-button class="link-button cert-link" (click)='viewTrustedCertificates($event)'
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>Add
                 Certificate</button>
