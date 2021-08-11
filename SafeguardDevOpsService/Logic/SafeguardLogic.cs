@@ -151,7 +151,7 @@ namespace OneIdentity.DevOps.Logic
                     _applianceAvailabilityLastCheck = DateTime.Now;
                 }
 
-                var servConfig = AuthorizedCache.Instance.FindByToken(_serviceConfiguration.AccessToken.ToInsecureString());
+                var servConfig = _serviceConfiguration == null ? null : AuthorizedCache.Instance.FindByToken(_serviceConfiguration.AccessToken.ToInsecureString());
                 return new SafeguardDevOpsConnection()
                 {
                     ApplianceAddress = address ?? _configDb.SafeguardAddress,
