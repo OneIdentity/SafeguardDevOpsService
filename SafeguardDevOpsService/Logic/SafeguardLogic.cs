@@ -888,7 +888,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        private Asset GetAsset(ISafeguardConnection sgConnection)
+        public Asset GetAsset(ISafeguardConnection sgConnection)
         {
             var sg = sgConnection ?? Connect();
 
@@ -963,9 +963,10 @@ namespace OneIdentity.DevOps.Logic
 
             return null;
         }
+
         private Asset GetAsset(ISafeguardConnection sg, int? id)
         {
-            if (id != null)
+            if ((id ?? 0) > 0)
             {
                 try
                 {
@@ -2251,7 +2252,8 @@ namespace OneIdentity.DevOps.Logic
                     }
                 }
 
-                if (!string.IsNullOrEmpty(addon.VaultAccountName)
+                if ((ApplianceSupportsDevOps ?? false)
+                    && !string.IsNullOrEmpty(addon.VaultAccountName)
                     && addon.VaultAccountId.HasValue
                     && addon.VaultAccountId > 0
                     && !string.IsNullOrEmpty(addon.Manifest?.PluginName))
@@ -2345,28 +2347,31 @@ namespace OneIdentity.DevOps.Logic
 
         public IEnumerable<AssetAccount> GetAssetAccounts(ISafeguardConnection sgConnection, int assetId)
         {
-            var sg = sgConnection ?? Connect();
-
-            try
+            if (assetId > 0)
             {
-                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"Assets/{assetId}/Accounts");
-                if (result.StatusCode == HttpStatusCode.OK)
+                var sg = sgConnection ?? Connect();
+
+                try
                 {
-                    var accounts = JsonHelper.DeserializeObject<IEnumerable<AssetAccount>>(result.Body);
-                    if (accounts != null)
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"Assets/{assetId}/Accounts");
+                    if (result.StatusCode == HttpStatusCode.OK)
                     {
-                        return accounts;
+                        var accounts = JsonHelper.DeserializeObject<IEnumerable<AssetAccount>>(result.Body);
+                        if (accounts != null)
+                        {
+                            return accounts;
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                throw LogAndException($"Failed to get the account for id '{assetId}': {ex.Message}", ex);
-            }
-            finally
-            {
-                if (sgConnection == null)
-                    sg.Dispose();
+                catch (Exception ex)
+                {
+                    throw LogAndException($"Failed to get the account for id '{assetId}': {ex.Message}", ex);
+                }
+                finally
+                {
+                    if (sgConnection == null)
+                        sg.Dispose();
+                }
             }
 
             return null;
@@ -2476,7 +2481,10 @@ namespace OneIdentity.DevOps.Logic
             {
                 try
                 {
-                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"Assets/{assetId}");
+                    var p = new Dictionary<string, string>
+                        {{"forceDelete", "true"}};
+
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"Assets/{assetId}", null, p);
                     if (result.StatusCode == HttpStatusCode.NoContent)
                     {
                         _configDb.AssetId = null;
@@ -2486,7 +2494,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    throw LogAndException($"Failed to remove the asset and accounts from safeguard: {ex.Message}", ex);
+                    _logger.Error($"Failed to remove the asset and accounts from safeguard: {ex.Message}", ex);
                 }
             }
 
@@ -2541,7 +2549,10 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"AssetAccounts/{account.Id}");
+                var p = new Dictionary<string, string>
+                    {{"forceDelete", "true"}};
+
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"AssetAccounts/{account.Id}", null, p);
                 if (result.StatusCode == HttpStatusCode.NoContent)
                 {
                     _logger.Information($"Successfully deleted the asset account {account.Name} from safeguard.");
@@ -2550,7 +2561,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                throw LogAndException($"Failed to delete the asset account {account.Name} from safeguard: {ex.Message}", ex);
+                _logger.Error($"Failed to delete the asset account {account.Name} from safeguard: {ex.Message}", ex);
             }
 
             return false;
@@ -3072,9 +3083,13 @@ namespace OneIdentity.DevOps.Logic
                     {
                         try
                         {
-                            if (devOpsSecretsBroker.Asset?.Id > 0)
-                                devOpsSecretsBroker.Asset =
-                                    GetAsset(sg, devOpsSecretsBroker.Asset?.Id);
+                            var assetId = devOpsSecretsBroker.Asset?.Id ?? 0;
+                            if (assetId > 0)
+                            {
+                                devOpsSecretsBroker.Asset = GetAsset(sg, assetId);
+                                var accounts = GetAssetAccounts(sg, assetId);
+                                devOpsSecretsBroker.Accounts = accounts.Select(x => x.ToDevOpsSecretsBrokerAccount());
+                            }
                         }catch { devOpsSecretsBroker.Asset = null; }
                     }),
                     Task.Run(() =>
@@ -3086,6 +3101,15 @@ namespace OneIdentity.DevOps.Logic
                                     GetAssetPartition(sg, devOpsSecretsBroker.AssetPartition?.Id);
                         }catch { devOpsSecretsBroker.Asset = null; }
                     }),
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            if (devOpsSecretsBroker.AssetPartition?.Id > 0)
+                                devOpsSecretsBroker.AssetPartition =
+                                    GetAssetPartition(sg, devOpsSecretsBroker.AssetPartition?.Id);
+                        }catch { devOpsSecretsBroker.Asset = null; }
+                    })
                 };
 
                 Task.WaitAll(tasks);

@@ -210,6 +210,25 @@ namespace OneIdentity.DevOps.Logic
                     if (tasks.Any())
                         Task.WaitAll(tasks.ToArray());
                 }
+
+                var asset = _safeguardLogic.GetAsset(sg);
+                if (asset != null)
+                {
+                    addon.VaultAssetId = asset.Id;
+                    addon.VaultAssetName = asset.Name;
+
+                    if (addon.VaultAccountName != null)
+                    {
+                        var account = _safeguardLogic.GetAssetAccounts(sg, asset.Id)
+                            .FirstOrDefault(x => x.Name.StartsWith(addon.VaultAccountName, StringComparison.OrdinalIgnoreCase));
+                        addon.VaultAccountId = account?.Id ?? 0;
+                        addon.VaultAccountName = account?.Name ?? addon.VaultAccountName;
+                    }
+
+                    _configDb.SaveAddon(addon);
+                }
+
+
             }
             finally
             {
