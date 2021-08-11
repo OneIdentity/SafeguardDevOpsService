@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
+using OneIdentity.SafeguardDotNet;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 #pragma warning disable 1573
 
@@ -76,40 +78,6 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Delete the Safeguard appliance connection information being used by Safeguard Secrets Broker for DevOps.
-        /// </summary>
-        /// <remarks>
-        /// Safeguard Secrets Broker for DevOps must be associated with a Safeguard for Privileged Passwords appliance before it can be used.
-        /// This appliance will be trusted for authentication.  It is also the appliance that will notify Safeguard Secrets Broker for DevOps
-        /// of secret changes so that they can be pushed to the configured plugins.
-        ///
-        /// This endpoint will remove the currently configured association.  It does not clean up any of Safeguard Secrets Broker for DevOps
-        /// related items added to the Safeguard for Privileged Passwords configuration.  Those must be removed manually.
-        ///
-        /// It will also remove Safeguard Secrets Broker for DevOps configuration database and restart the DevOps service.
-        ///
-        /// To help prevent unintended Safeguard appliance connection removal, the confirm query param is required and must be set to "yes".
-        ///
-        /// (see DELETE /service/devops/{version}/Safeguard/Configuration)
-        /// </remarks>
-        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the Safeguard appliance connection.</param>
-        /// <response code="204">Success.</response>
-        /// <response code="400">Bad Request</response>
-        [SafeguardSessionKeyAuthorization]
-        [SafeguardSessionHandler]
-        [UnhandledExceptionError]
-        [HttpDelete]
-        public ActionResult DeleteSafeguard([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
-        {
-            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
-                return BadRequest();
-
-            safeguard.DeleteSafeguardData();
-
-            return NoContent();
-        }
-
-        /// <summary>
         /// Get the Safeguard client configuration information being used by Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
@@ -152,7 +120,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// replaces the need to install the certificate separately.</param>
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
-        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionKeyAuthorization(WellKnownData.SafeguardAssetAdmin)]
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("Configuration")]
@@ -935,7 +903,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </remarks>
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
-        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionKeyAuthorization(WellKnownData.SafeguardAssetAdmin)]
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("Addons/{addonName}/Configuration")]

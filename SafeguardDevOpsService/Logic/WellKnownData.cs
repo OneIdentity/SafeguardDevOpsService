@@ -53,6 +53,9 @@ namespace OneIdentity.DevOps.Logic
         public const string SwaggerUrl = "https://{0}/service/core/swagger/v{1}/swagger.json";
         public const string DevOpsSecretsBrokerEndPoints = "/v3/DevOps/SecretsBrokers";
 
+        public const string SafeguardAssetAdmin = "AssetAdmin";
+        public const string SafeguardPolicyAdminAdmin = "PolicyAdmin";
+
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(

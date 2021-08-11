@@ -151,7 +151,7 @@ namespace OneIdentity.DevOps.Logic
                     _applianceAvailabilityLastCheck = DateTime.Now;
                 }
 
-
+                var servConfig = AuthorizedCache.Instance.FindByToken(_serviceConfiguration.AccessToken.ToInsecureString());
                 return new SafeguardDevOpsConnection()
                 {
                     ApplianceAddress = address ?? _configDb.SafeguardAddress,
@@ -162,6 +162,8 @@ namespace OneIdentity.DevOps.Logic
                     ApplianceSupportsDevOps = ApplianceSupportsDevOps
                                               ?? GetSafeguardDevOpsSupport(sg, address ?? _configDb.SafeguardAddress),
                     DevOpsInstanceId = _configDb.SvcId,
+                    UserName = servConfig?.User?.UserName,
+                    AdminRoles = servConfig?.User?.AdminRoles,
                     Version = WellKnownData.DevOpsServiceVersion()
                 };
             }
@@ -232,6 +234,8 @@ namespace OneIdentity.DevOps.Logic
             safeguardConnection.ApplianceState = safeguard.ApplianceState;
             safeguardConnection.ApplianceSupportsDevOps = safeguard.ApplianceSupportsDevOps;
             safeguardConnection.DevOpsInstanceId = _configDb.SvcId;
+            safeguardConnection.UserName = safeguard.UserName;
+            safeguardConnection.AdminRoles = safeguard.AdminRoles;
             safeguardConnection.Version = safeguard.Version;
 
             return safeguardConnection;
@@ -338,7 +342,7 @@ namespace OneIdentity.DevOps.Logic
                 var meJson = sg.InvokeMethod(Service.Core, Method.Get, "Me");
                 var loggedInUser = JsonHelper.DeserializeObject<LoggedInUser>(meJson);
 
-                var valid = loggedInUser.AdminRoles.Any(x => x.Equals("ApplianceAdmin") || x.Equals("OperationsAdmin"));
+                var valid = loggedInUser.AdminRoles.Any(x => x.Equals("PolicyAdmin"));
                 if (valid)
                 {
                     _serviceConfiguration.Appliance = GetSafeguardAvailability(sg, safeguardConnection);
@@ -546,6 +550,37 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
+        private bool DeleteA2AUser(ISafeguardConnection sgConnection, int userId)
+        {
+            if (sgConnection == null)
+            {
+                _logger.Error($"Failed to delete the A2A client user. Invalid safeguard connection.");
+                return false;
+            }
+            if (userId == 0)
+            {
+                _logger.Error("Failed to delete the A2A client user. No user found.");
+                return false;
+            }
+
+            try
+            {
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"Users/{userId}");
+                if (result.StatusCode == HttpStatusCode.NoContent)
+                {
+                    _configDb.A2aUserId = null;
+                    _logger.Information("Successfully deleted the A2A client user from safeguard.");
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to delete the A2A client user from safeguard: {ex.Message}", ex);
+            }
+
+            return false;
+        }
+
         private void EnableA2AService(ISafeguardConnection sg)
         {
             try
@@ -741,6 +776,41 @@ namespace OneIdentity.DevOps.Logic
             }
 
             return null;
+        }
+
+        private bool DeleteA2ARegistration(ISafeguardConnection sgConnection, int a2aRegistrationId, A2ARegistrationType registrationType)
+        {
+            if (sgConnection == null)
+            {
+                _logger.Error($"Failed to delete the A2A {nameof(registrationType)} registration. Invalid safeguard connection.");
+                return false;
+            }
+            if (a2aRegistrationId == 0)
+            {
+                _logger.Error($"Failed to delete the A2A {nameof(registrationType)} registration. No A2A registration found.");
+                return false;
+            }
+
+            try
+            {
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"A2aRegistrations/{a2aRegistrationId}");
+                if (result.StatusCode == HttpStatusCode.NoContent)
+                {
+                    if (registrationType == A2ARegistrationType.Account)
+                        _configDb.A2aRegistrationId = null;
+                    if (registrationType == A2ARegistrationType.Vault)
+                        _configDb.A2aVaultRegistrationId = null;
+
+                    _logger.Information($"Successfully deleted the A2A {nameof(registrationType)} registration from safeguard.");
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to delete the A2A {nameof(registrationType)} registration from safeguard: {ex.Message}", ex);
+            }
+
+            return false;
         }
 
         private Asset CreateAsset(ISafeguardConnection sgConnection, AssetPartition assetPartition)
@@ -1098,6 +1168,37 @@ namespace OneIdentity.DevOps.Logic
             }
 
             return null;
+        }
+
+        private bool DeleteAssetPartition(ISafeguardConnection sgConnection, int assetPartitionId)
+        {
+            if (sgConnection == null)
+            {
+                _logger.Error("Failed to delete the asset partition. Invalid safeguard connection.");
+                return false;
+            }
+            if (assetPartitionId == 0)
+            {
+                _logger.Error("Failed to delete the asset partition. No asset partition found.");
+                return false;
+            }
+
+            try
+            {
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"AssetPartitions/{assetPartitionId}");
+                if (result.StatusCode == HttpStatusCode.NoContent)
+                {
+                    _configDb.AssetPartitionId = null;
+                    _logger.Information("Successfully deleted the asset partition from safeguard.");
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to delete the asset partition from safeguard: {ex.Message}", ex);
+            }
+
+            return false;
         }
 
         private string LocalIPAddress()
@@ -1649,7 +1750,7 @@ namespace OneIdentity.DevOps.Logic
                 $"Invalid authorization token or SPP appliance {safeguardData.ApplianceAddress} is unavailable.");
         }
 
-        public void DeleteSafeguardData()
+        public void DeleteSecretsBrokerData()
         {
             _applianceAvailabilityCache = null;
             // Since the database is about to be dropped, we can't store deleted plugins in the database.
@@ -1662,6 +1763,42 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DropDatabase();
             _configDb.SvcId = WellKnownData.ServiceIdentitifierRegenerate;
             RestartService();
+        }
+
+        private void DeleteSafeguardData(ISafeguardConnection sgConnection)
+        {
+            var tasks = new[]
+            {
+                Task.Run(() =>
+                {
+                    if ((_configDb.AssetId ?? 0) > 0)
+                         DeleteAssetAndAccounts(sgConnection, _configDb.AssetId ?? 0);
+                }),
+                Task.Run(() =>
+                {
+                    if ((_configDb.AssetPartitionId ?? 0) > 0)
+                             DeleteAssetPartition(sgConnection, _configDb.AssetPartitionId ?? 0);
+                }),
+                Task.Run(() =>
+                {
+                    if ((_configDb.A2aRegistrationId ?? 0) > 0)
+                             DeleteA2ARegistration(sgConnection, _configDb.A2aRegistrationId ?? 0, A2ARegistrationType.Account);
+                }),
+                Task.Run(() =>
+                {
+                    if ((_configDb.A2aVaultRegistrationId ?? 0) > 0)
+                             DeleteA2ARegistration(sgConnection, _configDb.A2aVaultRegistrationId ?? 0, A2ARegistrationType.Vault);
+                }),
+                Task.Run(() =>
+                {
+                    if ((_configDb.A2aUserId ?? 0) > 0)
+                             DeleteA2AUser(sgConnection, _configDb.A2aUserId ?? 0);
+                })
+            };
+            
+            if (tasks.Any())
+                Task.WaitAll(tasks.ToArray());
+
         }
 
         public void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection, bool secretsBrokerOnly)
@@ -1681,10 +1818,17 @@ namespace OneIdentity.DevOps.Logic
             }
             else
             {
-                DeleteDevOpsInstance(sg);
+                if (ApplianceSupportsDevOps ?? false)
+                {
+                    DeleteDevOpsInstance(sg);
+                }
+                else
+                {
+                    DeleteSafeguardData(sg);
+                }
             }
 
-            DeleteSafeguardData();
+            DeleteSecretsBrokerData();
             DevOpsSecretsBrokerCache = null;
             DisconnectWithAccessToken();
         }
@@ -2313,6 +2457,40 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
+        private bool DeleteAssetAndAccounts(ISafeguardConnection sgConnection, int assetId)
+        {
+            if (sgConnection == null)
+            {
+                _logger.Error("Failed to delete the asset and accounts. Invalid safeguard connection.");
+                return false;
+            }
+            if (assetId == 0)
+            {
+                _logger.Error("Failed to delete the asset and accounts. No asset found.");
+                return false;
+            }
+
+            if (DeleteAssetAccounts(sgConnection, assetId))
+            {
+                try
+                {
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"Assets/{assetId}");
+                    if (result.StatusCode == HttpStatusCode.NoContent)
+                    {
+                        _configDb.AssetId = null;
+                        _logger.Information("Successfully removed the asset and accounts from safeguard.");
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndException($"Failed to remove the asset and accounts from safeguard: {ex.Message}", ex);
+                }
+            }
+
+            return false;
+        }
+
         public bool DeleteAssetAccounts(ISafeguardConnection sgConnection, int assetId)
         {
             if (assetId == 0)
@@ -2330,10 +2508,12 @@ namespace OneIdentity.DevOps.Logic
 
                 if (tasks.Any())
                     Task.WaitAll(tasks.ToArray());
+
+                return true;
             }
             catch (Exception ex)
             {
-                throw LogAndException($"Failed to delete the asset accounts in safeguard.: {ex.Message}", ex);
+                _logger.Error($"Failed to delete the asset accounts in safeguard.: {ex.Message}", ex);
             }
             finally
             {
@@ -2348,12 +2528,12 @@ namespace OneIdentity.DevOps.Logic
         {
             if (sgConnection == null)
             {
-                _logger.Error("Failed to add the asset accounts. Invalid safeguard connection.");
+                _logger.Error($"Failed to delete the asset account {account.Name}. Invalid safeguard connection.");
                 return false;
             }
             if (account == null || account.Id == 0)
             {
-                _logger.Error("Failed to delete the asset account. Invalid account.");
+                _logger.Error($"Failed to delete the asset account {account.Name}. Invalid account.");
                 return false;
             }
 
@@ -2362,13 +2542,13 @@ namespace OneIdentity.DevOps.Logic
                 var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"AssetAccounts/{account.Id}");
                 if (result.StatusCode == HttpStatusCode.NoContent)
                 {
-                    _logger.Information($"Successfully removed asset account {account.Name} from safeguard.");
+                    _logger.Information($"Successfully deleted the asset account {account.Name} from safeguard.");
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                throw LogAndException($"Failed to add the account {account.Name} to safeguard for '{account.AssetName}': {ex.Message}", ex);
+                throw LogAndException($"Failed to delete the asset account {account.Name} from safeguard: {ex.Message}", ex);
             }
 
             return false;

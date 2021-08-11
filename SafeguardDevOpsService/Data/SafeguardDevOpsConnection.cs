@@ -30,6 +30,14 @@
         /// </summary>
         public string DevOpsInstanceId { get; set; }
         /// <summary>
+        /// Logged in user name
+        /// </summary>
+        public string UserName { get; set; }
+        /// <summary>
+        /// Logged in user roles
+        /// </summary>
+        public string[] AdminRoles { get; set; }
+        /// <summary>
         /// Safeguard DevOps version
         /// </summary>
         public string Version { get; set; }
