@@ -13,16 +13,12 @@ namespace OneIdentity.DevOps.Data
     {
         private SecureString _accessToken;
         private string _sessionKey = Guid.NewGuid().ToString();
-        private A2ARegistration _a2ARegistration;
-        private A2ARegistration _a2AVaultRegistration;
-        private A2AUser _a2AUser;
-        private Asset _asset;
-        private AssetPartition _assetPartition;
 
         /// <summary>
         /// Service is authenticated
         /// </summary>
         public bool IsAuthenticated => _accessToken != null;
+
         /// <summary>
         /// Safeguard appliance information
         /// </summary>
@@ -39,55 +35,15 @@ namespace OneIdentity.DevOps.Data
         }
 
         /// <summary>
-        /// A2A Certificate User
+        /// Logged in user
         /// </summary>
-        public A2AUser A2AUser
-        {
-            get => _a2AUser; 
-            set => _a2AUser = value;
-        }
-
-        /// <summary>
-        /// A2A registration
-        /// </summary>
-        public A2ARegistration A2ARegistration
-        {
-            get => _a2ARegistration; 
-            set => _a2ARegistration = value;
-        }
-
-        /// <summary>
-        /// A2A vault registration
-        /// </summary>
-        public A2ARegistration A2AVaultRegistration
-        {
-            get => _a2AVaultRegistration; 
-            set => _a2AVaultRegistration = value;
-        }
-
-        /// <summary>
-        /// Asset
-        /// </summary>
-        public Asset Asset
-        {
-            get => _asset; 
-            set => _asset = value;
-        }
-
-        /// <summary>
-        /// Asset partition
-        /// </summary>
-        public AssetPartition AssetPartition
-        {
-            get => _assetPartition; 
-            set => _assetPartition = value;
-        }
+        public LoggedInUser User { get; set; }
 
         /// <summary>
         /// Session key
         /// </summary>
         [JsonIgnore]
-        public string SessionKey
+        public string SessionKey 
         {
             get => _sessionKey;
         }
@@ -104,13 +60,7 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public ServiceConfiguration(LoggedInUser loggedInUser)
         {
-            _a2AUser = new A2AUser()
-            {
-                AdminRoles = loggedInUser.AdminRoles,
-                UserName = loggedInUser.UserName,
-                IdentityProviderName = loggedInUser.IdentityProviderName,
-                Id = loggedInUser.Id
-            };
+            User = loggedInUser;
         }
 
         /// <summary>
@@ -126,11 +76,7 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public void Clear()
         {
-            _a2AUser = null;
-            _a2ARegistration = null;
-            _a2AVaultRegistration = null;
-            _asset = null;
-            _assetPartition = null;
+            User = null;
         }
 
         /// <summary>

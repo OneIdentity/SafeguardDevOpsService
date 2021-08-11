@@ -54,6 +54,8 @@ namespace OneIdentity.DevOps.Logic
         public const string DevOpsSecretsBrokerEndPoints = "/v3/DevOps/SecretsBrokers";
 
         public const string DefaultServicePort = "443";
+        public const string SafeguardAssetAdmin = "AssetAdmin";
+        public const string SafeguardPolicyAdminAdmin = "PolicyAdmin";
 
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
