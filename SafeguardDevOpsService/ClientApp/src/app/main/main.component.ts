@@ -39,6 +39,8 @@ export class MainComponent implements OnInit, AfterViewInit {
   }
   @ViewChildren(ViewMonitorEventsComponent) viewMonitorEventsRefs: QueryList<ViewMonitorEventsComponent>;
 
+  LoggedInUserName: string;
+  LoggedInUserDisplayName: string;
   UserName: string;
   UserDisplayName: string;
   IdentityProviderName: string;
@@ -69,6 +71,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   showAvailableRegistrations: boolean = false;
   needsClientCertificate: boolean = true;
   isLicensed: boolean;
+  isAssetAdmin: boolean;
 
   certificateUploading = {
     Client: false,
@@ -191,6 +194,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       tap((addons: any[]) => {
         addons.forEach(addon => {
           addon.IsConfigurationSetup = true;
+          addon.IsAssetAdmin = this.isAssetAdmin;
           this.serviceClient.getAddonStatus(addon.Name).subscribe(result => addon.Status = result);
           this.addons.push(addon);
         });
@@ -280,6 +284,9 @@ export class MainComponent implements OnInit, AfterViewInit {
 
   initializeConfig(config: any): void {
     this.isLicensed = config.IsLicensed;
+    this.isAssetAdmin = config.Appliance.AdminRoles.some(r => r == "AssetAdmin");
+    this.LoggedInUserName = config.Appliance.UserName;
+    this.LoggedInUserDisplayName = config.Appliance.UserDisplayName;
     this.ApplianceAddress = config.Appliance.ApplianceAddress;
     this.DevOpsInstanceId = config.Appliance.DevOpsInstanceId;
     this.DevOpsVersion = config.Appliance.Version;
@@ -697,7 +704,7 @@ export class MainComponent implements OnInit, AfterViewInit {
 
   updateMonitoringAvailable(): void {
     // Monitoring available when we have plugins and an account for at least one plugin
-    this.isMonitoringAvailable = this.isMonitoring || (this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0));
+    this.isMonitoringAvailable = this.isMonitoring || (this.plugins.length > 1 && this.plugins.some(x => x.MappedAccountsCount > 0) && !this.needsClientCertificate);
   }
 
   updateMonitoring(enabled: boolean): void {
@@ -721,11 +728,11 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.serviceClient.logout().pipe(
       untilDestroyed(this)
     ).subscribe(() => {
+      this.window.sessionStorage.removeItem('UserToken');
       this.router.navigate(['/login']);
     },
-      error => {
-        this.error = error;
-      });
+      error => this.error = error
+    );
   }
 
   downloadLog(): void {

@@ -163,6 +163,7 @@ namespace OneIdentity.DevOps.Logic
                                               ?? GetSafeguardDevOpsSupport(sg, address ?? _configDb.SafeguardAddress),
                     DevOpsInstanceId = _configDb.SvcId,
                     UserName = servConfig?.User?.UserName,
+                    UserDisplayName = servConfig?.User?.DisplayName,
                     AdminRoles = servConfig?.User?.AdminRoles,
                     Version = WellKnownData.DevOpsServiceVersion()
                 };
@@ -235,6 +236,7 @@ namespace OneIdentity.DevOps.Logic
             safeguardConnection.ApplianceSupportsDevOps = safeguard.ApplianceSupportsDevOps;
             safeguardConnection.DevOpsInstanceId = _configDb.SvcId;
             safeguardConnection.UserName = safeguard.UserName;
+            safeguardConnection.UserDisplayName = safeguard.UserDisplayName;
             safeguardConnection.AdminRoles = safeguard.AdminRoles;
             safeguardConnection.Version = safeguard.Version;
 
