@@ -34,6 +34,10 @@
         /// </summary>
         public string UserName { get; set; }
         /// <summary>
+        /// Logged in user display name
+        /// </summary>
+        public string UserDisplayName { get; set; }
+        /// <summary>
         /// Logged in user roles
         /// </summary>
         public string[] AdminRoles { get; set; }

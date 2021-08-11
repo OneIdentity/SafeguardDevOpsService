@@ -38,8 +38,8 @@
       </div>
       <app-progress-spinner color="accent" diameter="20" message='Configuring Add-on' [visible]="isConfiguring">
       </app-progress-spinner>
-      <button mat-button *ngIf="!addon?.Status.IsReady && !isConfiguring" (click)="configure()" color="primary" class="link-button"
-        disableRipple>Configure Add-on</button>
+      <button mat-button *ngIf="!addon?.Status.IsReady && !isConfiguring && addon?.IsAssetAdmin" (click)="configure()"
+        color="primary" class="link-button" disableRipple>Configure Add-on</button>
     </mat-card>
 
     <div *ngIf="error" class="error">

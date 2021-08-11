@@ -54,11 +54,11 @@ export class EditAddonComponent implements OnInit {
                   this.window.location.reload();
                 }, 2000);
               },
-                error => {
+                error2 => {
                   this.retryReconfigure = false;
                   this.isConfiguring = false;
-                  this.error = error.error;
-                })
+                  this.error = error2.error;
+                });
           } else {
             this.isConfiguring = false;
             this.error = error.error;

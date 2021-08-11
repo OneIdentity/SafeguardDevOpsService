@@ -2,13 +2,18 @@
   <div class="app-header">
     <span>Safeguard Secrets Broker For DevOps</span>
     <span class="spacer"></span>
+    <button mat-button [matMenuTriggerFor]="userMenu" disableRipple>
+      <span class="user-name">{{LoggedInUserDisplayName}}</span>
+    </button>
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>login</mat-icon>Log Out
+      </button>
+    </mat-menu>
     <button mat-icon-button [matMenuTriggerFor]="settingsMenu" *ngIf="Thumbprint">
       <mat-icon>settings</mat-icon>
     </button>
     <mat-menu #settingsMenu="matMenu">
-      <button mat-menu-item (click)="logout()">
-        <mat-icon>login</mat-icon>Log Out
-      </button>
       <button mat-menu-item (click)="uploadAddon()"
         [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting || !isLicensed'>
         <mat-icon>cloud_upload</mat-icon>Upload Add-on
@@ -93,7 +98,7 @@
                 [visible]="isUploading.Certificate">
               </app-progress-spinner>
               <button mat-flat-button class='link-button' cdkFocusInitial (click)="addCertificate($event, 'Client')"
-                color="primary" *ngIf="!isUploading.Certificate">Upload Certificate</button>
+                color="primary" *ngIf="!isUploading.Certificate && isAssetAdmin">Upload Certificate</button>
             </div>
           </div>
         </div>

@@ -24,7 +24,7 @@ export class EditPluginComponent implements OnInit {
     private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
-    ) { }
+  ) { }
 
   plugin: any;
   configs = [];
@@ -108,15 +108,15 @@ export class EditPluginComponent implements OnInit {
     ).subscribe(() => {
       this.editPluginService.deletePlugin();
       if (!this.isRestarting) {
-          this.dialog.open(ConfirmDialogComponent, {
-            data: {
-              title: 'Next Steps',
-              message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
-              showCancel: false,
-              confirmText: 'OK'
-            }
-          });
-        }
+        this.dialog.open(ConfirmDialogComponent, {
+          data: {
+            title: 'Next Steps',
+            message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
+            showCancel: false,
+            confirmText: 'OK'
+          }
+        });
+      }
     },
       error => {
         if (this.isRestarting) {
@@ -126,22 +126,35 @@ export class EditPluginComponent implements OnInit {
         } else {
           this.error = SCH.parseError(error);
         }
-    });
+      });
   }
 
   testConnection(): void {
     this.isTesting = true;
-    this.saveConfiguration().pipe(
-      switchMap(() =>
-        this.serviceClient.postPluginTestConnection(this.plugin.Name)
-      )).subscribe(() => {
-        this.snackBar.open('Test configuration successful.', 'Dismiss', {duration: 5000});
-        this.isTesting = false;
-      },
-      (error) => {
-        this.isTesting = false;
-        this.error = SCH.parseError(error);
-      });
+    
+    if (!this.plugin.IsSystemOwned) {
+      this.saveConfiguration().pipe(
+        switchMap(() =>
+          this.serviceClient.postPluginTestConnection(this.plugin.Name)
+        )).subscribe(() => {
+          this.snackBar.open('Test configuration successful.', 'Dismiss', { duration: 5000 });
+          this.isTesting = false;
+        },
+          error => {
+            this.isTesting = false;
+            this.error = SCH.parseError(error);
+          });
+    } else {
+      this.serviceClient.postPluginTestConnection(this.plugin.Name)
+        .subscribe(() => {
+          this.snackBar.open('Test configuration successful.', 'Dismiss', { duration: 5000 });
+          this.isTesting = false;
+        },
+          error => {
+            this.isTesting = false;
+            this.error = SCH.parseError(error);
+          });
+    }
   }
 
   updatePluginDisabled(): void {
@@ -203,7 +216,7 @@ export class EditPluginComponent implements OnInit {
 
           this.editPluginService.closeProperties(this.plugin);
         },
-        (error) => {
+        error => {
           this.error = SCH.parseError(error);
         }
       );
@@ -217,7 +230,7 @@ export class EditPluginComponent implements OnInit {
 
           this.editPluginService.closeProperties(this.plugin);
         },
-        (error) => {
+        error => {
           this.error = SCH.parseError(error);
         }
       );
@@ -250,7 +263,7 @@ export class EditPluginComponent implements OnInit {
           };
           this.plugin.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(this.plugin.VaultAccount);
         }
-     })
+      })
     );
   }
 }
