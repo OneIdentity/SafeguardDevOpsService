@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
-using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;
@@ -85,8 +84,7 @@ namespace OneIdentity.DevOps.Logic
         private void StartMonitoring()
         {
             if (_eventListener != null)
-                throw new 
-                    DevOpsException("Listener is already running.");
+                throw new DevOpsException("Listener is already running.");
 
             var sppAddress = _configDb.SafeguardAddress;
             var userCertificate = _configDb.UserCertificateBase64Data;
@@ -100,11 +98,13 @@ namespace OneIdentity.DevOps.Logic
                 return;
             }
 
+            if (ignoreSsl.Value)
+                throw new DevOpsException("Monitoring cannot be enabled until a secure connection has been established. Trusted certificates may be missing.");
+
             _pluginManager.RefreshPluginCredentials(null);
 
             // connect to Safeguard
-            _a2AContext = (ignoreSsl == true) ? Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion.Value, true) : 
-                Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
+            _a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
             // figure out what API keys to monitor
             _retrievableAccounts = _configDb.GetAccountMappings().ToList();
             if (_retrievableAccounts.Count == 0)

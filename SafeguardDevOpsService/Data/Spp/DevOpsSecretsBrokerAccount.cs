@@ -59,6 +59,11 @@ namespace OneIdentity.DevOps.Data.Spp
         public string NetbiosName { get; set; }
 
         /// <summary>
+        /// Id of the AssetPartition this account belongs to
+        /// </summary>
+        public int AssetPartitionId { get; set; }
+
+        /// <summary>
         /// Name of the AssetPartition this account belongs to
         /// </summary>
         public string AssetPartitionName { get; set; }

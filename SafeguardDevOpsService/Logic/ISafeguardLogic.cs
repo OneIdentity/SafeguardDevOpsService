@@ -36,6 +36,7 @@ namespace OneIdentity.DevOps.Logic
         bool DeleteAssetAccounts(ISafeguardConnection sgConnection, int assetId);
         void SetAssetAccountPassword(ISafeguardConnection sgConnection, AssetAccount account, string password);
 
+        public Asset GetAsset(ISafeguardConnection sgConnection);
 
         object GetAvailableA2ARegistrations(ISafeguardConnection sgConnection, string filter, int? page, bool? count, int? limit, string @orderby, string q);
         A2ARegistration GetA2ARegistration(ISafeguardConnection sgConnection, A2ARegistrationType registrationType);
