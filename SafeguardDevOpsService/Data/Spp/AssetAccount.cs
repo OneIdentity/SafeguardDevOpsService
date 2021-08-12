@@ -64,6 +64,10 @@ namespace OneIdentity.DevOps.Data.Spp
         /// </summary>
         public string CreatedByUserDisplayName { get; set; }
 
+        /// <summary>
+        /// Convert to DevOpsSecretsBrokerAccount
+        /// </summary>
+        /// <returns></returns>
         public DevOpsSecretsBrokerAccount ToDevOpsSecretsBrokerAccount()
         {
             return new DevOpsSecretsBrokerAccount()

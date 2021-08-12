@@ -873,7 +873,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       data: { trustedCertificates: this.trustedCertificates }
     });
 
-    dialogRef.afterClosed().subscribe();
+    dialogRef.afterClosed().subscribe(() => this.needsSSLEnabled = !dialogRef.componentInstance.useSsl);
   }
 
   parseError(error: any) {
