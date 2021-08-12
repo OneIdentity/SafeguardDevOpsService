@@ -54,7 +54,7 @@
           </div>
         </div>
         <p></p>
-        <div *ngIf="needsSSLEnabled">
+        <div *ngIf="needsSSLEnabled && !needsTrustedCertificates">
           <b>Monitoring is unavailable.</b>
           <p></p>
           <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"

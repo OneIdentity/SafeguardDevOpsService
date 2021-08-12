@@ -174,6 +174,7 @@ namespace OneIdentity.DevOps.Logic
 
             plugin.Configuration = pluginConfiguration.Configuration;
             plugin = _configDb.SavePluginConfiguration(plugin);
+            plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
             _pluginManager.SetConfigurationForPlugin(name);
 
             return plugin;
