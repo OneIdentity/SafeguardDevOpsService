@@ -54,9 +54,9 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
           this.certificateLoaded = true;
 
           // Show Back button instead of Remove if this is an auto-generated web server certificate
-          this.showBackButton = this.certificateType === 'Web Server' &&
-            cert.Subject === 'CN=DevOpsServiceServerSSL' &&
-            cert.IssuedBy === cert.Subject;
+          this.showBackButton = this.certificateType == 'Web Server' &&
+            cert.Subject == 'CN=DefaultDevOpsServiceServerSSL' &&
+            cert.IssuedBy == cert.Subject;
         },
         error => {
           this.error = error;
