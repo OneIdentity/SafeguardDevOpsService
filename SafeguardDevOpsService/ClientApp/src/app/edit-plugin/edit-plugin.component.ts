@@ -130,6 +130,7 @@ export class EditPluginComponent implements OnInit {
   }
 
   testConnection(): void {
+    this.error = null;
     this.isTesting = true;
     
     if (!this.plugin.IsSystemOwned) {
