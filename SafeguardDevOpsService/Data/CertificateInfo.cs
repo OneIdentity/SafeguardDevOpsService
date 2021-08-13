@@ -66,6 +66,12 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public string Passphrase { get; set; }
 
+        /// <summary>
+        /// The certificate is new or existing (Read-only)
+        /// </summary>
+        [ReadOnly(true)]
+        public bool IsNew { get; set; }
+
         protected bool Equals(CertificateInfo other)
         {
             return string.Equals(Subject, other.Subject) && string.Equals(IssuedBy, other.IssuedBy) && NotBefore.Equals(other.NotBefore) && NotAfter.Equals(other.NotAfter) && string.Equals(Thumbprint, other.Thumbprint);

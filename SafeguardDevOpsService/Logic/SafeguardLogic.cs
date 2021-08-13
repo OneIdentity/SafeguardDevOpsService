@@ -1862,7 +1862,7 @@ namespace OneIdentity.DevOps.Logic
             return certificate?.GetCertificateInfo();
         }
 
-        private CertificateInfo AddTrustedCertificate(string base64CertificateData)
+        private CertificateInfo AddTrustedCertificate(string base64CertificateData, string passPhrase = null)
         {
             if (base64CertificateData == null)
                 throw LogAndException("Certificate cannot be null");
@@ -1870,7 +1870,7 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 var certificateBytes = CertificateHelper.ConvertPemToData(base64CertificateData);
-                var cert = new X509Certificate2(certificateBytes);
+                var cert = passPhrase != null ? new X509Certificate2(certificateBytes, passPhrase) : new X509Certificate2(certificateBytes);
                 _logger.Debug(
                     $"Parsed new trusted certificate: subject={cert.SubjectName}, thumbprint={cert.Thumbprint}.");
 
@@ -1879,7 +1879,7 @@ namespace OneIdentity.DevOps.Logic
                 if (existingCert != null)
                 {
                     _logger.Debug("New trusted certificate already exists.");
-                    return existingCert.GetCertificateInfo();
+                    return existingCert.GetCertificateInfo(false);
                 }
 
                 if (!CertificateHelper.ValidateCertificate(cert, CertificateType.Trusted))
@@ -1902,7 +1902,7 @@ namespace OneIdentity.DevOps.Logic
 
         public CertificateInfo AddTrustedCertificate(CertificateInfo certificate)
         {
-            return AddTrustedCertificate(certificate.Base64CertificateData);
+            return AddTrustedCertificate(certificate.Base64CertificateData, certificate.Passphrase);
         }
 
         public void DeleteTrustedCertificate(string thumbPrint)

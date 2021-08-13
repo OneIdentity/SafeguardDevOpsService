@@ -24,7 +24,7 @@ namespace OneIdentity.DevOps.Data
         /// <summary>
         /// Get the certificate information
         /// </summary>
-        public CertificateInfo GetCertificateInfo()
+        public CertificateInfo GetCertificateInfo(bool isNew = true)
         {
             var cert = GetCertificate();
             return new CertificateInfo()
@@ -34,7 +34,8 @@ namespace OneIdentity.DevOps.Data
                 NotBefore = cert.NotBefore,
                 Subject = cert.Subject,
                 Thumbprint = cert.Thumbprint,
-                Base64CertificateData = cert.ToPemFormat()
+                Base64CertificateData = cert.ToPemFormat(),
+                IsNew = isNew
             };
         }
 
