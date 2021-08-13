@@ -15,6 +15,6 @@ namespace OneIdentity.DevOps.Logic
         IEnumerable<Addon> GetAddons();
         Addon GetAddon(string addonName);
         AddonStatus GetAddonStatus(string addonName);
-        bool ConfigureDevOpsAddOn(string addonName);
+        void ConfigureDevOpsAddOn(string addonName);
     }
 }

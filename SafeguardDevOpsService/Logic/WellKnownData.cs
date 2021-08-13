@@ -111,6 +111,11 @@ namespace OneIdentity.DevOps.Logic
             return $"{DevOpsServiceName}-{svcId}";
         }
 
+        public static string DevOpsAssetAccountGroupName(string svcId)
+        {
+            return $"{DevOpsServiceName}-{svcId}";
+        }
+
         public static string DevOpsServiceClientCertificate(string svcId)
         {
             return $"{DevOpsServiceClientCertificateSubject}-{svcId}";

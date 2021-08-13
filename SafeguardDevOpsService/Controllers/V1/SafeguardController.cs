@@ -120,7 +120,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// replaces the need to install the certificate separately.</param>
         /// <response code="200">Success.</response>
         /// <response code="400">Bad request.</response>
-        [SafeguardSessionKeyAuthorization(WellKnownData.SafeguardAssetAdmin)]
+        [SafeguardSessionKeyAuthorization]
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("Configuration")]
@@ -912,9 +912,7 @@ namespace OneIdentity.DevOps.Controllers.V1
             if (string.IsNullOrEmpty(addonName))
                 return BadRequest("Invalid add-on name.");
 
-            var configured = addonLogic.ConfigureDevOpsAddOn(addonName);
-            if (!configured)
-                return BadRequest("Failed to configure the add-on.");
+            addonLogic.ConfigureDevOpsAddOn(addonName);
 
             return Ok();
         }
