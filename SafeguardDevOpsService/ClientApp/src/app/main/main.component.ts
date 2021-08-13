@@ -489,10 +489,7 @@ export class MainComponent implements OnInit, AfterViewInit {
           this.viewCertificate(null, 'Client', true);
         } else {
           this.webServerCertAdded = true;
-          // Service restarts after updating web server cert; need to login again
-          // Reload is needed to accept new web server cert
-          this.window.sessionStorage.setItem('reload', 'true');
-          this.authService.login(this.ApplianceAddress);
+          this.window.location.reload();
         }
       },
       error => {
@@ -827,9 +824,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       this.snackBar.dismiss();
       this.window.sessionStorage.setItem('ApplianceAddress', '');
       if (this.isRestarting) {
-        // Reload is needed to accept new web server cert
-        this.window.sessionStorage.setItem('reload', 'true');
-        this.router.navigate(['/login']);
+        this.window.location.reload();
       }
     },
       error => {
@@ -846,15 +841,8 @@ export class MainComponent implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().subscribe(
       (result) => {
-        if (result?.result === ViewCertificateResult.RemovedCertificate) {
-          if (certType === 'Client') {
+        if (result?.result === ViewCertificateResult.RemovedCertificate) {      
             this.window.location.reload();
-          } else {
-            // Service restarts after removing web server cert; need to login again
-            // Reload is needed to accept new web server cert
-            this.window.sessionStorage.setItem('reload', 'true');
-            this.authService.login(this.ApplianceAddress);
-          }
         } else if (result?.result === ViewCertificateResult.AddCertificate) {
           this.addCertificate(null, certType);
         } else if (reload) {
