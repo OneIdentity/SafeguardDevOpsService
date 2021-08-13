@@ -107,7 +107,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             try
             {
-                var name = _rgx.Replace($"{asset}-{altAccountName ?? account}", "-");
+                var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
                 _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(name, passwordData, null, _configuration[MountPointName])
                     .Wait();
                 _logger.Information($"Password for {asset}-{altAccountName ?? account} has been successfully stored in the vault.");

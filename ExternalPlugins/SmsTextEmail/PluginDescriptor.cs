@@ -65,7 +65,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
             {
                 From = new MailAddress(_configuration[FromAddressName]),
                 Subject = "Message from Safeguard Secrets Broker for DevOps",
-                Body = $"{asset} - {altAccountName ?? account}\n{password}"
+                Body = altAccountName != null ? $"{altAccountName}\n{password}" : $"{asset} - {account}\n{password}"
             };
 
             foreach (var address in _toAddresses)

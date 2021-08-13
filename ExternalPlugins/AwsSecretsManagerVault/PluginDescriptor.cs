@@ -45,7 +45,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
 
             try
             {
-                var name = $"{asset}-{altAccountName ?? account}";
+                var name = altAccountName ?? $"{asset}-{account}";
               
                 var request = new PutSecretValueRequest()
                 {

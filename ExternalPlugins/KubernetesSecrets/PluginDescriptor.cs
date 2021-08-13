@@ -109,7 +109,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             V1Secret secret = null;
             try
             {
-                secret = _client.ReadNamespacedSecret($"{asset}-{altAccountName ?? account}", vaultNamespace);
+                secret = _client.ReadNamespacedSecret(altAccountName ?? $"{asset}-{account}", vaultNamespace);
             }
             catch (Exception)
             {
