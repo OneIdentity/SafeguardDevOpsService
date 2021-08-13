@@ -53,6 +53,11 @@ namespace OneIdentity.DevOps.Data.Spp
         public AssetPartition AssetPartition { get; set; }
 
         /// <summary>
+        /// The asset account group.
+        /// </summary>
+        public AssetAccountGroup AssetAccountGroup { get; set; }
+
+        /// <summary>
         /// The A2A user.
         /// </summary>
         public A2AUser A2AUser { get; set; }

@@ -20,6 +20,7 @@ using OneIdentity.SafeguardDotNet;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Extensions;
 using OneIdentity.SafeguardDotNet.A2A;
@@ -815,7 +816,7 @@ namespace OneIdentity.DevOps.Logic
             return false;
         }
 
-        private Asset CreateAsset(ISafeguardConnection sgConnection, AssetPartition assetPartition)
+        public Asset CreateAsset(ISafeguardConnection sgConnection, AssetPartition assetPartition)
         {
             if (assetPartition == null || assetPartition.Id == 0)
                 throw LogAndException("Failed to create the asset. Missing the asset partition.");
@@ -996,7 +997,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        private AssetPartition CreateAssetPartition(ISafeguardConnection sgConnection)
+        public AssetPartition CreateAssetPartition(ISafeguardConnection sgConnection)
         {
             var sg = sgConnection ?? Connect();
 
@@ -1203,6 +1204,237 @@ namespace OneIdentity.DevOps.Logic
 
             return false;
         }
+
+        public AssetAccountGroup CreateAssetAccountGroup(ISafeguardConnection sgConnection, Addon addon)
+        {
+            if (addon?.VaultAccountName == null)
+            {
+                _logger.Error("Failed to create the asset account group. Invalid add-on provided.");
+                return null;
+            }
+
+            var sg = sgConnection ?? Connect();
+
+            try
+            {
+                var assetAccountGroup = GetAssetAccountGroup(sg);
+                if (assetAccountGroup == null)
+                {
+                    assetAccountGroup = new AssetAccountGroup
+                    {
+                        Id = 0,
+                        Description = "DevOps Secrets Broker Asset Account Group",
+                        Name = WellKnownData.DevOpsAssetAccountGroupName(_configDb.SvcId),
+                        IsDynamic = true,
+                        GroupingRule = new TaggingGroupingRule
+                        {
+                            Description = "DevOps Secrets Broker Dynamic Group",
+                            Enabled = true,
+                            RuleConditionGroup = new TaggingGroupingConditionGroup()
+                            {
+                                LogicalJoinType = ConditionJoinType.And,
+                                Children = new[]
+                                {
+                                    new TaggingGroupingConditionOrConditionGroup()
+                                    {
+                                        TaggingGroupingCondition = new TaggingGroupingCondition
+                                        {
+                                            ObjectAttribute = TaggingGroupingObjectAttributes.Name,
+                                            CompareType = ComparisonOperator.StartsWith,
+                                            CompareValue = addon.Name
+                                        }
+                                    } 
+                                }
+                            }
+                        }
+                    };
+
+                    var assetAccountGroupStr = JsonHelper.SerializeObject(assetAccountGroup);
+                    try
+                    {
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Post, "AccountGroups", assetAccountGroupStr);
+                        if (result.StatusCode == HttpStatusCode.Created)
+                        {
+                            assetAccountGroup = JsonHelper.DeserializeObject<AssetAccountGroup>(result.Body);
+                            if (DevOpsSecretsBrokerCache?.AssetAccountGroup == null ||
+                                DevOpsSecretsBrokerCache.AssetAccountGroup.Id != assetAccountGroup.Id)
+                            {
+                                _configDb.AssetAccountGroupId = assetAccountGroup.Id;
+                                if (DevOpsSecretsBrokerCache != null)
+                                {
+                                    DevOpsSecretsBrokerCache.AssetAccountGroup = assetAccountGroup;
+                                    UpdateSecretsBrokerInstance(sg, DevOpsSecretsBrokerCache, false);
+                                }
+                            }
+
+                            return assetAccountGroup;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw LogAndException($"Failed to create the asset account group: {ex.Message}", ex);
+                    }
+                }
+                else
+                {
+                    if (DevOpsSecretsBrokerCache?.AssetAccountGroup == null ||
+                         DevOpsSecretsBrokerCache.AssetAccountGroup.Id != assetAccountGroup.Id)
+                    {
+                        _configDb.AssetAccountGroupId = assetAccountGroup.Id;
+                        if (DevOpsSecretsBrokerCache != null)
+                        {
+                            DevOpsSecretsBrokerCache.AssetAccountGroup = assetAccountGroup;
+                            UpdateSecretsBrokerInstance(sg, DevOpsSecretsBrokerCache, false);
+                        }
+                    }
+
+                    return assetAccountGroup;
+                }
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
+
+            return null;
+        }
+
+        private AssetAccountGroup GetAssetAccountGroup(ISafeguardConnection sgConnection)
+        {
+            var sg = sgConnection ?? Connect();
+
+            try
+            {
+                // If we don't have an asset account group Id then try to find the asset account group by name
+                if ((_configDb.AssetAccountGroupId ?? 0) == 0)
+                {
+                    var knownAssetAccountGroupName = WellKnownData.DevOpsAssetAccountGroupName(_configDb.SvcId);
+                    try
+                    {
+                        var p = new Dictionary<string, string>
+                            {{"filter", $"Name eq '{knownAssetAccountGroupName}'"}};
+
+                        var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get,
+                            "AccountGroups", null, p);
+                        if (result.StatusCode == HttpStatusCode.OK)
+                        {
+                            var foundAssetAccountGroups =
+                                JsonHelper.DeserializeObject<List<AssetAccountGroup>>(result.Body);
+
+                            if (foundAssetAccountGroups.Count > 0)
+                            {
+                                var assetAccountGroup = foundAssetAccountGroups.FirstOrDefault();
+                                if (assetAccountGroup != null)
+                                {
+                                    _configDb.AssetAccountGroupId = assetAccountGroup.Id;
+                                    if (DevOpsSecretsBrokerCache != null)
+                                        DevOpsSecretsBrokerCache.AssetAccountGroup = assetAccountGroup;
+                                }
+
+                                return assetAccountGroup;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex,
+                            $"Failed to get the asset account group by name {knownAssetAccountGroupName}: {ex.Message}");
+                    }
+                }
+                else // Otherwise just get the account group by id
+                {
+                    try
+                    {
+                        var assetAccountGroup = GetAssetAccountGroup(sg, _configDb.AssetAccountGroupId);
+                        if (assetAccountGroup != null)
+                        {
+                            return assetAccountGroup;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Just log the error and move on. If there is an asset account group that matches, Secrets Broker will find it
+                        //  the next time.
+                        _logger.Error(ex,
+                            $"Failed to get the asset account group for id '{_configDb.AssetAccountGroupId}': {ex.Message}");
+                    }
+                }
+
+                // Apparently the asset account group id we have is wrong so get rid of it.
+                _configDb.AssetAccountGroupId = null;
+                if (DevOpsSecretsBrokerCache != null)
+                    DevOpsSecretsBrokerCache.AssetAccountGroup = null;
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
+
+            return null;
+        }
+
+        private AssetAccountGroup GetAssetAccountGroup(ISafeguardConnection sg, int? id)
+        {
+            try
+            {
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"AccountGroups/{id}");
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    return JsonHelper.DeserializeObject<AssetAccountGroup>(result.Body);
+                }
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                {
+                    _logger.Error($"Asset account group not found for id '{id}'", ex);
+                }
+                else
+                {
+                    throw LogAndException($"Failed to get the asset account group for id '{id}'", ex);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to get the asset account group for id '{id}'", ex);
+            }
+
+            return null;
+        }
+
+        private bool DeleteAssetAccountGroup(ISafeguardConnection sgConnection, int assetAccountGroupId)
+        {
+            if (sgConnection == null)
+            {
+                _logger.Error("Failed to delete the asset account group. Invalid safeguard connection.");
+                return false;
+            }
+            if (assetAccountGroupId == 0)
+            {
+                _logger.Error("Failed to delete the asset account group. No asset account group found.");
+                return false;
+            }
+
+            try
+            {
+                var result = DevOpsInvokeMethodFull(_configDb.SvcId, sgConnection, Service.Core, Method.Delete, $"AccountGroups/{assetAccountGroupId}");
+                if (result.StatusCode == HttpStatusCode.NoContent)
+                {
+                    _configDb.AssetAccountGroupId = null;
+                    _logger.Information("Successfully deleted the asset account group from safeguard.");
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to delete the asset account group from safeguard: {ex.Message}", ex);
+            }
+
+            return false;
+        }
+
 
         private string LocalIPAddress()
         {
@@ -1637,8 +1869,6 @@ namespace OneIdentity.DevOps.Logic
             CreateA2AUser(sg);
             CreateA2ARegistration(sg, A2ARegistrationType.Account);
             CreateA2ARegistration(sg, A2ARegistrationType.Vault);
-            var assetPartition = CreateAssetPartition(sg);
-            CreateAsset(sg, assetPartition);
             EnableA2AService(sg);
 
             CheckAndSyncSecretsBrokerInstance(null);
@@ -1774,28 +2004,33 @@ namespace OneIdentity.DevOps.Logic
             {
                 Task.Run(() =>
                 {
-                    if ((_configDb.AssetId ?? 0) > 0)
-                         DeleteAssetAndAccounts(sgConnection, _configDb.AssetId ?? 0);
+                    if ((_configDb.AssetAccountGroupId ?? 0) > 0) 
+                        DeleteAssetAccountGroup(sgConnection, _configDb.AssetAccountGroupId ?? 0);
                 }),
                 Task.Run(() =>
                 {
-                    if ((_configDb.AssetPartitionId ?? 0) > 0)
-                             DeleteAssetPartition(sgConnection, _configDb.AssetPartitionId ?? 0);
+                    if ((_configDb.AssetId ?? 0) > 0) 
+                        DeleteAssetAndAccounts(sgConnection, _configDb.AssetId ?? 0);
                 }),
                 Task.Run(() =>
                 {
-                    if ((_configDb.A2aRegistrationId ?? 0) > 0)
-                             DeleteA2ARegistration(sgConnection, _configDb.A2aRegistrationId ?? 0, A2ARegistrationType.Account);
+                    if ((_configDb.AssetPartitionId ?? 0) > 0) 
+                        DeleteAssetPartition(sgConnection, _configDb.AssetPartitionId ?? 0);
                 }),
                 Task.Run(() =>
                 {
-                    if ((_configDb.A2aVaultRegistrationId ?? 0) > 0)
-                             DeleteA2ARegistration(sgConnection, _configDb.A2aVaultRegistrationId ?? 0, A2ARegistrationType.Vault);
+                    if ((_configDb.A2aRegistrationId ?? 0) > 0) 
+                        DeleteA2ARegistration(sgConnection, _configDb.A2aRegistrationId ?? 0, A2ARegistrationType.Account);
                 }),
                 Task.Run(() =>
                 {
-                    if ((_configDb.A2aUserId ?? 0) > 0)
-                             DeleteA2AUser(sgConnection, _configDb.A2aUserId ?? 0);
+                    if ((_configDb.A2aVaultRegistrationId ?? 0) > 0) 
+                        DeleteA2ARegistration(sgConnection, _configDb.A2aVaultRegistrationId ?? 0, A2ARegistrationType.Vault);
+                }),
+                Task.Run(() =>
+                {
+                    if ((_configDb.A2aUserId ?? 0) > 0) 
+                        DeleteA2AUser(sgConnection, _configDb.A2aUserId ?? 0);
                 })
             };
             
@@ -3090,7 +3325,10 @@ namespace OneIdentity.DevOps.Logic
                                 var accounts = GetAssetAccounts(sg, assetId);
                                 devOpsSecretsBroker.Accounts = accounts.Select(x => x.ToDevOpsSecretsBrokerAccount());
                             }
-                        }catch { devOpsSecretsBroker.Asset = null; }
+                        }catch { 
+                            devOpsSecretsBroker.Asset = null; 
+                            devOpsSecretsBroker.Accounts = null;
+                        }
                     }),
                     Task.Run(() =>
                     {
@@ -3099,16 +3337,16 @@ namespace OneIdentity.DevOps.Logic
                             if (devOpsSecretsBroker.AssetPartition?.Id > 0)
                                 devOpsSecretsBroker.AssetPartition =
                                     GetAssetPartition(sg, devOpsSecretsBroker.AssetPartition?.Id);
-                        }catch { devOpsSecretsBroker.Asset = null; }
+                        }catch { devOpsSecretsBroker.AssetPartition = null; }
                     }),
                     Task.Run(() =>
                     {
                         try
                         {
-                            if (devOpsSecretsBroker.AssetPartition?.Id > 0)
-                                devOpsSecretsBroker.AssetPartition =
-                                    GetAssetPartition(sg, devOpsSecretsBroker.AssetPartition?.Id);
-                        }catch { devOpsSecretsBroker.Asset = null; }
+                            if (devOpsSecretsBroker.AssetAccountGroup?.Id > 0)
+                                devOpsSecretsBroker.AssetAccountGroup =
+                                    GetAssetAccountGroup(sg, devOpsSecretsBroker.AssetAccountGroup?.Id);
+                        }catch { devOpsSecretsBroker.AssetAccountGroup = null; }
                     })
                 };
 
@@ -3128,9 +3366,13 @@ namespace OneIdentity.DevOps.Logic
                 devOpsSecretsBroker.Asset = DevOpsSecretsBrokerCache.Asset?.Id == devOpsSecretsBroker.Asset?.Id
                     ? DevOpsSecretsBrokerCache.Asset
                     : devOpsSecretsBroker.Asset;
+                devOpsSecretsBroker.Accounts = DevOpsSecretsBrokerCache.Accounts ?? devOpsSecretsBroker.Accounts;
                 devOpsSecretsBroker.AssetPartition = DevOpsSecretsBrokerCache.AssetPartition?.Id == devOpsSecretsBroker.AssetPartition?.Id
                     ? DevOpsSecretsBrokerCache.AssetPartition
                     : devOpsSecretsBroker.AssetPartition;
+                devOpsSecretsBroker.AssetAccountGroup = DevOpsSecretsBrokerCache.AssetAccountGroup?.Id == devOpsSecretsBroker.AssetAccountGroup?.Id
+                    ? DevOpsSecretsBrokerCache.AssetAccountGroup
+                    : devOpsSecretsBroker.AssetAccountGroup;
             }
 
             return devOpsSecretsBroker;

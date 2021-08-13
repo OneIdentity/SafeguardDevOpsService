@@ -177,17 +177,30 @@ namespace OneIdentity.DevOps.Logic
             return accountsPushedToSpp;
         }
 
-        public bool ConfigureDevOpsAddOn(string addonName)
+        public void ConfigureDevOpsAddOn(string addonName)
         {
-            var assetId = _configDb.AssetId;
-            if ((assetId ?? 0) == 0)
-                return false;
-
             var sg = _safeguardLogic.Connect();
 
             try
             {
                 var addon = _configDb.GetAddonByName(addonName);
+                if (addon == null)
+                {
+                    throw LogAndException($"Add-on {addonName} not found.");
+                }
+
+                if ((_configDb.AssetPartitionId ?? 0) == 0 || (_configDb.AssetId ?? 0) == 0)
+                {
+                    var assetPartition = _safeguardLogic.CreateAssetPartition(sg);
+                    _safeguardLogic.CreateAsset(sg, assetPartition);
+                    _safeguardLogic.CreateAssetAccountGroup(sg, addon);
+
+                }
+
+                var assetId = _configDb.AssetId;
+                if ((assetId ?? 0) == 0)
+                    throw LogAndException($"Failed to configure the add-on {addonName}. No associated asset found in Safeguard.");
+
                 if (addon.VaultCredentials.Any() && !SafeguardHasVaultCredentials(addon))
                 {
                     var tasks = new List<Task>();
@@ -227,15 +240,11 @@ namespace OneIdentity.DevOps.Logic
 
                     _configDb.SaveAddon(addon);
                 }
-
-
             }
             finally
             {
                 sg.Dispose();
             }
-
-            return true;
         }
 
         private void InstallAddon(ZipArchive zipArchive, bool force)

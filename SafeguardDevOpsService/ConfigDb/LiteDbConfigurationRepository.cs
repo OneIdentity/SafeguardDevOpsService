@@ -45,6 +45,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string A2aVaultRegistrationIdKey = "A2aVaultRegistrationId";
         private const string AssetIdKey = "AssetId";
         private const string AssetPartitionIdKey = "AssetPartitionId";
+        private const string AssetAccountGroupIdKey = "AssetAccountGroupId";
         private const string SigningCertificateKey = "SigningCertificate";
         private const string LastKnownMonitorStateKey = "LastKnownMonitorState";
 
@@ -495,6 +496,21 @@ namespace OneIdentity.DevOps.ConfigDb
             set => SetSimpleSetting(AssetPartitionIdKey, value.ToString());
         }
 
+        public int? AssetAccountGroupId
+        {
+            get
+            {
+                try
+                {
+                    return Int32.Parse(GetSimpleSetting(AssetAccountGroupIdKey));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            set => SetSimpleSetting(AssetAccountGroupIdKey, value.ToString());
+        }
 
         public string LastKnownMonitorState
         {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.SafeguardDotNet;
@@ -35,6 +36,9 @@ namespace OneIdentity.DevOps.Logic
         AssetAccount AddAssetAccount(ISafeguardConnection sgConnection, AssetAccount account);
         bool DeleteAssetAccounts(ISafeguardConnection sgConnection, int assetId);
         void SetAssetAccountPassword(ISafeguardConnection sgConnection, AssetAccount account, string password);
+        Asset CreateAsset(ISafeguardConnection sgConnection, AssetPartition assetPartition);
+        AssetPartition CreateAssetPartition(ISafeguardConnection sgConnection);
+        AssetAccountGroup CreateAssetAccountGroup(ISafeguardConnection sgConnection, Addon addon);
 
         public Asset GetAsset(ISafeguardConnection sgConnection);
 
