@@ -123,6 +123,8 @@ namespace OneIdentity.DevOps.Logic
             _eventListener = _a2AContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);
             _eventListener.Start();
 
+            InitialPasswordPull();
+
             _logger.Information("Password change monitoring has been started.");
         }
 
@@ -159,48 +161,32 @@ namespace OneIdentity.DevOps.Logic
                 if (!apiKeys.All(x => x.ApiKey.Equals(apiKey)))
                     _logger.Error("Mismatched API keys for the same account were found by the password change handler.");
 
+                var selectedAccounts = _configDb.GetAccountMappings().Where(a => a.ApiKey.Equals(apiKey)).ToList();
+
                 // At this point we should have one API key to retrieve.
-                using (var password = _a2AContext.RetrievePassword(apiKey.ToSecureString()))
+                PullAndPushPasswordByApiKey(apiKey, selectedAccounts);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Password change handler failed: {ex.Message}.");
+            }
+        }
+
+        private void InitialPasswordPull()
+        {
+            try
+            {
+                var apiKeys = _retrievableAccounts.GroupBy(x => x.ApiKey).Select(x => x.First().ApiKey).ToArray();
+
+                // Make sure that we have at least one plugin mapped to the account
+                if (!apiKeys.Any())
+                    return;
+
+                var accounts = _configDb.GetAccountMappings().ToList();
+                foreach (var apiKey in apiKeys)
                 {
-                    var accounts = _configDb.GetAccountMappings().ToList();
                     var selectedAccounts = accounts.Where(a => a.ApiKey.Equals(apiKey));
-                    foreach (var account in selectedAccounts)
-                    {
-                        var monitorEvent = new MonitorEvent()
-                        {
-                            Event = $"Sending password for account {account.AccountName} to {account.VaultName}.",
-                            Result = WellKnownData.SentPasswordSuccess,
-                            Date = DateTime.UtcNow
-                        };
-
-                        if (_pluginManager.IsDisabledPlugin(account.VaultName))
-                        {
-                            monitorEvent.Event = $"{account.VaultName} is disabled or not loaded. No password sent for account {account.AccountName}.";
-                            monitorEvent.Event = WellKnownData.SentPasswordFailure;
-                        }
-                        else
-                        {
-                            try
-                            {
-                                _logger.Information(monitorEvent.Event);
-                                if (!_pluginManager.SendPassword(account.VaultName, account.AssetName,
-                                    account.AccountName, password))
-                                {
-                                    _logger.Error(
-                                        $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
-                                    monitorEvent.Result = WellKnownData.SentPasswordFailure;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.Error(ex, 
-                                    $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
-                                monitorEvent.Result = WellKnownData.SentPasswordFailure;
-                            }
-                        }
-
-                        _lastEventsQueue.Enqueue(monitorEvent);
-                    }
+                    PullAndPushPasswordByApiKey(apiKey, selectedAccounts);
                 }
             }
             catch (Exception ex)
@@ -208,5 +194,50 @@ namespace OneIdentity.DevOps.Logic
                 _logger.Error(ex, $"Password change handler failed: {ex.Message}.");
             }
         }
+
+        private void PullAndPushPasswordByApiKey(string apiKey, IEnumerable<AccountMapping> selectedAccounts)
+        {
+            using var password = _a2AContext.RetrievePassword(apiKey.ToSecureString());
+
+            foreach (var account in selectedAccounts)
+            {
+                var monitorEvent = new MonitorEvent()
+                {
+                    Event = $"Sending password for account {account.AccountName} to {account.VaultName}.",
+                    Result = WellKnownData.SentPasswordSuccess,
+                    Date = DateTime.UtcNow
+                };
+
+                if (_pluginManager.IsDisabledPlugin(account.VaultName))
+                {
+                    monitorEvent.Event = $"{account.VaultName} is disabled or not loaded. No password sent for account {account.AccountName}.";
+                    monitorEvent.Event = WellKnownData.SentPasswordFailure;
+                }
+                else
+                {
+                    try
+                    {
+                        _logger.Information(monitorEvent.Event);
+                        if (!_pluginManager.SendPassword(account.VaultName, 
+                            account.AssetName, account.AccountName, password, 
+                            string.IsNullOrEmpty(account.AltAccountName) ? null : account.AltAccountName))
+                        {
+                            _logger.Error(
+                                $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
+                            monitorEvent.Result = WellKnownData.SentPasswordFailure;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex,
+                            $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
+                        monitorEvent.Result = WellKnownData.SentPasswordFailure;
+                    }
+                }
+
+                _lastEventsQueue.Enqueue(monitorEvent);
+            }
+        }
+
     }
 }

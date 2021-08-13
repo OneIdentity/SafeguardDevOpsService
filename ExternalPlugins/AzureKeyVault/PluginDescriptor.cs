@@ -94,7 +94,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
 
             try
             {
-                var name = _rgx.Replace($"{asset}-{altAccountName ?? account}", "-");
+                var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
                 Task.Run(async () => await _keyVaultClient.SetSecretAsync(_configuration[VaultUriName], name, password));
                 return true;
             }

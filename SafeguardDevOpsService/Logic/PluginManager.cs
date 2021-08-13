@@ -155,7 +155,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public bool SendPassword(string name, string assetName, string accountName, SecureString password, string altAccountName = null)
+        public bool SendPassword(string name, string assetName, string accountName, SecureString password, string altAccountName)
         {
             if (LoadedPlugins.ContainsKey(name))
             {
