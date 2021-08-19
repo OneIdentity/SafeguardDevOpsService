@@ -12,7 +12,7 @@
 
   <div class="actions">
     <div class="upload-button" >
-      <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".cer,.crt,.der,.pfx,.p12,.pem" />
+      <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"  accept=".cer,.crt,.der,.pem" />
       <button mat-stroked-button (click)="browse()" color="primary">Upload</button>
     </div>
     <button mat-flat-button (click)="import()" color="primary" cdkFocusInitial>Import from Safeguard</button>
