@@ -234,7 +234,7 @@ namespace OneIdentity.DevOps.Logic
         {
             var plugin = _configDb.GetPluginByName(pluginName);
 
-            if (_safeguardLogic.IsLoggedIn() && plugin?.VaultAccountId != null)
+            if (plugin?.VaultAccountId != null)
             {
                 var pluginInstance = LoadedPlugins[pluginName];
                 if (pluginInstance != null)
@@ -420,7 +420,7 @@ namespace OneIdentity.DevOps.Logic
         
         private void RefreshPluginCredential(ISafeguardConnection sgConnection, Plugin plugin)
         {
-            if (_safeguardLogic.IsLoggedIn() && plugin.VaultAccountId.HasValue)
+            if (plugin.VaultAccountId.HasValue)
             {
                 try
                 {

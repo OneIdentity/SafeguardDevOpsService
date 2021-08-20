@@ -31,7 +31,18 @@ namespace OneIdentity.DevOps.Data
         public SecureString AccessToken
         {
             get => _accessToken;
-            set => _accessToken = value.Copy();
+            set
+            {
+                if (value == null)
+                {
+                    _accessToken.Dispose();
+                    _accessToken = null;
+                }
+                else
+                {
+                    _accessToken = value.Copy();
+                }
+            }
         }
 
         /// <summary>
@@ -72,19 +83,12 @@ namespace OneIdentity.DevOps.Data
         }
 
         /// <summary>
-        /// Clear properties
-        /// </summary>
-        public void Clear()
-        {
-            User = null;
-        }
-
-        /// <summary>
         /// Dispose
         /// </summary>
         public void Dispose()
         {
-            AccessToken?.Dispose();
+            _accessToken?.Dispose();
+            _accessToken = null;
         }
     }
 }

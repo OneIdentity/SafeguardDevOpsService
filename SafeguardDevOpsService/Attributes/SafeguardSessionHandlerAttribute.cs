@@ -11,7 +11,8 @@ namespace OneIdentity.DevOps.Attributes
         {
             var sppToken = AttributeHelper.GetSppToken(context.HttpContext);
             var managementConnection = AuthorizedCache.Instance.FindByToken(sppToken);
-            context.HttpContext.Response.Cookies.Append("sessionKey", managementConnection.SessionKey, new CookieOptions(){Secure = true});
+            if (managementConnection != null)
+                context.HttpContext.Response.Cookies.Append("sessionKey", managementConnection.SessionKey, new CookieOptions(){Secure = true});
         }
     }
 }

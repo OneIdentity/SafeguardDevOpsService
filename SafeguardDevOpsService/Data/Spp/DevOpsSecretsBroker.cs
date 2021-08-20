@@ -9,7 +9,7 @@ namespace OneIdentity.DevOps.Data.Spp
     /// </summary>
     public class DevOpsSecretsBroker
     {
-        private IEnumerable<DevOpsSecretsBrokerAccount> _accounts = Enumerable.Empty<DevOpsSecretsBrokerAccount>();
+        private IEnumerable<AssetAccount> _accounts = Enumerable.Empty<AssetAccount>();
         private IEnumerable<DevOpsSecretsBrokerPlugin> _plugins = Enumerable.Empty<DevOpsSecretsBrokerPlugin>();
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace OneIdentity.DevOps.Data.Spp
         /// <summary>
         /// Set of asset accounts that are assigned to this devops secrets broker
         /// </summary>
-        public IEnumerable<DevOpsSecretsBrokerAccount> Accounts
+        public IEnumerable<AssetAccount> Accounts
         {
             get => _accounts;
             set => _accounts = value;
