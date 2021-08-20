@@ -40,7 +40,9 @@ namespace OneIdentity.DevOps.Logic
         private ApplianceAvailability _applianceAvailabilityCache;
         private DateTime _applianceAvailabilityLastCheck = DateTime.MinValue;
 
-        private ServiceConfiguration _serviceConfiguration;
+        [ThreadStatic] private static string _threadToken;
+
+        private ServiceConfiguration _serviceConfiguration => AuthorizedCache.Instance.FindByToken(_threadToken);
         private DevOpsSecretsBroker _devOpsSecretsBrokerCache;
 
         public DevOpsSecretsBroker DevOpsSecretsBrokerCache
@@ -111,6 +113,18 @@ namespace OneIdentity.DevOps.Logic
                 AddDevOpsHeader(devOpsInstanceId, additionalHeaders), timeout);
         }
 
+        public bool SetThreadData(string token)
+        {
+            var threadData = AuthorizedCache.Instance.FindByToken(token);
+
+            if (threadData == null)
+                return false;
+
+            _threadToken = token;
+            return true;
+
+        }
+
         public bool ValidateLicense()
         {
             var sg = _configDb.IgnoreSsl ?? true
@@ -152,7 +166,7 @@ namespace OneIdentity.DevOps.Logic
                     _applianceAvailabilityLastCheck = DateTime.Now;
                 }
 
-                var servConfig = _serviceConfiguration == null ? null : AuthorizedCache.Instance.FindByToken(_serviceConfiguration.AccessToken.ToInsecureString());
+                var servConfig = _serviceConfiguration;
                 return new SafeguardDevOpsConnection()
                 {
                     ApplianceAddress = address ?? _configDb.SafeguardAddress,
@@ -320,19 +334,17 @@ namespace OneIdentity.DevOps.Logic
             if (string.IsNullOrEmpty(token))
                 throw new DevOpsException("Missing safeguard access token.");
 
-            _serviceConfiguration = new ServiceConfiguration
-            {
-                AccessToken = token.ToSecureString()
-            };
-
             return Connect(safeguardConnection.ApplianceAddress, token.ToSecureString(), safeguardConnection.ApiVersion,
                 safeguardConnection.IgnoreSsl);
         }
 
         private void DisconnectWithAccessToken()
         {
-            _serviceConfiguration?.AccessToken?.Dispose();
-            _serviceConfiguration = null;
+            var sc = _serviceConfiguration;
+            if (sc != null)
+            {
+                sc.AccessToken = null;
+            }
         }
 
         private bool GetAndValidateUserPermissions(string token, SafeguardDevOpsConnection safeguardConnection)
@@ -348,12 +360,12 @@ namespace OneIdentity.DevOps.Logic
                 var valid = loggedInUser.AdminRoles.Any(x => x.Equals("PolicyAdmin"));
                 if (valid)
                 {
-                    _serviceConfiguration.Appliance = GetSafeguardAvailability(sg, safeguardConnection);
+                    var appliance = GetSafeguardAvailability(sg, safeguardConnection);
 
                     AuthorizedCache.Instance.Add(new ServiceConfiguration(loggedInUser)
                     {
                         AccessToken = token.ToSecureString(),
-                        Appliance = _serviceConfiguration.Appliance
+                        Appliance = appliance
                     });
                 }
 
@@ -1500,29 +1512,14 @@ namespace OneIdentity.DevOps.Logic
             _configDb.WebSslCertificate = CertificateHelper.CreateDefaultSslCertificate();
         }
 
-        public bool IsLoggedIn()
-        {
-            return _serviceConfiguration != null;
-        }
-
         public ISafeguardConnection Connect()
         {
-            if (!IsLoggedIn())
-                throw new DevOpsException("Not logged in");
-
-            return Connect(_serviceConfiguration.Appliance.ApplianceAddress,
-                _serviceConfiguration.AccessToken,
-                _serviceConfiguration.Appliance.ApiVersion,
-                _serviceConfiguration.Appliance.IgnoreSsl);
+            var sc = _serviceConfiguration;
+            return Connect(sc.Appliance.ApplianceAddress, sc.AccessToken, sc.Appliance.ApiVersion, sc.Appliance.IgnoreSsl);
         }
 
         private ISafeguardConnection Connect(string address, SecureString token, int? version, bool? ignoreSsl)
         {
-            if (!IsLoggedIn())
-            {
-                throw new DevOpsException("Not logged in");
-            }
-
             try
             {
                 _logger.Debug("Connecting to Safeguard as user: {address}", address);
@@ -2445,8 +2442,6 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                _serviceConfiguration.Clear();
-
                 _serviceConfiguration.Appliance = GetSafeguardAvailability(sg,
                     new SafeguardDevOpsConnection()
                     {
@@ -3125,15 +3120,15 @@ namespace OneIdentity.DevOps.Logic
                     foreach (var addon in addons)
                     {
                         // Determine if there are any accounts that need to be pushed to Safeguard.
-                        var accounts = new List<DevOpsSecretsBrokerAccount>();
+                        var accounts = new List<AssetAccount>();
                         foreach (var credential in addon.VaultCredentials)
                         {
-                            if (secretsBrokerAccounts.All(x => x.AccountName != credential.Key))
+                            if (secretsBrokerAccounts.All(x => x.Name != credential.Key))
                             {
-                                accounts.Add(new DevOpsSecretsBrokerAccount()
+                                accounts.Add(new AssetAccount()
                                 {
-                                    AccountId = 0,
-                                    AccountName = credential.Key,
+                                    Id = 0,
+                                    Name = credential.Key,
                                     Description = addon.Manifest.DisplayName + " account",
                                     AssetId = DevOpsSecretsBrokerCache.Asset.Id,
                                     Password = credential.Value
@@ -3168,11 +3163,11 @@ namespace OneIdentity.DevOps.Logic
                         if (!string.IsNullOrEmpty(addon.VaultAccountName))
                         {
                             var vaultAccount = secretsBrokerAccounts.FirstOrDefault(x =>
-                                x.AccountName.StartsWith(addon.VaultAccountName));
-                            if (vaultAccount != null && addon.VaultAccountId != vaultAccount.AccountId)
+                                x.Name.StartsWith(addon.VaultAccountName));
+                            if (vaultAccount != null && addon.VaultAccountId != vaultAccount.Id)
                             {
-                                addon.VaultAccountId = vaultAccount.AccountId;
-                                addon.VaultAccountName = vaultAccount.AccountName;
+                                addon.VaultAccountId = vaultAccount.Id;
+                                addon.VaultAccountName = vaultAccount.Name;
                                 addon.VaultAssetId = vaultAccount.AssetId;
                                 addon.VaultAssetName = vaultAccount.AssetName;
                                 _configDb.SaveAddon(addon);
@@ -3186,9 +3181,9 @@ namespace OneIdentity.DevOps.Logic
 
                             var accountsToPush = secretsBrokerAccounts.Where(x =>
                                     a2aAccounts.All(y =>
-                                        !y.AccountName.Equals(x.AccountName,
+                                        !y.AccountName.Equals(x.Name,
                                             StringComparison.InvariantCultureIgnoreCase)))
-                                .Select(x => new SppAccount() {Id = x.AccountId, Name = x.AccountName});
+                                .Select(x => new SppAccount() {Id = x.Id, Name = x.Name});
 
                             AddA2ARetrievableAccounts(sgConnection, accountsToPush, A2ARegistrationType.Vault);
                         }
@@ -3322,8 +3317,7 @@ namespace OneIdentity.DevOps.Logic
                             if (assetId > 0)
                             {
                                 devOpsSecretsBroker.Asset = GetAsset(sg, assetId);
-                                var accounts = GetAssetAccounts(sg, assetId);
-                                devOpsSecretsBroker.Accounts = accounts.Select(x => x.ToDevOpsSecretsBrokerAccount());
+                                devOpsSecretsBroker.Accounts = GetAssetAccounts(sg, assetId);
                             }
                         }catch { 
                             devOpsSecretsBroker.Asset = null; 
@@ -3619,23 +3613,23 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private List<DevOpsSecretsBrokerAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg)
+        private List<AssetAccount> GetSecretsBrokerAccounts(ISafeguardConnection sg)
         {
             try
             {
                 var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, $"DevOps/SecretsBrokers/{DevOpsSecretsBrokerCache.Id}/Accounts");
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
-                    var secretsBrokerAccounts = JsonHelper.DeserializeObject<IEnumerable<DevOpsSecretsBrokerAccount>>(result.Body).ToList();
+                    var secretsBrokerAccounts = JsonHelper.DeserializeObject<IEnumerable<AssetAccount>>(result.Body).ToList();
                     return secretsBrokerAccounts;
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Failed to get the DevOps Secrets Broker accounts from Safeguard. ");
+                _logger.Error(ex, "Failed to get the asset accounts from Safeguard. ");
             }
 
-            return new List<DevOpsSecretsBrokerAccount>();
+            return new List<AssetAccount>();
         }
 
         #endregion

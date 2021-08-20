@@ -28,6 +28,10 @@ namespace OneIdentity.DevOps.Data.Spp
         /// </summary>
         public bool HasPassword { get; set; }
         /// <summary>
+        /// The password for the account (write only)
+        /// </summary>
+        public string Password { get; set; }
+        /// <summary>
         /// Account is disabled
         /// </summary>
         public bool Disabled { get; set; }
@@ -63,28 +67,5 @@ namespace OneIdentity.DevOps.Data.Spp
         /// The display name of the user that created this entity.
         /// </summary>
         public string CreatedByUserDisplayName { get; set; }
-
-        /// <summary>
-        /// Convert to DevOpsSecretsBrokerAccount
-        /// </summary>
-        /// <returns></returns>
-        public DevOpsSecretsBrokerAccount ToDevOpsSecretsBrokerAccount()
-        {
-            return new DevOpsSecretsBrokerAccount()
-            {
-                AccountId = Id,
-                AccountName = Name,
-                Description = Description,
-                DomainName = DomainName,
-                AssetId = AssetId,
-                AssetName = AssetName,
-                AssetNetworkAddress = AssetNetworkAddress,
-                AssetPartitionId = AssetPartitionId,
-                AssetPartitionName = AssetPartitionName,
-                CreatedDate = CreatedDate,
-                CreatedBy = CreatedBy,
-                CreatedByUserDisplayName = CreatedByUserDisplayName
-            };
-        }
     }
 }

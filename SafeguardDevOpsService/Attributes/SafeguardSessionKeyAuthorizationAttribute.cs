@@ -62,6 +62,7 @@ namespace OneIdentity.DevOps.Attributes
                 return;
             }
 
+            service.SetThreadData(sppToken);
             context.HttpContext.Items.Add("spp-token", sppToken);
             context.HttpContext.Items.Add("session-key", sessionKey);
         }

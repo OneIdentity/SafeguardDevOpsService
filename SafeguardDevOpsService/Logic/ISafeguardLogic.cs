@@ -18,8 +18,8 @@ namespace OneIdentity.DevOps.Logic
         SafeguardDevOpsConnection GetSafeguardConnection();
         SafeguardDevOpsLogon GetSafeguardLogon();
         SafeguardDevOpsConnection SetSafeguardData(string token, SafeguardData safeguardData);
+        bool SetThreadData(string token);
 
-        bool IsLoggedIn();
         bool ValidateLicense();
         bool ValidateLogin(string token, bool tokenOnly = false);
         bool PauseBackgroundMaintenance { get; }

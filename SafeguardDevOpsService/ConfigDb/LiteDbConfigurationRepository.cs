@@ -730,11 +730,11 @@ namespace OneIdentity.DevOps.ConfigDb
                     Plugins = GetAllPlugins().Select(x => x.ToDevOpsSecretsBrokerPlugin(this))
                 };
 
-                var accounts = new List<DevOpsSecretsBrokerAccount>();
+                var accounts = new List<AssetAccount>();
                 var addons = GetAllAddons().ToList();
                 foreach (var addon in addons)
                 {
-                    accounts.AddRange(addon.VaultCredentials.Select(x => new DevOpsSecretsBrokerAccount() {AccountName = x.Key}));
+                    accounts.AddRange(addon.VaultCredentials.Select(x => new AssetAccount() {Name = x.Key}));
                 }
                 devOpsSecretsBroker.Accounts = accounts;
 
