@@ -2469,12 +2469,6 @@ namespace OneIdentity.DevOps.Logic
                 var plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
                 if (plugin != null)
                 {
-                    if (plugin.IsSystemOwned != addon.Manifest.IsPluginSystemOwned)
-                    {
-                        plugin.IsSystemOwned = addon.Manifest.IsPluginSystemOwned;
-                        _configDb.SavePluginConfiguration(plugin);
-                    }
-
                     if (plugin.IsDisabled != notLicensed)
                     {
                         plugin.IsDisabled = notLicensed;

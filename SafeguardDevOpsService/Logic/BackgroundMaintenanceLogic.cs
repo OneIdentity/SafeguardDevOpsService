@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -20,6 +22,13 @@ namespace OneIdentity.DevOps.Logic
             _safeguardLogic = safeguardLogic;
         }
 
+        bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain,
+            SslPolicyErrors sslPolicyErrors)
+        {
+            return CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger,
+                _configDb);
+        }
+
         private ISafeguardConnection GetSgConnection()
         {
             var sppAddress = _configDb.SafeguardAddress;
@@ -33,7 +42,10 @@ namespace OneIdentity.DevOps.Logic
                 try
                 {
                     _logger.Debug("Connecting to Safeguard: {address}", sppAddress);
-                    var connection = Safeguard.Connect(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion, ignoreSsl);
+                    var connection = ignoreSsl
+                        ? Safeguard.Connect(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion, true)
+                        : Safeguard.Connect(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion);
+
                     return connection;
                 }
                 catch (SafeguardDotNetException ex)
