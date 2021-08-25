@@ -369,6 +369,8 @@ namespace OneIdentity.DevOps.Logic
                                 Version = pluginVersion
                             };
 
+                            pluginInfo = ConfigureIfSystemOwned(pluginInfo);
+
                             _configDb.SavePluginConfiguration(pluginInfo);
 
                             _logger.Information($"Discovered new unconfigured plugin {Path.GetFileName(pluginPath)}.");
@@ -406,6 +408,23 @@ namespace OneIdentity.DevOps.Logic
             {
                 _logger.Error(ex, $"Failed to load plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
             }
+        }
+
+        private Plugin ConfigureIfSystemOwned(Plugin plugin)
+        {
+            var notLicensed = !_safeguardLogic.ValidateLicense();
+
+            var addons = _configDb.GetAllAddons();
+            foreach (var addon in addons)
+            {
+                if (addon.Manifest.PluginName.Equals(plugin.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    plugin.IsSystemOwned = addon.Manifest.IsPluginSystemOwned;
+                    plugin.IsDisabled = notLicensed;
+                }
+            }
+
+            return plugin;
         }
 
         public void RefreshPluginCredentials(ISafeguardConnection sgConnection)
