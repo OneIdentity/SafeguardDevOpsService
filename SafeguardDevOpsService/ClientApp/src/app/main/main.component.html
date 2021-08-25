@@ -48,7 +48,7 @@
             <div>{{ApplianceAddress}}</div>
             <p></p>
             <div *ngIf="DevOpsInstanceId">
-              <div class="info-label">Dev Ops ID</div>
+              <div class="info-label">DevOps ID</div>
               <div>{{DevOpsInstanceId}}</div>
             </div>
           </div>
@@ -81,7 +81,7 @@
         <div>{{UserDisplayName}}</div>
         <div class="info-label">({{UserName}})</div>
         <p></p>
-        <div class="info-label">Appliance to Appliance Registrations</div>
+        <div class="info-label">Application to Application Registrations</div>
         <div>{{A2ARegistrationName}}</div>
         <div>{{A2AVaultRegistrationName}}</div>
       </div>
@@ -150,8 +150,8 @@
             <div class="info-label">Trusted Certificates</div>
             <div *ngIf="!trustedCertificates?.length || needsTrustedCertificates">
               <button mat-button class="link-button cert-link" (click)='viewTrustedCertificates($event)'
-                [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>Add
-                Certificate</button>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>Add/Import
+                Certificates</button>
             </div>
             <div *ngIf="trustedCertificates?.length">
               <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"

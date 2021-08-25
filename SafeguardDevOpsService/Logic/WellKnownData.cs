@@ -57,6 +57,9 @@ namespace OneIdentity.DevOps.Logic
         public const string SafeguardAssetAdmin = "AssetAdmin";
         public const string SafeguardPolicyAdminAdmin = "PolicyAdmin";
 
+        public const string GenuineInstallerProdCertificate = "GenuineInstallerProd.pem";
+        public const string GenuineInstallerTestCertificate = "GenuineInstallerTest.pem";
+
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
@@ -68,6 +71,8 @@ namespace OneIdentity.DevOps.Logic
         public static readonly string SvcIdPath = Path.Combine(ServiceDirPath, ServiceIdentifier);
         public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, PluginsDeleteFile);
         public static readonly string LogDirPath = Path.Combine(ProgramDataPath, $"{DevOpsServiceName}.log");
+        public static readonly string GenuineInstallerProdCertPath = Path.Combine(ServiceDirPath, GenuineInstallerProdCertificate);
+        public static readonly string GenuineInstallerTestCertPath = Path.Combine(ServiceDirPath, GenuineInstallerTestCertificate);
 
         public static readonly string RestartNotice =
             "Safeguard Secrets Broker for DevOps needs to be restarted to complete installing this action.";
