@@ -650,7 +650,7 @@ export class MainComponent implements OnInit, AfterViewInit {
 
   uploadAddon() {
     this.error = null;
-    var fileInput = $('<input type="file" accept=".zip" />');
+    var fileInput = $('<input type="file" accept=".sbao" />');
 
     fileInput.on('change', () => {
       var file = fileInput.prop('files')[0];
@@ -841,7 +841,7 @@ export class MainComponent implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().subscribe(
       (result) => {
-        if (result?.result === ViewCertificateResult.RemovedCertificate) {      
+        if (result?.result === ViewCertificateResult.RemovedCertificate) {
             this.window.location.reload();
         } else if (result?.result === ViewCertificateResult.AddCertificate) {
           this.addCertificate(null, certType);

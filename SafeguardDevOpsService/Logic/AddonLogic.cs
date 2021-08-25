@@ -5,6 +5,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Common;
@@ -36,6 +38,36 @@ namespace OneIdentity.DevOps.Logic
             return new DevOpsException(msg, ex);
         }
 
+        private Tuple<bool,bool> ValidateAddonSignature(byte[] addonBytes)
+        {
+            try
+            {
+                var isProduction = true;
+
+                var signature = addonBytes.Take(512).ToArray();
+                var data = addonBytes.Skip(512).ToArray();
+
+                var prodGenuineInstaller = new X509Certificate2(File.ReadAllBytes(WellKnownData.GenuineInstallerProdCertPath));
+                var testGenuineInstaller = new X509Certificate2(File.ReadAllBytes(WellKnownData.GenuineInstallerTestCertPath));
+                var validToken = prodGenuineInstaller.GetRSAPublicKey()
+                    .VerifyData(data, signature, HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1);
+                if (!validToken)
+                {
+                    isProduction = false;
+                    validToken = testGenuineInstaller.GetRSAPublicKey()
+                        .VerifyData(data, signature, HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1);
+                }
+
+                return new Tuple<bool, bool>(validToken, isProduction);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to install the Add-on plugin. {ex.Message}");
+            }
+
+            return new Tuple<bool, bool>(false, false);
+        }
+
         public void InstallAddon(string base64Addon, bool force)
         {
             if (!_safeguardLogic.ValidateLicense())
@@ -50,10 +82,19 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
-                using (var inputStream = new MemoryStream(bytes))
-                using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
+                var signatureResult = ValidateAddonSignature(bytes);
+
+                if (signatureResult.Item1)
                 {
-                    InstallAddon(zipArchive, force);
+                    var isProduction = signatureResult.Item2;
+
+                    // Skip the signature bytes to get to the zip file
+                    var data = bytes.Skip(512).ToArray();
+
+                    using (var zipArchive = new ZipArchive(new MemoryStream(data), ZipArchiveMode.Read))
+                    {
+                        InstallAddon(zipArchive, isProduction, force);
+                    }
                 }
             }
             catch (Exception ex)
@@ -74,10 +115,24 @@ namespace OneIdentity.DevOps.Logic
 
             try
             {
+                byte[] addonBytes = null;
                 using (var inputStream = formFile.OpenReadStream())
-                using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
+                using (var memoryStream = new MemoryStream())
                 {
-                    InstallAddon(zipArchive, force);
+                    inputStream.CopyTo(memoryStream);
+                    addonBytes = memoryStream.ToArray();
+                }
+
+                var signatureResult = ValidateAddonSignature(addonBytes);
+                if (signatureResult.Item1)
+                {
+                    var isProduction = signatureResult.Item2;
+                    var data = addonBytes.Skip(512).ToArray();
+
+                    using (var zipArchive = new ZipArchive(new MemoryStream(data), ZipArchiveMode.Read))
+                    {
+                        InstallAddon(zipArchive, isProduction, force);
+                    }
                 }
             }
             catch (Exception ex)
@@ -247,7 +302,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void InstallAddon(ZipArchive zipArchive, bool force)
+        private void InstallAddon(ZipArchive zipArchive, bool isProduction, bool force)
         {
             var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
             if (manifestEntry == null)
@@ -267,6 +322,7 @@ namespace OneIdentity.DevOps.Logic
                         if (force)
                         {
                             _configDb.DeleteAddonByName(addonManifest.Name);
+                            addon = null;
                         }
                         else
                         {
@@ -304,7 +360,8 @@ namespace OneIdentity.DevOps.Logic
                     addon = new Addon()
                     {
                         Name = addonManifest.Name,
-                        Manifest = addonManifest
+                        Manifest = addonManifest,
+                        IsProduction = isProduction
                     };
                     _configDb.SaveAddon(addon);
 

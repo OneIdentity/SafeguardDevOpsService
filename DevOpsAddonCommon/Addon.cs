@@ -49,6 +49,11 @@ namespace OneIdentity.DevOps.Common
         public AddonManifest Manifest { get; set; }
 
         /// <summary>
+        /// Is production add-on type (true: Production, false: Test)
+        /// </summary>
+        public bool IsProduction { get; set; }
+
+        /// <summary>
         /// Cancellation Token
         /// </summary>
         [IgnoreDataMember]
