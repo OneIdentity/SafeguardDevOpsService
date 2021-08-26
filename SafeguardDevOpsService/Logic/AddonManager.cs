@@ -68,6 +68,15 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        public void StartAddon(Addon addon)
+        {
+            if (addon != null && LoadedAddons.ContainsKey(addon.Name))
+            {
+                var addonInstance = LoadedAddons[addon.Name];
+                Task.Run(async () => await addonInstance.RunAddonServiceAsync(addonInstance.AddOn.ServiceCancellationToken.Token), addonInstance.AddOn.ServiceCancellationToken.Token);
+            }
+        }
+
         private bool LoadAddonService(Addon addon)
         {
             if (addon?.Manifest?.DestinationFolder == null || addon.Manifest.Assembly == null)
@@ -100,12 +109,15 @@ namespace OneIdentity.DevOps.Logic
                     }
                     else
                     {
-                        addonService.SetLogger(_logger);
+                        addonService.Logger = _logger;
 
                         addonService.Name = addon.Manifest.Name;
                         addonService.DisplayName = addon.Manifest.DisplayName;
                         addonService.Description = addon.Manifest.Description;
                         addonService.AddOn = addon;
+
+                        // Make sure that the addon services are provided with the latest TLS certificates if needed.
+                        addonService.TlsCertificates = _configDb.GetWebSslPemCertificate();
 
                         //Subscribe for property changes in the addon object
                         addonService.AddOn.PropertyChanged += AddonPropertyChangedHandler;

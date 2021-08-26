@@ -36,6 +36,7 @@ namespace OneIdentity.DevOps.Logic
         private readonly Func<IPluginsLogic> _pluginsLogic;
         private readonly Func<IMonitoringLogic> _monitoringLogic;
         private readonly Func<IAddonLogic> _addonLogic;
+        private readonly Func<IAddonManager> _addonManager;
 
         private ApplianceAvailability _applianceAvailabilityCache;
         private DateTime _applianceAvailabilityLastCheck = DateTime.MinValue;
@@ -59,12 +60,14 @@ namespace OneIdentity.DevOps.Logic
         public bool PauseBackgroundMaintenance { get; private set; }
         public bool? ApplianceSupportsDevOps { get; private set; } = null;
 
-        public SafeguardLogic(IConfigurationRepository configDb, Func<IPluginsLogic> pluginsLogic, Func<IMonitoringLogic> monitoringLogic, Func<IAddonLogic> addonLogic)
+        public SafeguardLogic(IConfigurationRepository configDb, Func<IPluginsLogic> pluginsLogic, 
+            Func<IMonitoringLogic> monitoringLogic, Func<IAddonLogic> addonLogic, Func<IAddonManager> addonManager)
         {
             _configDb = configDb;
             _pluginsLogic = pluginsLogic;
             _monitoringLogic = monitoringLogic;
             _addonLogic = addonLogic;
+            _addonManager = addonManager;
             _logger = Serilog.Log.Logger;
         }
 
@@ -2070,6 +2073,13 @@ namespace OneIdentity.DevOps.Logic
 
         public void RestartService()
         {
+            // Try to shutdown any services that are owned by the addons before
+            //  shutting down Secrets Broker.
+            foreach (var addon in _configDb.GetAllAddons())
+            {
+                _addonManager().ShutdownAddon(addon);
+            }
+
             // Sleep just for a second to give the caller time to respond before we exit.
             Thread.Sleep(1000);
             Task.Run(() => Environment.Exit(54));

@@ -116,7 +116,7 @@ namespace OneIdentity.DevOps
         {
             builder.RegisterLogger();
             builder.Register(c => new LiteDbConfigurationRepository()).As<IConfigurationRepository>().SingleInstance();
-            builder.Register(c => new SafeguardLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<Func<IPluginsLogic>>(), c.Resolve<Func<IMonitoringLogic>>(), c.Resolve<Func<IAddonLogic>>())).As<ISafeguardLogic>().SingleInstance();
+            builder.Register(c => new SafeguardLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<Func<IPluginsLogic>>(), c.Resolve<Func<IMonitoringLogic>>(), c.Resolve<Func<IAddonLogic>>(), c.Resolve<Func<IAddonManager>>())).As<ISafeguardLogic>().SingleInstance();
             builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>(), c.Resolve<ISafeguardLogic>())).As<IPluginManager>().SingleInstance();
             builder.Register(c => new AddonManager(c.Resolve<IConfigurationRepository>())).As<IAddonManager>().SingleInstance();
             builder.Register(c => new PluginsLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>(), c.Resolve<ISafeguardLogic>())).As<IPluginsLogic>().SingleInstance();

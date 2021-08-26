@@ -16,5 +16,6 @@ namespace OneIdentity.DevOps.Logic
         Addon GetAddon(string addonName);
         AddonStatus GetAddonStatus(string addonName);
         void ConfigureDevOpsAddOn(string addonName);
+        void RestartDevOpsAddOn(string addonName);
     }
 }

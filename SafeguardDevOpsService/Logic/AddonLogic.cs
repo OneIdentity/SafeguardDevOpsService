@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Common;
@@ -300,6 +301,19 @@ namespace OneIdentity.DevOps.Logic
             {
                 sg.Dispose();
             }
+        }
+
+        public void RestartDevOpsAddOn(string addonName)
+        {
+            var addon = _configDb.GetAddonByName(addonName);
+            if (addon == null)
+            {
+                throw LogAndException($"Add-on {addonName} not found.");
+            }
+
+            _addonManager.ShutdownAddon(addon);
+            Thread.Sleep(TimeSpan.FromSeconds(1));
+            _addonManager.StartAddon(addon);
         }
 
         private void InstallAddon(ZipArchive zipArchive, bool isProduction, bool force)
