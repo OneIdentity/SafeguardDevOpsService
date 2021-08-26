@@ -24,13 +24,15 @@ namespace OneIdentity.DevOps.Logic
         private readonly IConfigurationRepository _configDb;
         private readonly IAddonManager _addonManager;
         private readonly ISafeguardLogic _safeguardLogic;
+        private readonly IPluginsLogic _pluginsLogic;
 
-        public AddonLogic(IConfigurationRepository configDb, IAddonManager addonManager, ISafeguardLogic safeguardLogic)
+        public AddonLogic(IConfigurationRepository configDb, IAddonManager addonManager, ISafeguardLogic safeguardLogic, IPluginsLogic pluginsLogic)
         {
             _logger = Serilog.Log.Logger;
             _configDb = configDb;
             _addonManager = addonManager;
             _safeguardLogic = safeguardLogic;
+            _pluginsLogic = pluginsLogic;
         }
 
         private DevOpsException LogAndException(string msg, Exception ex = null)
@@ -296,6 +298,14 @@ namespace OneIdentity.DevOps.Logic
 
                     _configDb.SaveAddon(addon);
                 }
+
+                var plugin = _configDb.GetPluginByName(addon.Manifest.PluginName);
+                if (plugin != null && plugin.VaultAccountId != addon.VaultAccountId)
+                {
+                    plugin.VaultAccountId = addon.VaultAccountId;
+                    _pluginsLogic.SavePluginVaultAccount(sg, plugin.Name, new AssetAccount(){Id = addon.VaultAccountId.Value});
+                }
+
             }
             finally
             {

@@ -121,7 +121,7 @@ namespace OneIdentity.DevOps
             builder.Register(c => new AddonManager(c.Resolve<IConfigurationRepository>())).As<IAddonManager>().SingleInstance();
             builder.Register(c => new PluginsLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>(), c.Resolve<ISafeguardLogic>())).As<IPluginsLogic>().SingleInstance();
             builder.Register(c => new MonitoringLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>())).As<IMonitoringLogic>().SingleInstance();
-            builder.Register(c => new AddonLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IAddonManager>(), c.Resolve<ISafeguardLogic>())).As<IAddonLogic>().SingleInstance();
+            builder.Register(c => new AddonLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IAddonManager>(), c.Resolve<ISafeguardLogic>(), c.Resolve<IPluginsLogic>())).As<IAddonLogic>().SingleInstance();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
