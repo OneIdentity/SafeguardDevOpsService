@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic.CompilerServices;
 using Serilog;
 
 namespace OneIdentity.DevOps.Common
@@ -11,10 +12,11 @@ namespace OneIdentity.DevOps.Common
         string Name { get; set; }
         string DisplayName { get; set; }
         string Description { get; set; }
+        ILogger Logger { get; set; }
+        Tuple<string,string> TlsCertificates { get; set; }
         Tuple<bool, List<string>> GetHealthStatus();
         Addon AddOn { get; set; }
         Task RunAddonServiceAsync(CancellationToken cancellationToken);
-        void SetLogger(ILogger logger);
         void Unload();
     }
 }

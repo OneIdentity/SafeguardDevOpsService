@@ -894,7 +894,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
-        /// Configure a specific add-on.
+        /// Configure an add-on.
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
@@ -913,6 +913,30 @@ namespace OneIdentity.DevOps.Controllers.V1
                 return BadRequest("Invalid add-on name.");
 
             addonLogic.ConfigureDevOpsAddOn(addonName);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Restart an add-on.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// </remarks>
+        /// <response code="200">Success.</response>
+        /// <response code="400">Bad request.</response>
+        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpPost("Addons/{addonName}/Restart")]
+        public ActionResult RestartAddOn([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        {
+            if (string.IsNullOrEmpty(addonName))
+                return BadRequest("Invalid add-on name.");
+
+            addonLogic.RestartDevOpsAddOn(addonName);
 
             return Ok();
         }
