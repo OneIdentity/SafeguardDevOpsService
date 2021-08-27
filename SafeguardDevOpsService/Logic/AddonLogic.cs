@@ -504,7 +504,11 @@ namespace OneIdentity.DevOps.Logic
                         if (addon.Manifest?.Name != null)
                             _configDb.DeleteAddonByName(addon.Manifest.Name);
                         if (addon.Manifest?.PluginName != null)
-                            _configDb.DeletePluginByName(addon.Manifest.PluginName);
+                        {
+                            _pluginsLogic.DeleteAccountMappings(addon.Manifest.PluginName);
+                            _pluginsLogic.RemovePluginVaultAccount(addon.Manifest.PluginName);
+                            _pluginsLogic.DeletePluginByName(addon.Manifest.PluginName);
+                        }
                     }
                 }
             }

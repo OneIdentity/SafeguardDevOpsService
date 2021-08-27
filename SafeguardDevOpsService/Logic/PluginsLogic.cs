@@ -297,6 +297,27 @@ namespace OneIdentity.DevOps.Logic
                 throw new DevOpsException(msg);
             }
 
+            var allAccounts = _configDb.GetAccountMappings().ToArray();
+            foreach (var account in retrievableAccounts)
+            {
+                if (!string.IsNullOrEmpty(account.AltAccountName))
+                {
+                    // Make sure that no other existing account has the same altAccountName
+                    // Make sure that none of the accounts that are being added, have the same altAccountName
+                    if (allAccounts.Any(x => x.AltAccountName != null 
+                                             && x.AltAccountName.Equals(account.AltAccountName, StringComparison.OrdinalIgnoreCase)
+                                             && !x.VaultName.Equals(name, StringComparison.OrdinalIgnoreCase)) 
+                        || retrievableAccounts.Any(x => x.AccountId != account.AccountId 
+                                                        && x.AltAccountName != null 
+                                                        && x.AltAccountName.Equals(account.AltAccountName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var msg = $"Invalid alternate account name. The account name {account.AltAccountName} is already in use.";
+                        _logger.Error(msg);
+                        throw new DevOpsException(msg);
+                    }
+                }
+            }
+
             var sg = sgConnection ?? _safeguardLogic.Connect();
 
             try

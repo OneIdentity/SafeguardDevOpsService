@@ -15,6 +15,7 @@ export class AuthService {
   login(applianceAddress: string): void {
     const redirect = encodeURIComponent(location.protocol + '//' + location.host + '/main');
     this.window.location.href = 'https://' + applianceAddress + '/RSTS/Login?response_type=token&redirect_uri=' + redirect;
+    this.window.sessionStorage.removeItem('UserToken');
   }
 
   getUserToken(applianceAddress: string): Observable<any> {
