@@ -1966,12 +1966,16 @@ namespace OneIdentity.DevOps.Logic
             var safeguardConnection = ConnectAnonymous(safeguardData.ApplianceAddress,
                 safeguardData.ApiVersion ?? WellKnownData.DefaultApiVersion, safeguardData.IgnoreSsl ?? false);
 
+            // If the user is trying to change the state of the ignoreSsl flag back to true, then use the new value.
+            //  If the current value of the flag in the database or the new value is null, then assume true or the current value.
+            safeguardConnection.IgnoreSsl = (safeguardConnection.IgnoreSsl ?? true) || (safeguardData.IgnoreSsl ?? (safeguardConnection.IgnoreSsl ?? true));
+
             _applianceAvailabilityCache = null;
             if (safeguardConnection != null && FetchAndStoreSignatureCertificate(token, safeguardConnection))
             {
                 _configDb.SafeguardAddress = safeguardData.ApplianceAddress;
                 _configDb.ApiVersion = safeguardData.ApiVersion ?? WellKnownData.DefaultApiVersion;
-                _configDb.IgnoreSsl = safeguardData.IgnoreSsl ?? false;
+                _configDb.IgnoreSsl = safeguardData.IgnoreSsl ?? true;
 
                 safeguardConnection.ApplianceAddress = _configDb.SafeguardAddress;
                 safeguardConnection.ApiVersion = _configDb.ApiVersion;

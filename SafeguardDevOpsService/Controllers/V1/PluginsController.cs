@@ -131,7 +131,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("{name}")]
-        public ActionResult<Plugin> GetPlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        public ActionResult<Plugin> GetPluginConfiguration([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
             var plugin = pluginsLogic.GetPluginByName(name);
             if (plugin == null)
@@ -156,7 +156,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPut("{name}")]
-        public ActionResult<Plugin> UpdatePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginConfiguration pluginConfiguration)
+        public ActionResult<Plugin> UpdatePluginConfiguration([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginConfiguration pluginConfiguration)
         {
             var plugin = pluginsLogic.SavePluginConfigurationByName(pluginConfiguration, name);
             if (plugin == null)
@@ -184,7 +184,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("{name}")]
-        public ActionResult DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromQuery] bool restart = false)
+        public ActionResult DeletePluginConfiguration([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromQuery] bool restart = false)
         {
             pluginsLogic.DeleteAccountMappings(name);
             pluginsLogic.RemovePluginVaultAccount(name);
