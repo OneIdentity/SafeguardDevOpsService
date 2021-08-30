@@ -48,10 +48,9 @@ namespace OneIdentity.DevOps
             Log.Logger.Information($"Thumbprint for {webSslCert.Subject}: {webSslCert.Thumbprint}");
             Log.Logger.Information(webSslCert.ToPemFormat());
 
-            Log.Logger.Information($"Configuration file location: {Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json");
+            Log.Logger.Information($"Configuration file location: {WellKnownData.AppSettingsFile}");
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile($"{Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json",
-                    optional: true, reloadOnChange: true)
+                .AddJsonFile(WellKnownData.AppSettingsFile, optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
             var httpsPort = configuration["HttpsPort"] ?? WellKnownData.DefaultServicePort;

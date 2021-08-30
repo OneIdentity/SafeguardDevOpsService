@@ -2002,6 +2002,14 @@ namespace OneIdentity.DevOps.Logic
             RestartService();
         }
 
+        private void RestoreDefaultPort()
+        {
+            if (File.Exists(WellKnownData.AppSettingsFile))
+            {
+                File.Delete(WellKnownData.AppSettingsFile);
+            }
+        }
+
         private void DeleteSafeguardData(ISafeguardConnection sgConnection)
         {
             var tasks = new[]
@@ -2070,6 +2078,7 @@ namespace OneIdentity.DevOps.Logic
                 }
             }
 
+            RestoreDefaultPort();
             DeleteSecretsBrokerData();
             DevOpsSecretsBrokerCache = null;
             DisconnectWithAccessToken();
