@@ -66,6 +66,7 @@ namespace OneIdentity.DevOps.Logic
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
             System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) ?
                 Assembly.GetExecutingAssembly().Location : Process.GetCurrentProcess().MainModule?.FileName);
+        public static readonly string AppSettingsFile = $"{Path.Combine(ServiceDirPath, AppSettings)}.json";
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
         public static readonly string AddonServiceStageDirPath = Path.Combine(ProgramDataPath, AddonServiceStageName);
