@@ -1518,7 +1518,13 @@ namespace OneIdentity.DevOps.Logic
         public ISafeguardConnection Connect()
         {
             var sc = _serviceConfiguration;
-            return Connect(sc.Appliance.ApplianceAddress, sc.AccessToken, sc.Appliance.ApiVersion, sc.Appliance.IgnoreSsl);
+            if (sc != null)
+            {
+                return Connect(sc.Appliance.ApplianceAddress, sc.AccessToken, sc.Appliance.ApiVersion,
+                    sc.Appliance.IgnoreSsl);
+            }
+
+            throw LogAndException("Failed to connect to Safeguard. The service configuration is not set yet.");
         }
 
         private ISafeguardConnection Connect(string address, SecureString token, int? version, bool? ignoreSsl)
