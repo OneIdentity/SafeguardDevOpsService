@@ -17,6 +17,7 @@ RUN apk -U --no-cache add \
 
 COPY ["SafeguardDevOpsService/bin/Release/linux-musl-x64/publish/SafeguardDevOpsService", "/home/safeguard/"]
 COPY ["SafeguardDevOpsService/bin/Release/linux-musl-x64/publish/ClientApp", "/home/safeguard/ClientApp"]
+COPY ["SafeguardDevOpsService/bin/Release/linux-x64/Certificates", "/home/safeguard/Certificates"]
 COPY ["docker/run-devops.sh", "/home/safeguard/run-devops.sh"]
 
 RUN chown -R safeguard:safeguard /home/safeguard \
