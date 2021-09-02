@@ -8,6 +8,8 @@ RUN apk -U --no-cache add \
         coreutils \
         util-linux \
         bash \
+        nginx \
+        sudo \
     && rm /usr/bin/vi \
     && ln -s /usr/bin/vim /usr/bin/vi \
     && groupadd -r safeguard \
@@ -22,6 +24,7 @@ COPY ["docker/run-devops.sh", "/home/safeguard/run-devops.sh"]
 
 RUN chown -R safeguard:safeguard /home/safeguard \
     && chown -R safeguard:safeguard /usr/share
+RUN echo 'safeguard ALL=(ALL) ALL' > /etc/sudoers.d/safeguard
 
 USER safeguard
 WORKDIR /home/safeguard

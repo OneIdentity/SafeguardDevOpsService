@@ -2,6 +2,8 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-focal
 MAINTAINER support@oneidentity.com
 ENV DOCKER_RUNNING=true
 
+RUN apt install nginx
+
 RUN groupadd -r safeguard \
     && useradd -r -g safeguard -s /bin/bash safeguard \
     && mkdir -p /home/safeguard \
@@ -14,6 +16,7 @@ COPY ["docker/run-devops.sh", "/home/safeguard/run-devops.sh"]
 
 RUN chown -R safeguard:safeguard /home/safeguard \
     && chown -R safeguard:safeguard /usr/share
+RUN echo 'safeguard ALL=(ALL) ALL' > /etc/sudoers.d/safeguard
 
 USER safeguard
 WORKDIR /home/safeguard
