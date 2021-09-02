@@ -959,6 +959,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [DisableRequestSizeLimit]
         [UnhandledExceptionError]
+        [RequestFormLimits(ValueLengthLimit = (200000*1024), MultipartBodyLengthLimit = (200000*1024))]
         [HttpPost("Addons")]
         public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
             Addon addonInfo, [FromQuery] bool restart = false, [FromQuery] bool force = false)
@@ -991,6 +992,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [DisableRequestSizeLimit]
         [UnhandledExceptionError]
+        [RequestFormLimits(ValueLengthLimit = (200000*1024), MultipartBodyLengthLimit = (200000*1024))]
         [HttpPost("Addons/File")]
         public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
             IFormFile formFile, [FromQuery] bool restart = false, [FromQuery] bool force = false)
