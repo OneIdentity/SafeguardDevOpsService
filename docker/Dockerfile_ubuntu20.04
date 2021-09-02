@@ -16,7 +16,7 @@ COPY ["docker/run-devops.sh", "/home/safeguard/run-devops.sh"]
 
 RUN chown -R safeguard:safeguard /home/safeguard \
     && chown -R safeguard:safeguard /usr/share
-RUN echo 'safeguard ALL=(ALL) ALL' > /etc/sudoers.d/safeguard
+RUN echo 'safeguard ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/safeguard
 
 USER safeguard
 WORKDIR /home/safeguard
