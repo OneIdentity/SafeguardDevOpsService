@@ -35,9 +35,9 @@ jobs:
         displayName: 'Creating and publishing a release to Github'
         condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
-      #- powershell: Publish-Module -Path $(Build.SourcesDirectory)\safeguard-devops -NuGetApiKey "$(PowerShellGalleryApiKey)" -Verbose -SkipAutomaticTags
-      #  displayName: 'Publish Powershell module to Powershell Gallery'
-      #  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+      - powershell: Publish-Module -Path $(Build.SourcesDirectory)\safeguard-devops -NuGetApiKey "$(PowerShellGalleryApiKey)" -Verbose -SkipAutomaticTags
+        displayName: 'Publish Powershell module to Powershell Gallery'
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
       - task: NuGetCommand@2
         inputs:

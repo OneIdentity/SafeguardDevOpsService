@@ -68,7 +68,7 @@ steps:
     inputs:
       targetType: filePath
       filePath: $(System.DefaultWorkingDirectory)\powershell\install-forpipeline.ps1
-      arguments: $(Build.SourcesDirectory) $(VersionString) $$(isPrerelease)
+      arguments: $(Build.SourcesDirectory) $(Build.BuildId) $$(isPrerelease)
     displayName: 'Building Powershell module'
 
   - task: PublishBuildArtifacts@1
