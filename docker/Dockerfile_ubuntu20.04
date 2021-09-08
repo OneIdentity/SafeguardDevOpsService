@@ -2,7 +2,12 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-focal
 MAINTAINER support@oneidentity.com
 ENV DOCKER_RUNNING=true
 
-RUN apt update && apt -y install nginx && apt -y install sudo
+RUN apt update \
+    && apt -y install nginx \
+    && apt -y install sudo \
+    && apt -y install psmisc \
+    && apt -y install less \
+    && apt -y install vim
 
 RUN groupadd -r safeguard \
     && useradd -r -g safeguard -s /bin/bash safeguard \
