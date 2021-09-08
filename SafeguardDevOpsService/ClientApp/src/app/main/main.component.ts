@@ -75,6 +75,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   needsSSLEnabled:boolean = true;
   isLicensed: boolean = false;
   isAssetAdmin: boolean = false;
+  certificateUploaded: boolean = false;
 
   certificateUploading = {
     Client: false,
@@ -421,13 +422,15 @@ export class MainComponent implements OnInit, AfterViewInit {
     const dialogRef = this.dialog.open(UploadCertificateComponent, {
       data: {
         certificateType,
-        certificate: certificateType === 'Web Server' ? this.webServerCert : null
+        certificate: certificateType === 'Web Server' ? this.webServerCert : null,
+        needsWebCertificate: this.needsWebCertificate
       }
     });
 
     dialogRef.afterClosed().pipe(
       switchMap((dlgResult: any) => {
         if (dlgResult?.result === UploadCertificateResult.UploadCertificate) {
+          this.certificateUploaded = true;
           return of(dlgResult.data);
         }
 
@@ -486,7 +489,7 @@ export class MainComponent implements OnInit, AfterViewInit {
               this.initializeAddons()
             ]).subscribe();
           }, 2000);
-          this.viewCertificate(null, 'Client', true);
+          this.viewCertificate(null, 'Client', true, this.certificateUploaded);
         } else {
           this.webServerCertAdded = true;
           this.window.location.reload();
@@ -833,10 +836,14 @@ export class MainComponent implements OnInit, AfterViewInit {
       });
   }
 
-  viewCertificate(e: Event, certType: string = 'Client', reload: boolean = false): void {
+  viewCertificate(e: Event, certType: string = 'Client', reload: boolean = false, isUpload: boolean = false): void {
     this.error = null;
     const dialogRef = this.dialog.open(ViewCertificateComponent, {
-      data: { certificateType: certType, certificate: certType === 'Web Server' ? this.webServerCert : null }
+      data: {
+        certificateType: certType,
+        certificate: certType === 'Web Server' ? this.webServerCert : null,
+        isUpload: isUpload
+      }
     });
 
     dialogRef.afterClosed().subscribe(
@@ -861,7 +868,9 @@ export class MainComponent implements OnInit, AfterViewInit {
       data: { trustedCertificates: this.trustedCertificates }
     });
 
-    dialogRef.afterClosed().subscribe(() => this.needsSSLEnabled = !dialogRef.componentInstance.useSsl);
+    dialogRef.afterClosed().subscribe(() => {
+      this.window.location.reload();
+    });
   }
 
   parseError(error: any) {

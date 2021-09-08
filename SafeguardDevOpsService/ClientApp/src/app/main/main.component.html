@@ -62,6 +62,9 @@
             <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon> Verify TLS Certificate
           </button>
         </div>
+        <div *ngIf="!isMonitoringAvailable">
+          <b>Monitoring is unavailable.</b>
+        </div>
         <button mat-flat-button class="monitoring-button start-monitoring"
           *ngIf="!isMonitoring && isMonitoringAvailable && !needsSSLEnabled" (click)="updateMonitoring(true)"
           [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>Start Monitoring</button>
@@ -150,7 +153,8 @@
             <div class="info-label">Trusted Certificates</div>
             <div *ngIf="!trustedCertificates?.length || needsTrustedCertificates">
               <button mat-button class="link-button cert-link" (click)='viewTrustedCertificates($event)'
-                [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>Add/Import
+                [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary'
+                disableRipple>Add/Import
                 Certificates</button>
             </div>
             <div *ngIf="trustedCertificates?.length">

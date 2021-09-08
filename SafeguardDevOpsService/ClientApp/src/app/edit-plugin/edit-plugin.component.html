@@ -87,9 +87,9 @@
           <ng-container matColumnDef="altaccount">
             <th mat-header-cell *matHeaderCellDef>Alternate</th>
             <td mat-cell *matCellDef="let element">
-              <div class="center">
-                <input matInput type="text" [(ngModel)]="element.AltAccountName">
-              </div>
+              <mat-form-field appearance="outline" class="eui-input--small eui-input--no-margin maxWidth">
+                <input matInput class="altname" type="text" autocomplete='off' [(ngModel)]="element.AltAccountName">
+              </mat-form-field>
             </td>
           </ng-container>
 

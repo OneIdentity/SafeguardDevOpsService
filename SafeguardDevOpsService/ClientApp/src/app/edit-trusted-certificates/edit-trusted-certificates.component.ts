@@ -21,6 +21,7 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   localizedValidFrom: string;
   isLoading: boolean;
   showExplanatoryText: boolean;
+  error = null;
 
   @ViewChild('certificates', { static: false }) certList: MatSelectionList;
   @ViewChild('fileSelectInputDialog', { static: false }) fileSelectInputDialog: ElementRef;
@@ -57,7 +58,13 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   }
 
   updateUseSsl(): void {
-    this.serviceClient.putSafeguardUseSsl(this.useSsl).subscribe();
+    this.error = null;
+    this.serviceClient.putSafeguardUseSsl(this.useSsl)
+      .subscribe(() => { },
+        error => {
+          this.useSsl = false;
+          this.error = error;
+        });
   }
 
   onChangeFile(files: FileList): void {

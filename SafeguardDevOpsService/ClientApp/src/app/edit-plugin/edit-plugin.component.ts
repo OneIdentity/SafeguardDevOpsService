@@ -218,6 +218,7 @@ export class EditPluginComponent implements OnInit {
           this.editPluginService.closeProperties(this.plugin);
         },
         error => {
+          this.isSaving = false;
           this.error = SCH.parseError(error);
         }
       );
@@ -232,6 +233,7 @@ export class EditPluginComponent implements OnInit {
           this.editPluginService.closeProperties(this.plugin);
         },
         error => {
+          this.isSaving = false;
           this.error = SCH.parseError(error);
         }
       );
