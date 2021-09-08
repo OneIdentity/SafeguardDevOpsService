@@ -12,6 +12,7 @@
 
    <app-progress-spinner diameter="20" color="accent" [visible]="!certificateLoaded || removingCertificate"
       [message]="spinnerMessage"></app-progress-spinner>
+
    <div class='certificate-container' *ngIf='certificateLoaded && !removingCertificate'>
       <div>
          <div class='label'>Subject Name</div>
@@ -34,10 +35,10 @@
       </div>
    </div>
 </div>
-<div mat-dialog-actions align='start'>
-   <button mat-button *ngIf="showBackButton" class='link-button' color='primary' (click)="addCertificate()"
+
+<div mat-dialog-actions align='start' *ngIf="certificateLoaded">
+   <button mat-button *ngIf="showBackButton && !isUpload" class='link-button' color='primary' (click)="addCertificate()"
       tabindex='-1' disableRipple>&lt; &nbsp; Back</button>
-   <button mat-button *ngIf="!removingCertificate && !showBackButton" class='link-button' color='primary'
-      (click)="removeCertificate()" tabindex='-1' disableRipple>Remove
-      Certificate</button>
+   <button mat-button *ngIf="!removingCertificate && !showBackButton && !isUpload" class='link-button' color='primary'
+      (click)="addCertificate()" tabindex='-1' disableRipple>Replace Certificate</button>
 </div>

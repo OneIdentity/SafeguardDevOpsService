@@ -1,5 +1,5 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import * as $ from 'jquery';
 
 @Component({
@@ -11,15 +11,16 @@ export class UploadCertificateComponent implements OnInit {
 
   certificateType: string = '';
   certificate: any;
+  needsWebCertificate: boolean;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
-    private dialog: MatDialog,
     private dialogRef: MatDialogRef<UploadCertificateComponent>) { }
 
   ngOnInit(): void {
     this.certificateType = this.data?.certificateType ?? '';
     this.certificate = this.data?.certificate;
+    this.needsWebCertificate = this.data?.needsWebCertificate;
   }
 
   browse(): void {
