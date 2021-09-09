@@ -19,6 +19,7 @@ Write-Host "BuildNumber = $($local:BuildNumber)"
 $local:PackageCodeMarker = "255.255.65534"
 $local:AssemblyCodeMarker = "255.255.65534.65534"
 $local:AssemblyVersion = "${SemanticVersion}.$($local:BuildNumber)"
+$local:PwShellVersion = "${SemanticVersion}.$($BuildId)"
 if ($IsPrerelease)
 {
     $local:PackageVersion = "${SemanticVersion}-dev-$($local:BuildNumber)"
@@ -57,3 +58,4 @@ Get-Content $local:ProjectFile
 Write-Output "*****"
 
 Write-Output "##vso[task.setvariable variable=VersionString;]$($local:AssemblyVersion)"
+Write-Output "##vso[task.setvariable variable=PwShellVersionString;]$($local:PwShellVersion)"
