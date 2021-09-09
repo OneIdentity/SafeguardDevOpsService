@@ -32,6 +32,7 @@ Write-Host "PackageCodeMarker = $($local:PackageCodeMarker)"
 Write-Host "AssemblyCodeMarker = $($local:AssemblyCodeMarker)"
 Write-Host "PackageVersion = $($local:PackageVersion)"
 Write-Host "AssemblyVersion = $($local:AssemblyVersion)"
+Write-Host "PwShellVersion = $($local:PwShellVersion)"
 
 Write-Host "Replacing version information in SafeguardDevOpsService assembly info"
 $local:ProjectFile = (Join-Path $PSScriptRoot "SafeguardDevOpsService\Properties\AssemblyInfo.cs")
