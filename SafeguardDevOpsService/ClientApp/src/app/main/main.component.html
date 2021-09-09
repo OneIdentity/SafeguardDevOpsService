@@ -59,10 +59,10 @@
           <p></p>
           <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"
             color='primary' disableRipple>
-            <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon> Verify TLS Certificate
+            <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon>&nbsp;Verify TLS Certificate
           </button>
         </div>
-        <div *ngIf="!isMonitoringAvailable">
+        <div *ngIf="!isMonitoringAvailable && !isLoading">
           <b>Monitoring is unavailable.</b>
         </div>
         <button mat-flat-button class="monitoring-button start-monitoring"
@@ -125,7 +125,7 @@
               <button mat-button class="link-button cert-link" color="primary"
                 (click)="viewCertificate($event, 'Client')"
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' disableRipple>
-                <mat-icon class="green-icon" inline=true>check_circle</mat-icon> View Details
+                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
               </button>
             </div>
           </div>
@@ -137,15 +137,13 @@
             <div *ngIf="!webServerCertAdded || needsWebCertificate">
               <button mat-button class="link-button cert-link" (click)="addCertificate($event, 'Web Server')"
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>
-                <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon>
-                View Details
+                <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
               </button>
             </div>
             <div *ngIf="webServerCertAdded && !needsWebCertificate">
               <button mat-button class="link-button cert-link" (click)="viewCertificate($event,'Web Server')"
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>
-                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>
-                View Details
+                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
               </button>
             </div>
           </div>
@@ -154,14 +152,12 @@
             <div *ngIf="!trustedCertificates?.length || needsTrustedCertificates">
               <button mat-button class="link-button cert-link" (click)='viewTrustedCertificates($event)'
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary'
-                disableRipple>Add/Import
-                Certificates</button>
+                disableRipple>Add/Import Certificates</button>
             </div>
             <div *ngIf="trustedCertificates?.length">
               <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>
-                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>
-                View Details
+                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
               </button>
             </div>
           </div>
@@ -187,11 +183,15 @@
                   matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">check_circle</mat-icon>
                 <mat-icon class="yellow-icon" inline=true *ngIf="!addon.Status?.IsReady"
                   matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">check_circle</mat-icon>
-                {{addon.Manifest.DisplayName}}
+                &nbsp;{{addon.Manifest.DisplayName}}&nbsp;
+                <mat-icon class="blue-icon" inline=true *ngIf="addon.IsProduction" matTooltip="Production">verified_user
+                </mat-icon>
+                <mat-icon class="blue-icon" inline=true *ngIf="!addon.IsProduction" matTooltip="Test">remove_moderator
+                </mat-icon>
               </button>
               <button *ngIf="addon.IsUploadCustom" mat-button class="link-button cert-link" (click)='uploadAddon()'
                 [disabled]='isUploading.Plugin || !isLicensed' color='primary' disableRipple>
-                <mat-icon class="upload-icon" inline=true>cloud_upload</mat-icon>{{addon.Manifest.DisplayName}}
+                <mat-icon class="upload-icon" inline=true>cloud_upload</mat-icon>&nbsp;{{addon.Manifest.DisplayName}}
               </button>
             </div>
           </ng-container>

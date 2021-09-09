@@ -12,7 +12,11 @@
       <div class="basic-info-header">
         <h2>Basic Info</h2>
         <div class="spacer"></div>
-        <div class="sub-title">Version {{addon?.Manifest.Version}}</div>
+        <div class="sub-title">
+          Version {{addon?.Manifest.Version}}
+          <mat-icon class="blue-icon" inline=true *ngIf="addon.IsProduction" matTooltip="Production">verified_user</mat-icon>
+          <mat-icon class="blue-icon" inline=true *ngIf="!addon.IsProduction" matTooltip="Test">remove_moderator</mat-icon>
+        </div>
       </div>
       <div class="info-label">Name</div>
       <div>{{addon?.Manifest.DisplayName}}</div>
@@ -21,6 +25,18 @@
       <div>
         <div class="info-label">Description</div>
         <div>{{addon?.Manifest.Description}}</div>
+      </div>
+    </mat-card>
+
+    <mat-card>
+      <h2>
+        Status&nbsp;
+        <mat-icon class="green-icon" inline=true *ngIf="addon.Status?.IsReady">check_circle</mat-icon>
+        <mat-icon class="yellow-icon" inline=true *ngIf="!addon.Status?.IsReady">check_circle</mat-icon>
+      </h2>
+      <p></p>
+      <div>
+        {{addon.Status?.HealthStatus.join(', ')}}
       </div>
     </mat-card>
 
