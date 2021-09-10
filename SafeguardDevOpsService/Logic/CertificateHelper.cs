@@ -32,16 +32,9 @@ namespace OneIdentity.DevOps.Logic
             SslPolicyErrors sslPolicyErrors, Serilog.ILogger logger, IConfigurationRepository configDb)
         {
             var trustedChain = configDb.GetTrustedChain();
-            if (trustedChain.ChainPolicy.ExtraStore.Count == 0)
-            {
-                logger.Error("IgnoreSsl is false and there no trusted certificates have been specified.");
-                return false;
-            }
 
             try
             {
-                var cert2 = new X509Certificate2(certificate);
-
                 var sans = GetSubjectAlternativeName(new X509Certificate2(certificate), logger);
                 var safeguardAddress = configDb.SafeguardAddress;
                 if (!sans.Exists(x => x.Equals(safeguardAddress, StringComparison.InvariantCultureIgnoreCase) ||
@@ -54,6 +47,7 @@ namespace OneIdentity.DevOps.Logic
 
                 if (chain.ChainElements.Count <= 1)
                 {
+                    var cert2 = new X509Certificate2(certificate);
                     var found = trustedChain.ChainPolicy.ExtraStore.Find(X509FindType.FindByThumbprint, cert2.Thumbprint ?? string.Empty, false);
                     if (found.Count == 1)
                         return true;
