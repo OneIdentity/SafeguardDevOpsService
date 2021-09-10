@@ -50,26 +50,43 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
 
     this.pluginAccounts = this.editPluginService.plugin.Accounts;
 
-    const sortColumn = this.window.sessionStorage.getItem('AccountsSortColumn');
-    const sortDirection = this.window.sessionStorage.getItem('AccountsSortDirection');
+    let sortColumn = this.window.sessionStorage.getItem('AccountsSortColumn');
+    if (!sortColumn) {
+      sortColumn = 'asset';
+      this.window.sessionStorage.setItem('AccountsSortColumn', sortColumn);
+    }
+
+    let sortDirection = this.window.sessionStorage.getItem('AccountsSortDirection');
+    if (!sortDirection) {
+      sortDirection = 'asc';
+      this.window.sessionStorage.setItem('AccountsSortDirection', sortDirection);
+    }
+
     if ((sortColumn === 'account' || sortColumn === 'asset') && (sortDirection === 'asc' || sortDirection === 'desc')) {
       this.sortColumn = sortColumn;
       this.sortDirection = sortDirection;
     }
 
+    this.loadAccounts();
+  }
+
+  loadAccounts() {
+    this.assetSearchVal = '';
+    this.accountSearchVal = '';
     this.isLoading = true;
-    this.editPluginService.getAvailableAccounts().pipe(
-      untilDestroyed(this),
-      filter(() => !this.editPluginService.plugin.LoadingAvailableAccounts)
-    ).subscribe(
-      (data: any[]) => {
-        this.isLoading = false;
-        this.accounts = [...data];
-        this.totalCount = this.editPluginService.availableAccountsTotalCount;
-        this.hideCurrentAccounts();
-        this.dataSource.data = this.accounts;
-      }
-    );
+    this.editPluginService.getAvailableAccounts()
+      .pipe(untilDestroyed(this),
+        filter(() => !this.editPluginService.plugin.LoadingAvailableAccounts)
+      ).subscribe(
+        (data: any[]) => {
+          this.isLoading = false;
+          this.accounts = [];
+          this.accounts = [...data];
+          this.totalCount = this.editPluginService.availableAccountsTotalCount;
+          this.hideCurrentAccounts();
+          this.dataSource.data = this.accounts;
+        }
+      );
   }
 
   private hideCurrentAccounts(): void {
@@ -92,16 +109,16 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
       this.sort.sortChange,
       this.paginator.page
     ).pipe(
-        untilDestroyed(this),
-        debounceTime(500),
-        distinctUntilChanged(),
-        switchMap(() => this.doSearch()),
-      ).subscribe(
-        (data) => {
-          this.accounts = data;
-          this.hideCurrentAccounts();
-          this.dataSource.data = this.accounts;
-          this.isLoading = false;
+      untilDestroyed(this),
+      debounceTime(500),
+      distinctUntilChanged(),
+      switchMap(() => this.doSearch()),
+    ).subscribe(
+      (data) => {
+        this.accounts = data;
+        this.hideCurrentAccounts();
+        this.dataSource.data = this.accounts;
+        this.isLoading = false;
       });
   }
 
@@ -124,7 +141,7 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
     }
 
     if (this.sort.active && this.sort.direction) {
-      const dir =  this.sort.direction === 'desc' ? '-' : '';
+      const dir = this.sort.direction === 'desc' ? '-' : '';
 
       if (this.sort.active === 'asset') {
         sortby = `${dir}SystemName,${dir}SystemNetworkAddress`;
@@ -148,16 +165,17 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
       this.currFilterStr = filterStr;
       this.currSortby = sortby;
 
-      return this.serviceClient.getAvailableAccountsCount(filterStr, sortby).pipe(
-        switchMap((count) => {
-          this.totalCount = count;
-          if (this.totalCount > 0) {
-            return this.serviceClient.getAvailableAccounts(filterStr, sortby, this.paginator.pageIndex, this.paginator.pageSize);
-          } else {
-            return of([]);
-          }
-        })
-      );
+      return this.serviceClient.getAvailableAccountsCount(filterStr, sortby)
+        .pipe(
+          switchMap((count) => {
+            this.totalCount = count;
+            if (this.totalCount > 0) {
+              return this.serviceClient.getAvailableAccounts(filterStr, sortby, this.paginator.pageIndex, this.paginator.pageSize);
+            } else {
+              return of([]);
+            }
+          })
+        );
     }
 
     return this.serviceClient.getAvailableAccounts(filterStr, sortby, this.paginator.pageIndex, this.paginator.pageSize);
@@ -173,8 +191,8 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
   /** Selects all rows if they are not all selected; otherwise clear selection. */
   masterToggle(): void {
     this.isAllSelected() ?
-        this.selection.clear() :
-        this.accounts.forEach(row => this.selection.select(row));
+      this.selection.clear() :
+      this.accounts.forEach(row => this.selection.select(row));
   }
 
   selectRow(event, row): void {
