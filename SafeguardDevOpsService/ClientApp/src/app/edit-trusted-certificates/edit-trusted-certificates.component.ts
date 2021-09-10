@@ -197,6 +197,10 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
     this.serviceClient.deleteTrustedCertificate(thumbprint).pipe(
       switchMap(() => this.refreshCertificates())
     ).subscribe(() => {
+      if (this.trustedCertificates.length == 0) {
+        this.useSsl = false;
+        this.updateUseSsl();
+      }
       this.isLoading = false;
     });
   }

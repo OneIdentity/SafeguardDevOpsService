@@ -21,6 +21,25 @@ table {
   width: 600px;
   flex: 1;
   overflow: auto;
+
+  .table-container {
+    position: relative;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+
+    .mat-table {
+      flex: 1;
+    }
+
+    & th {
+    padding-left: 24px; 
+    }
+    
+    & td {
+    padding-left: 24px; 
+    }
+  }
 }
 
 .spinner-container {
@@ -64,13 +83,3 @@ table {
   background-color: $iris-pastel;
 }
 
-.table-container {
-  position: relative;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-
-  .mat-table {
-    flex: 1;
-  }
-}
