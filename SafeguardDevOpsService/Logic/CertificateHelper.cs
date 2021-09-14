@@ -28,58 +28,90 @@ namespace OneIdentity.DevOps.Logic
             return b64String;
         }
 
-        public static bool CertificateValidation(object sender, X509Certificate certificate, X509Chain chain,
-            SslPolicyErrors sslPolicyErrors, Serilog.ILogger logger, IConfigurationRepository configDb)
+        private static bool WalkTrustChain(X509Certificate2 certificate, TrustedCertificate[] trustedCertificates)
         {
-            var trustedChain = configDb.GetTrustedChain();
+            if (IsSelfSigned(certificate) && IsCa(certificate))
+                return true;
 
+            var issuedBy = trustedCertificates.FirstOrDefault(x => x.Subject.Equals(certificate.Issuer));
+            if (issuedBy != null)
+            {
+                return WalkTrustChain(issuedBy.GetCertificate(), trustedCertificates);
+            }
+
+            return false;
+        }
+
+        public static bool CertificateValidation(object sender, X509Certificate certificate, X509Chain chain,
+            SslPolicyErrors sslPolicyErrors, Serilog.ILogger logger, IConfigurationRepository configDb, 
+            IEnumerable<TrustedCertificate> customTrustedCertificateList = null)
+        {
             try
             {
-                var sans = GetSubjectAlternativeName(new X509Certificate2(certificate), logger);
-                var safeguardAddress = configDb.SafeguardAddress;
-                if (!sans.Exists(x => x.Equals(safeguardAddress, StringComparison.InvariantCultureIgnoreCase) ||
-                                      (x.StartsWith("*") && safeguardAddress.Substring(safeguardAddress.IndexOf('.'))
-                                          .Equals(x.Substring(1), StringComparison.InvariantCultureIgnoreCase))))
+                var cert2 = new X509Certificate2(certificate);
+
+                // If the certificate has the server authentication eku then make sure that the sans match.
+                if (HasEku(cert2, "1.3.6.1.5.5.7.3.1"))
                 {
-                    logger.Debug("Failed to find a matching subject alternative name.");
-                    return false;
+                    var sans = GetSubjectAlternativeName(cert2, logger);
+                    var safeguardAddress = configDb.SafeguardAddress;
+                    if (!sans.Exists(x => x.Equals(safeguardAddress, StringComparison.InvariantCultureIgnoreCase) ||
+                                          (x.StartsWith("*") && safeguardAddress.Substring(safeguardAddress.IndexOf('.'))
+                                              .Equals(x.Substring(1), StringComparison.InvariantCultureIgnoreCase))))
+                    {
+                        logger.Debug("Failed to find a matching subject alternative name.");
+                        return false;
+                    }
                 }
 
-                if (chain.ChainElements.Count <= 1)
+                var trustedCertificates = (customTrustedCertificateList ?? configDb.GetAllTrustedCertificates()).ToArray();
+
+                // if the certificate is self-signed and a CA then it must match a trusted certificate in the list.
+                if (IsSelfSigned(cert2) && IsCa(cert2))
                 {
-                    var cert2 = new X509Certificate2(certificate);
-                    var found = trustedChain.ChainPolicy.ExtraStore.Find(X509FindType.FindByThumbprint, cert2.Thumbprint ?? string.Empty, false);
-                    if (found.Count == 1)
-                        return true;
+                    var result = trustedCertificates.Any(x => x.Thumbprint.Equals(cert2.Thumbprint));
+                    if (!result)
+                        logger.Debug("The self-signed certificate is not found in the trusted certificate list.");
+
+                    return result;
                 }
 
-                logger.Debug($"Trusted certificates count = {trustedChain.ChainPolicy.ExtraStore.Count}");
+                // If there is no chain provided then just walk the certificate structure to validate the chain.
+                if (chain == null)
+                {
+                    return WalkTrustChain(cert2, trustedCertificates);
+                }
+
+                logger.Debug($"Trusted certificates count = {chain.ChainElements.Count}");
                 var i = 0;
-                foreach (var trusted in trustedChain.ChainPolicy.ExtraStore)
+
+                // Make sure that all of the certificates in the chain, excluding the SSL certificate itself, are trusted.
+                foreach (var trusted in chain.ChainElements)
                 {
-                    logger.Debug($"[{i}] - subject = {trusted.SubjectName.Name}");
-                    logger.Debug($"[{i}] - issuer = {trusted.IssuerName.Name}");
-                    logger.Debug($"[{i}] - thumbprint = {trusted.Thumbprint}");
+                    logger.Debug($"[{i}] - subject = {trusted.Certificate.SubjectName.Name}");
+                    logger.Debug($"[{i}] - issuer = {trusted.Certificate.IssuerName.Name}");
+                    logger.Debug($"[{i}] - thumbprint = {trusted.Certificate.Thumbprint}");
+
+                    // Skip checking the first certificate since it is not part of the trust chain.
+                    if ((i > 0) &&
+                        !trustedCertificates.Any(x => x.Thumbprint.Equals(trusted.Certificate.Thumbprint)))
+                    {
+                        logger.Error("Failed SPP SSL certificate validation. Maybe missing a trusted certificate.");
+                        return false;
+                    }
+
                     i++;
                 }
 
-                if (!trustedChain.Build(new X509Certificate2(certificate)))
+                // Make sure that the last certificate in the chain is a self-signed CA.  We will deal with a certificate signing authority later.
+                if (i > 0)
                 {
-                    logger.Error("Failed SPP SSL certificate validation.");
-                    var chainStatus = trustedChain.ChainStatus;
-                    for (i = 0; i < chainStatus.Length; i++)
-                    {
-                        logger.Debug($"[{i}] - chain status = {chainStatus[i].StatusInformation}");
-                    }
-                    i = 0;
-                    foreach (var chainElement in trustedChain.ChainElements)
-                    {
-                        logger.Debug($"[{i}] - subject = {chainElement.Certificate.SubjectName.Name}");
-                        logger.Debug($"[{i}] - issuer = {chainElement.Certificate.IssuerName.Name}");
-                        logger.Debug($"[{i}] - thumbprint = {chainElement.Certificate.Thumbprint}");
-                        i++;
-                    }
-                    return false;
+                    var lastCertificate = chain.ChainElements[i - 1];
+                    var result = IsSelfSigned(lastCertificate.Certificate) && IsCa(lastCertificate.Certificate);
+                    if (!result)
+                        logger.Debug("A valid certificate chain was not provided by the remote application.");
+
+                    return result;
                 }
             }
             catch (Exception ex)
@@ -88,7 +120,7 @@ namespace OneIdentity.DevOps.Logic
                 return false;
             }
 
-            return true;
+            return false;
         }
 
         public static X509Certificate2 CreateDefaultSslCertificate()
@@ -194,15 +226,20 @@ namespace OneIdentity.DevOps.Logic
             return true;
         }
 
+        public static bool ValidateTrustChain(X509Certificate2 certificate, IConfigurationRepository configDb, Serilog.ILogger logger)
+        {
+            return CertificateValidation(null, certificate, null, SslPolicyErrors.None, logger, configDb);
+        }
+
         private static bool IsSelfSigned(X509Certificate2 cert)
         {
             return cert.SubjectName.RawData.SequenceEqual(cert.IssuerName.RawData);
         }
 
-        private static bool IsCa(X509Certificate2 cert)
+        public static bool IsCa(X509Certificate2 cert)
         {
             var basic = cert.Extensions.OfType<X509BasicConstraintsExtension>().ToList();
-            if (basic.Any() && basic[0].CertificateAuthority && basic[0].CertificateAuthority)
+            if (basic.Any() && basic[0].CertificateAuthority)
             {
                 var ku = cert.Extensions.OfType<X509KeyUsageExtension>().ToList();
                 if (!ku.Any())

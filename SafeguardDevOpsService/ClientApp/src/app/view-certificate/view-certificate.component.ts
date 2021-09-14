@@ -24,6 +24,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
   error = null;
   showBackButton: boolean;
   isUpload: boolean;
+  showTrustChain: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -43,6 +44,7 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
       case 'Client':
         sub = this.serviceClient.getClientCertificate();
         this.typeDisplay = 'Client';
+        this.showTrustChain = true;
         break;
       case 'Web Server':
         sub = this.retrievedCert ? of(this.retrievedCert) : this.serviceClient.getWebServerCertificate();

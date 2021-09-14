@@ -164,8 +164,10 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
 
   private refreshCertificates(): Observable<any[]> {
     return this.serviceClient.getTrustedCertificates().pipe(
-      tap((certs) => this.trustedCertificates.push(...certs))
-    );
+      tap((certs) => {
+        this.trustedCertificates.splice(0);
+        this.trustedCertificates.push(...certs);
+      }));
   }
 
   import(): void {
@@ -193,7 +195,6 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
     const thumbprint = this.selectedCert.Thumbprint;
     this.selectedCert = null;
     this.isLoading = true;
-    this.trustedCertificates.splice(0);
     this.serviceClient.deleteTrustedCertificate(thumbprint).pipe(
       switchMap(() => this.refreshCertificates())
     ).subscribe(() => {
@@ -202,7 +203,11 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
         this.updateUseSsl();
       }
       this.isLoading = false;
-    });
+      },
+      error => {
+        this.isLoading = false;
+        this.error = error;
+      });
   }
 
   closeCertDetails(): void {

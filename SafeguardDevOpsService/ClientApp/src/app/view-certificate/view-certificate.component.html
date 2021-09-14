@@ -33,7 +33,12 @@
          <div class='label'>Thumbprint</div>
          <div class='data'>{{retrievedCert.Thumbprint}}</div>
       </div>
-   </div>
+
+      <div *ngIf="showTrustChain">
+        <div class='label'>Trust Chain Validation</div>
+        <div class='data'>{{retrievedCert.PassedTrustChainValidatation}}</div>
+     </div>
+  </div>
 </div>
 
 <div mat-dialog-actions align='start' *ngIf="certificateLoaded">
