@@ -17,6 +17,11 @@ namespace OneIdentity.DevOps.Data
         public string Thumbprint { get; set; }
 
         /// <summary>
+        /// Certificate subject
+        /// </summary>
+        public string Subject { get; set; }
+
+        /// <summary>
         /// Base64 representation of the certificate
         /// </summary>
         public string Base64CertificateData { get; set; }

@@ -154,6 +154,34 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        private bool CheckSslConnection(IEnumerable<TrustedCertificate> customCertificateList = null)
+        {
+            ISafeguardConnection sg = null;
+            var certChainOk = false;
+
+            try
+            {
+                sg = Safeguard.Connect(_configDb.SafeguardAddress, 
+                    (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) =>
+                    {
+                        certChainOk = CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger, _configDb, customCertificateList);
+                        return certChainOk;
+                    }, _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion);
+
+                return certChainOk;
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                _logger.Error(ex, "Invalid certificate chain.  Please add or import the Safeguard trusted certificates.");
+            }
+            finally
+            {
+                sg?.Dispose();
+            }
+
+            return certChainOk;
+        }
+
         private SafeguardDevOpsConnection GetSafeguardAppliance(ISafeguardConnection sgConnection, string address = null)
         {
             var sg = sgConnection ?? Connect();
@@ -1631,8 +1659,10 @@ namespace OneIdentity.DevOps.Logic
                     Subject = cert.Subject,
                     NotAfter = cert.NotAfter,
                     NotBefore = cert.NotBefore,
-                    Base64CertificateData = cert.ToPemFormat()
+                    Base64CertificateData = cert.ToPemFormat(),
+                    PassedTrustChainValidation = certificateType != CertificateType.A2AClient || CertificateHelper.ValidateTrustChain(cert, _configDb, _logger)
                 };
+
                 return result;
             }
 
@@ -1936,7 +1966,7 @@ namespace OneIdentity.DevOps.Logic
                 HasMissingPlugins = _pluginsLogic().GetAllPlugins().Any(x => !x.IsLoaded),
                 NeedsClientCertificate = _configDb.UserCertificate == null,
                 NeedsSSLEnabled = safeguardConnection.IgnoreSsl ?? true,
-                NeedsTrustedCertificates = !_configDb.GetAllTrustedCertificates().Any(),
+                NeedsTrustedCertificates = !_configDb.GetAllTrustedCertificates().Any() || !CheckSslConnection(),
                 NeedsWebCertificate = webSslCertificate?.SubjectName.Name != null && webSslCertificate.SubjectName.Name.Equals(WellKnownData.DevOpsServiceDefaultWebSslCertificateSubject)
             };
 
@@ -1950,23 +1980,33 @@ namespace OneIdentity.DevOps.Logic
 
             if (_configDb.SafeguardAddress != null)
             {
+                if (!string.IsNullOrEmpty(safeguardData.ApplianceAddress) 
+                    && !_configDb.SafeguardAddress.Equals(safeguardData.ApplianceAddress, StringComparison.OrdinalIgnoreCase))
+                {
+                    var newSignatureCert = FetchSignatureCertificate(safeguardData.ApplianceAddress);
+                    if (!_configDb.SigningCertificate.Equals(newSignatureCert))
+                    {
+                        throw LogAndException(
+                            "Invalid operation. The previously configured Secrets Broker cannot be repurposed until the configuration is deleted.");
+                    }
+                }
+
                 var signatureCert = FetchSignatureCertificate(_configDb.SafeguardAddress);
                 if (!ValidateLogin(token, null, signatureCert))
                 {
-                    if (_configDb.SafeguardAddress.Equals(safeguardData.ApplianceAddress))
-                    {
-                        throw new DevOpsException("Authorization Failed: Invalid token", HttpStatusCode.Unauthorized);
-                    }
-
-                    throw LogAndException(
-                        "Invalid token. The previously configured Secrets Broker cannot be repurposed until the configuration is deleted.");
+                    throw LogAndException("Invalid login token. Authentication failed.");
                 }
             }
 
-            if (safeguardData.IgnoreSsl.HasValue && !safeguardData.IgnoreSsl.Value &&
-                !_configDb.GetAllTrustedCertificates().Any())
+            var enablingSsl = safeguardData.IgnoreSsl.HasValue && !safeguardData.IgnoreSsl.Value;
+            if (enablingSsl && !_configDb.GetAllTrustedCertificates().Any())
             {
-                throw LogAndException("Cannot ignore SSL before adding trusted certificates.");
+                throw LogAndException("Cannot enable TLS before adding trusted certificates.");
+            }
+
+            if (enablingSsl && !CheckSslConnection())
+            {
+                throw LogAndException("Invalid certificate chain. Unable to validate the Safeguard certificate without a complete trusted certificate chain.");
             }
 
             var safeguardConnection = ConnectAnonymous(safeguardData.ApplianceAddress,
@@ -1977,7 +2017,7 @@ namespace OneIdentity.DevOps.Logic
             safeguardConnection.IgnoreSsl = (safeguardConnection.IgnoreSsl ?? true) || (safeguardData.IgnoreSsl ?? (safeguardConnection.IgnoreSsl ?? true));
 
             _applianceAvailabilityCache = null;
-            if (safeguardConnection != null && FetchAndStoreSignatureCertificate(token, safeguardConnection))
+            if (FetchAndStoreSignatureCertificate(token, safeguardConnection))
             {
                 _configDb.SafeguardAddress = safeguardData.ApplianceAddress;
                 _configDb.ApiVersion = safeguardData.ApiVersion ?? WellKnownData.DefaultApiVersion;
@@ -2149,6 +2189,7 @@ namespace OneIdentity.DevOps.Logic
                 var trustedCertificate = new TrustedCertificate()
                 {
                     Thumbprint = cert.Thumbprint,
+                    Subject = cert.Subject,
                     Base64CertificateData = cert.ToPemFormat()
                 };
 
@@ -2170,6 +2211,17 @@ namespace OneIdentity.DevOps.Logic
         {
             if (string.IsNullOrEmpty(thumbPrint))
                 throw LogAndException("Invalid thumbprint");
+
+            if (_configDb.IgnoreSsl == false)
+            {
+                var trustedCertificates = _configDb.GetAllTrustedCertificates().Where(x => !x.Thumbprint.Equals(thumbPrint));
+                if (!CheckSslConnection(trustedCertificates))
+                {
+                    var cert = _configDb.GetTrustedCertificateByThumbPrint(thumbPrint);
+                    var subject = cert == null ? thumbPrint : cert.GetCertificate().SubjectName.Name;
+                    throw LogAndException($"Removing the trusted certificate {subject} would break the trust chain.");
+                }
+            }
 
             _configDb.DeleteTrustedCertificateByThumbPrint(thumbPrint);
         }
@@ -2216,6 +2268,46 @@ namespace OneIdentity.DevOps.Logic
                     }
                 }
 
+                try
+                {
+
+                    var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Get, "SslCertificates");
+                    if (result.StatusCode == HttpStatusCode.OK)
+                    {
+                        serverCertificates = JsonHelper.DeserializeObject<IList<ServerCertificate>>(result.Body);
+                        _logger.Debug($"Received {serverCertificates.Count()} SSL certificates from Safeguard.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw LogAndException("Failed to get the Safeguard ssl certificates.", ex);
+                }
+
+                if (serverCertificates != null)
+                {
+                    foreach (var cert in serverCertificates)
+                    {
+                        try
+                        {
+                            var certificateBytes = CertificateHelper.ConvertPemToData(cert.Base64CertificateData);
+                            var certificate2 = new X509Certificate2(certificateBytes);
+
+                            // Only import self-signed CA certificates.
+                            if (certificate2.Subject.Equals(certificate2.IssuerName.Name) && CertificateHelper.IsCa(certificate2))
+                            {
+                                _logger.Debug($"Importing ssl certificate {cert.Subject} {cert.Thumbprint}.");
+                                var certificateInfo = AddTrustedCertificate(cert.Base64CertificateData);
+                                trustedCertificates.Add(certificateInfo);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error(ex,
+                                $"Failed to import certificate {cert.Subject} {cert.Thumbprint} from Safeguard. {ex.Message}");
+                        }
+                    }
+                }
+
                 return trustedCertificates;
             }
             finally
@@ -2227,6 +2319,13 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeleteAllTrustedCertificates()
         {
+            if (_configDb.IgnoreSsl == false)
+            {
+                if (!CheckSslConnection(new List<TrustedCertificate>()))
+                {
+                    throw LogAndException("Removing all of the trusted certificate would break the trust chain.");
+                }
+            }
             _configDb.DeleteAllTrustedCertificates();
         }
 
