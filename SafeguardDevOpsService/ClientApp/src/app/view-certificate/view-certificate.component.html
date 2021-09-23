@@ -35,10 +35,12 @@
       </div>
 
       <div *ngIf="showTrustChain">
-        <div class='label'>Trust Chain Validation</div>
-        <div class='data'>{{retrievedCert.PassedTrustChainValidatation}}</div>
-     </div>
-  </div>
+         <div class='label'>Trust Chain Validation&nbsp;
+            <mat-icon class="green-icon" inline=true *ngIf="retrievedCert.PassedTrustChainValidation">check_circle</mat-icon>
+            <mat-icon class="yellow-icon" inline=true *ngIf="!retrievedCert.PassedTrustChainValidation">error_outline</mat-icon>
+         </div>
+      </div>
+   </div>
 </div>
 
 <div mat-dialog-actions align='start' *ngIf="certificateLoaded">

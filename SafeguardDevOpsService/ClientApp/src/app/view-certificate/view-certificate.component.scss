@@ -3,6 +3,7 @@
 .dialog-content {
   max-width: 600px;
   width: 550px;
+  overflow: hidden;
 }
 
 .label {
@@ -16,3 +17,14 @@
   font-size: 16px;
 }
 
+.green-icon {
+  color: $aspen-green;
+  vertical-align: top;
+  font-size: 24px;
+}
+
+.yellow-icon {
+  color: $corbin-orange;
+  font-size: 24px;
+  vertical-align: top;
+}
