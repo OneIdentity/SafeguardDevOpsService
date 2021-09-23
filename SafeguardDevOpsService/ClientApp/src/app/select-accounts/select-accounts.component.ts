@@ -71,6 +71,7 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
   }
 
   loadAccounts() {
+    this.editPluginService.clearAvailableAccounts();
     this.assetSearchVal = '';
     this.accountSearchVal = '';
     this.isLoading = true;
