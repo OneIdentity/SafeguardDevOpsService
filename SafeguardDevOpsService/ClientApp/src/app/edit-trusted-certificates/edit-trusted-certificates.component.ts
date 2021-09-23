@@ -192,6 +192,7 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   }
 
   removeCertificate(): void {
+    this.error = null;
     const thumbprint = this.selectedCert.Thumbprint;
     this.selectedCert = null;
     this.isLoading = true;

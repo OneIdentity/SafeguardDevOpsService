@@ -59,7 +59,7 @@
           <p></p>
           <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"
             color='primary' disableRipple>
-            <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon>&nbsp;Verify TLS Certificate
+            <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>&nbsp;Verify TLS Certificate
           </button>
         </div>
         <div *ngIf="!isMonitoringAvailable && !isLoading">
@@ -137,7 +137,7 @@
             <div *ngIf="!webServerCertAdded || needsWebCertificate">
               <button mat-button class="link-button cert-link" (click)="addCertificate($event, 'Web Server')"
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>
-                <mat-icon class="yellow-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
+                <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>&nbsp;View Details
               </button>
             </div>
             <div *ngIf="webServerCertAdded && !needsWebCertificate">
@@ -182,7 +182,7 @@
                 <mat-icon class="green-icon" inline=true *ngIf="addon.Status?.IsReady"
                   matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">check_circle</mat-icon>
                 <mat-icon class="yellow-icon" inline=true *ngIf="!addon.Status?.IsReady"
-                  matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">check_circle</mat-icon>
+                  matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">error_outline</mat-icon>
                 &nbsp;{{addon.Manifest.DisplayName}}&nbsp;
                 <mat-icon class="blue-icon" inline=true *ngIf="addon.IsProduction" matTooltip="Production">verified_user
                 </mat-icon>
