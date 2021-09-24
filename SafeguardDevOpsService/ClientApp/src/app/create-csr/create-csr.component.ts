@@ -11,11 +11,11 @@ import { SaveCsrComponent } from '../save-csr/save-csr.component';
   styleUrls: ['./create-csr.component.scss']
 })
 export class CreateCsrComponent implements OnInit {
-  @ViewChild('subject', {static:true}) subjectInput: ElementRef;
+  @ViewChild('subject') subjectInput: ElementRef;
 
   countryCodes = [
     { Code: "AF", Name: "Afghanistan" },
-    { Code: "AX", Name: "\xc5land Islands" }, // Åland Islands
+    { Code: "AX", Name: "\xc5land Islands" }, // ï¿½land Islands
     { Code: "AL", Name: "Albania" },
     { Code: "DZ", Name: "Algeria" },
     { Code: "AS", Name: "American Samoa" },
@@ -287,6 +287,12 @@ export class CreateCsrComponent implements OnInit {
     this.certificateType = this.data?.certificateType ?? 'Client';
   }
 
+  onKeyUpSubject(event: any) {
+    if (event.key === 'Enter' && this.subjectName && this.subjectName.startsWith("CN=")) {
+      this.createCSR();
+    }
+  }
+
   createCSR(): void {
     const csrType = this.certificateType === 'Web Server' ? 'WebSsl' : 'A2AClient';
     this.creatingCSR = true;
@@ -296,14 +302,15 @@ export class CreateCsrComponent implements OnInit {
         (csr) => {
           this.csr.Text = csr;
           const saveModal = this.dialog.open(SaveCsrComponent,
-            { data: {
+            {
+              data: {
                 CertificateType: this.certificateType,
                 Base64RequestData: csr,
               }
-             });
+            });
           saveModal.afterClosed().subscribe(
-            result=>{ 
-              if ( (result??'') == 'back') {
+            result => {
+              if ((result ?? '') == 'back') {
                 document.getElementById('subjectName')?.focus();
               } else {
                 this.dialogRef.close();
@@ -314,47 +321,47 @@ export class CreateCsrComponent implements OnInit {
           this.error = error;
         }
       )
-      .add(() => {this.creatingCSR = false;});
+      .add(() => { this.creatingCSR = false; });
   }
 
   goBack(): void {
     this.dialogRef.close({ result: CreateCsrResult.AddCertificate });
   }
 
-  addSubjectAlt(whichalt,event?):void {
+  addSubjectAlt(whichalt, event?): void {
     if ((!event || event.key === 'Enter' || event.key === ',' || event.key === ' ') &&
-        ((whichalt == 'name' ? this.dnsSubjectAlternativeNames : this.ipSubjectAlternativeNames)??'').trim()) {
-      var values = (whichalt=='name' ? this.dnsSubjectAlternativeNames : this.ipSubjectAlternativeNames).split(/[ ,]/);
+      ((whichalt == 'name' ? this.dnsSubjectAlternativeNames : this.ipSubjectAlternativeNames) ?? '').trim()) {
+      var values = (whichalt == 'name' ? this.dnsSubjectAlternativeNames : this.ipSubjectAlternativeNames).split(/[ ,]/);
       this.csr.DnsNames = this.csr.DnsNames ?? [];
       this.csr.IpAddresses = this.csr.IpAddresses ?? [];
-      for(var v of values) {
-        if (whichalt == 'name' && this.csr.DnsNames.indexOf(v)==-1 && this.CertValidCharsRegex.test(v)) {
+      for (var v of values) {
+        if (whichalt == 'name' && this.csr.DnsNames.indexOf(v) == -1 && this.CertValidCharsRegex.test(v)) {
           this.csr.DnsNames.push(v);
-        } else if (whichalt == 'ip' && this.csr.IpAddresses.indexOf(v)==-1 && (this.Ipv4Regex.test(v) || this.Ipv6Regex.test(v))) {
+        } else if (whichalt == 'ip' && this.csr.IpAddresses.indexOf(v) == -1 && (this.Ipv4Regex.test(v) || this.Ipv6Regex.test(v))) {
           this.csr.IpAddresses.push(v);
         }
       }
       if (event?.key === 'Enter') {
         event.preventDefault();
       }
-      setTimeout(()=>{this.dnsSubjectAlternativeNames='';this.ipSubjectAlternativeNames='';});
+      setTimeout(() => { this.dnsSubjectAlternativeNames = ''; this.ipSubjectAlternativeNames = ''; });
     }
   }
 
-  removeSubjectAlt(whichalt:string,value:string,allFlag?:boolean):void {
+  removeSubjectAlt(whichalt: string, value: string, allFlag?: boolean): void {
     if (allFlag) {
       if (whichalt == 'name') {
         this.csr.DnsNames = [];
       } else {
         this.csr.IpAddresses = [];
       }
-    } else if ((value??'').trim()) {
-      var idx = (whichalt=='name' ? this.csr.DnsNames : this.csr.IpAddresses)?.indexOf(value);
-      if ((idx??-1) >= 0) {
+    } else if ((value ?? '').trim()) {
+      var idx = (whichalt == 'name' ? this.csr.DnsNames : this.csr.IpAddresses)?.indexOf(value);
+      if ((idx ?? -1) >= 0) {
         if (whichalt == 'name') {
-          this.csr.DnsNames.splice(idx,1);
+          this.csr.DnsNames.splice(idx, 1);
         } else {
-          this.csr.IpAddresses.splice(idx,1);
+          this.csr.IpAddresses.splice(idx, 1);
         }
       }
     }
@@ -372,13 +379,12 @@ export class CreateCsrComponent implements OnInit {
         State: '',
         Country: ''
       };
-      setTimeout(()=>{$('#FullyQualifiedDomainName').focus();},0);
+      setTimeout(() => { $('#FullyQualifiedDomainName').focus(); }, 0);
     } else {
       this.savedSubjectName = '';
       setTimeout(() => {
         this.subjectInput?.nativeElement.focus();
-        this.subjectInput?.nativeElement.setSelectionRange(0,this.subjectName.length);
-      },0);
+      }, 0);
     }
   }
 
@@ -386,8 +392,8 @@ export class CreateCsrComponent implements OnInit {
     this.subjectName = this.savedSubjectName;
     this.useDNBuilder(false);
   }
-  
-  buildDn(ev: Event=null): void {
+
+  buildDn(ev: any): void {
     var fqdn = this.dnBuilder.FullyQualifiedDomainName.trim();
     this.subjectName = fqdn ? 'CN=' + fqdn : '';
     if (fqdn) {
@@ -396,6 +402,10 @@ export class CreateCsrComponent implements OnInit {
         (this.dnBuilder.City ? ', L=' + this.dnBuilder.City : '') +
         (this.dnBuilder.State ? ', S=' + this.dnBuilder.State : '') +
         (this.dnBuilder.Country ? ', C=' + this.dnBuilder.Country : '');
+    }
+
+    if (ev.key === 'Enter' && this.subjectName && this.subjectName.startsWith("CN=")) {
+      this.useDNBuilder(false);
     }
   }
 }
