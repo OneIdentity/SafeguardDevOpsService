@@ -288,7 +288,7 @@ export class CreateCsrComponent implements OnInit {
   }
 
   onKeyUpSubject(event: any) {
-    if (event.key === 'Enter' && this.subjectName && this.subjectName.startsWith("CN=")) {
+    if (event.key === 'Enter' && this.subjectName && this.subjectName.toLocaleLowerCase().startsWith("cn=")) {
       this.createCSR();
     }
   }
@@ -404,7 +404,7 @@ export class CreateCsrComponent implements OnInit {
         (this.dnBuilder.Country ? ', C=' + this.dnBuilder.Country : '');
     }
 
-    if (ev.key === 'Enter' && this.subjectName && this.subjectName.startsWith("CN=")) {
+    if (ev.key === 'Enter' && this.subjectName && this.subjectName.toLocaleLowerCase().startsWith("cn=")) {
       this.useDNBuilder(false);
     }
   }

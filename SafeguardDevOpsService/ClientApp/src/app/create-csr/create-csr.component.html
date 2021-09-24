@@ -64,7 +64,7 @@
       <div class='dn-builder-actions'>
          <button mat-button color='primary' (click)='cancelDNBuilder()'>Cancel</button>
          <button mat-flat-button color='primary' type="submit"
-            [disabled]="!subjectName || !subjectName.startsWith('CN=')" (click)='useDNBuilder(false)'>Save Distinguished
+            [disabled]="!subjectName || !subjectName.toLocaleLowerCase().startsWith('cn=')" (click)='useDNBuilder(false)'>Save Distinguished
             Name</button>
       </div>
    </div>
@@ -130,7 +130,7 @@
    </div>
 
    <div mat-dialog-actions align="end" class='buttons'>
-      <button mat-flat-button (click)="createCSR()" [disabled]="!subjectName || !subjectName.startsWith('CN=')"
+      <button mat-flat-button (click)="createCSR()" [disabled]="!subjectName || !subjectName.toLocaleLowerCase().startsWith('cn=')"
          color="primary">Create
          CSR</button>
    </div>
