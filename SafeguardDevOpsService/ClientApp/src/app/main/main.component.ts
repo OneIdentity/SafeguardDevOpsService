@@ -76,6 +76,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   isLicensed: boolean = false;
   isAssetAdmin: boolean = false;
   certificateUploaded: boolean = false;
+  passedTrustChainValidation: boolean = false;
 
   certificateUploading = {
     Client: false,
@@ -333,6 +334,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         this.needsWebCertificate = logon.NeedsWebCertificate;
         this.needsTrustedCertificates = logon.NeedsTrustedCertificates;
         this.needsSSLEnabled = logon.NeedsSSLEnabled;
+        this.passedTrustChainValidation = logon.PassedTrustChainValidation;
       }),
       switchMap(() => this.checkA2ARegistration()),
       tap((nullRegistration: any) => {

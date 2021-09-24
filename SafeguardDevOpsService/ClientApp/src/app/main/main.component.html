@@ -125,7 +125,9 @@
               <button mat-button class="link-button cert-link" color="primary"
                 (click)="viewCertificate($event, 'Client')"
                 [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' disableRipple>
-                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
+                <mat-icon class="green-icon" inline=true *ngIf="passedTrustChainValidation">check_circle</mat-icon>
+                <mat-icon class="yellow-icon" inline=true *ngIf="!passedTrustChainValidation">error_outline</mat-icon>
+                &nbsp;View Details
               </button>
             </div>
           </div>
