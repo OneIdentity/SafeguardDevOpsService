@@ -41,6 +41,9 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public bool NeedsSSLEnabled { get; set; }
 
-
+        /// <summary>
+        /// Passed Trust Chain Validation
+        /// </summary>
+        public bool PassedTrustChainValidation { get; set; }
     }
 }

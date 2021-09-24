@@ -1958,16 +1958,18 @@ namespace OneIdentity.DevOps.Logic
 
             var availableA2aRegistrationIds = GetAvailableA2ARegistrationIds(null);
             var webSslCertificate = _configDb.WebSslCertificate;
+            var userCertificate = _configDb.UserCertificate;
 
             var safeguardLogon = new SafeguardDevOpsLogon()
             {
                 SafeguardDevOpsConnection = safeguardConnection,
                 HasAvailableA2ARegistrations = availableA2aRegistrationIds.Any(),
                 HasMissingPlugins = _pluginsLogic().GetAllPlugins().Any(x => !x.IsLoaded),
-                NeedsClientCertificate = _configDb.UserCertificate == null,
+                NeedsClientCertificate = userCertificate == null,
                 NeedsSSLEnabled = safeguardConnection.IgnoreSsl ?? true,
                 NeedsTrustedCertificates = !_configDb.GetAllTrustedCertificates().Any() || !CheckSslConnection(),
-                NeedsWebCertificate = webSslCertificate?.SubjectName.Name != null && webSslCertificate.SubjectName.Name.Equals(WellKnownData.DevOpsServiceDefaultWebSslCertificateSubject)
+                NeedsWebCertificate = webSslCertificate?.SubjectName.Name != null && webSslCertificate.SubjectName.Name.Equals(WellKnownData.DevOpsServiceDefaultWebSslCertificateSubject),
+                PassedTrustChainValidation = userCertificate != null ? CertificateHelper.ValidateTrustChain(userCertificate, _configDb, _logger) : false
             };
 
             return safeguardLogon;
