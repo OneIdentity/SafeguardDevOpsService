@@ -15,7 +15,8 @@
    <mat-form-field appearance="outline" class='short-height'>
       <mat-label>Subject Name</mat-label>
       <input cdkFocusInitial matInput #subject id='subjectName' type="text" placeholder='CN='
-         [pattern]='CertValidSubjectCharsRegex' [(ngModel)]="subjectName" name="subjectName">
+         [pattern]='CertValidSubjectCharsRegex' [(ngModel)]="subjectName" name="subjectName"
+         (keyup)="onKeyUpSubject($event)">
    </mat-form-field>
 
    <div *ngIf='showDistinguishedNameBuilder' class="dn-builder-container">
@@ -24,32 +25,32 @@
       <mat-form-field appearance="outline">
          <mat-label>Fully Qualified Domain Name</mat-label>
          <input matInput type="text" id='FullyQualifiedDomainName' [(ngModel)]="dnBuilder.FullyQualifiedDomainName"
-            name="FullyQualifiedDomainName" [required]='true' [pattern]="CertValidCharsRegex" (keyup)='buildDn()'
-            (change)='buildDn()'>
+            name="FullyQualifiedDomainName" [required]='true' [pattern]="CertValidCharsRegex" (keyup)='buildDn($event)'
+            (change)='buildDn($event)'>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
          <mat-label>Department</mat-label>
          <input cdkFocusInitial matInput type="text" [(ngModel)]="dnBuilder.Department" name="Department"
-            [pattern]="CertValidCharsRegex" (keyup)='buildDn()' (change)='buildDn()'>
+            [pattern]="CertValidCharsRegex" (keyup)='buildDn($event)' (change)='buildDn($event)'>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
          <mat-label>Organization</mat-label>
          <input cdkFocusInitial matInput type="text" [(ngModel)]="dnBuilder.Organization" name="Organization"
-            [pattern]="CertValidCharsRegex" (keyup)='buildDn()' (change)='buildDn()'>
+            [pattern]="CertValidCharsRegex" (keyup)='buildDn($event)' (change)='buildDn($event)'>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
          <mat-label>City / Locality</mat-label>
          <input cdkFocusInitial matInput type="text" [(ngModel)]="dnBuilder.City" name="City"
-            [pattern]="CertValidCharsRegex" (keyup)='buildDn()' (change)='buildDn()'>
+            [pattern]="CertValidCharsRegex" (keyup)='buildDn($event)' (change)='buildDn($event)'>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
          <mat-label>State / County / Region</mat-label>
          <input cdkFocusInitial matInput type="text" [(ngModel)]="dnBuilder.State" name="State"
-            [pattern]="CertValidCharsRegex" (keyup)='buildDn()' (change)='buildDn()'>
+            [pattern]="CertValidCharsRegex" (keyup)='buildDn($event)' (change)='buildDn($event)'>
       </mat-form-field>
 
       <mat-form-field appearance="outline">
@@ -62,7 +63,8 @@
 
       <div class='dn-builder-actions'>
          <button mat-button color='primary' (click)='cancelDNBuilder()'>Cancel</button>
-         <button mat-flat-button color='primary' type="submit" (click)='useDNBuilder(false)'>Save Distinguished
+         <button mat-flat-button color='primary' type="submit"
+            [disabled]="!subjectName || !subjectName.startsWith('CN=')" (click)='useDNBuilder(false)'>Save Distinguished
             Name</button>
       </div>
    </div>
@@ -128,7 +130,8 @@
    </div>
 
    <div mat-dialog-actions align="end" class='buttons'>
-      <button mat-flat-button (click)="createCSR()" (keyup.enter)="createCSR()" type="submit" [disabled]="!subjectName" color="primary">Create
+      <button mat-flat-button (click)="createCSR()" [disabled]="!subjectName || !subjectName.startsWith('CN=')"
+         color="primary">Create
          CSR</button>
    </div>
 </div>
