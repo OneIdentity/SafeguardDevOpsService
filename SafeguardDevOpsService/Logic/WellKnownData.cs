@@ -44,6 +44,7 @@ namespace OneIdentity.DevOps.Logic
 
         public const string PluginsDeleteFile = "DeletePlugins.all";
         public const string AddonDeleteFile = "DeleteAddon.all";
+        public const string AddonDeleteStaging = "DeleteAddon.staging";
 
         public const string ServiceIdentitifierRegenerate = "NEVER-INSTALLED";
 
@@ -70,6 +71,7 @@ namespace OneIdentity.DevOps.Logic
         public static readonly string PluginDirPath = Path.Combine(ProgramDataPath, PluginDirName);
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
         public static readonly string AddonServiceStageDirPath = Path.Combine(ProgramDataPath, AddonServiceStageName);
+        public static readonly string DeleteAddonStagingDir = Path.Combine(AddonServiceStageDirPath, AddonDeleteStaging);
         public static readonly string SvcIdPath = Path.Combine(ServiceDirPath, ServiceIdentifier);
         public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, PluginsDeleteFile);
         public static readonly string LogDirPath = Path.Combine(ProgramDataPath, $"{DevOpsServiceName}.log");

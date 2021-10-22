@@ -120,11 +120,11 @@ namespace OneIdentity.DevOps
         public void Start()
         {
             // This kicks off a function that
-            // checks for and loads any staged plugins
-            _pluginManager.Run();
-            // This kicks off a function that
             // checks for and loads any staged addons
             _addonManager.Run();
+            // This kicks off a function that
+            // checks for and loads any staged plugins
+            _pluginManager.Run();
             // This kicks off a function that restores
             // the password change monitor to last known
             // running state.

@@ -11,6 +11,7 @@ namespace OneIdentity.DevOps.Logic
     {
         void InstallAddon(string base64Addon, bool force);
         void InstallAddon(IFormFile formFile, bool force);
+        bool UpgradeAddon();
         void RemoveAddon(string name);
         IEnumerable<Addon> GetAddons();
         Addon GetAddon(string addonName);

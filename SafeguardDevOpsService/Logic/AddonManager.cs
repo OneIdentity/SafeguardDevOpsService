@@ -16,10 +16,12 @@ namespace OneIdentity.DevOps.Logic
 
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
+        private readonly Func<IAddonLogic> _addonLogic;
 
-        public AddonManager(IConfigurationRepository configDb)
+        public AddonManager(IConfigurationRepository configDb, Func<IAddonLogic> addonLogic)
         {
             _configDb = configDb;
+            _addonLogic = addonLogic;
             _logger = Serilog.Log.Logger;
         }
 
@@ -31,6 +33,22 @@ namespace OneIdentity.DevOps.Logic
         public void Run()
         {
             CleanUpDeletedAddons();
+
+            try {
+                if (Directory.Exists(WellKnownData.AddonServiceStageDirPath) && !File.Exists(WellKnownData.DeleteAddonStagingDir))
+                {
+                    // If the addon successfully upgraded, then restart immediately.
+                    if (_addonLogic().UpgradeAddon())
+                    {
+                        Task.Run(() => Environment.Exit(27)).Wait();
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to upgrade the staged Add-on: {ex.Message}.");
+            }
 
             var addons = _configDb.GetAllAddons();
 
@@ -156,6 +174,19 @@ namespace OneIdentity.DevOps.Logic
                 {
                     Directory.Delete(Path.GetDirectoryName(addonPath), true);
                 }
+            }
+
+            try
+            {
+                if (File.Exists(WellKnownData.DeleteAddonStagingDir))
+                {
+                    Directory.Delete(WellKnownData.AddonServiceStageDirPath, true);
+                    _logger.Information($"Cleaning up Add-on staging folder {WellKnownData.AddonServiceStageDirPath}.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to clean up the Add-on staging folder: {ex.Message}.");
             }
         }
 

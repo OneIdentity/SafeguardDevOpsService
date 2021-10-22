@@ -22,11 +22,11 @@ namespace OneIdentity.DevOps.Logic
     {
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
-        private readonly IAddonManager _addonManager;
+        private readonly Func<IAddonManager> _addonManager;
         private readonly ISafeguardLogic _safeguardLogic;
         private readonly IPluginsLogic _pluginsLogic;
 
-        public AddonLogic(IConfigurationRepository configDb, IAddonManager addonManager, ISafeguardLogic safeguardLogic, IPluginsLogic pluginsLogic)
+        public AddonLogic(IConfigurationRepository configDb, Func<IAddonManager> addonManager, ISafeguardLogic safeguardLogic, IPluginsLogic pluginsLogic)
         {
             _logger = Serilog.Log.Logger;
             _configDb = configDb;
@@ -144,6 +144,75 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        public bool UpgradeAddon()
+        {
+            var manifest = File.ReadAllText(Path.Combine(WellKnownData.AddonServiceStageDirPath, WellKnownData.ManifestPattern));
+            var addonManifest = JsonHelper.DeserializeObject<AddonManifest>(manifest);
+
+            // Whether the addon upgrade completes successfully or fails, mark the addon staging folder
+            // to be deleted on the next restart by adding a DELETE file. By forcing the staging
+            // folder to be deleted, it won't get stuck in a failed install or upgrade loop.
+            File.Create(WellKnownData.DeleteAddonStagingDir).Dispose();
+
+            try
+            {
+                _logger.Debug($"Add-on manifest source folder: {addonManifest.SourceFolder}");
+                _logger.Debug($"Add-on manifest assembly: {addonManifest.Assembly}");
+
+                var addonPath = Path.Combine(WellKnownData.AddonServiceStageDirPath, addonManifest.SourceFolder, addonManifest.Assembly);
+                _logger.Debug($"Looking for Add-on module at {addonPath}");
+
+                if (!File.Exists(addonPath))
+                {
+                    _logger.Error("Failed to find the Add-on module.");
+                    return false;
+                }
+
+                var addon = _configDb.GetAddonByName(addonManifest.Name);
+                if (addon == null)
+                {
+                    _logger.Error("Failed to find the Add-on entry in the database.");
+                    return false;
+                }
+
+                _logger.Debug($"Loading Add-on assembly from {addonPath}");
+                var assembly = Assembly.LoadFrom(addonPath);
+
+                var deployAddonClass = assembly.GetTypes().FirstOrDefault(t => t.IsClass 
+                                                                               && t.Name.Equals(addonManifest.DeployClassName) 
+                                                                               && typeof(IDeployAddon).IsAssignableFrom(t));
+
+                if (deployAddonClass != null)
+                {
+                    _logger.Information($"Loading the Add-on service from path {addonPath}.");
+                    var deployAddon = (IDeployAddon) Activator.CreateInstance(deployAddonClass);
+
+                    if (deployAddon == null)
+                    {
+                        _logger.Warning($"Unable to instantiate the Add-on service from {addonPath}");
+                    }
+                    else
+                    {
+                        deployAddon.SetLogger(_logger);
+                        deployAddon.SetTempDirectory(Path.Combine(WellKnownData.AddonServiceStageDirPath));
+
+                        deployAddon.Deploy(addonManifest, _configDb.GetWebSslPemCertificate());
+                        _logger.Information($"Installed staged Add-on to {Path.Combine(WellKnownData.ProgramDataPath, addonManifest.DestinationFolder)}.");
+
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var msg = $"Failed to deploy the Add-on service {addonManifest.Name}: {ex.Message}.";
+                _logger.Error(msg);
+                throw new Exception($"Failed to deploy the Add-on service {addonManifest.Name}: {ex.Message}.");
+            }
+
+            return false;
+        }
+
         public void RemoveAddon(string name)
         {
             var addon = _configDb.GetAddonByName(name);
@@ -165,7 +234,7 @@ namespace OneIdentity.DevOps.Logic
             }
 
             // Stop the addon service before undeploying the addon.
-            _addonManager.ShutdownAddon(addon);
+            _addonManager().ShutdownAddon(addon);
 
             // Deleting the addon renders the asset accounts useless since the vault is being
             //  deleted as well.
@@ -194,7 +263,7 @@ namespace OneIdentity.DevOps.Logic
             var addon = _configDb.GetAddonByName(addonName);
             if (addon != null)
             {
-                var addonStatus = _addonManager.GetAddonStatus(addon, isLicensed);
+                var addonStatus = _addonManager().GetAddonStatus(addon, isLicensed);
 
                 if (!SafeguardHasVaultCredentials(addon))
                 {
@@ -204,7 +273,7 @@ namespace OneIdentity.DevOps.Logic
                     if (addonStatus.IsReady)
                         addonStatus.HealthStatus.Clear();
                     addonStatus.IsReady = false;
-                    addonStatus.HealthStatus.Add("[Configuration] The add-on needs to be configured.");
+                    addonStatus.HealthStatus.Add("[Configuration] The Add-on needs to be configured.");
                 }
 
                 return addonStatus;
@@ -257,7 +326,7 @@ namespace OneIdentity.DevOps.Logic
 
                 var assetId = _configDb.AssetId;
                 if ((assetId ?? 0) == 0)
-                    throw LogAndException($"Failed to configure the add-on {addonName}. No associated asset found in Safeguard.");
+                    throw LogAndException($"Failed to configure the Add-on {addonName}. No associated asset found in Safeguard.");
 
                 if (addon.VaultCredentials.Any() && !SafeguardHasVaultCredentials(addon))
                 {
@@ -321,9 +390,9 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException($"Add-on {addonName} not found.");
             }
 
-            _addonManager.ShutdownAddon(addon);
+            _addonManager().ShutdownAddon(addon);
             Thread.Sleep(TimeSpan.FromSeconds(1));
-            _addonManager.StartAddon(addon);
+            _addonManager().StartAddon(addon);
         }
 
         private void InstallAddon(ZipArchive zipArchive, bool isProduction, bool force)
@@ -340,21 +409,6 @@ namespace OneIdentity.DevOps.Logic
                 var addonManifest = JsonHelper.DeserializeObject<AddonManifest>(manifest);
                 if (addonManifest != null && ValidateManifest(addonManifest))
                 {
-                    var addon = _configDb.GetAddonByName(addonManifest.Name);
-                    if (addon != null)
-                    {
-                        if (force)
-                        {
-                            _configDb.DeleteAddonByName(addonManifest.Name);
-                            addon = null;
-                        }
-                        else
-                        {
-                            _logger.Warning($"Add-on {addon.Name} already exists. ");
-                            return;
-                        }
-                    }
-
                     RestartManager.Instance.ShouldRestart = true;
                     _logger.Debug($"Extracting Add-on to {WellKnownData.AddonServiceStageDirPath}");
                     if (!Directory.Exists(WellKnownData.AddonServiceStageDirPath))
@@ -381,15 +435,40 @@ namespace OneIdentity.DevOps.Logic
                     }
 
                     _logger.Debug($"Add-on manifest name: {addonManifest.Name}");
-                    addon = new Addon()
-                    {
-                        Name = addonManifest.Name,
-                        Manifest = addonManifest,
-                        IsProduction = isProduction
-                    };
-                    _configDb.SaveAddon(addon);
 
-                    DeployAddon(addonManifest, WellKnownData.AddonServiceStageDirPath);
+                    var addon = _configDb.GetAddonByName(addonManifest.Name);
+                    if (addon != null && force)
+                    {
+                        _configDb.DeleteAddonByName(addonManifest.Name);
+                        addon = null;
+                    }
+
+                    if (addon != null)
+                    {
+                        // This is an upgrade so don't actually deploy the addon at this point. Let the
+                        //  service restart so that the DLLs are unloaded and the addon can overwrite the
+                        //  previous install.
+                        addon.Manifest = addonManifest;
+                        addon.IsProduction = isProduction;
+                        _configDb.SaveAddon(addon);
+                    }
+                    else
+                    {
+                        // Whether the addon completes successfully or fails, mark the addon staging folder
+                        // to be deleted on the next restart by adding a DELETE file. By forcing the staging
+                        // folder to be deleted, it won't get stuck in a failed install or upgrade loop.
+                        File.Create(WellKnownData.DeleteAddonStagingDir).Dispose();
+
+                        addon = new Addon()
+                        {
+                            Name = addonManifest.Name,
+                            Manifest = addonManifest,
+                            IsProduction = isProduction
+                        };
+
+                        _configDb.SaveAddon(addon);
+                        DeployAddon(addonManifest, WellKnownData.AddonServiceStageDirPath);
+                    }
                 }
                 else
                 {

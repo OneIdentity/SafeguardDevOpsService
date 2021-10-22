@@ -29,19 +29,6 @@ namespace OneIdentity.DevOps
             Console.WriteLine($"Safeguard Secrets Broker for DevOps logging to: {logDirPath}");
             RestartManager.Instance.ShouldRestart = false;
 
-            try
-            {
-                if (Directory.Exists(WellKnownData.AddonServiceStageDirPath))
-                {
-                    Directory.Delete(WellKnownData.AddonServiceStageDirPath, true);
-                    Log.Logger.Information($"Cleaning up Add-on staging folder {WellKnownData.AddonServiceStageDirPath}.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Logger.Error($"Failed to clean up the Add-on staging folder: {ex.Message}.");
-            }
-
             HostFactory.Run(hostConfig =>
             {
                 hostConfig.UseSerilog();
