@@ -22,7 +22,8 @@ $local:ManifestFile = (Join-Path $builddir "Manifest.json")
 if ($buildId) {
     Write-Host "Replacing version marker in manifest file"
     $local:VersionMarker = ".9999"
-    (Get-Content $local:ManifestFile -Raw).replace($local:VersionMarker, ".${buildId}") | Set-Content -Encoding UTF8 $local:ManifestFile
+    $local:BuildNumber = ($buildId % 65535) # max value for version part on Windows is 65534
+    (Get-Content $local:ManifestFile -Raw).replace($local:VersionMarker, ".${local:BuildNumber}") | Set-Content -Encoding UTF8 $local:ManifestFile
 }
 
 
