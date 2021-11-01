@@ -62,7 +62,7 @@
             <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>&nbsp;Verify TLS Certificate
           </button>
         </div>
-        <div *ngIf="!isMonitoringAvailable && !isLoading">
+        <div *ngIf="!isMonitoringAvailable && !needsSSLEnabled && !isLoading">
           <b>Monitoring is unavailable.</b>
         </div>
         <button mat-flat-button class="monitoring-button start-monitoring"
