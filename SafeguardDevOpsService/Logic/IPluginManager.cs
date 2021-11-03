@@ -15,6 +15,6 @@ namespace OneIdentity.DevOps.Logic
         bool IsLoadedPlugin(string name);
         bool IsDisabledPlugin(string name);
 
-        void RefreshPluginCredentials(ISafeguardConnection sgConnection);
+        void RefreshPluginCredentials();
     }
 }

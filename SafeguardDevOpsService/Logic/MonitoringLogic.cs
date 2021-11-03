@@ -101,7 +101,12 @@ namespace OneIdentity.DevOps.Logic
             if (ignoreSsl.Value)
                 throw new DevOpsException("Monitoring cannot be enabled until a secure connection has been established. Trusted certificates may be missing.");
 
-            _pluginManager.RefreshPluginCredentials(null);
+            // This call will fail if the monitor is being started as part of the service start up.
+            //  The reason why is because at service startup, the user has not logged into Secrets Broker yet
+            //  so Secrets Broker does not have the SPP credentials that are required to query the current vault account credentials.
+            //  However, the monitor can still be started using the existing vault credentials. If syncing doesn't appear to be working
+            //  the monitor can be stopped and restarted which will cause a refresh of the vault credentials.
+            _pluginManager.RefreshPluginCredentials();
 
             // connect to Safeguard
             _a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);

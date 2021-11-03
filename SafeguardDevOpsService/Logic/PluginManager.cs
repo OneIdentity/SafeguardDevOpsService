@@ -427,13 +427,22 @@ namespace OneIdentity.DevOps.Logic
             return plugin;
         }
 
-        public void RefreshPluginCredentials(ISafeguardConnection sgConnection)
+        public void RefreshPluginCredentials()
         {
-            var plugins = _configDb.GetAllPlugins();
-        
-            foreach (var plugin in plugins)
+            try
             {
-                RefreshPluginCredential(sgConnection, plugin);
+                var sgConnection = _safeguardLogic.Connect();
+
+                var plugins = _configDb.GetAllPlugins();
+
+                foreach (var plugin in plugins)
+                {
+                    RefreshPluginCredential(sgConnection, plugin);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, $"Failed to refresh the plugin vault credentials. If account credentials are not being synced correctly, try stopping and restarting the monitor. Reason: {ex.Message}.");
             }
         }
         
