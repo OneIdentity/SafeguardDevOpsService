@@ -63,6 +63,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
         {
             if (_configuration != null && credential != null)
             {
+
                 try
                 {
                     var client = new HttpClient(_handler)
@@ -73,6 +74,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                         Convert.ToBase64String(Encoding.ASCII.GetBytes($"{_configuration[UserName]}:{credential}")));
 
                     var response = client.GetAsync("crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)").Result;
+
                     response.EnsureSuccessStatusCode();
 
                     var result = response.Content.ReadAsStringAsync().Result;
@@ -80,7 +82,6 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                     _secretsClient = client;
                     var crumb = result.Split(':');
                     client.DefaultRequestHeaders.Add(crumb[0], crumb[1]);
-                    client.DefaultRequestHeaders.Add("Content-Type", "application/x-www-form-urlencoded");
 
                     _logger.Information($"Plugin {Name} successfully authenticated.");
                 }
@@ -135,6 +136,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                     {
                         new KeyValuePair<string,string>("json",payload)
                     });
+                    content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
                     response = _secretsClient.PostAsync($"credentials/store/system/domain/_/credential/{id}/updateSubmit", content).Result;
                 }
@@ -145,6 +147,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                     {
                         new KeyValuePair<string,string>("json",payload)
                     });
+                    content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
                     response = _secretsClient.PostAsync("credentials/store/system/domain/_/createCredentials", content).Result;
                 }
