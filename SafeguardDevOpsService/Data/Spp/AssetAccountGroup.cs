@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace OneIdentity.DevOps.Data.Spp
 {
@@ -90,6 +92,7 @@ namespace OneIdentity.DevOps.Data.Spp
         /// <summary>
         /// Determines whether the items in this group are ANDed or ORed together
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
         public ConditionJoinType LogicalJoinType { get; set; }
 
         /// <summary>
@@ -116,11 +119,13 @@ namespace OneIdentity.DevOps.Data.Spp
         /// <summary>
         /// Which asset or account attribute is being examined.
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
         public TaggingGroupingObjectAttributes ObjectAttribute { get; set; }
 
         /// <summary>
         /// Indicates how the attribute value should be compared to the CompareValue. Data type dependent.
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
         public ComparisonOperator CompareType { get; set; }
 
         /// <summary>
