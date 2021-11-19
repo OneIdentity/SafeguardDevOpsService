@@ -316,6 +316,11 @@ namespace OneIdentity.DevOps.Logic
                     throw LogAndException($"Add-on {addonName} not found.");
                 }
 
+                if (!addon.VaultCredentials.Any())
+                {
+                    throw LogAndException($"Waiting for the Add-on {addonName} to post the vault credentials.  Try again later...");
+                }
+
                 if ((_configDb.AssetPartitionId ?? 0) == 0 || (_configDb.AssetId ?? 0) == 0)
                 {
                     var assetPartition = _safeguardLogic.CreateAssetPartition(sg);
