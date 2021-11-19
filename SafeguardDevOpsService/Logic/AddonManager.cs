@@ -167,13 +167,31 @@ namespace OneIdentity.DevOps.Logic
 
         private void CleanUpDeletedAddons()
         {
-            var files = Directory.GetFiles(WellKnownData.ProgramDataPath, WellKnownData.AddonDeleteFile, SearchOption.AllDirectories);
-            if (files.Any())
+            try
             {
-                foreach (var addonPath in files)
+                var directories = Directory.GetDirectories(WellKnownData.ProgramDataPath);
+                foreach (var dir in directories)
                 {
-                    Directory.Delete(Path.GetDirectoryName(addonPath), true);
+                    try 
+                    {
+                        var files = Directory.GetFiles(dir, WellKnownData.AddonDeleteFile, SearchOption.TopDirectoryOnly);
+                        if (files.Any())
+                        {
+                            foreach (var addonPath in files)
+                            {
+                                Directory.Delete(Path.GetDirectoryName(addonPath), true);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error($"Failed to query for deleted add-ons in directory {dir}: {ex.Message}.");
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to query for deleted add-ons: {ex.Message}.");
             }
 
             try

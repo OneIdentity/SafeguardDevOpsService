@@ -48,17 +48,19 @@ export class EditAddonComponent implements OnInit {
       },
         error => {
           if (this.retryReconfigure) {
-            this.serviceClient.postConfiguration()
-              .subscribe(() => {
-                setTimeout(() => {
-                  this.window.location.reload();
-                }, 2000);
-              },
-                error2 => {
-                  this.retryReconfigure = false;
-                  this.isConfiguring = false;
-                  this.error = error2.error;
-                });
+            setTimeout(() => {
+              this.serviceClient.postAddonConfiguration(this.addon.Name)
+                .subscribe(() => {
+                  setTimeout(() => {
+                    this.window.location.reload();
+                  }, 2000);
+                },
+                  error2 => {
+                    this.retryReconfigure = false;
+                    this.isConfiguring = false;
+                    this.error = error2.error;
+                  });
+            }, 4000);
           } else {
             this.isConfiguring = false;
             this.error = error.error;
