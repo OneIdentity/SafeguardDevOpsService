@@ -205,8 +205,9 @@ namespace OneIdentity.DevOps.Logic
                     ApplianceName = _applianceAvailabilityCache.ApplianceName,
                     ApplianceVersion = _applianceAvailabilityCache.ApplianceVersion,
                     ApplianceState = _applianceAvailabilityCache.ApplianceCurrentState,
-                    ApplianceSupportsDevOps = ApplianceSupportsDevOps
-                                              ?? GetSafeguardDevOpsSupport(sg, address ?? _configDb.SafeguardAddress),
+                    // TODO: Hardcoded to false for now. This should be changed back to call the following when devops support it added to Safeguard
+                    // ApplianceSupportsDevOps = ApplianceSupportsDevOps ?? GetSafeguardDevOpsSupport(sg, address ?? _configDb.SafeguardAddress),
+                    ApplianceSupportsDevOps = false,  
                     DevOpsInstanceId = _configDb.SvcId,
                     UserName = servConfig?.User?.UserName,
                     UserDisplayName = servConfig?.User?.DisplayName,

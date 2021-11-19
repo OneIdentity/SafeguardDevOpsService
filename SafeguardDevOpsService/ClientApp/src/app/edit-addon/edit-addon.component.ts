@@ -58,12 +58,12 @@ export class EditAddonComponent implements OnInit {
                   error2 => {
                     this.retryReconfigure = false;
                     this.isConfiguring = false;
-                    this.error = error2.error;
+                    this.error = error2.error.Message;
                   });
             }, 4000);
           } else {
             this.isConfiguring = false;
-            this.error = error.error;
+            this.error = error.error.Message;
           }
         });
   }
