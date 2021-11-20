@@ -32,12 +32,7 @@ namespace OneIdentity.DevOps.Logic
         {
             if (IsSelfSigned(certificate))
             {
-                if (IsCa(certificate))
-                {
-                    return true;
-                }
-
-                return false;
+                return IsCa(certificate);
             }
 
             var issuedBy = trustedCertificates.FirstOrDefault(x => x.Subject.Equals(certificate.Issuer));
