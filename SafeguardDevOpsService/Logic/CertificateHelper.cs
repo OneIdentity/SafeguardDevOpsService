@@ -30,8 +30,15 @@ namespace OneIdentity.DevOps.Logic
 
         private static bool WalkTrustChain(X509Certificate2 certificate, TrustedCertificate[] trustedCertificates)
         {
-            if (IsSelfSigned(certificate) && IsCa(certificate))
-                return true;
+            if (IsSelfSigned(certificate))
+            {
+                if (IsCa(certificate))
+                {
+                    return true;
+                }
+
+                return false;
+            }
 
             var issuedBy = trustedCertificates.FirstOrDefault(x => x.Subject.Equals(certificate.Issuer));
             if (issuedBy != null)
