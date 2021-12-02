@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Security.Cryptography.X509Certificates;
 
 #pragma warning disable 1591
 
@@ -37,8 +36,8 @@ namespace OneIdentity.DevOps.Data
         [ReadOnly(true)]
         public DateTime NotBefore
         {
-            get { return _notBefore; }
-            set { _notBefore = DateTime.SpecifyKind(value, DateTimeKind.Utc); }
+            get => _notBefore;
+            set => _notBefore = DateTime.SpecifyKind(value, DateTimeKind.Utc);
         }
 
         /// <summary>
@@ -47,8 +46,8 @@ namespace OneIdentity.DevOps.Data
         [ReadOnly(true)]
         public DateTime NotAfter
         {
-            get { return _notAfter; }
-            set { _notAfter = DateTime.SpecifyKind(value, DateTimeKind.Utc); }
+            get => _notAfter;
+            set => _notAfter = DateTime.SpecifyKind(value, DateTimeKind.Utc);
         }
 
         /// <summary>
@@ -67,6 +66,18 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public string Passphrase { get; set; }
 
+        /// <summary>
+        /// The certificate is new or existing (Read-only)
+        /// </summary>
+        [ReadOnly(true)]
+        public bool IsNew { get; set; }
+
+        /// <summary>
+        /// The certificate has a valid chain of trust (Read-only)
+        /// </summary>
+        [ReadOnly(true)]
+        public bool PassedTrustChainValidation { get; set; }
+
         protected bool Equals(CertificateInfo other)
         {
             return string.Equals(Subject, other.Subject) && string.Equals(IssuedBy, other.IssuedBy) && NotBefore.Equals(other.NotBefore) && NotAfter.Equals(other.NotAfter) && string.Equals(Thumbprint, other.Thumbprint);
@@ -76,8 +87,7 @@ namespace OneIdentity.DevOps.Data
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != GetType()) return false;
-            return Equals((CertificateInfo) obj);
+            return obj.GetType() == GetType() && Equals((CertificateInfo) obj);
         }
 
         public override int GetHashCode()

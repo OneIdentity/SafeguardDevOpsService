@@ -11,7 +11,7 @@ namespace OneIdentity.DevOps.Common
         Dictionary<string, string> GetPluginInitialConfiguration();
         void SetPluginConfiguration(Dictionary<string, string> configuration);
         void SetVaultCredential(string credential);
-        bool SetPassword(string asset, string account, string password);
+        bool SetPassword(string asset, string account, string password, string altAccountName = null);
         void SetLogger(ILogger logger);
         bool TestVaultConnection();
         void Unload();

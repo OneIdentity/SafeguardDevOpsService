@@ -15,6 +15,10 @@ namespace OneIdentity.DevOps.Data.Spp
         /// </summary>
         public string AccountName { get; set; }
         /// <summary>
+        /// Alternate Account name
+        /// </summary>
+        public string AltAccountName { get; set; }
+        /// <summary>
         /// Account description
         /// </summary>
         public string AccountDescription { get; set; }

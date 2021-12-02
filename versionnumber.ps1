@@ -19,6 +19,7 @@ Write-Host "BuildNumber = $($local:BuildNumber)"
 $local:PackageCodeMarker = "255.255.65534"
 $local:AssemblyCodeMarker = "255.255.65534.65534"
 $local:AssemblyVersion = "${SemanticVersion}.$($local:BuildNumber)"
+$local:PwShellVersion = "${SemanticVersion}.$($BuildId)"
 if ($IsPrerelease)
 {
     $local:PackageVersion = "${SemanticVersion}-dev-$($local:BuildNumber)"
@@ -31,6 +32,7 @@ Write-Host "PackageCodeMarker = $($local:PackageCodeMarker)"
 Write-Host "AssemblyCodeMarker = $($local:AssemblyCodeMarker)"
 Write-Host "PackageVersion = $($local:PackageVersion)"
 Write-Host "AssemblyVersion = $($local:AssemblyVersion)"
+Write-Host "PwShellVersion = $($local:PwShellVersion)"
 
 Write-Host "Replacing version information in SafeguardDevOpsService assembly info"
 $local:ProjectFile = (Join-Path $PSScriptRoot "SafeguardDevOpsService\Properties\AssemblyInfo.cs")
@@ -48,4 +50,13 @@ Write-Output "*****"
 Get-Content $local:ProjectFile
 Write-Output "*****"
 
+Write-Host "Replacing version information in DevOpsAddonCommon project file"
+$local:ProjectFile = (Join-Path $PSScriptRoot "DevOpsAddonCommon\DevOpsAddonCommon.csproj")
+(Get-Content $local:ProjectFile -Raw).replace($local:AssemblyCodeMarker, $local:AssemblyVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
+(Get-Content $local:ProjectFile -Raw).replace($local:PackageCodeMarker, $local:PackageVersion) | Set-Content -Encoding UTF8 $local:ProjectFile
+Write-Output "*****"
+Get-Content $local:ProjectFile
+Write-Output "*****"
+
 Write-Output "##vso[task.setvariable variable=VersionString;]$($local:AssemblyVersion)"
+Write-Output "##vso[task.setvariable variable=PwShellVersionString;]$($local:PwShellVersion)"

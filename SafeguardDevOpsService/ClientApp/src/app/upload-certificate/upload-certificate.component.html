@@ -1,6 +1,6 @@
 <div mat-dialog-title>
    <div class='dialog-title-elements'>
-      <div class='title-text'>Add {{certificateType}} Certificate</div>
+      <div class='title-text'>{{certificateType}} Certificate</div>
       <div class='close-button'><button mat-icon-button class='link-button' mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
    </div>
 </div>
@@ -10,7 +10,7 @@
       <p>This can be either a PFX formatted certificate that includes the private key and a passphrase for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.</p>
    </ng-container>
    <ng-container *ngIf='certificateType=="Web Server"'>
-      <p>Safeguard Secrets Broker for DevOps uses TLS to authenticate itself and to protect its API. The first time it starts it generates a self-signed web server certificate. <button mat-button class="link-button view-button" color="primary" (click)="viewCertificate()" disableRipple>View</button></p>
+      <p>Safeguard Secrets Broker for DevOps uses TLS to authenticate itself and to protect its API. The first time it starts it generates a self-signed web server certificate. <button mat-button *ngIf="needsWebCertificate" class="link-button view-button" color="primary" (click)="viewCertificate()" disableRipple>View Web Server Certificate Details</button></p>
       <p>To ensure secure access this web certificate should be replaced. The most secure way to create this certificate is using a certificate signing request (CSR). This can be either a PFX formatted certificate that includes the private key and a passphrase for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.</p>
    </ng-container>
    <div class="show-more-link">

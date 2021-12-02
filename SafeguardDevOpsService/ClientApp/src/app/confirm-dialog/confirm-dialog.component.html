@@ -1,13 +1,21 @@
 <div mat-dialog-title>
    <div class='dialog-title-elements'>
       <div class='title-text'>{{title}}</div>
-      <div class='close-button'><button *ngIf='!showCancel' mat-icon-button class='link-button' mat-dialog-close tabindex='-1'><mat-icon>close</mat-icon></button></div>
+      <div class='close-button'><button *ngIf='!showCancel' mat-icon-button class='link-button' mat-dialog-close
+            tabindex='-1'>
+            <mat-icon>close</mat-icon>
+         </button></div>
    </div>
 </div>
 <div class='dialog-content' mat-dialog-content>
    <div [innerHTML]="message"></div>
 </div>
+<mat-checkbox *ngIf="showSecretsBrokerOnly" [(ngModel)]="secretsBrokerOnly">Reset Safeguard Secrets Broker for DevOps Only
+</mat-checkbox>
+<br/>
+<mat-checkbox *ngIf="showRestart" [(ngModel)]="restart">Restart Safeguard Secrets Broker for DevOps Service
+</mat-checkbox>
 <div mat-dialog-actions align='end'>
-  <button mat-button (click)="close()" cdkFocusInitial *ngIf="showCancel">Cancel</button>
-  <button mat-flat-button color='primary' (click)="confirm()">{{confirmText}}</button>
+   <button mat-button (click)="close()" cdkFocusInitial *ngIf="showCancel">Cancel</button>
+   <button mat-flat-button color='primary' (click)="confirm()">{{confirmText}}</button>
 </div>

@@ -79,17 +79,17 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             {
                 var task = Task.Run(async () => await _client.ListNamespacedSecretAsync(vaultNamespace));
                 var result = task.Result;
-                _logger.Information($"Successfully passed the connection test for Password for {DisplayName}.");
+                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
         }
 
-        public bool SetPassword(string asset, string account, string password)
+        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
             if (_client == null)
             {
@@ -109,7 +109,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             V1Secret secret = null;
             try
             {
-                secret = _client.ReadNamespacedSecret($"{asset}-{account}", vaultNamespace);
+                secret = _client.ReadNamespacedSecret(altAccountName ?? $"{asset}-{account}", vaultNamespace);
             }
             catch (Exception)
             {
@@ -128,7 +128,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                         StringData = passwordData,
                         Metadata = new V1ObjectMeta()
                         {
-                            Name = $"{asset}-{account}",
+                            Name = $"{asset}-{altAccountName ?? account}",
                             NamespaceProperty = vaultNamespace
                         }
                     };
@@ -137,15 +137,15 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                 else
                 {
                     secret.StringData = passwordData;
-                    _client.ReplaceNamespacedSecret(secret, $"{asset}-{account}", vaultNamespace);
+                    _client.ReplaceNamespacedSecret(secret, $"{asset}-{altAccountName ?? account}", vaultNamespace);
                 }
 
-                _logger.Information($"Password for {asset}-{account} has been successfully stored in the vault.");
+                _logger.Information($"Password for {asset}-{altAccountName ?? account} has been successfully stored in the vault.");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return false;
             }
         }

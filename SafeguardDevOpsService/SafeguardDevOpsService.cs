@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using Autofac.Extensions.DependencyInjection;
@@ -20,6 +19,7 @@ namespace OneIdentity.DevOps
     {
         private readonly IWebHost _host;
         private readonly IPluginManager _pluginManager;
+        private readonly IAddonManager _addonManager;
         private readonly IMonitoringLogic _monitoringLogic;
 
         public SafeguardDevOpsService()
@@ -48,13 +48,12 @@ namespace OneIdentity.DevOps
             Log.Logger.Information($"Thumbprint for {webSslCert.Subject}: {webSslCert.Thumbprint}");
             Log.Logger.Information(webSslCert.ToPemFormat());
 
-            Log.Logger.Information($"Configuration file location: {Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json");
+            Log.Logger.Information($"Configuration file location: {WellKnownData.AppSettingsFile}");
             var configuration = new ConfigurationBuilder()
-                .AddJsonFile($"{Path.Combine(WellKnownData.ServiceDirPath, WellKnownData.AppSettings)}.json",
-                    optional: true, reloadOnChange: true)
+                .AddJsonFile(WellKnownData.AppSettingsFile, optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
-            var httpsPort = configuration["HttpsPort"] ?? "443";
+            var httpsPort = configuration["HttpsPort"] ?? WellKnownData.DefaultServicePort;
             var logLevel = configuration["LogLevel"];
 
             if (logLevel != null)
@@ -98,7 +97,10 @@ namespace OneIdentity.DevOps
                 .UseKestrel(options =>
                 {
                     if (int.TryParse(httpsPort, out var port) == false)
-                        port = 443;
+                    {
+                        Log.Logger.Warning($"Failed to parse HttpsPort from appsettings.json '{httpsPort}'");
+                        port = int.Parse(WellKnownData.DefaultServicePort);
+                    }
                     Log.Logger.Information($"Binding web server to port: {port}.");
                     options.ListenAnyIP(port, listenOptions =>
                         {
@@ -112,10 +114,14 @@ namespace OneIdentity.DevOps
 
             _monitoringLogic = (IMonitoringLogic) _host.Services.GetService(typeof(IMonitoringLogic));
             _pluginManager = (IPluginManager)_host.Services.GetService(typeof(IPluginManager));
+            _addonManager = (IAddonManager)_host.Services.GetService(typeof(IAddonManager));
         }
 
         public void Start()
         {
+            // This kicks off a function that
+            // checks for and loads any staged addons
+            _addonManager.Run();
             // This kicks off a function that
             // checks for and loads any staged plugins
             _pluginManager.Run();
@@ -148,7 +154,7 @@ namespace OneIdentity.DevOps
                 Log.Logger.Information($"Failed to read the service instance identifier: {WellKnownData.SvcIdPath}", ex);
             }
 
-            if (svcId == null || svcId.Equals("NEVER-INSTALLED", StringComparison.InvariantCultureIgnoreCase))
+            if (svcId == null || svcId.Equals(WellKnownData.ServiceIdentitifierRegenerate, StringComparison.OrdinalIgnoreCase))
             {
                 try
                 {

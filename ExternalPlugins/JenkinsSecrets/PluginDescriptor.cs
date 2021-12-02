@@ -63,6 +63,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
         {
             if (_configuration != null && credential != null)
             {
+
                 try
                 {
                     var client = new HttpClient(_handler)
@@ -73,6 +74,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                         Convert.ToBase64String(Encoding.ASCII.GetBytes($"{_configuration[UserName]}:{credential}")));
 
                     var response = client.GetAsync("crumbIssuer/api/xml?xpath=concat(//crumbRequestField,\":\",//crumb)").Result;
+
                     response.EnsureSuccessStatusCode();
 
                     var result = response.Content.ReadAsStringAsync().Result;
@@ -80,13 +82,12 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                     _secretsClient = client;
                     var crumb = result.Split(':');
                     client.DefaultRequestHeaders.Add(crumb[0], crumb[1]);
-                    client.DefaultRequestHeaders.Add("Content-Type", "application/x-www-form-urlencoded");
 
                     _logger.Information($"Plugin {Name} successfully authenticated.");
                 }
                 catch (Exception ex)
                 {
-                    _logger.Information($"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
+                    _logger.Information(ex, $"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
                 }
             }
             else
@@ -104,16 +105,17 @@ namespace OneIdentity.DevOps.JenkinsSecrets
             {
                 var task = Task.Run(async () => await _secretsClient.GetAsync($"api/"));
                 var result = task.Result;
+                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
         }
 
-        public bool SetPassword(string asset, string account, string password)
+        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
             if (_secretsClient == null)
             {
@@ -123,8 +125,8 @@ namespace OneIdentity.DevOps.JenkinsSecrets
 
             try
             {
-                var name = _rgx.Replace($"{asset}-{account}", "-");
-                var id = $"{asset}{account}";
+                var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+                var id = altAccountName ?? $"{asset}{account}";
 
                 var response = _secretsClient.GetAsync($"credentials/store/system/domain/_/credential/{id}/").Result;
                 if (response.IsSuccessStatusCode)
@@ -134,6 +136,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                     {
                         new KeyValuePair<string,string>("json",payload)
                     });
+                    content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
                     response = _secretsClient.PostAsync($"credentials/store/system/domain/_/credential/{id}/updateSubmit", content).Result;
                 }
@@ -144,6 +147,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                     {
                         new KeyValuePair<string,string>("json",payload)
                     });
+                    content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
 
                     response = _secretsClient.PostAsync("credentials/store/system/domain/_/createCredentials", content).Result;
                 }
@@ -151,12 +155,12 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                 response = _secretsClient.GetAsync($"credentials/store/system/domain/_/credential/{id}/").Result;
                 response.EnsureSuccessStatusCode();
 
-                _logger.Information($"Password for {asset}-{account} has been successfully stored in the vault.");
+                _logger.Information($"Password for {asset}-{altAccountName ?? account} has been successfully stored in the vault.");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return false;
             }
         }

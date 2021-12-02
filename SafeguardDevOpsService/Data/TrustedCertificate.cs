@@ -1,7 +1,4 @@
-﻿
-using System;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
+﻿using System.Security.Cryptography.X509Certificates;
 using LiteDB;
 using OneIdentity.DevOps.Extensions;
 using OneIdentity.DevOps.Logic;
@@ -20,6 +17,11 @@ namespace OneIdentity.DevOps.Data
         public string Thumbprint { get; set; }
 
         /// <summary>
+        /// Certificate subject
+        /// </summary>
+        public string Subject { get; set; }
+
+        /// <summary>
         /// Base64 representation of the certificate
         /// </summary>
         public string Base64CertificateData { get; set; }
@@ -27,7 +29,7 @@ namespace OneIdentity.DevOps.Data
         /// <summary>
         /// Get the certificate information
         /// </summary>
-        public CertificateInfo GetCertificateInfo()
+        public CertificateInfo GetCertificateInfo(bool isNew = true)
         {
             var cert = GetCertificate();
             return new CertificateInfo()
@@ -37,7 +39,8 @@ namespace OneIdentity.DevOps.Data
                 NotBefore = cert.NotBefore,
                 Subject = cert.Subject,
                 Thumbprint = cert.Thumbprint,
-                Base64CertificateData = cert.ToPemFormat()
+                Base64CertificateData = cert.ToPemFormat(),
+                IsNew = isNew
             };
         }
 

@@ -59,25 +59,38 @@ namespace OneIdentity.DevOps.Logic
             {
                 var manifest = reader.ReadToEnd();
                 var pluginManifest = JsonHelper.DeserializeObject<PluginManifest>(manifest);
-                if (pluginManifest != null)
+                if (pluginManifest != null && ValidateManifest(pluginManifest))
                 {
                     var extractLocation = Path.Combine(WellKnownData.PluginDirPath, pluginManifest.Name);
                     if (_pluginManager.IsLoadedPlugin(pluginManifest.Name) || Directory.Exists(extractLocation))
                     {
+                        _logger.Debug("Plugin is already loaded, setting restart flag.");
                         RestartManager.Instance.ShouldRestart = true;
 
                         if (!Directory.Exists(WellKnownData.PluginStageDirPath))
                             Directory.CreateDirectory(WellKnownData.PluginStageDirPath);
                         extractLocation = Path.Combine(WellKnownData.PluginStageDirPath, pluginManifest.Name);
                     }
+                    _logger.Debug($"Extracting plugin ZIP to {extractLocation}.");
                     zipArchive.ExtractToDirectory(extractLocation, true);
                 }
                 else
                 {
-                    throw LogAndException($"Plugin package does not contain a {WellKnownData.ManifestPattern} file.");
+                    throw LogAndException($"Plugin package does not contain a valid {WellKnownData.ManifestPattern} file.");
                 }
             }
         }
+
+        private bool ValidateManifest(PluginManifest pluginManifest)
+        {
+            return pluginManifest != null 
+                   && pluginManifest.GetType().GetProperties()
+                       .Where(pi => pi.PropertyType == typeof(string))
+                       .Select(pi => (string) pi.GetValue(pluginManifest))
+                       .All(value => !string.IsNullOrEmpty(value)) 
+                   && pluginManifest.Type.Equals(WellKnownData.PluginUploadType, StringComparison.OrdinalIgnoreCase);
+        }
+
         public void InstallPlugin(IFormFile formFile)
         {
             if (formFile.Length <= 0)
@@ -134,11 +147,8 @@ namespace OneIdentity.DevOps.Logic
         {
             //Don't actually delete the plugin configuration yet.  Mark the plugin to be deleted
             // and then delete it on the next restart.
-            var plugin = _configDb.GetPluginByName(name);
-            if (plugin != null)
+            if (_configDb.DeletePluginByName(name))
             {
-                plugin.IsDeleted = true;
-                _configDb.SavePluginConfiguration(plugin);
                 RestartManager.Instance.ShouldRestart = true;
             }
         }
@@ -150,28 +160,38 @@ namespace OneIdentity.DevOps.Logic
 
             if (plugin == null)
             {
-                _logger.Error($"Failed to save the safeguardConnection. No plugin {name} was found.");
-                return null;
+                var msg = $"Failed to save the safeguardConnection. No plugin {name} was found.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
+            }
+
+            if (plugin.IsSystemOwned)
+            {
+                var msg = $"Failed to save the safeguardConnection. The plugin {name} is system owned.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg, HttpStatusCode.BadRequest);
             }
 
             plugin.Configuration = pluginConfiguration.Configuration;
             plugin = _configDb.SavePluginConfiguration(plugin);
+            plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
             _pluginManager.SetConfigurationForPlugin(name);
 
             return plugin;
         }
 
-        public bool TestPluginConnectionByName(string name)
+        public bool TestPluginConnectionByName(ISafeguardConnection sgConnection, string name)
         {
             var plugin = _configDb.GetPluginByName(name);
 
             if (plugin == null)
             {
-                _logger.Error($"Failed to test the safeguardConnection. No plugin {name} was found.");
-                return false;
+                var msg = $"Failed to test the safeguardConnection. No plugin {name} was found.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
-            return _pluginManager.TestPluginVaultConnection(name);
+            return _pluginManager.TestPluginVaultConnection(sgConnection, name);
         }
 
         public PluginState GetPluginDisabledState(string name)
@@ -182,7 +202,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             return new PluginState() {Disabled = plugin.IsDisabled};
@@ -196,7 +216,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             plugin.IsDisabled = state;
@@ -211,7 +231,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             var mappings = _configDb.GetAccountMappings();
@@ -239,7 +259,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             var mappings = _configDb.GetAccountMappings();
@@ -253,7 +273,7 @@ namespace OneIdentity.DevOps.Logic
             return null;
         }
 
-        public IEnumerable<AccountMapping> SaveAccountMappings(string name, IEnumerable<A2ARetrievableAccount> accounts)
+        public IEnumerable<AccountMapping> SaveAccountMappings(ISafeguardConnection sgConnection, string name, IEnumerable<A2ARetrievableAccount> accounts)
         {
             if (_configDb.A2aRegistrationId == null)
             {
@@ -266,7 +286,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
-                throw new DevOpsException(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
             }
 
             var retrievableAccounts = accounts.ToArray();
@@ -277,46 +297,77 @@ namespace OneIdentity.DevOps.Logic
                 throw new DevOpsException(msg);
             }
 
-            using var sg = _safeguardLogic.Connect();
-
-            var newAccounts = new List<AccountMapping>();
-
+            var allAccounts = _configDb.GetAccountMappings().ToArray();
             foreach (var account in retrievableAccounts)
             {
-                try
+                if (!string.IsNullOrEmpty(account.AltAccountName))
                 {
-                    var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"A2ARegistrations/{_configDb.A2aRegistrationId}/RetrievableAccounts/{account.AccountId}");
-                    if (result.StatusCode == HttpStatusCode.OK)
+                    // Make sure that no other existing account has the same altAccountName
+                    // Make sure that none of the accounts that are being added, have the same altAccountName
+                    if (allAccounts.Any(x => x.AltAccountName != null 
+                                             && x.AltAccountName.Equals(account.AltAccountName, StringComparison.OrdinalIgnoreCase)
+                                             && !x.VaultName.Equals(name, StringComparison.OrdinalIgnoreCase)) 
+                        || retrievableAccounts.Any(x => x.AccountId != account.AccountId 
+                                                        && x.AltAccountName != null 
+                                                        && x.AltAccountName.Equals(account.AltAccountName, StringComparison.OrdinalIgnoreCase)))
                     {
-                        var retrievableAccount = JsonHelper.DeserializeObject<A2ARetrievableAccount>(result.Body);
-                        var accountMapping = new AccountMapping()
-                        {
-                            AccountName = retrievableAccount.AccountName,
-                            AccountId = retrievableAccount.AccountId,
-                            ApiKey = retrievableAccount.ApiKey,
-                            AssetName = retrievableAccount.SystemName,
-                            SystemId = retrievableAccount.SystemId,
-                            DomainName = retrievableAccount.DomainName,
-                            NetworkAddress = retrievableAccount.NetworkAddress,
-                            VaultName = name
-                        };
-
-                        newAccounts.Add(accountMapping);
+                        var msg = $"Invalid alternate account name. The account name {account.AltAccountName} is already in use.";
+                        _logger.Error(msg);
+                        throw new DevOpsException(msg);
                     }
                 }
-                catch (Exception ex)
-                {
-                    var msg = $"Failed to add account {account.AccountId} - {account.AccountName}: {ex.Message}";
-                    _logger.Error(msg);
-                }
             }
 
-            if (newAccounts.Count > 0)
+            var sg = sgConnection ?? _safeguardLogic.Connect();
+
+            try
             {
-                _configDb.SaveAccountMappings(newAccounts);
-            }
+                var newAccounts = new List<AccountMapping>();
 
-            return GetAccountMappings(name);
+                foreach (var account in retrievableAccounts)
+                {
+                    try
+                    {
+                        var retrievableAccount =
+                            _safeguardLogic.GetA2ARetrievableAccountById(sg, A2ARegistrationType.Account, account.AccountId);
+
+                        if (retrievableAccount != null)
+                        {
+                            var accountMapping = new AccountMapping()
+                            {
+                                AccountName = retrievableAccount.AccountName,
+                                AltAccountName = account.AltAccountName,
+                                AccountId = retrievableAccount.AccountId,
+                                ApiKey = retrievableAccount.ApiKey,
+                                AssetName = retrievableAccount.SystemName,
+                                SystemId = retrievableAccount.SystemId,
+                                DomainName = retrievableAccount.DomainName,
+                                NetworkAddress = retrievableAccount.NetworkAddress,
+                                VaultName = name
+                            };
+
+                            newAccounts.Add(accountMapping);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        var msg = $"Failed to add account {account.AccountId} - {account.AccountName}: {ex.Message}";
+                        _logger.Error(ex, msg);
+                    }
+                }
+
+                if (newAccounts.Count > 0)
+                {
+                    _configDb.SaveAccountMappings(newAccounts);
+                }
+
+                return GetAccountMappings(name);
+            }
+            finally
+            {
+                if (sgConnection == null)
+                    sg.Dispose();
+            }
         }
 
         public void DeleteAccountMappings(string name)
@@ -331,7 +382,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
+                    _logger.Error(ex, $"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
                 }
             }
         }
@@ -355,7 +406,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
+                    _logger.Error(ex, $"Failed to remove the account mapping {account.AssetName}-{account.AccountName} from plugin {name}.", ex);
                 }
             }
         }
@@ -365,19 +416,39 @@ namespace OneIdentity.DevOps.Logic
             _configDb.DeleteAccountMappings();
         }
 
-        public A2ARetrievableAccount GetPluginVaultAccount(string name)
+        public A2ARetrievableAccount GetPluginVaultAccount(ISafeguardConnection sgConnection, string name)
         {
             var plugin = _configDb.GetPluginByName(name);
             if (plugin == null)
             {
                 throw LogAndException($"Plugin {name} not found");
             }
+            if (plugin.IsSystemOwned && !plugin.VaultAccountId.HasValue)
+            {
+                var account = new A2ARetrievableAccount()
+                {
+                    AccountName = WellKnownData.DevOpsCredentialName(plugin.Name, _configDb.SvcId),
+                    AccountDescription = "Internal account",
+                    SystemName = WellKnownData.DevOpsAssetName(_configDb.SvcId),
+                    SystemDescription = WellKnownData.DevOpsAssetName(_configDb.SvcId)
+                };
+
+                var addon = _configDb.GetAllAddons().FirstOrDefault(a => a.Manifest.PluginName.Equals(plugin.Name));
+                if (addon != null)
+                {
+                    account.AccountName = addon.VaultAccountName;
+                    account.SystemName = addon.Name;
+                    account.SystemDescription = addon.Name;
+                }
+
+                return account;
+            }
             if (!plugin.VaultAccountId.HasValue)
             {
                 return null;
             }
 
-            return _safeguardLogic.GetA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+            return _safeguardLogic.GetA2ARetrievableAccount(sgConnection, plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
         }
 
         private int VaultAccountUsage(int accountId)
@@ -387,7 +458,7 @@ namespace OneIdentity.DevOps.Logic
             return usage.Length;
         }
 
-        public A2ARetrievableAccount SavePluginVaultAccount(string name, AssetAccount sppAccount)
+        public A2ARetrievableAccount SavePluginVaultAccount(ISafeguardConnection sgConnection, string name, AssetAccount sppAccount)
         {
             var plugin = _configDb.GetPluginByName(name);
             if (plugin == null)
@@ -399,7 +470,7 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException("Invalid account.");
             }
 
-            var account = _safeguardLogic.GetAccount(sppAccount.Id);
+            var account = _safeguardLogic.GetAssetAccount(sgConnection, sppAccount.Id);
             if (account == null)
             {
                 throw LogAndException($"Account {sppAccount.Id} not found.");
@@ -408,10 +479,10 @@ namespace OneIdentity.DevOps.Logic
             // Make sure that the vault account isn't being used by another plugin before we delete it.
             if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
             {
-                _safeguardLogic.DeleteA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+                _safeguardLogic.DeleteA2ARetrievableAccount(sgConnection, plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
             }
 
-            var accounts = _safeguardLogic.AddA2ARetrievableAccounts(new List<SppAccount>() {new SppAccount() {Id = account.Id, Name = account.Name}}, A2ARegistrationType.Vault);
+            var accounts = _safeguardLogic.AddA2ARetrievableAccounts(sgConnection, new List<SppAccount>() {new SppAccount() {Id = account.Id, Name = account.Name}}, A2ARegistrationType.Vault);
 
             var a2aAccount = accounts.FirstOrDefault(x => x.AccountId == account.Id);
             if (a2aAccount != null)
@@ -438,11 +509,23 @@ namespace OneIdentity.DevOps.Logic
             // Make sure that the vault account isn't being used by another plugin before we delete it.
             if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
             {
-                _safeguardLogic.DeleteA2ARetrievableAccount(plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
+                _safeguardLogic.DeleteA2ARetrievableAccount(null, plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
             }
 
             plugin.VaultAccountId = null;
             _configDb.SavePluginConfiguration(plugin);
+        }
+
+        // This method just removes the vault account mappings in the local database.  It does
+        //  not remove the vault A2A registration.
+        public void ClearMappedPluginVaultAccounts()
+        {
+            var plugins = _configDb.GetAllPlugins();
+            foreach (var plugin in plugins)
+            {
+                plugin.VaultAccountId = null;
+                _configDb.SavePluginConfiguration(plugin);
+            }
         }
 
         public void RestartService()

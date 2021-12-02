@@ -77,7 +77,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                _logger.Error($"Could not restore the last known running state of the monitor. {ex.Message}");
+                _logger.Error(ex, $"Could not restore the last known running state of the monitor. {ex.Message}");
             }
         }
 
@@ -98,11 +98,18 @@ namespace OneIdentity.DevOps.Logic
                 return;
             }
 
+            if (ignoreSsl.Value)
+                throw new DevOpsException("Monitoring cannot be enabled until a secure connection has been established. Trusted certificates may be missing.");
+
+            // This call will fail if the monitor is being started as part of the service start up.
+            //  The reason why is because at service startup, the user has not logged into Secrets Broker yet
+            //  so Secrets Broker does not have the SPP credentials that are required to query the current vault account credentials.
+            //  However, the monitor can still be started using the existing vault credentials. If syncing doesn't appear to be working
+            //  the monitor can be stopped and restarted which will cause a refresh of the vault credentials.
             _pluginManager.RefreshPluginCredentials();
 
             // connect to Safeguard
-            _a2AContext = (ignoreSsl == true) ? Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion.Value, true) : 
-                Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
+            _a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
             // figure out what API keys to monitor
             _retrievableAccounts = _configDb.GetAccountMappings().ToList();
             if (_retrievableAccounts.Count == 0)
@@ -120,6 +127,8 @@ namespace OneIdentity.DevOps.Logic
 
             _eventListener = _a2AContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);
             _eventListener.Start();
+
+            InitialPasswordPull();
 
             _logger.Information("Password change monitoring has been started.");
         }
@@ -157,54 +166,83 @@ namespace OneIdentity.DevOps.Logic
                 if (!apiKeys.All(x => x.ApiKey.Equals(apiKey)))
                     _logger.Error("Mismatched API keys for the same account were found by the password change handler.");
 
+                var selectedAccounts = _configDb.GetAccountMappings().Where(a => a.ApiKey.Equals(apiKey)).ToList();
+
                 // At this point we should have one API key to retrieve.
-                using (var password = _a2AContext.RetrievePassword(apiKey.ToSecureString()))
+                PullAndPushPasswordByApiKey(apiKey, selectedAccounts);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Password change handler failed: {ex.Message}.");
+            }
+        }
+
+        private void InitialPasswordPull()
+        {
+            try
+            {
+                var apiKeys = _retrievableAccounts.GroupBy(x => x.ApiKey).Select(x => x.First().ApiKey).ToArray();
+
+                // Make sure that we have at least one plugin mapped to the account
+                if (!apiKeys.Any())
+                    return;
+
+                var accounts = _configDb.GetAccountMappings().ToList();
+                foreach (var apiKey in apiKeys)
                 {
-                    var accounts = _configDb.GetAccountMappings().ToList();
                     var selectedAccounts = accounts.Where(a => a.ApiKey.Equals(apiKey));
-                    foreach (var account in selectedAccounts)
-                    {
-                        var monitorEvent = new MonitorEvent()
-                        {
-                            Event = $"Sending password for account {account.AccountName} to {account.VaultName}.",
-                            Result = WellKnownData.SentPasswordSuccess,
-                            Date = DateTime.UtcNow
-                        };
-
-                        if (_pluginManager.IsDisabledPlugin(account.VaultName))
-                        {
-                            monitorEvent.Event = $"{account.VaultName} is disabled or not loaded. No password sent for account {account.AccountName}.";
-                            monitorEvent.Event = WellKnownData.SentPasswordFailure;
-                        }
-                        else
-                        {
-                            try
-                            {
-                                _logger.Information(monitorEvent.Event);
-                                if (!_pluginManager.SendPassword(account.VaultName, account.AssetName,
-                                    account.AccountName, password))
-                                {
-                                    _logger.Error(
-                                        $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
-                                    monitorEvent.Result = WellKnownData.SentPasswordFailure;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.Error(
-                                    $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
-                                monitorEvent.Result = WellKnownData.SentPasswordFailure;
-                            }
-                        }
-
-                        _lastEventsQueue.Enqueue(monitorEvent);
-                    }
+                    PullAndPushPasswordByApiKey(apiKey, selectedAccounts);
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"Password change handler failed: {ex.Message}.");
+                _logger.Error(ex, $"Password change handler failed: {ex.Message}.");
             }
         }
+
+        private void PullAndPushPasswordByApiKey(string apiKey, IEnumerable<AccountMapping> selectedAccounts)
+        {
+            using var password = _a2AContext.RetrievePassword(apiKey.ToSecureString());
+
+            foreach (var account in selectedAccounts)
+            {
+                var monitorEvent = new MonitorEvent()
+                {
+                    Event = $"Sending password for account {account.AccountName} to {account.VaultName}.",
+                    Result = WellKnownData.SentPasswordSuccess,
+                    Date = DateTime.UtcNow
+                };
+
+                if (_pluginManager.IsDisabledPlugin(account.VaultName))
+                {
+                    monitorEvent.Event = $"{account.VaultName} is disabled or not loaded. No password sent for account {account.AccountName}.";
+                    monitorEvent.Event = WellKnownData.SentPasswordFailure;
+                }
+                else
+                {
+                    try
+                    {
+                        _logger.Information(monitorEvent.Event);
+                        if (!_pluginManager.SendPassword(account.VaultName, 
+                            account.AssetName, account.AccountName, password, 
+                            string.IsNullOrEmpty(account.AltAccountName) ? null : account.AltAccountName))
+                        {
+                            _logger.Error(
+                                $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
+                            monitorEvent.Result = WellKnownData.SentPasswordFailure;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex,
+                            $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
+                        monitorEvent.Result = WellKnownData.SentPasswordFailure;
+                    }
+                }
+
+                _lastEventsQueue.Enqueue(monitorEvent);
+            }
+        }
+
     }
 }

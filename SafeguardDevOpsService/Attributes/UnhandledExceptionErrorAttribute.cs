@@ -1,7 +1,7 @@
 ﻿using System.Net;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Extensions;
 #pragma warning disable 1591

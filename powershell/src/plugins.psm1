@@ -7,8 +7,8 @@ The Secrets Broker uses individualized plugins that are capable of pushing
 credential information to a specific third party vault. Each plugin must be
 installed and configured individually.
 
-This cmdlet lists all of the plugins that have been installed along with
-the specific configuration parameters if invoked with no parameters.  If
+This cmdlet lists all of the plugins that have been installed if invoked
+with no parameters along with the specific configuration parameters.  If
 a plugin name is provided, it will return the configuration parameters
 for the specific plugin.
 

@@ -3,15 +3,14 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using OneIdentity.DevOps.Common;
+using RestSharp;
 using Serilog;
-using VaultSharp;
-using VaultSharp.V1.AuthMethods.Token;
 
 namespace OneIdentity.DevOps.HashiCorpVault
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static IVaultClient _vaultClient;
+        private static VaultConnection _vaultClient;
         private static Dictionary<string,string> _configuration;
         private static ILogger _logger;
         private static Regex _rgx;
@@ -55,14 +54,12 @@ namespace OneIdentity.DevOps.HashiCorpVault
             {
                 try
                 {
-                    var authMethod = new TokenAuthMethodInfo(credential);
-                    var vaultClientSettings = new VaultClientSettings(_configuration[AddressName], authMethod);
-                    _vaultClient = new VaultClient(vaultClientSettings);
+                    _vaultClient = new VaultConnection(_configuration[AddressName], credential, _logger);
                     _logger.Information($"Plugin {Name} successfully authenticated.");
                 }
                 catch (Exception ex)
                 {
-                    _logger.Information($"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
+                    _logger.Information(ex, $"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
                 }
             }
             else
@@ -78,21 +75,19 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             try
             {
-                var task = Task.Run(async () =>
-                    await _vaultClient.V1.Secrets.KeyValue.V2.ReadSecretPathsAsync("/", $"{_configuration[MountPointName]}"));
-                var result = task.Result;
-                _logger.Information($"Successfully passed the connection test for Password for {DisplayName}.");
+                var response = _vaultClient.InvokeMethodFull(Method.GET, $"v1/{_configuration[MountPointName]}/config");
+                _logger.Information($"Test vault connection for {DisplayName}: Result = {response.Body}");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
 
         }
 
-        public bool SetPassword(string asset, string account, string password)
+        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
             if (_configuration == null || _vaultClient == null)
             {
@@ -100,22 +95,18 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 return false;
             }
 
-            var passwordData = new Dictionary<string, object>
-            {
-                { "value", password }
-            };
-
+            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
             try
             {
-                var name = _rgx.Replace($"{asset}-{account}", "-");
-                _vaultClient.V1.Secrets.KeyValue.V2.WriteSecretAsync(name, passwordData, null, _configuration[MountPointName])
-                    .Wait();
-                _logger.Information($"Password for {asset}-{account} has been successfully stored in the vault.");
+                var payload = "{\"data\": {\"pw\":\""+password+"\"}}";
+                var response = _vaultClient.InvokeMethodFull(Method.POST, $"v1/{_configuration[MountPointName]}/data/{name}", payload);
+
+                _logger.Information($"Password for {name} has been successfully stored in the vault.");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to set the secret for {name}: {ex.Message}.");
                 return false;
             }
         }

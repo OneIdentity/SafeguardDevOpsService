@@ -18,6 +18,7 @@ namespace OneIdentity.DevOps.Data
         /// Service is authenticated
         /// </summary>
         public bool IsAuthenticated => _accessToken != null;
+
         /// <summary>
         /// Safeguard appliance information
         /// </summary>
@@ -30,42 +31,30 @@ namespace OneIdentity.DevOps.Data
         public SecureString AccessToken
         {
             get => _accessToken;
-            set => _accessToken = value.Copy();
+            set
+            {
+                if (value == null)
+                {
+                    _accessToken.Dispose();
+                    _accessToken = null;
+                }
+                else
+                {
+                    _accessToken = value.Copy();
+                }
+            }
         }
+
         /// <summary>
-        /// Identity provider name
+        /// Logged in user
         /// </summary>
-        public string IdentityProviderName { get; set; }
-        /// <summary>
-        /// User name
-        /// </summary>
-        public string UserName { get; set; }
-        /// <summary>
-        /// User display name
-        /// </summary>
-        public string UserDisplayName { get; set; }
-        /// <summary>
-        /// Admin roles
-        /// </summary>
-        public string[] AdminRoles { get; set; }
-        /// <summary>
-        /// A2A registration name
-        /// </summary>
-        public string A2ARegistrationName { get; set; }
-        /// <summary>
-        /// A2A vault registration name
-        /// </summary>
-        public string A2AVaultRegistrationName { get; set; }
-        /// <summary>
-        /// Thumb print
-        /// </summary>
-        public string Thumbprint { get; set; }
+        public LoggedInUser User { get; set; }
 
         /// <summary>
         /// Session key
         /// </summary>
         [JsonIgnore]
-        public string SessionKey
+        public string SessionKey 
         {
             get => _sessionKey;
         }
@@ -82,9 +71,7 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public ServiceConfiguration(LoggedInUser loggedInUser)
         {
-            AdminRoles = loggedInUser.AdminRoles;
-            UserName = loggedInUser.UserName;
-            IdentityProviderName = loggedInUser.IdentityProviderName;
+            User = loggedInUser;
         }
 
         /// <summary>
@@ -100,7 +87,8 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         public void Dispose()
         {
-            AccessToken?.Dispose();
+            _accessToken?.Dispose();
+            _accessToken = null;
         }
     }
 }

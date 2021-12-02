@@ -23,13 +23,17 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
   retrievedCert = {};
   error = null;
   showBackButton: boolean;
+  isUpload: boolean;
+  showTrustChain: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
     private dialogRef: MatDialogRef<ViewCertificateComponent>
-  ){}
+  ) {
+    this.isUpload = data?.isUpload;
+  }
 
   ngOnInit(): void {
     let sub = null;
@@ -40,12 +44,14 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
       case 'Client':
         sub = this.serviceClient.getClientCertificate();
         this.typeDisplay = 'Client';
+        this.showTrustChain = true;
         break;
       case 'Web Server':
         sub = this.retrievedCert ? of(this.retrievedCert) : this.serviceClient.getWebServerCertificate();
         this.typeDisplay = 'Web Server';
         break;
     }
+
     if (sub) {
       sub.subscribe(
         cert => {
@@ -54,9 +60,9 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
           this.certificateLoaded = true;
 
           // Show Back button instead of Remove if this is an auto-generated web server certificate
-          this.showBackButton = this.certificateType === 'Web Server' &&
-            cert.Subject === 'CN=DevOpsServiceServerSSL' &&
-            cert.IssuedBy === cert.Subject;
+          this.showBackButton = this.certificateType == 'Web Server' &&
+            cert.Subject == 'CN=DefaultDevOpsServiceServerSSL' &&
+            cert.IssuedBy == cert.Subject;
         },
         error => {
           this.error = error;
@@ -75,51 +81,13 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
       }, 0);
     }
   }
+
   ngAfterViewInit(): void {
     this.fieldFocus();
   }
 
   addCertificate(): void {
     this.dialogRef.close({ result: ViewCertificateResult.AddCertificate });
-  }
-
-  removeCertificate(): void {
-    let dlgData;
-    this.error = null;
-
-    if (this.certificateType === 'Client') {
-      dlgData = { title: 'Remove Client Certificate',
-        message: '<p>Are you sure you want to remove the client certificate?</p><p>Monitoring and pulling passwords will no longer be available if this certificate is removed.</p>',
-        confirmText: 'Remove Certificate' };
-    } else if (this.certificateType === 'Web Server') {
-      dlgData = { title: 'Remove Web Server Certificate',
-        message: '<p>Are you sure you want to remove the web server certificate?</p><p>This will generate a new self-signed certificate to take its place and the Safeguard Secrets Broker for DevOps service will restart.</p>',
-        confirmText: 'Remove Certificate' };
-    }
-
-    if (dlgData) {
-      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-        data: dlgData
-      });
-
-      dialogRef.afterClosed().pipe(
-        filter((dlgResult) => dlgResult?.result === 'OK'),
-        switchMap(() => {
-          this.removingCertificate = true;
-          this.spinnerMessage = 'Removing ' + this.typeDisplay + ' Certificate';
-          return this.certificateType === 'Client' ?
-            this.serviceClient.deleteClientCertificate() :
-            this.serviceClient.deleteWebServerCertificate();
-        })
-      ).subscribe(
-        () => {
-          this.dialogRef.close({ result: ViewCertificateResult.RemovedCertificate });
-        },
-        (error) => {
-          this.error = error;
-        }
-      ).add(() => { this.removingCertificate = false; this.spinnerMessage='';});
-    }
   }
 }
 

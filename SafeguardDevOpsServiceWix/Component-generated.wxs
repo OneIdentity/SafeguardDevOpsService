@@ -584,8 +584,8 @@
             <Component Id="mscordaccore.dll" Guid="*">
                 <File Id="mscordaccore.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore.dll" />
             </Component>
-            <Component Id="mscordaccore_amd64_amd64_4.700.21.21202.dll" Guid="*">
-                <File Id="mscordaccore_amd64_amd64_4.700.21.21202.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.21.21202.dll" />
+            <Component Id="mscordaccore_amd64_amd64_4.700.21.26205.dll" Guid="*">
+                <File Id="mscordaccore_amd64_amd64_4.700.21.26205.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.21.26205.dll" />
             </Component>
             <Component Id="mscordbi.dll" Guid="*">
                 <File Id="mscordbi.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordbi.dll" />
@@ -610,6 +610,12 @@
             </Component>
             <Component Id="OneIdentity.SafeguardDotNet.dll" Guid="*">
                 <File Id="OneIdentity.SafeguardDotNet.dll" KeyPath="yes" Source="$(var.SourceDir)\OneIdentity.SafeguardDotNet.dll" />
+            </Component>
+            <Component Id="OneIdentity.SafeguardSecretsBroker.AddonCommon.dll" Guid="*">
+                <File Id="OneIdentity.SafeguardSecretsBroker.AddonCommon.dll" KeyPath="yes" Source="$(var.SourceDir)\OneIdentity.SafeguardSecretsBroker.AddonCommon.dll" />
+            </Component>
+            <Component Id="OneIdentity.SafeguardSecretsBroker.AddonCommon.pdb" Guid="*">
+                <File Id="OneIdentity.SafeguardSecretsBroker.AddonCommon.pdb" KeyPath="yes" Source="$(var.SourceDir)\OneIdentity.SafeguardSecretsBroker.AddonCommon.pdb" />
             </Component>
             <Component Id="OneIdentity.SafeguardSecretsBroker.PluginCommon.dll" Guid="*">
                 <File Id="OneIdentity.SafeguardSecretsBroker.PluginCommon.dll" KeyPath="yes" Source="$(var.SourceDir)\OneIdentity.SafeguardSecretsBroker.PluginCommon.dll" />
@@ -1439,7 +1445,7 @@
             <ComponentRef Id="Microsoft.Win32.Registry.dll" />
             <ComponentRef Id="Microsoft.Win32.SystemEvents.dll" />
             <ComponentRef Id="mscordaccore.dll" />
-            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.21.21202.dll" />
+            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.21.26205.dll" />
             <ComponentRef Id="mscordbi.dll" />
             <ComponentRef Id="mscorlib.dll" />
             <ComponentRef Id="mscorrc.debug.dll" />
@@ -1448,6 +1454,8 @@
             <ComponentRef Id="Newtonsoft.Json.Bson.dll" />
             <ComponentRef Id="Newtonsoft.Json.dll" />
             <ComponentRef Id="OneIdentity.SafeguardDotNet.dll" />
+            <ComponentRef Id="OneIdentity.SafeguardSecretsBroker.AddonCommon.dll" />
+            <ComponentRef Id="OneIdentity.SafeguardSecretsBroker.AddonCommon.pdb" />
             <ComponentRef Id="OneIdentity.SafeguardSecretsBroker.PluginCommon.dll" />
             <ComponentRef Id="OneIdentity.SafeguardSecretsBroker.PluginCommon.pdb" />
             <ComponentRef Id="RestSharp.dll" />

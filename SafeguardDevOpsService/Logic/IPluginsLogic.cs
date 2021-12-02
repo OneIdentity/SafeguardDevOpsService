@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
+using OneIdentity.SafeguardDotNet;
+using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
+
 #pragma warning disable 1591
 
 namespace OneIdentity.DevOps.Logic
@@ -18,17 +21,18 @@ namespace OneIdentity.DevOps.Logic
 
         IEnumerable<AccountMapping> GetAccountMappings(string name);
         AccountMapping GetAccountMappingById(string name, int accountId);
-        IEnumerable<AccountMapping> SaveAccountMappings(string name, IEnumerable<A2ARetrievableAccount> mappings);
+        IEnumerable<AccountMapping> SaveAccountMappings(ISafeguardConnection sgConnection, string name, IEnumerable<A2ARetrievableAccount> accounts);
         void DeleteAccountMappings(string name);
         void DeleteAccountMappings(string name, IEnumerable<AccountMapping> accounts);
         void DeleteAccountMappings();
 
-        A2ARetrievableAccount GetPluginVaultAccount(string name);
-        A2ARetrievableAccount SavePluginVaultAccount(string name, AssetAccount sppAccount);
+        A2ARetrievableAccount GetPluginVaultAccount(ISafeguardConnection sgConnection, string name);
+        A2ARetrievableAccount SavePluginVaultAccount(ISafeguardConnection sgConnection, string name, AssetAccount sppAccount);
         void RemovePluginVaultAccount(string name);
+        void ClearMappedPluginVaultAccounts();
 
         void RestartService();
-        bool TestPluginConnectionByName(string name);
+        bool TestPluginConnectionByName(ISafeguardConnection sgConnection, string name);
         PluginState GetPluginDisabledState(string name);
         PluginState UpdatePluginDisabledState(string name, bool isDisabled);
     }

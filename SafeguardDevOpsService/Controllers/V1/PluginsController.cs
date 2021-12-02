@@ -71,6 +71,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="200">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
+        [DisableRequestSizeLimit]
         [UnhandledExceptionError]
         [HttpPost]
         public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, Plugin pluginInfo, [FromQuery] bool restart = false)
@@ -100,6 +101,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <response code="204">Success</response>
         /// <response code="400">Bad request</response>
         [SafeguardSessionKeyAuthorization]
+        [DisableRequestSizeLimit]
         [UnhandledExceptionError]
         [HttpPost("File")]
         public ActionResult UploadPlugin([FromServices] IPluginsLogic pluginsLogic, IFormFile formFile, [FromQuery] bool restart = false)
@@ -129,7 +131,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("{name}")]
-        public ActionResult<Plugin> GetPlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        public ActionResult<Plugin> GetPluginConfiguration([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
             var plugin = pluginsLogic.GetPluginByName(name);
             if (plugin == null)
@@ -154,7 +156,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPut("{name}")]
-        public ActionResult<Plugin> GetPlugins([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginConfiguration pluginConfiguration)
+        public ActionResult<Plugin> UpdatePluginConfiguration([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] PluginConfiguration pluginConfiguration)
         {
             var plugin = pluginsLogic.SavePluginConfigurationByName(pluginConfiguration, name);
             if (plugin == null)
@@ -182,7 +184,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("{name}")]
-        public ActionResult DeletePlugin([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromQuery] bool restart = false)
+        public ActionResult DeletePluginConfiguration([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromQuery] bool restart = false)
         {
             pluginsLogic.DeleteAccountMappings(name);
             pluginsLogic.RemovePluginVaultAccount(name);
@@ -214,7 +216,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpPost("{name}/TestConnection")]
         public ActionResult TestPluginConnection([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
-            var success = pluginsLogic.TestPluginConnectionByName(name);
+            var success = pluginsLogic.TestPluginConnectionByName(null, name);
 
             if (!success)
             {
@@ -292,7 +294,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpPut("{name}/Accounts")]
         public ActionResult<IEnumerable<AccountMapping>> AddAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, IEnumerable<A2ARetrievableAccount> accounts)
         {
-            var accountMappings = pluginsLogic.SaveAccountMappings(name, accounts);
+            var accountMappings = pluginsLogic.SaveAccountMappings(null, name, accounts);
 
             return Ok(accountMappings);
         }
@@ -378,7 +380,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpGet("{name}/VaultAccount")]
         public ActionResult<AssetAccount> GetPluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
         {
-            var account = pluginsLogic.GetPluginVaultAccount(name);
+            var account = pluginsLogic.GetPluginVaultAccount(null, name);
             if (account == null)
                 return NotFound();
 
@@ -407,7 +409,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpPut("{name}/VaultAccount")]
         public ActionResult<AssetAccount> PutPluginVaultAccount([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromBody] AssetAccount assetAccount)
         {
-            var account = pluginsLogic.SavePluginVaultAccount(name, assetAccount);
+            var account = pluginsLogic.SavePluginVaultAccount(null, name, assetAccount);
 
             return Ok(account);
         }

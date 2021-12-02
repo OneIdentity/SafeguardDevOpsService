@@ -1,6 +1,7 @@
 {
+	"Type": "Plugin",
 	"Name": "SmsTextEmail",
 	"DisplayName": "Sms Text & Email",
 	"Assembly": "SmsTextEmail.dll",
-	"Version": "1.0"
+	"Version": "1.0.0.9999"
 }

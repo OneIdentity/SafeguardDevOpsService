@@ -109,7 +109,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed to clean up the external plugins directory. {ex.Message}");
+                    _logger.Error(ex, $"Failed to clean up the external plugins directory. {ex.Message}");
                 }
                 return;
             }
@@ -121,7 +121,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
-                        _configDb.DeletePluginByName(plugin.Name);
+                        _configDb.DeletePluginByName(plugin.Name, true);
 
                         var dirPath = Path.Combine(WellKnownData.PluginDirPath, plugin.Name);
                         if (Directory.Exists(dirPath)) 
@@ -129,7 +129,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Failed to clean up the external plugin {plugin.Name}. {ex.Message}");
+                        _logger.Error(ex, $"Failed to clean up the external plugin {plugin.Name}. {ex.Message}");
                     }
                 }
 
@@ -155,13 +155,13 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public bool SendPassword(string name, string assetName, string accountName, SecureString password)
+        public bool SendPassword(string name, string assetName, string accountName, SecureString password, string altAccountName)
         {
             if (LoadedPlugins.ContainsKey(name))
             {
                 var pluginInstance = LoadedPlugins[name];
                 if (pluginInstance != null)
-                    return pluginInstance.SetPassword(assetName, accountName, password.ToInsecureString());
+                    return pluginInstance.SetPassword(assetName, accountName, password.ToInsecureString(), altAccountName);
             }
             else
             {
@@ -216,18 +216,32 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public bool TestPluginVaultConnection(string pluginName)
+        private void SendPluginVaultCredentialOnly(string name, string credential)
+        {
+            var pluginInstance = LoadedPlugins[name];
+            if (pluginInstance != null && credential != null)
+            {
+                pluginInstance.SetVaultCredential(credential);
+            }
+            else
+            {
+                _logger.Error(
+                    $"Failed to get the plugin instance {name}.");
+            }
+        }
+
+        public bool TestPluginVaultConnection(ISafeguardConnection sgConnection, string pluginName)
         {
             var plugin = _configDb.GetPluginByName(pluginName);
 
-            if (_safeguardLogic.IsLoggedIn() && plugin?.VaultAccountId != null)
+            if (plugin?.VaultAccountId != null)
             {
                 var pluginInstance = LoadedPlugins[pluginName];
                 if (pluginInstance != null)
                 {
                     try
                     {
-                        RefreshPluginCredential(plugin);
+                        RefreshPluginCredential(sgConnection, plugin);
                         if (pluginInstance.TestVaultConnection())
                         {
                             _logger.Error($"Test connection for plugin {pluginName} successful.");
@@ -236,7 +250,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Failed to test the connection for plugin {pluginName}.  {ex.Message}");
+                        _logger.Error(ex, $"Failed to test the connection for plugin {pluginName}.  {ex.Message}");
                     }
                 }
                 else
@@ -293,7 +307,7 @@ namespace OneIdentity.DevOps.Logic
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"Failed to read the manifest file for {pluginPath}. {ex.Message}");
+                    _logger.Error(ex, $"Failed to read the manifest file for {pluginPath}. {ex.Message}");
                 }
             }
 
@@ -355,6 +369,8 @@ namespace OneIdentity.DevOps.Logic
                                 Version = pluginVersion
                             };
 
+                            pluginInfo = ConfigureIfSystemOwned(pluginInfo);
+
                             _configDb.SavePluginConfiguration(pluginInfo);
 
                             _logger.Information($"Discovered new unconfigured plugin {Path.GetFileName(pluginPath)}.");
@@ -368,55 +384,98 @@ namespace OneIdentity.DevOps.Logic
                                 pluginInstance.SetPluginConfiguration(configuration);
                             }
 
-                            if (pluginInfo.Version == null || !pluginInfo.Version.Equals(pluginVersion, StringComparison.InvariantCultureIgnoreCase))
+                            if (!string.Equals(pluginInfo.Name, name, StringComparison.OrdinalIgnoreCase) 
+                                || !string.Equals(pluginInfo.Description, description, StringComparison.OrdinalIgnoreCase) 
+                                || !string.Equals(pluginInfo.DisplayName, displayName, StringComparison.OrdinalIgnoreCase)
+                                || !string.Equals(pluginInfo.Version, pluginVersion, StringComparison.OrdinalIgnoreCase))
                             {
+                                pluginInfo.Name = name;
+                                pluginInfo.DisplayName = displayName;
+                                pluginInfo.Description = description;
                                 pluginInfo.Version = pluginVersion;
+
                                 _configDb.SavePluginConfiguration(pluginInfo);
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.Warning($"Failed to configure plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
+                        _logger.Warning(ex, $"Failed to configure plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to load plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to load plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
             }
+        }
+
+        private Plugin ConfigureIfSystemOwned(Plugin plugin)
+        {
+            var notLicensed = !_safeguardLogic.ValidateLicense();
+
+            var addons = _configDb.GetAllAddons();
+            foreach (var addon in addons)
+            {
+                if (addon.Manifest.PluginName.Equals(plugin.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    plugin.IsSystemOwned = addon.Manifest.IsPluginSystemOwned;
+                    plugin.IsDisabled = notLicensed;
+                }
+            }
+
+            return plugin;
         }
 
         public void RefreshPluginCredentials()
         {
-            var plugins = _configDb.GetAllPlugins();
-        
-            foreach (var plugin in plugins)
+            try
             {
-                RefreshPluginCredential(plugin);
+                var sgConnection = _safeguardLogic.Connect();
+
+                var plugins = _configDb.GetAllPlugins();
+
+                foreach (var plugin in plugins)
+                {
+                    RefreshPluginCredential(sgConnection, plugin);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, $"Failed to refresh the plugin vault credentials. If account credentials are not being synced correctly, try stopping and restarting the monitor. Reason: {ex.Message}.");
             }
         }
         
-        private void RefreshPluginCredential(Plugin plugin)
+        private void RefreshPluginCredential(ISafeguardConnection sgConnection, Plugin plugin)
         {
-            if (_safeguardLogic.IsLoggedIn() && plugin.VaultAccountId.HasValue)
+            if (plugin.VaultAccountId.HasValue)
             {
                 try
                 {
-                    var a2aAccount = _safeguardLogic.GetA2ARetrievableAccount(plugin.VaultAccountId.Value,
+                    var a2aAccount = _safeguardLogic.GetA2ARetrievableAccount(sgConnection, plugin.VaultAccountId.Value,
                         A2ARegistrationType.Vault);
                     if (a2aAccount != null)
                     {
                         SendPluginVaultCredentials(plugin.Name, a2aAccount.ApiKey);
                         return;
                     }
-        
-                    _logger.Error($"Failed to refresh the credential for plugin {plugin.Name} account {plugin.VaultAccountId}.");
+
+                    _logger.Error(
+                        $"Failed to refresh the credential for plugin {plugin.Name} account {plugin.VaultAccountId}.");
                 }
                 catch (Exception ex)
                 {
-                    var msg = $"Failed to refresh the api key for {plugin.Name} account {plugin.VaultAccountId}: {ex.Message}";
-                    _logger.Error(msg);
+                    var msg =
+                        $"Failed to refresh the api key for {plugin.Name} account {plugin.VaultAccountId}: {ex.Message}";
+                    _logger.Error(ex, msg);
+                }
+            } 
+            else if (plugin.IsSystemOwned)
+            {
+                var addon = _configDb.GetAllAddons().FirstOrDefault(a => a.Manifest.PluginName.Equals(plugin.Name));
+                if (addon != null && addon.VaultCredentials.ContainsKey(WellKnownData.DevOpsCredentialName(addon.VaultAccountName, _configDb.SvcId)))
+                {
+                    SendPluginVaultCredentialOnly(plugin.Name, addon.VaultCredentials[WellKnownData.DevOpsCredentialName(addon.VaultAccountName, _configDb.SvcId)]);
                 }
             }
         }

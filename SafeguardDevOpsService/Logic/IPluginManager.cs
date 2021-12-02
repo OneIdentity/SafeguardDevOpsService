@@ -1,4 +1,5 @@
 ﻿using System.Security;
+using OneIdentity.SafeguardDotNet;
 
 #pragma warning disable 1591
 
@@ -9,8 +10,8 @@ namespace OneIdentity.DevOps.Logic
         void Run();
         void SetConfigurationForPlugin(string name);
         void SendPluginVaultCredentials(string plugin, string apiKey);
-        bool TestPluginVaultConnection(string plugin);
-        bool SendPassword(string name, string assetName, string accountName, SecureString password);
+        bool TestPluginVaultConnection(ISafeguardConnection sgConnection, string plugin);
+        bool SendPassword(string name, string assetName, string accountName, SecureString password, string altAccountName = null);
         bool IsLoadedPlugin(string name);
         bool IsDisabledPlugin(string name);
 

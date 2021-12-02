@@ -22,9 +22,25 @@
         /// </summary>
         public string ApplianceState { get; set; }
         /// <summary>
+        /// Safeguard appliance the DevOps endpoints
+        /// </summary>
+        public bool ApplianceSupportsDevOps { get; set; } = false;
+        /// <summary>
         /// Safeguard DevOps instance Id
         /// </summary>
         public string DevOpsInstanceId { get; set; }
+        /// <summary>
+        /// Logged in user name
+        /// </summary>
+        public string UserName { get; set; }
+        /// <summary>
+        /// Logged in user display name
+        /// </summary>
+        public string UserDisplayName { get; set; }
+        /// <summary>
+        /// Logged in user roles
+        /// </summary>
+        public string[] AdminRoles { get; set; }
         /// <summary>
         /// Safeguard DevOps version
         /// </summary>

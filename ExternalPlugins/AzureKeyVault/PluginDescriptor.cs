@@ -74,16 +74,17 @@ namespace OneIdentity.DevOps.AzureKeyVault
             {
                 var task = Task.Run(async () => await _keyVaultClient.GetSecretsAsync(_configuration[VaultUriName]));
                 var result = task.Result;
+                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed the connection test for {DisplayName}: {ex.Message}.");
+                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
         }
 
-        public bool SetPassword(string asset, string account, string password)
+        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
             if (_keyVaultClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
             {
@@ -93,13 +94,13 @@ namespace OneIdentity.DevOps.AzureKeyVault
 
             try
             {
-                var name = _rgx.Replace($"{asset}-{account}", "-");
+                var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
                 Task.Run(async () => await _keyVaultClient.SetSecretAsync(_configuration[VaultUriName], name, password));
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed to set the secret for {asset}-{account}: {ex.Message}.");
+                _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return false;
             }
         }

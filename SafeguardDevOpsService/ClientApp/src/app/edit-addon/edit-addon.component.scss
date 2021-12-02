@@ -1,0 +1,138 @@
+@import '../../colors.scss';
+
+.root-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.green-icon {
+  color: $aspen-green;
+  vertical-align: top;
+  font-size: 24px;
+}
+
+.yellow-icon {
+  color: $corbin-orange;
+  font-size: 24px;
+  vertical-align: top;
+}
+
+.blue-icon {
+  color: $iris-blue;
+  vertical-align: top;
+  font-size: 24px;
+}
+
+.info-label {
+  font-size: .85em;
+  color: $black-9;
+}
+
+.basic-info-header {
+  display: flex;
+  align-items: baseline;
+}
+
+.sub-title {
+  color: $black-9;
+}
+
+table {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.detail-row {
+  font-size: .85em;
+  color: $black-9;
+}
+
+.main-container {
+  background-color: $asher-gray;
+  padding: 20px;
+  width: 600px;
+  flex: 1;
+  overflow: auto;
+
+  mat-card {
+    margin-bottom: 30px;
+  }
+}
+
+.error-field {
+  color: $phoenix-red;
+  font-size: .85em;
+  margin-top: -15px;;
+}
+
+.sub-title-2 {
+  font-size: 1.2em;
+  color: $black-9;
+  margin: 15px 0 10px 0;
+}
+
+.field-container {
+  display: flex;
+  align-items: center;
+
+  mat-form-field {
+    flex: 1;
+  }
+
+  .field-text {
+    color: $black-9;
+    width: 40%;
+    padding-left: 15px;
+    font-size: .9em;
+  }
+
+  .vault-account {
+    flex: 1;
+  }
+
+  .inline-div {
+    display: inline-block;
+  }
+}
+
+.error {
+  color: $phoenix-red;
+  margin: 10px;
+
+  mat-icon {
+    vertical-align: middle;
+    margin-right: 2px;
+  }
+}
+
+.busy {
+  mat-spinner {
+    margin: auto;
+  }
+}
+
+.header {
+  background-color: $black-6;
+  color: #fff;
+  display: flex;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.selection-footer {
+  background-color: $black-6;
+  color: $iris-tint;
+  display: flex;
+  font-size: 1em;
+
+  .spacer {
+    flex: 1;
+  }
+
+  mat-spinner {
+    margin-right: 15px;
+  }
+}

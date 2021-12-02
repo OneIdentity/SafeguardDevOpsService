@@ -6,8 +6,11 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SafeguardDevOpsService", "SafeguardDevOpsService\SafeguardDevOpsService.csproj", "{60B8D62D-E862-46C3-AB7A-94C746F6F65B}"
 	ProjectSection(ProjectDependencies) = postProject
 		{28C04737-8B6D-4F2C-8251-918AA2347309} = {28C04737-8B6D-4F2C-8251-918AA2347309}
+		{B4702447-110E-4560-86E6-15B328EB4BB2} = {B4702447-110E-4560-86E6-15B328EB4BB2}
+		{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4} = {FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4}
 		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973} = {C9D5BD86-F2E3-40AA-AE97-0BE505B70973}
 		{C208CAA2-B312-4CBB-864D-7DFF4673140F} = {C208CAA2-B312-4CBB-864D-7DFF4673140F}
+		{7CE7EFD8-88A6-48F3-9DD0-738529B07070} = {7CE7EFD8-88A6-48F3-9DD0-738529B07070}
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsPluginCommon", "DevOpsPluginCommon\DevOpsPluginCommon.csproj", "{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}"
@@ -28,67 +31,66 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JenkinsSecrets", "ExternalP
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AwsSecretsManagerVault", "ExternalPlugins\AwsSecretsManagerVault\AwsSecretsManagerVault.csproj", "{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsAddonCommon", "DevOpsAddonCommon\DevOpsAddonCommon.csproj", "{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{597FFDB7-E23A-4250-B5FF-1572F597E730}"
+	ProjectSection(SolutionItems) = preProject
+		build-docker.sh = build-docker.sh
+		docker\docker-include.psm1 = docker\docker-include.psm1
+		docker\docker-include.sh = docker\docker-include.sh
+		docker\Dockerfile_alpine3.12 = docker\Dockerfile_alpine3.12
+		docker\Dockerfile_ubuntu20.04 = docker\Dockerfile_ubuntu20.04
+		invoke-docker-build.ps1 = invoke-docker-build.ps1
+		invoke-docker-run.ps1 = invoke-docker-run.ps1
+		docker\run-devops.sh = docker\run-devops.sh
+		run-docker.sh = run-docker.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
-		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{60B8D62D-E862-46C3-AB7A-94C746F6F65B}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{60B8D62D-E862-46C3-AB7A-94C746F6F65B}.Debug|x64.ActiveCfg = Debug|x64
 		{60B8D62D-E862-46C3-AB7A-94C746F6F65B}.Debug|x64.Build.0 = Debug|x64
-		{60B8D62D-E862-46C3-AB7A-94C746F6F65B}.Release|Any CPU.ActiveCfg = Release|x64
 		{60B8D62D-E862-46C3-AB7A-94C746F6F65B}.Release|x64.ActiveCfg = Release|x64
 		{60B8D62D-E862-46C3-AB7A-94C746F6F65B}.Release|x64.Build.0 = Release|x64
-		{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}.Debug|x64.ActiveCfg = Debug|x64
 		{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}.Debug|x64.Build.0 = Debug|x64
-		{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}.Release|Any CPU.ActiveCfg = Release|x64
 		{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}.Release|x64.ActiveCfg = Release|x64
 		{CC2EAD07-8C0D-42D7-9E3C-5A401996E240}.Release|x64.Build.0 = Release|x64
-		{C208CAA2-B312-4CBB-864D-7DFF4673140F}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{C208CAA2-B312-4CBB-864D-7DFF4673140F}.Debug|x64.ActiveCfg = Debug|x64
 		{C208CAA2-B312-4CBB-864D-7DFF4673140F}.Debug|x64.Build.0 = Debug|x64
-		{C208CAA2-B312-4CBB-864D-7DFF4673140F}.Release|Any CPU.ActiveCfg = Release|x64
 		{C208CAA2-B312-4CBB-864D-7DFF4673140F}.Release|x64.ActiveCfg = Release|x64
 		{C208CAA2-B312-4CBB-864D-7DFF4673140F}.Release|x64.Build.0 = Release|x64
-		{28C04737-8B6D-4F2C-8251-918AA2347309}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{28C04737-8B6D-4F2C-8251-918AA2347309}.Debug|x64.ActiveCfg = Debug|x64
 		{28C04737-8B6D-4F2C-8251-918AA2347309}.Debug|x64.Build.0 = Debug|x64
-		{28C04737-8B6D-4F2C-8251-918AA2347309}.Release|Any CPU.ActiveCfg = Release|x64
 		{28C04737-8B6D-4F2C-8251-918AA2347309}.Release|x64.ActiveCfg = Release|x64
 		{28C04737-8B6D-4F2C-8251-918AA2347309}.Release|x64.Build.0 = Release|x64
-		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}.Debug|x64.ActiveCfg = Debug|x64
 		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}.Debug|x64.Build.0 = Debug|x64
-		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}.Release|Any CPU.ActiveCfg = Release|x64
 		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}.Release|x64.ActiveCfg = Release|x64
 		{C9D5BD86-F2E3-40AA-AE97-0BE505B70973}.Release|x64.Build.0 = Release|x64
-		{79AB1FDC-B831-4A99-992B-26A383C49BDF}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{79AB1FDC-B831-4A99-992B-26A383C49BDF}.Debug|x64.ActiveCfg = Debug|x64
-		{79AB1FDC-B831-4A99-992B-26A383C49BDF}.Release|Any CPU.ActiveCfg = Release|x64
 		{79AB1FDC-B831-4A99-992B-26A383C49BDF}.Release|x64.ActiveCfg = Release|x64
 		{79AB1FDC-B831-4A99-992B-26A383C49BDF}.Release|x64.Build.0 = Release|x64
-		{7CE7EFD8-88A6-48F3-9DD0-738529B07070}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{7CE7EFD8-88A6-48F3-9DD0-738529B07070}.Debug|x64.ActiveCfg = Debug|x64
 		{7CE7EFD8-88A6-48F3-9DD0-738529B07070}.Debug|x64.Build.0 = Debug|x64
-		{7CE7EFD8-88A6-48F3-9DD0-738529B07070}.Release|Any CPU.ActiveCfg = Release|x64
 		{7CE7EFD8-88A6-48F3-9DD0-738529B07070}.Release|x64.ActiveCfg = Release|x64
 		{7CE7EFD8-88A6-48F3-9DD0-738529B07070}.Release|x64.Build.0 = Release|x64
-		{B4702447-110E-4560-86E6-15B328EB4BB2}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{B4702447-110E-4560-86E6-15B328EB4BB2}.Debug|x64.ActiveCfg = Debug|x64
 		{B4702447-110E-4560-86E6-15B328EB4BB2}.Debug|x64.Build.0 = Debug|x64
-		{B4702447-110E-4560-86E6-15B328EB4BB2}.Release|Any CPU.ActiveCfg = Release|x64
 		{B4702447-110E-4560-86E6-15B328EB4BB2}.Release|x64.ActiveCfg = Release|x64
 		{B4702447-110E-4560-86E6-15B328EB4BB2}.Release|x64.Build.0 = Release|x64
-		{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4}.Debug|x64.ActiveCfg = Debug|x64
 		{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4}.Debug|x64.Build.0 = Debug|x64
-		{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4}.Release|Any CPU.ActiveCfg = Release|x64
 		{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4}.Release|x64.ActiveCfg = Release|x64
 		{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4}.Release|x64.Build.0 = Release|x64
+		{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}.Debug|x64.ActiveCfg = Debug|x64
+		{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}.Debug|x64.Build.0 = Debug|x64
+		{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}.Release|x64.ActiveCfg = Release|x64
+		{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

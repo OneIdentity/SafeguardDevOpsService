@@ -1,5 +1,9 @@
 ﻿
+using System.Collections.Generic;
 using LiteDB;
+using OneIdentity.DevOps.ConfigDb;
+using OneIdentity.DevOps.Data.Spp;
+using OneIdentity.DevOps.Logic;
 
 namespace OneIdentity.DevOps.Data
 {
@@ -50,6 +54,11 @@ namespace OneIdentity.DevOps.Data
         public bool IsDisabled { get; set; } = false;
 
         /// <summary>
+        /// Is the plugin system owned
+        /// </summary>
+        public bool IsSystemOwned { get; set; } = false;
+
+        /// <summary>
         /// Plugin version
         /// </summary>
         public string Version { get; set; }
@@ -58,5 +67,43 @@ namespace OneIdentity.DevOps.Data
         /// Mapped accounts count
         /// </summary>
         public int MappedAccountsCount { get; set; }
+
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+        public DevOpsSecretsBrokerPlugin ToDevOpsSecretsBrokerPlugin(IConfigurationRepository configDb)
+        {
+            var devOpsSecretsBrokerPlugin = new DevOpsSecretsBrokerPlugin
+            {
+                Name = Name, 
+                DisplayName = DisplayName,
+                Description = Description,
+                Version = Version, 
+                Configuration = JsonHelper.SerializeObject(Configuration),
+                MappedVaultAccounts = VaultAccountId.ToString()
+            };
+
+            var accountMappings = configDb.GetAccountMappings(Name);
+            if (accountMappings != null)
+                devOpsSecretsBrokerPlugin.MappedAccounts = JsonHelper.SerializeObject(accountMappings);
+
+            return devOpsSecretsBrokerPlugin;
+        }
+
+        public Plugin()
+        {
+        }
+
+        public Plugin(DevOpsSecretsBrokerPlugin devOpsPlugin)
+        {
+            Name = devOpsPlugin.Name;
+            DisplayName = devOpsPlugin.DisplayName;
+            Description = devOpsPlugin.Description;
+            Version = devOpsPlugin.Version;
+            Configuration = JsonHelper.DeserializeObject<Dictionary<string,string>>(devOpsPlugin.Configuration);
+            if (int.TryParse(devOpsPlugin.MappedVaultAccounts, out var x))
+                VaultAccountId = x;
+        }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+
     }
 }

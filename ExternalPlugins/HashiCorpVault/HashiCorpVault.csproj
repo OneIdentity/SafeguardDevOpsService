@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="VaultSharp" Version="0.11.1002" />
+    <PackageReference Include="RestSharp" Version="106.11.7" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,12 +28,7 @@
   </ItemGroup>
 
   <Target Name="PostBuildWindows" AfterTargets="PostBuildEvent">
-    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;&amp; '$(SolutionDir)zipplugin.ps1' '$(ProjectDir)' '$(OutDir)' '$(SolutionDir)ExternalPlugins\bin\$(Configuration)\$(ProjectName).zip'&quot;"
-          EchoOff="False" IgnoreExitCode="False" LogStandardErrorAsError="True" ContinueOnError="False" ConsoleToMsBuild="True" />
-  </Target>
-  <Target Name="PostBuildLinux" AfterTargets="PostBuildEvent" Condition="'$(OS)' != 'Windows_NT' And '$(SelfContained)' == 'true'" >
-    <Exec Command="$(SolutionDir)zipplugin.sh $(ProjectDir) $(OutDir) $(SolutionDir)ExternalPlugins\bin\$(Configuration)\$(ProjectName).zip"
-          EchoOff="False" IgnoreExitCode="False" LogStandardErrorAsError="True" ContinueOnError="False" ConsoleToMsBuild="True" />
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;&amp; '$(SolutionDir)zipplugin.ps1' '$(ProjectDir)' '$(OutDir)' '$(SolutionDir)ExternalPlugins\bin\$(Configuration)\' '$(buildId)'&quot;" EchoOff="False" IgnoreExitCode="False" LogStandardErrorAsError="True" ContinueOnError="False" ConsoleToMsBuild="True" />
   </Target>
 
 </Project>

@@ -21,6 +21,7 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   localizedValidFrom: string;
   isLoading: boolean;
   showExplanatoryText: boolean;
+  error = null;
 
   @ViewChild('certificates', { static: false }) certList: MatSelectionList;
   @ViewChild('fileSelectInputDialog', { static: false }) fileSelectInputDialog: ElementRef;
@@ -57,7 +58,13 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   }
 
   updateUseSsl(): void {
-    this.serviceClient.putSafeguardUseSsl(this.useSsl).subscribe();
+    this.error = null;
+    this.serviceClient.putSafeguardUseSsl(this.useSsl)
+      .subscribe(() => { },
+        error => {
+          this.useSsl = false;
+          this.error = error;
+        });
   }
 
   onChangeFile(files: FileList): void {
@@ -71,10 +78,10 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
     fileReader.onloadend = (e) => {
       const arrayBufferToString = (buffer) => {
         let binary = '';
-        const bytes = new Uint8Array( buffer );
+        const bytes = new Uint8Array(buffer);
         const len = bytes.byteLength;
         for (let i = 0; i < len; i++) {
-          binary += String.fromCharCode( bytes[ i ] );
+          binary += String.fromCharCode(bytes[i]);
         }
         return binary;
       };
@@ -88,13 +95,17 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
         fileName: fileSelected.name
       };
 
+      let isNew = false;
       this.getPassphrase(fileData).pipe(
         tap(() => {
           this.isLoading = true;
           this.trustedCertificates.splice(0);
         }),
         switchMap((data) => this.saveCertificate(data)),
-        switchMap(() => this.refreshCertificates()),
+        switchMap((data) => {
+          isNew = data[0]?.IsNew;
+          return this.refreshCertificates();
+        }),
         finalize(() => {
           this.isLoading = false;
 
@@ -103,7 +114,11 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
           input.value = null;
         })
       ).subscribe(() => {
-        this.snackbar.open(`Added certificate ${fileData.fileName}`, 'Dismiss', { duration: 5000 });
+        if (isNew) {
+          this.snackbar.open(`Added certificate ${fileData.fileName}`, 'Dismiss', { duration: 5000 });
+        } else {
+          this.snackbar.open(`Certificate ${fileData.fileName} already exists.`, 'Dismiss', { duration: 5000 });
+        }
       });
     };
     fileReader.readAsArrayBuffer(fileSelected);
@@ -128,7 +143,7 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   private saveCertificate(resultArray: any[]): Observable<any> {
     const fileContents = resultArray[0]?.fileContents;
     if (!fileContents) {
-      return of();
+      return of([]);
     }
 
     const passphrase = resultArray.length > 1 ? resultArray[1] : '';
@@ -142,7 +157,7 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
         } else if (err.error?.Message) {
           this.snackbar.open(err.error.Message, 'Dismiss', { duration: 5000 });
         }
-        return of();
+        return of([]);
       })
     );
   }
@@ -150,38 +165,50 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   private refreshCertificates(): Observable<any[]> {
     return this.serviceClient.getTrustedCertificates().pipe(
       tap((certs) => {
+        this.trustedCertificates.splice(0);
         this.trustedCertificates.push(...certs);
-      })
-    );
+      }));
   }
 
   import(): void {
     this.isLoading = true;
     this.trustedCertificates.splice(0);
-    let trustedCertsCount = 0;
+    let newTrustedCertsCount = 0;
+    let existingTrustedCertsCount = 0;
     this.serviceClient.postTrustedCertificates(true).pipe(
       switchMap((trustedCerts) => {
-        trustedCertsCount = trustedCerts.length;
+        newTrustedCertsCount = trustedCerts.filter(cert => cert.IsNew).length;
+        existingTrustedCertsCount = trustedCerts.filter(cert => !cert.IsNew).length;
         return this.refreshCertificates();
       })
-    ).subscribe(
-      (data) => {
-        this.isLoading = false;
-        this.snackbar.open(`Imported ${trustedCertsCount} certificates`, 'Dismiss', { duration: 5000 });
+    ).subscribe(() => {
+      this.isLoading = false;
+      if (newTrustedCertsCount > 0 && existingTrustedCertsCount == 0) {
+        this.snackbar.open(`Imported ${newTrustedCertsCount} certificates.`, 'Dismiss', { duration: 5000 });
+      } else {
+        this.snackbar.open(`Imported ${newTrustedCertsCount} new certificates and ${existingTrustedCertsCount} existing certificates.`, 'Dismiss', { duration: 5000 });
       }
-    );
+    });
   }
 
   removeCertificate(): void {
+    this.error = null;
     const thumbprint = this.selectedCert.Thumbprint;
     this.selectedCert = null;
     this.isLoading = true;
-    this.trustedCertificates.splice(0);
     this.serviceClient.deleteTrustedCertificate(thumbprint).pipe(
       switchMap(() => this.refreshCertificates())
     ).subscribe(() => {
+      if (this.trustedCertificates.length == 0) {
+        this.useSsl = false;
+        this.updateUseSsl();
+      }
       this.isLoading = false;
-    });
+      },
+      error => {
+        this.isLoading = false;
+        this.error = error;
+      });
   }
 
   closeCertDetails(): void {

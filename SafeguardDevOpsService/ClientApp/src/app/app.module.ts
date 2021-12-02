@@ -35,6 +35,7 @@ import { DevOpsServiceClient } from './service-client.service';
 import { EnterPassphraseComponent } from './upload-certificate/enter-passphrase/enter-passphrase.component';
 import { SelectAccountsComponent } from './select-accounts/select-accounts.component';
 import { EditPluginComponent } from './edit-plugin/edit-plugin.component';
+import { EditAddonComponent } from './edit-addon/edit-addon.component';
 import { CreateCsrComponent } from './create-csr/create-csr.component';
 import { ViewCertificateComponent } from './view-certificate/view-certificate.component';
 import { SaveCsrComponent } from './save-csr/save-csr.component';
@@ -43,6 +44,7 @@ import { ConfirmDialogComponent } from './confirm-dialog/confirm-dialog.componen
 import { ProgressSpinnerComponent } from './progress-spinner/progress-spinner.component';
 import { ErrorBarComponent } from './error-bar/error-bar.component';
 import { ViewMonitorEventsComponent } from './view-monitor-events/view-monitor-events.component';
+import { RegistrationsComponent } from './registrations/registrations.component';
 
 @NgModule({
   declarations: [
@@ -53,6 +55,7 @@ import { ViewMonitorEventsComponent } from './view-monitor-events/view-monitor-e
     EnterPassphraseComponent,
     SelectAccountsComponent,
     EditPluginComponent,
+    EditAddonComponent,
     CreateCsrComponent,
     ViewCertificateComponent,
     SaveCsrComponent,
@@ -60,7 +63,8 @@ import { ViewMonitorEventsComponent } from './view-monitor-events/view-monitor-e
     ConfirmDialogComponent,
     ProgressSpinnerComponent,
     ErrorBarComponent,
-    ViewMonitorEventsComponent
+    ViewMonitorEventsComponent,
+    RegistrationsComponent
   ],
   imports: [
     BrowserModule,

@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using CredentialManagement;
 using LiteDB;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
 
@@ -15,11 +19,13 @@ namespace OneIdentity.DevOps.ConfigDb
     internal class LiteDbConfigurationRepository : IConfigurationRepository, IDisposable
     {
         private bool _disposed;
+        private readonly Serilog.ILogger _logger;
         private LiteDatabase _configurationDb;
-        private X509Certificate2Collection _trustedCertificateCollection = null;
+        private X509Certificate2Collection _trustedCertificateCollection;
         private ILiteCollection<Setting> _settings;
         private ILiteCollection<AccountMapping> _accountMappings;
         private ILiteCollection<Plugin> _plugins;
+        private ILiteCollection<Addon> _addons;
         private ILiteCollection<TrustedCertificate> _trustedCertificates;
         private string _svcId;
 
@@ -28,6 +34,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string SettingsTableName = "settings";
         private const string AccountMappingsTableName = "accountmappings";
         private const string PluginsTableName = "plugins";
+        private const string AddonsTableName = "addons";
         private const string TrustedCertificateTableName = "trustedcertificates";
 
         private const string SafeguardAddressKey = "SafeguardAddress";
@@ -36,6 +43,9 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string A2aUserIdKey = "A2aUserId";
         private const string A2aRegistrationIdKey = "A2aRegistrationId";
         private const string A2aVaultRegistrationIdKey = "A2aVaultRegistrationId";
+        private const string AssetIdKey = "AssetId";
+        private const string AssetPartitionIdKey = "AssetPartitionId";
+        private const string AssetAccountGroupIdKey = "AssetAccountGroupId";
         private const string SigningCertificateKey = "SigningCertificate";
         private const string LastKnownMonitorStateKey = "LastKnownMonitorState";
 
@@ -53,6 +63,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public LiteDbConfigurationRepository()
         {
+            _logger = Serilog.Log.Logger;
             _isLinux = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
             InitializeDatabase();
         }
@@ -62,7 +73,7 @@ namespace OneIdentity.DevOps.ConfigDb
             if (!Directory.Exists(WellKnownData.ProgramDataPath))
                 Directory.CreateDirectory(WellKnownData.ProgramDataPath);
             var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
-            Serilog.Log.Logger.Information($"Loading configuration database at {dbPath}.");
+            _logger.Information($"Loading configuration database at {dbPath}.");
 
             var passwd = GetPassword();
             if (string.IsNullOrEmpty(passwd) && !_isLinux)
@@ -72,7 +83,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
             if (!string.IsNullOrEmpty(passwd))
             {
-                Serilog.Log.Logger.Information("The database is encrypted.");
+                _logger.Information("The database is encrypted.");
             }
 
             var connectionString = $"Filename={dbPath}";
@@ -82,6 +93,7 @@ namespace OneIdentity.DevOps.ConfigDb
             _settings = _configurationDb.GetCollection<Setting>(SettingsTableName);
             _accountMappings = _configurationDb.GetCollection<AccountMapping>(AccountMappingsTableName);
             _plugins = _configurationDb.GetCollection<Plugin>(PluginsTableName);
+            _addons = _configurationDb.GetCollection<Addon>(AddonsTableName);
             _trustedCertificates = _configurationDb.GetCollection<TrustedCertificate>(TrustedCertificateTableName);
         }
 
@@ -111,7 +123,7 @@ namespace OneIdentity.DevOps.ConfigDb
             catch (Exception ex)
             {
                 var msg = $"Failed to get the credential needed to open the database. {ex.Message}";
-                Serilog.Log.Logger.Error(msg);
+                _logger.Error(msg);
                 throw new DevOpsException(msg);
             }
         }
@@ -200,15 +212,64 @@ namespace OneIdentity.DevOps.ConfigDb
             return plugin;
         }
 
-        public void DeletePluginByName(string name)
+        public bool DeletePluginByName(string name, bool hardDelete = false)
         {
-            _plugins.Delete(name);
+            if (hardDelete)
+            {
+                return _plugins.Delete(name);
+            }
+
+            var plugin = GetPluginByName(name);
+            if (plugin != null)
+            {
+                plugin.IsDeleted = true;
+                SavePluginConfiguration(plugin);
+            }
+
+            return true;
+        }
+
+        public IEnumerable<Addon> GetAllAddons()
+        {
+            return _addons.FindAll();
+        }
+
+        public Addon GetAddonByName(string name)
+        {
+            return _addons.FindById(name);
+        }
+
+        public Addon SaveAddon(Addon addon)
+        {
+            _addons.Upsert(addon);
+            return addon;
+        }
+
+        public void DeleteAddonByName(string name)
+        {
+            _addons.Delete(name);
         }
 
         public IEnumerable<AccountMapping> GetAccountMappings()
         {
             return _accountMappings.FindAll();
         }
+
+        public IEnumerable<AccountMapping> GetAccountMappings(string name)
+        {
+            if (GetPluginByName(name) == null)
+            {
+                var msg = $"Plugin {name} not found";
+                _logger.Error(msg);
+                throw new DevOpsException(msg, HttpStatusCode.NotFound);
+            }
+
+            var mappings = GetAccountMappings();
+
+            var accountMappings = mappings.Where(x => x.VaultName.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+            return accountMappings;
+        }
+
 
         public void GetAccountMappingsByKey(string key)
         {
@@ -324,12 +385,18 @@ namespace OneIdentity.DevOps.ConfigDb
                     catch (Exception ex)
                     {
                         var msg = $"Failed to read the service instance identifier: {WellKnownData.SvcIdPath}";
-                        Serilog.Log.Logger.Error(msg, ex);
+                        _logger.Error(msg, ex);
                         throw new DevOpsException(msg, ex);
                     }
                 }
 
                 return _svcId;
+            }
+
+            set
+            {
+                _svcId = value;
+                File.WriteAllText(WellKnownData.SvcIdPath, value);
             }
         }
 
@@ -395,6 +462,54 @@ namespace OneIdentity.DevOps.ConfigDb
                 }
             }
             set => SetSimpleSetting(A2aVaultRegistrationIdKey, value.ToString());
+        }
+
+        public int? AssetId
+        {
+            get
+            {
+                try
+                {
+                    return Int32.Parse(GetSimpleSetting(AssetIdKey));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            set => SetSimpleSetting(AssetIdKey, value.ToString());
+        }
+
+        public int? AssetPartitionId
+        {
+            get
+            {
+                try
+                {
+                    return Int32.Parse(GetSimpleSetting(AssetPartitionIdKey));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            set => SetSimpleSetting(AssetPartitionIdKey, value.ToString());
+        }
+
+        public int? AssetAccountGroupId
+        {
+            get
+            {
+                try
+                {
+                    return Int32.Parse(GetSimpleSetting(AssetAccountGroupIdKey));
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            set => SetSimpleSetting(AssetAccountGroupIdKey, value.ToString());
         }
 
         public string LastKnownMonitorState
@@ -548,13 +663,92 @@ namespace OneIdentity.DevOps.ConfigDb
             }
         }
 
+        public Tuple<string,string> GetWebSslPemCertificate()
+        {
+            if (!string.IsNullOrEmpty(WebSslCertificateBase64Data))
+            {
+                try
+                {
+                    var certPass = string.IsNullOrEmpty(WebSslCertificatePassphrase) ? "" : WebSslCertificatePassphrase;
+                    var cert = new CertificateData(WebSslCertificateBase64Data, certPass);
+                    return new Tuple<string,string>(cert.PemEncodedCertificate, cert.PemEncodedUnencryptedPrivateKey);
+                }
+                catch (Exception)
+                {
+                    // TODO: log?
+                    // throw appropriate error?
+                }
+            }
+
+            return null;
+        }
+
+        public DevOpsSecretsBroker DevOpsSecretsBroker
+        {
+            get
+            {
+                var devOpsSecretsBroker = new DevOpsSecretsBroker()
+                {
+                    Host = SafeguardAddress,
+                    DevOpsInstanceId = SvcId,
+                    A2ARegistration = A2aRegistrationId == null || A2aRegistrationId == 0 
+                        ? null 
+                        : new A2ARegistration()
+                        {
+                            DevOpsInstanceId = SvcId,
+                            Id = A2aRegistrationId.Value,
+                            CertificateUserId = A2aUserId ?? 0,
+                            CertificateUserThumbPrint = UserCertificateThumbprint
+                        },
+                    A2AVaultRegistration = A2aVaultRegistrationId == null || A2aVaultRegistrationId == 0 
+                        ? null 
+                        : new A2ARegistration()
+                        {
+                            DevOpsInstanceId = SvcId,
+                            Id = A2aVaultRegistrationId.Value,
+                            CertificateUserId = A2aUserId ?? 0,
+                            CertificateUserThumbPrint = UserCertificateThumbprint
+                        },
+                    A2AUser = A2aUserId == null || A2aUserId == 0
+                        ? null
+                        : new A2AUser() 
+                            {Id = A2aUserId ?? 0, DisplayName = WellKnownData.DevOpsUserName(SvcId)},
+                    AssetPartition = AssetPartitionId == null || AssetPartitionId == 0 
+                        ? null 
+                        : new AssetPartition()
+                        {
+                            Id = AssetPartitionId.Value,
+                            Name = WellKnownData.DevOpsAssetPartitionName(SvcId)
+                        },
+                    Asset = AssetId == null || AssetId == 0 
+                        ? null 
+                        : new Asset()
+                        {
+                            Id = AssetId.Value,
+                            Name = WellKnownData.DevOpsAssetName(SvcId)
+                        },
+                    Plugins = GetAllPlugins().Select(x => x.ToDevOpsSecretsBrokerPlugin(this))
+                };
+
+                var accounts = new List<AssetAccount>();
+                var addons = GetAllAddons().ToList();
+                foreach (var addon in addons)
+                {
+                    accounts.AddRange(addon.VaultCredentials.Select(x => new AssetAccount() {Name = x.Key}));
+                }
+                devOpsSecretsBroker.Accounts = accounts;
+
+                return devOpsSecretsBroker;
+            }
+        }
+
         public void DropDatabase()
         {
             Dispose();
             var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
             File.Delete(dbPath);
             DeletePassword();
-            Serilog.Log.Logger.Information($"Dropped the database at {dbPath}.");
+            _logger.Information($"Dropped the database at {dbPath}.");
 
             InitializeDatabase();
         }

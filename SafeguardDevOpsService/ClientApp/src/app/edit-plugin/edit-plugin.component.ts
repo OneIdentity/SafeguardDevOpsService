@@ -19,18 +19,21 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class EditPluginComponent implements OnInit {
 
   constructor(
+    private window: Window,
     private editPluginService: EditPluginService,
     private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
-    ) { }
+  ) { }
 
   plugin: any;
   configs = [];
   error: any;
   isSaving = false;
   isTesting = false;
-  displayedColumns: string[] = ['asset', 'account', 'delete'];
+  isRestarting = false;
+  isDeleting = false;
+  displayedColumns: string[] = ['asset', 'account', 'altaccount', 'delete'];
   isPluginDisabled: boolean;
 
   ngOnInit(): void {
@@ -85,51 +88,74 @@ export class EditPluginComponent implements OnInit {
   delete(): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
+        showRestart: true,
         title: 'Delete Plugin',
         message:
           '<p>Are you sure you want to remove the configuration for this plugin and unregister the plugin from Safeguard Secrets Broker for DevOps?</p>' +
           '<p>This does not remove the plugin from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder at this point.</p>' +
-          '<p>The Safeguard Secrets Broker for DevOps service must be restarted to completely remove the deleted plugin. Select the "Restart Secrets Broker" option from the settings menu.</p>',
+          '<p>The Safeguard Secrets Broker for DevOps service must be restarted to completely remove the deleted plugin.</p>',
         confirmText: 'Delete Plugin'
       }
     });
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK'),
-      tap(() => {
-        this.editPluginService.deletePlugin();
-        this.snackBar.open('Deleting plugin...');
+      tap((dlgResult) => {
+        this.isRestarting = dlgResult?.restart;
+        this.isDeleting = true;
       }),
-      switchMap(() => this.serviceClient.deletePluginConfiguration(this.plugin.Name))
-    ).subscribe(
-      () => {
-        this.snackBar.dismiss();
+      switchMap((dlgResult) => this.serviceClient.deletePluginConfiguration(this.plugin.Name, dlgResult?.restart))
+    ).subscribe(() => {
+      this.editPluginService.deletePlugin();
+      if (!this.isRestarting) {
         this.dialog.open(ConfirmDialogComponent, {
           data: {
             title: 'Next Steps',
             message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
             showCancel: false,
             confirmText: 'OK'
-        }});
+          }
+        });
       }
-    );
+    },
+      error => {
+        if (this.isRestarting) {
+          setTimeout(() => {
+            this.window.location.reload();
+          }, 3000);
+        } else {
+          this.error = SCH.parseError(error);
+        }
+      });
   }
 
   testConnection(): void {
+    this.error = null;
     this.isTesting = true;
-    this.snackBar.open('Testing Configuration...');
-    this.saveConfiguration().pipe(
-      switchMap(() =>
-        this.serviceClient.postPluginTestConnection(this.plugin.Name)
-      )).subscribe(() => {
-        this.snackBar.open('Test configuration successful.', 'Dismiss', {duration: 5000});
-        this.isTesting = false;
-      },
-      (error) => {
-        this.snackBar.open('Test configuration failed.', 'Dismiss', { duration: 5000 });
-        this.isTesting = false;
-        this.error = SCH.parseError(error);
-      });
+    
+    if (!this.plugin.IsSystemOwned) {
+      this.saveConfiguration().pipe(
+        switchMap(() =>
+          this.serviceClient.postPluginTestConnection(this.plugin.Name)
+        )).subscribe(() => {
+          this.snackBar.open('Test configuration successful.', 'Dismiss', { duration: 5000 });
+          this.isTesting = false;
+        },
+          error => {
+            this.isTesting = false;
+            this.error = SCH.parseError(error);
+          });
+    } else {
+      this.serviceClient.postPluginTestConnection(this.plugin.Name)
+        .subscribe(() => {
+          this.snackBar.open('Test configuration successful.', 'Dismiss', { duration: 5000 });
+          this.isTesting = false;
+        },
+          error => {
+            this.isTesting = false;
+            this.error = SCH.parseError(error);
+          });
+    }
   }
 
   updatePluginDisabled(): void {
@@ -171,29 +197,47 @@ export class EditPluginComponent implements OnInit {
         this.serviceClient.putPluginAccounts(this.plugin.Name, this.plugin.Accounts) : of([]))
     );
 
-    const obs2 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
+    if (!this.plugin.IsSystemOwned) {
+      const obs2 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
 
-    const obs3 = this.plugin.VaultAccount ?
-      this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.plugin.VaultAccount) :
-      this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
+      const obs3 = this.plugin.VaultAccount ?
+        this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.plugin.VaultAccount) :
+        this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
 
-    const obs4 = this.serviceClient.postPluginDisableState(this.plugin.Name, this.plugin.IsDisabled);
+      const obs4 = this.serviceClient.postPluginDisableState(this.plugin.Name, this.plugin.IsDisabled);
 
-    forkJoin([obs1, obs2, obs3, obs4]).pipe(
-      untilDestroyed(this)
-    ).subscribe(
-      (data) => {
-        this.plugin = data[1];
-        this.plugin.Accounts =  data[0];
-        this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
-        this.plugin.IsDisabled = data[3].Disabled;
+      forkJoin([obs1, obs2, obs3, obs4]).pipe(
+        untilDestroyed(this)
+      ).subscribe(
+        (data) => {
+          this.plugin = data[1];
+          this.plugin.Accounts = data[0];
+          this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
+          this.plugin.IsDisabled = data[3].Disabled;
 
-        this.editPluginService.closeProperties(this.plugin);
-      },
-      (error) => {
-        this.error = SCH.parseError(error);
-      }
-    );
+          this.editPluginService.closeProperties(this.plugin);
+        },
+        error => {
+          this.isSaving = false;
+          this.error = SCH.parseError(error);
+        }
+      );
+    } else {
+      forkJoin([obs1]).pipe(
+        untilDestroyed(this)
+      ).subscribe(
+        (data) => {
+          this.plugin.Accounts = data[0];
+          this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
+
+          this.editPluginService.closeProperties(this.plugin);
+        },
+        error => {
+          this.isSaving = false;
+          this.error = SCH.parseError(error);
+        }
+      );
+    }
   }
 
   saveConfiguration(): Observable<any> {
@@ -222,7 +266,7 @@ export class EditPluginComponent implements OnInit {
           };
           this.plugin.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(this.plugin.VaultAccount);
         }
-     })
+      })
     );
   }
 }

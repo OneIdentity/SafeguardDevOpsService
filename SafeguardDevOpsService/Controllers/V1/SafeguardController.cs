@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Principal;
 using System.Threading.Tasks;
-using LiteDB;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.StaticFiles;
 using OneIdentity.DevOps.Attributes;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
+using OneIdentity.SafeguardDotNet;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 #pragma warning disable 1573
 
@@ -71,42 +72,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         {
             var token = WellKnownData.GetSppToken(HttpContext);
             var appliance = safeguard.SetSafeguardData(token, safeguardData);
+            safeguard.AddSecretsBrokerInstance(null);
 
             return Ok(appliance);
-        }
-
-        /// <summary>
-        /// Delete the Safeguard appliance connection information being used by Safeguard Secrets Broker for DevOps.
-        /// </summary>
-        /// <remarks>
-        /// Safeguard Secrets Broker for DevOps must be associated with a Safeguard for Privileged Passwords appliance before it can be used.
-        /// This appliance will be trusted for authentication.  It is also the appliance that will notify Safeguard Secrets Broker for DevOps
-        /// of secret changes so that they can be pushed to the configured plugins.
-        /// 
-        /// This endpoint will remove the currently configured association.  It does not clean up any of Safeguard Secrets Broker for DevOps
-        /// related items added to the Safeguard for Privileged Passwords configuration.  Those must be removed manually.
-        /// 
-        /// It will also remove Safeguard Secrets Broker for DevOps configuration database and restart the DevOps service.
-        /// 
-        /// To help prevent unintended Safeguard appliance connection removal, the confirm query param is required and must be set to "yes".
-        /// 
-        /// (see DELETE /service/devops/{version}/Safeguard/Configuration)
-        /// </remarks>
-        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the Safeguard appliance connection.</param>
-        /// <response code="204">Success.</response>
-        /// <response code="400">Bad Request</response>
-        [SafeguardSessionKeyAuthorization]
-        [SafeguardSessionHandler]
-        [UnhandledExceptionError]
-        [HttpDelete]
-        public ActionResult DeleteSafeguard([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
-        {
-            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
-                return BadRequest();
-
-            safeguard.DeleteSafeguardData();
-
-            return NoContent();
         }
 
         /// <summary>
@@ -123,11 +91,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("Configuration")]
-        public ActionResult<ServiceConfiguration> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<DevOpsSecretsBroker> GetDevOpsConfiguration([FromServices] ISafeguardLogic safeguard)
         {
-            var serviceConfiguration = safeguard.GetDevOpsConfiguration();
+            var devOpsSecretsBroker = safeguard.GetDevOpsConfiguration(null);
 
-            return Ok(serviceConfiguration);
+            return Ok(devOpsSecretsBroker);
         }
 
         /// <summary>
@@ -141,10 +109,10 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// This endpoint will modify configuration stored in Safeguard for Privileged Passwords.  The client certificate that will
         /// be used to create the A2A user in Safeguard for Privileged Passwords can be uploaded as part of the this /Configuration
         /// endpoint or can be uploaded separately in the POST /ClientCertificate endpoint.
-        /// 
+        ///
         /// If the client certificate was already uploaded using the ClientCertificate endpoint, it does not need to be provided
         /// in this operation and the POST body should be empty. ("{}")
-        /// 
+        ///
         /// (see POST /service/devops/{version}/Safeguard/ClientCertificate)
         /// </remarks>
         /// <param name="certFile">If the "Base64CertificateData" parameter contains a base64 encoded (or PEM) A2A client certificate, the certificate
@@ -156,16 +124,16 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("Configuration")]
-        public ActionResult<ServiceConfiguration> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, CertificateInfo certFile = null)
+        public ActionResult<DevOpsSecretsBroker> ConfigureSafeguard([FromServices] ISafeguardLogic safeguard, CertificateInfo certFile = null)
         {
             if (certFile?.Base64CertificateData != null)
             {
                 safeguard.InstallCertificate(certFile, CertificateType.A2AClient);
             }
 
-            var devOpsConfiguration = safeguard.ConfigureDevOpsService();
+            var devOpsSecretsBroker = safeguard.ConfigureDevOpsService();
 
-            return Ok(devOpsConfiguration);
+            return Ok(devOpsSecretsBroker);
         }
 
         /// <summary>
@@ -175,25 +143,35 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Safeguard Secrets Broker for DevOps uses client certificate authentication and the A2A service to access Safeguard for Privileged
         /// Passwords to monitor account secret changes and to pull secrets.  Safeguard Secrets Broker for DevOps also proxies configuration
         /// requests to Safeguard for Privileged Passwords as the currently authenticated administrator user.
-        /// 
+        ///
         /// This endpoint will remove all A2A credential retrievals, the A2A registration and the A2A user from Safeguard for
         /// Privileged Passwords.  It will also remove Safeguard Secrets Broker for DevOps configuration database and restart the DevOps service.
-        /// 
+        ///
         /// To help prevent unintended Safeguard client configuration removal, the confirm query param is required and must be set to "yes".
         /// </remarks>
+        /// <param name="secretsBrokerOnly">If set to true (default) then reset the Secrets Broker database only and leave all related devops instance data elements in Safeguard, as is.
+        /// If set to false then the Secrets Broker database will be reset and all related data elements in Safeguard will also be removed.</param>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the Safeguard client configuration.</param>
-        /// <response code="204">No Content.</response>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps when complete.</param>
+        /// <response code="200">Success. Restart required.</response>
+        /// <response code="204">Success. No Content.</response>
         /// <response code="400">Bad request.</response>
         [SafeguardSessionKeyAuthorization]
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpDelete("Configuration")]
-        public ActionResult DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard, [FromQuery] string confirm)
+        public ActionResult DeleteSafeguardConfiguration([FromServices] ISafeguardLogic safeguard,
+            [FromQuery] string confirm, [FromQuery] bool secretsBrokerOnly = true, [FromQuery] bool restart = true)
         {
             if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
                 return BadRequest();
 
-            safeguard.DeleteDevOpsConfiguration();
+            safeguard.DeleteDevOpsConfiguration(null, secretsBrokerOnly);
+
+            if (restart)
+                safeguard.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok(WellKnownData.RestartNotice);
 
             return NoContent();
         }
@@ -215,13 +193,15 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("Logon")]
-        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardDevOpsLogon> GetSafeguardLogon([FromServices] ISafeguardLogic safeguard)
         {
-            var safeguardConnection = safeguard.GetSafeguardConnection();
-            if (safeguardConnection == null)
+            var safeguardLogon = safeguard.GetSafeguardLogon();
+            if (safeguardLogon == null)
                 return NotFound("No Safeguard has not been configured");
 
-            return Ok(safeguardConnection);
+            safeguard.RetrieveDevOpsSecretsBrokerInstance(null);
+
+            return Ok(safeguardLogon);
         }
 
         /// <summary>
@@ -237,7 +217,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("Logoff")]
-        public ActionResult<SafeguardDevOpsConnection> GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
+        public ActionResult GetSafeguardLogoff([FromServices] ISafeguardLogic safeguard)
         {
             var sessionKey = HttpContext.Items["session-key"].ToString();
             AuthorizedCache.Instance.Remove(sessionKey);
@@ -251,7 +231,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
         /// The most secure way to create this certificate is using a certificate signing request (CSR).
-        /// 
+        ///
         /// (see GET /service/devops/v1/Safeguard/CSR)
         /// </remarks>
         /// <response code="200">Success.</response>
@@ -288,7 +268,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("ClientCertificate")]
-        public ActionResult InstallClientCertificate([FromServices] ISafeguardLogic safeguard, CertificateInfo certInfo)
+        public ActionResult<CertificateInfo> InstallClientCertificate([FromServices] ISafeguardLogic safeguard, CertificateInfo certInfo)
         {
             safeguard.InstallCertificate(certInfo, CertificateType.A2AClient);
             var certificate = safeguard.GetCertificateInfo(CertificateType.A2AClient);
@@ -301,7 +281,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
-        /// 
+        ///
         /// This endpoint removes the current client certificate from Safeguard Secrets Broker for DevOps.
         /// </remarks>
         /// <response code="204">No Content.</response>
@@ -343,17 +323,17 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <summary>
         /// Upload the web server certificate for the DevOps service to use.
         /// </summary>
-        /// 
+        ///
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps use TLS to authenticate itself and to protect its API.  The first time it starts
         /// it generates a self-signed web server certificate.  To ensure secure access this web certificate should
         /// be replaced.  The most secure way to create this certificate is using a certificate signing request (CSR).
-        /// 
+        ///
         /// This endpoint can receive either a PFX formatted certificate that includes the private key and a passphrase for decrypting
         /// that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.
-        /// 
+        ///
         /// Safeguard Secrets Broker for DevOps will be restarted so the new certificate can be applied.
-        /// 
+        ///
         /// (see GET /service/devops/v1/Safeguard/CSR)
         /// </remarks>
         /// <param name="certInfo">The certificate info should contain the base64 (or PEM) encoded certificate and pass phrase if the certificate includes a private key.</param>
@@ -364,7 +344,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpPost("WebServerCertificate")]
-        public ActionResult InstallWebServerCertificate([FromServices] ISafeguardLogic safeguard, [FromBody] CertificateInfo certInfo, [FromQuery] bool restart = true)
+        public ActionResult<CertificateInfo> InstallWebServerCertificate([FromServices] ISafeguardLogic safeguard, [FromBody] CertificateInfo certInfo, [FromQuery] bool restart = true)
         {
             safeguard.InstallCertificate(certInfo, CertificateType.WebSsl);
             var certificate = safeguard.GetCertificateInfo(CertificateType.WebSsl);
@@ -385,7 +365,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         ///
         /// This endpoint will remove the current web server certificate and will generate a new self-signed certificate
         /// to take its place.
-        /// 
+        ///
         /// Safeguard Secrets Broker for DevOps must be restarted before the new self-signed web server certificate will be applied.
         /// </remarks>
         /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after installing a new default certificate.</param>
@@ -411,11 +391,11 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <remarks>
         /// Using a certificate signing request is the most secure method for configuring a web server certificate or
         /// a client certificate in Safeguard Secrets Broker for DevOps.  This is because the private key never leaves the DevOps service.
-        /// 
+        ///
         /// This endpoint will generate a CSR and return it in PKCS#10 PEM format.  This can be submitted to your own
         /// secure certificate authority (CA) resulting in a signed certificate.  This certificate can be uploaded as a
         /// web server certificate or a client certificate for Safeguard Secrets Broker for DevOps to use for secure communications.
-        /// 
+        ///
         /// (see POST /service​/devops​/v1​/Safeguard​/ClientCertificate)
         /// (see POST /service/devops/v1/Safeguard/WebServerCertificate)
         /// </remarks>
@@ -430,7 +410,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("CSR")]
-        public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size, 
+        public ActionResult<string> GetClientCsr([FromServices] ISafeguardLogic safeguard, [FromQuery] int? size,
             [FromQuery] string subjectName, [FromQuery] string sanDns, [FromQuery] string sanIp, [FromQuery] string certType = "A2AClient")
         {
             if (!Enum.TryParse(certType, true, out CertificateType cType))
@@ -463,12 +443,40 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
         [HttpGet("AvailableAccounts")]
-        public ActionResult GetAvailableAccounts([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null, 
+        public ActionResult GetAvailableAccounts([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null,
             [FromQuery] int? page = null, [FromQuery] bool? count = null, [FromQuery] int? limit = null, [FromQuery] string orderby = null, [FromQuery] string q = null)
         {
-            var availableAccounts = safeguard.GetAvailableAccounts(filter, page, count, limit, orderby, q);
+            var availableAccounts = safeguard.GetAvailableAccounts(null, filter, page, count, limit, orderby, q);
 
             return Ok(availableAccounts);
+        }
+
+        /// <summary>
+        /// Get available Safeguard A2A registrations that are associated with a Safeguard Secrets Broker for DevOps.
+        /// </summary>
+        /// <remarks>
+        /// This endpoint returns a list of A2A registrations that can be registered with Safeguard Secrets Broker for DevOps.
+        ///
+        /// (see GET /service​/devops​/v1​/Safeguard​/A2ARegistration​)
+        /// (see PUT /service​/devops​/v1​/Safeguard​/A2ARegistration​/{id})
+        /// </remarks>
+        /// <param name="filter">Filter results. Available operators: eq, ne, gt, ge, lt, le, and, or, not, contains, ieq, icontains, in [ {item1}, {item2}, etc], (). Use \ to escape quotes in strings.</param>
+        /// <param name="page">Which page (starting with 0) of data to return</param>
+        /// <param name="limit">The size of a page of data</param>
+        /// <param name="orderby">List of property names (comma-separated) to sort entities by. Prepend properties with - for descending.</param>
+        /// <param name="q">Search all string fields for the specified value</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad Request</response>
+        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpGet("AvailableA2ARegistrations")]
+        public ActionResult GetAvailableA2ARegistrations([FromServices] ISafeguardLogic safeguard, [FromQuery] string filter = null,
+            [FromQuery] int? page = null, [FromQuery] bool? count = null, [FromQuery] int? limit = null, [FromQuery] string orderby = null, [FromQuery] string q = null)
+        {
+            var availableRegistrations = safeguard.GetAvailableA2ARegistrations(null, filter, page, count, limit, orderby, q);
+
+            return Ok(availableRegistrations);
         }
 
         /// <summary>
@@ -493,7 +501,37 @@ namespace OneIdentity.DevOps.Controllers.V1
             if (!Enum.TryParse(registrationType, true, out A2ARegistrationType rType))
                 return BadRequest("Invalid registration type");
 
-            var registration = safeguard.GetA2ARegistration(rType);
+            var registration = safeguard.GetA2ARegistration(null, rType);
+            if (registration == null)
+                return NotFound();
+
+            return Ok(registration);
+        }
+
+        /// <summary>
+        /// Set the A2A registration used by Safeguard Secrets Broker for DevOps.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses the Safeguard for Privileged Passwords A2A service to access
+        /// to monitor account secret changes and to pull secrets. Safeguard Secrets Broker for DevOps create a special A2A registration
+        /// that can have registered accounts.  Each account that is registered with this A2A registration, will be monitored
+        /// by Safeguard Secrets Broker for DevOps.
+        ///
+        /// This API will associate this instance of the Secrets Broker with an existing A2A registration.  All mapped account data
+        /// from the previously associated Secrets Broker will be removed.  The loaded plugins must be re-mapped to all accounts
+        /// that should be monitored through the new A2A registration.
+        /// </remarks>
+        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to assign a new A2A registration to this instance of the Secrets Broker.</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad Request</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpPut("A2ARegistration/{id}")]
+        public ActionResult<A2ARegistration> SetA2ARegistration([FromServices] ISafeguardLogic safeguard, [FromRoute] int id, [FromQuery] string confirm)
+        {
+            var registration = safeguard.SetA2ARegistration(null, id);
             if (registration == null)
                 return NotFound();
 
@@ -519,7 +557,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpGet("A2ARegistration/RetrievableAccounts")]
         public ActionResult<IEnumerable<A2ARetrievableAccount>> GetRetrievableAccounts([FromServices] ISafeguardLogic safeguard)
         {
-            var retrievableAccounts = safeguard.GetA2ARetrievableAccounts(A2ARegistrationType.Account);
+            var retrievableAccounts = safeguard.GetA2ARetrievableAccounts(null, A2ARegistrationType.Account);
 
             return Ok(retrievableAccounts);
         }
@@ -544,7 +582,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpGet("A2ARegistration/RetrievableAccounts/{accountId}")]
         public ActionResult<A2ARetrievableAccount> GetRetrievableAccountById([FromServices] ISafeguardLogic safeguard, [FromRoute] int accountId)
         {
-            var retrievableAccount = safeguard.GetA2ARetrievableAccountById(A2ARegistrationType.Account, accountId);
+            var retrievableAccount = safeguard.GetA2ARetrievableAccountById(null, A2ARegistrationType.Account, accountId);
             if (retrievableAccount == null)
                 return NotFound();
 
@@ -571,7 +609,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpPut("A2ARegistration/RetrievableAccounts")]
         public ActionResult<IEnumerable<A2ARetrievableAccount>> AddRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<SppAccount> accounts)
         {
-            var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(accounts, A2ARegistrationType.Account);
+            var retrievableAccounts = safeguard.AddA2ARetrievableAccounts(null, accounts, A2ARegistrationType.Account);
 
             return Ok(retrievableAccounts);
         }
@@ -596,7 +634,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [HttpDelete("A2ARegistration/RetrievableAccounts")]
         public ActionResult RemoveRetrievableAccounts([FromServices] ISafeguardLogic safeguard, IEnumerable<A2ARetrievableAccount> accounts)
         {
-            safeguard.RemoveA2ARetrievableAccounts(accounts, A2ARegistrationType.Account);
+            safeguard.RemoveA2ARetrievableAccounts(null, accounts, A2ARegistrationType.Account);
 
             return NoContent();
         }
@@ -624,7 +662,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </summary>
         /// <remarks>
         /// The Safeguard Secrets Broker for DevOps log file contains additional information about errors or events that may occur during normal operation.
-        /// 
+        ///
         /// This endpoint downloads the log file.
         /// </remarks>
         /// <response code="200">Success</response>
@@ -726,7 +764,7 @@ namespace OneIdentity.DevOps.Controllers.V1
 
             if (importFromSafeguard)
             {
-                trustedCertificates = safeguard.ImportTrustedCertificates();
+                trustedCertificates = safeguard.ImportTrustedCertificates(null);
             }
             else
             {
@@ -768,7 +806,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// established.  Establishing a trusted connection requires that trusted certificates be added to the service.
         ///
         /// This endpoint removes all of the trusted certificates from Safeguard Secrets Broker for DevOps.
-        /// 
+        ///
         /// To help prevent unintended trusted certificate removal, the confirm query param is required and must be set to "yes".
         /// </remarks>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove all of the trusted certificates.</param>
@@ -787,6 +825,264 @@ namespace OneIdentity.DevOps.Controllers.V1
 
             return NoContent();
         }
+
+        /// <summary>
+        /// Get a list of the known add-ons.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// </remarks>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("Addons")]
+        public ActionResult<IEnumerable<Addon>> GetAddons([FromServices] IAddonLogic addonLogic)
+        {
+            var addons = addonLogic.GetAddons();
+
+            return Ok(addons);
+        }
+
+        /// <summary>
+        /// Get an add-on by name.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// </remarks>
+        /// <param name="addonName">Name of the add-on to retrieve.</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        /// <response code="404">Not Found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("Addons/{addonName}")]
+        public ActionResult<Addon> GetAddonByName([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        {
+            var addon = addonLogic.GetAddon(addonName);
+
+            return Ok(addon);
+        }
+
+        /// <summary>
+        /// Get a list of the known add-ons.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// </remarks>
+        /// <param name="addonName">Name of the add-on to retrieve.</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad request</response>
+        /// <response code="404">Not Found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("Addons/{addonName}/Status")]
+        public ActionResult<AddonStatus> GetAddonStatusByName([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        {
+            if (string.IsNullOrEmpty(addonName))
+                return BadRequest("Invalid add-on name.");
+
+            var addonStatus = addonLogic.GetAddonStatus(addonName);
+
+            return Ok(addonStatus);
+        }
+
+        /// <summary>
+        /// Configure an add-on.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// </remarks>
+        /// <response code="200">Success.</response>
+        /// <response code="400">Bad request.</response>
+        [SafeguardSessionKeyAuthorization(WellKnownData.SafeguardAssetAdmin)]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpPost("Addons/{addonName}/Configuration")]
+        public ActionResult ConfigureAddOn([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        {
+            if (string.IsNullOrEmpty(addonName))
+                return BadRequest("Invalid add-on name.");
+
+            addonLogic.ConfigureDevOpsAddOn(addonName);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Restart an add-on.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// </remarks>
+        /// <response code="200">Success.</response>
+        /// <response code="400">Bad request.</response>
+        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpPost("Addons/{addonName}/Restart")]
+        public ActionResult RestartAddOn([FromServices] IAddonLogic addonLogic, [FromRoute] string addonName)
+        {
+            if (string.IsNullOrEmpty(addonName))
+                return BadRequest("Invalid add-on name.");
+
+            addonLogic.RestartDevOpsAddOn(addonName);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Upload and deploy a Secrets Broker add-on as a base64 string.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.  &lt;br /&gt;
+        ///
+        /// (See POST /service/devops/{version}/Plugins/File to upload a plugin file using multipart-form-data)
+        /// </remarks>
+        /// <param name="addonInfo">Secrets Broker add-on containing the base64 encoded zip file.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after add-on install.</param>
+        /// <param name="force">>Force Safeguard Secrets Broker for DevOps to re-install add-on.</param>
+        /// <response code="200">Success. Needing restart</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [DisableRequestSizeLimit]
+        [UnhandledExceptionError]
+        [RequestFormLimits(ValueLengthLimit = (200000*1024), MultipartBodyLengthLimit = (200000*1024))]
+        [HttpPost("Addons")]
+        public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
+            Addon addonInfo, [FromQuery] bool restart = false, [FromQuery] bool force = false)
+        {
+            addonLogic.InstallAddon(addonInfo.Base64AddonData, force);
+
+            if (restart)
+                safeguard.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok(WellKnownData.RestartNotice);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Upload and deploy a Secrets Broker add-on via multipart-form-data.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// The add-on must be a zip compressed file.
+        /// </remarks>
+        /// <param name="formFile">Zip compressed add-on file.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
+        /// <param name="force">Force add-on to installed even if another with the same name already exists.</param>
+        /// <response code="200">Success. Needing restart</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [DisableRequestSizeLimit]
+        [UnhandledExceptionError]
+        [RequestFormLimits(ValueLengthLimit = (200000*1024), MultipartBodyLengthLimit = (200000*1024))]
+        [HttpPost("Addons/File")]
+        public ActionResult UploadAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
+            IFormFile formFile, [FromQuery] bool restart = false, [FromQuery] bool force = false)
+        {
+            addonLogic.InstallAddon(formFile, force);
+
+            if (restart)
+                safeguard.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok(WellKnownData.RestartNotice);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Remove a Secrets Broker add-on.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
+        /// capability that is compatible with the HashiCorp API.
+        ///
+        /// This endpoint removes the currently deployed Secrets Broker add-on.
+        /// </remarks>
+        /// <param name="addonName">Name of the add-on to remove.</param>
+        /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove the add-on.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after removing the add-on.</param>
+        /// <response code="200">Success. Needing restart</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpDelete("Addons/{addonName}")]
+        public ActionResult RemoveAddon([FromServices] IAddonLogic addonLogic, [FromServices] ISafeguardLogic safeguard,
+            [FromRoute] string addonName, [FromQuery] string confirm, [FromQuery] bool restart = false)
+        {
+            if (confirm == null || !confirm.Equals("yes", StringComparison.InvariantCultureIgnoreCase))
+                return BadRequest();
+
+            addonLogic.RemoveAddon(addonName);
+
+            if (restart)
+                safeguard.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok(WellKnownData.RestartNotice);
+
+            return NoContent();
+        }
+
+        // /// <summary>
+        // /// This is a test endpoint and should be removed before release
+        // /// </summary>
+        // /// <remarks>
+        // /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        // /// capability that is compatible with the HashiCorp API.
+        // ///
+        // /// </remarks>
+        // /// <response code="200">Success</response>
+        // /// <response code="204">Success</response>
+        // /// <response code="400">Bad request</response>
+        // //[SafeguardSessionKeyAuthorization]
+        // [UnhandledExceptionError]
+        // [HttpPost("Ping")]
+        // public ActionResult PingSpp([FromServices] ISafeguardLogic safeguard)
+        // {
+        //     safeguard.PingSpp(null);
+        //
+        //     return NoContent();
+        // }
+
+        // /// <summary>
+        // /// Get a list of the known add-ons.
+        // /// </summary>
+        // /// <remarks>
+        // /// Safeguard Secrets Broker for DevOps can be modified to provide addition functionality such as credential vault
+        // /// capability that is compatible with the HashiCorp API.
+        // ///
+        // /// </remarks>
+        // /// <param name="addonName">Name of the add-on to retrieve.</param>
+        // /// <response code="200">Success</response>
+        // /// <response code="400">Bad request</response>
+        // /// <response code="404">Not Found</response>
+        // [SafeguardSessionKeyAuthorization]
+        // [UnhandledExceptionError]
+        // [HttpGet("TestCertConnection")]
+        // public ActionResult<Addon> GetTestCertConnection([FromServices] ISafeguardLogic safeguard)
+        // {
+        //     safeguard.TestCertConnection();
+        //
+        //     return Ok();
+        // }
 
     }
 }

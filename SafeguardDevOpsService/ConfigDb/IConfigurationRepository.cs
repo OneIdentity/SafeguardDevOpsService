@@ -1,22 +1,17 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
+
 #pragma warning disable 1591
 
 namespace OneIdentity.DevOps.ConfigDb
 {
-    public interface IConfigurationRepository
+    public interface IConfigurationRepository : ISettingsRepository, IPluginRepository, IAddonRepository
     {
-        ISetting GetSetting(string name);
-        void SetSetting(ISetting value);
-        void RemoveSetting(string name);
-
-        IEnumerable<Plugin> GetAllPlugins();
-        Plugin GetPluginByName(string name);
-        Plugin SavePluginConfiguration(Plugin plugin);
-        void DeletePluginByName(string name);
-
         IEnumerable<AccountMapping> GetAccountMappings();
+        IEnumerable<AccountMapping> GetAccountMappings(string name);
         void SaveAccountMappings(IEnumerable<AccountMapping> accounts);
         void DeleteAccountMappingsByKey(string key);
         void DeleteAccountMappings();
@@ -30,11 +25,14 @@ namespace OneIdentity.DevOps.ConfigDb
 
         string SafeguardAddress { get; set; }
         int? ApiVersion { get; set; }
-        string SvcId { get; }
+        string SvcId { get; set; }
         bool? IgnoreSsl { get; set; }
         int? A2aUserId { get; set; }
         int? A2aRegistrationId { get; set; }
         int? A2aVaultRegistrationId { get; set; }
+        int? AssetId { get; set; }
+        int? AssetPartitionId { get; set; }
+        int? AssetAccountGroupId { get; set; }
         string SigningCertificate { get; set; }
         string LastKnownMonitorState { get; set; }
 
@@ -50,6 +48,10 @@ namespace OneIdentity.DevOps.ConfigDb
 
         X509Certificate2 UserCertificate { get; }
         X509Certificate2 WebSslCertificate { get; set; }
+
+        Tuple<string, string> GetWebSslPemCertificate();
+
+        DevOpsSecretsBroker DevOpsSecretsBroker { get; }
 
         void DropDatabase();
     }

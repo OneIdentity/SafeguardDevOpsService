@@ -3,6 +3,8 @@ Param(
     [Parameter(Mandatory=$false,Position=0)]
     [string]$ImageType = "alpine",
     [Parameter(Mandatory=$false)]
+    [switch]$Rebuild,
+    [Parameter(Mandatory=$false)]
     [int]$Port = 443,
     [Parameter(Mandatory=$false)]
     [ValidateScript({[bool]($_ -as [IPAddress])})]
@@ -34,8 +36,16 @@ if (-not (Get-Command "docker" -EA SilentlyContinue))
 $ImageName = "oneidentity/safeguard-devops:$ImageType"
 $ContainerName = "safeguard-devops-runtime"
 
-Write-Host "Rebuilding the image: $ImageName ..."
-& "$PSScriptRoot/invoke-docker-build.ps1" $ImageType
+if (-not $(docker images $ImageName -q))
+{
+    Write-Host "Building the image: $ImageName ..."
+    & "$PSScriptRoot/invoke-docker-build.ps1" $ImageType
+}
+elseif ($Rebuild)
+{
+    Write-Host "Rebuilding the image: $ImageName ..."
+    & "$PSScriptRoot/invoke-docker-build.ps1" $ImageType -Rebuild:$Rebuild
+}
 
 Write-Host "Clean up any old container named $ContainerName ..."
 $Exists = (& docker ps -a -f name=$ContainerName -q)

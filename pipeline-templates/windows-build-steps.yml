@@ -8,14 +8,15 @@ steps:
   - task: VSBuild@1
     inputs:
       solution: '$(solution)'
+      msbuildArgs: '/p:buildId=$(Build.BuildId)'
       platform: '$(buildPlatform)'
       configuration: '$(buildConfiguration)'
     displayName: 'Build $(solution)'
-
+    
   - task: VSBuild@1
     inputs:
       solution: '$(setupProject)'
-      msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)"'
+      msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)" /p:buildId=$(Build.BuildId)'
       platform: '$(buildPlatform)'
       configuration: '$(buildConfiguration)'
     displayName: 'Build $(setupProject) with signing'
@@ -24,6 +25,7 @@ steps:
   - task: VSBuild@1
     inputs:
       solution: '$(setupProject)'
+      msbuildArgs: '/p:buildId=$(Build.BuildId)'
       platform: '$(buildPlatform)'
       configuration: '$(buildConfiguration)'
     displayName: 'Build $(setupProject) no signing'
@@ -35,6 +37,13 @@ steps:
       custom: 'pack'
       arguments: '$(Build.SourcesDirectory)\DevOpsPluginCommon\DevOpsPluginCommon.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
     displayName: Building Plugin Common NuGet packages
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'custom'
+      custom: 'pack'
+      arguments: '$(Build.SourcesDirectory)\DevOpsAddonCommon\DevOpsAddonCommon.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
+    displayName: Building Addon Common NuGet packages
 
   - task: DeleteFiles@1
     inputs:
@@ -61,7 +70,7 @@ steps:
     inputs:
       targetType: filePath
       filePath: $(System.DefaultWorkingDirectory)\powershell\install-forpipeline.ps1
-      arguments: $(Build.SourcesDirectory) $(VersionString) $$(isPrerelease)
+      arguments: $(Build.SourcesDirectory) $(PwShellVersionString) $$(isPrerelease)
     displayName: 'Building Powershell module'
 
   - task: PublishBuildArtifacts@1

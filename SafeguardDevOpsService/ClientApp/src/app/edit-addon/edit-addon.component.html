@@ -1,0 +1,71 @@
+<div class="root-container">
+  <mat-toolbar class="header">
+    <span>Add-on Settings</span>
+    <div class="spacer"></div>
+    <button mat-icon-button (click)="close()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="main-container">
+    <mat-card>
+      <div class="basic-info-header">
+        <h2>Basic Info</h2>
+        <div class="spacer"></div>
+        <div class="sub-title">
+          Version {{addon?.Manifest.Version}}
+          <mat-icon class="blue-icon" inline=true *ngIf="addon.IsProduction" matTooltip="Production">verified_user</mat-icon>
+          <mat-icon class="blue-icon" inline=true *ngIf="!addon.IsProduction" matTooltip="Test">remove_moderator</mat-icon>
+        </div>
+      </div>
+      <div class="info-label">Name</div>
+      <div>{{addon?.Manifest.DisplayName}}</div>
+      <div class="info-label">({{addon?.Manifest.Name}})</div>
+      <p></p>
+      <div>
+        <div class="info-label">Description</div>
+        <div>{{addon?.Manifest.Description}}</div>
+      </div>
+    </mat-card>
+
+    <mat-card>
+      <h2>
+        Status&nbsp;
+        <mat-icon class="green-icon" inline=true *ngIf="addon.Status?.IsReady">check_circle</mat-icon>
+        <mat-icon class="yellow-icon" inline=true *ngIf="!addon.Status?.IsReady">error_outline</mat-icon>
+      </h2>
+      <p></p>
+      <div>
+        {{addon.Status?.HealthStatus.join(', ')}}
+      </div>
+    </mat-card>
+
+    <mat-card>
+      <h2>Configuration</h2>
+      <p></p>
+      <div>
+        <div class="info-label">Vault's Account in Safeguard</div>
+        <div>{{addon?.VaultAccountName}}</div>
+      </div>
+      <p></p>
+      <div>
+        <div class="info-label">Vault's Asset in Safeguard</div>
+        <div>{{addon?.VaultAssetName}}</div>
+      </div>
+      <app-progress-spinner color="accent" diameter="20" message='Configuring Add-on' [visible]="isConfiguring">
+      </app-progress-spinner>
+      <button mat-button *ngIf="!addon?.Status.IsReady && !isConfiguring && addon?.IsAssetAdmin" (click)="configure()"
+        color="primary" class="link-button" disableRipple>Configure Add-on</button>
+    </mat-card>
+
+    <div *ngIf="error" class="error">
+      <mat-icon>error</mat-icon>{{error}}
+    </div>
+  </div>
+
+  <mat-toolbar class="selection-footer">
+    <app-progress-spinner color="accent" diameter="20" message='Deleting Add-on' [visible]="isDeleting">
+    </app-progress-spinner>
+    <button mat-button *ngIf="!isDeleting" (click)="delete()" class="link-button" disableRipple>Delete Add-on</button>
+  </mat-toolbar>
+</div>

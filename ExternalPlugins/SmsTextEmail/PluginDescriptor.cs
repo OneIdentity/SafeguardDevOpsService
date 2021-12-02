@@ -18,7 +18,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
         private const string FromAddressName = "from-address";
         private const string ToAddressesName = "to-addresses";
 
-        private string[] toAddresses = null;
+        private string[] _toAddresses;
 
         public string Name => "SmsTextEmail";
         public string DisplayName => "Sms Text & Email";
@@ -41,9 +41,9 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 configuration.ContainsKey(ToAddressesName))
             {
                 _configuration = configuration;
-                toAddresses = configuration[ToAddressesName].Split(';');
+                _toAddresses = configuration[ToAddressesName].Split(';');
 
-                if (toAddresses.Length == 0)
+                if (_toAddresses.Length == 0)
                     _logger.Information("No recipient addresses were found.");
 
                 _logger.Information($"Plugin {Name} has been successfully configured.");
@@ -59,16 +59,16 @@ namespace OneIdentity.DevOps.SmsTextEmail
             _logger.Information($"Plugin {Name} successfully authenticated.");
         }
 
-        public bool SetPassword(string asset, string account, string password)
+        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
             var message = new MailMessage()
             {
                 From = new MailAddress(_configuration[FromAddressName]),
                 Subject = "Message from Safeguard Secrets Broker for DevOps",
-                Body = $"{asset} - {account}\n{password}"
+                Body = altAccountName != null ? $"{altAccountName}\n{password}" : $"{asset} - {account}\n{password}"
             };
 
-            foreach (var address in toAddresses)
+            foreach (var address in _toAddresses)
             {
                 message.To.Add(new MailAddress(address));
             }

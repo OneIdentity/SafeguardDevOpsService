@@ -136,8 +136,10 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('deleteSafeguard')));
   }
 
-  deleteConfiguration(): Observable<any> {
-    return this.http.delete(this.BASE + 'Safeguard/Configuration?confirm=yes', this.authHeader())
+  deleteConfiguration(secretsBrokerOnly: boolean, restartService: boolean): Observable<any> {
+    const options = Object.assign({ responseType: 'text', params: { confirm: 'yes', secretsBrokerOnly: secretsBrokerOnly, restart: restartService } }, this.authHeader());
+
+    return this.http.delete(this.BASE + 'Safeguard/Configuration', options)
       .pipe(catchError(this.error<any>('deleteConfiguration')));
   }
 
@@ -161,6 +163,39 @@ export class DevOpsServiceClient {
 
     return this.http.get(this.BASE + 'Safeguard/Log', options)
       .pipe(catchError(this.error<any>('getLogFile')));
+  }
+
+  getAddons(): Observable<any> {
+    return this.http.get(this.BASE + 'Safeguard/Addons', this.authHeader())
+      .pipe(catchError(this.error<any>('getAddons')));
+  }
+
+  getAddonStatus(name: string): Observable<any> {
+    return this.http.get(this.BASE + 'Safeguard/Addons/' + encodeURIComponent(name) + '/Status', this.authHeader())
+      .pipe(catchError(this.error<any>('getAddonStatus')));
+  }
+
+  postAddonFile(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('formFile', file);
+    formData.append('type', file.type);
+
+    const options = Object.assign({ responseType: 'text', params: { restart: true } }, this.authHeader());
+
+    return this.http.post(this.BASE + 'Safeguard/Addons/File', formData, options)
+      .pipe(catchError(this.error<any>('postAddonFile')));
+  }
+
+  deleteAddonConfiguration(name: string, restartService: boolean): Observable<any> {
+    const options = Object.assign({ responseType: 'text', params: { confirm: 'yes', restart: restartService } }, this.authHeader());
+
+    return this.http.delete(this.BASE + 'Safeguard/Addons/' + encodeURIComponent(name), options)
+      .pipe(catchError(this.error<any>('deleteAddonConfiguration')));
+  }
+
+  postAddonConfiguration(name: string): Observable<any> {
+    return this.http.post(this.BASE + 'Safeguard/Addons/' + encodeURIComponent(name) + '/Configuration', '', this.authHeader())
+      .pipe(catchError(this.error<any>('postAddonConfiguration')));
   }
 
   getPlugins(): Observable<any> {
@@ -231,8 +266,8 @@ export class DevOpsServiceClient {
     .pipe(catchError(this.error<any>('putPluginConfiguration')));
   }
 
-  deletePluginConfiguration(name: string): Observable<any> {
-    const options = Object.assign({ responseType: 'text' }, this.authHeader());
+  deletePluginConfiguration(name: string, restartService: boolean): Observable<any> {
+    const options = Object.assign({ responseType: 'text', params: { restart: restartService } }, this.authHeader());
 
     return this.http.delete(this.BASE + 'Plugins/' + encodeURIComponent(name), options)
     .pipe(catchError(this.error<any>('deletePluginConfiguration')));
@@ -263,6 +298,28 @@ export class DevOpsServiceClient {
   getRetrievableAccounts(): Observable<any[]> {
     return this.http.get(this.BASE + 'Safeguard/A2ARegistration/RetrievableAccounts', this.authHeader())
       .pipe(catchError(this.error<any>('getRetrievableAccounts')));
+  }
+
+  getA2ARegistration(): Observable<any> {
+    return this.http.get(this.BASE + 'Safeguard/A2ARegistration', this.authHeader())
+      .pipe(catchError(this.error<any>('getA2ARegistration')));
+  }
+
+  putA2ARegistration(id: number): Observable<any> {
+    return this.http.put(this.BASE + 'Safeguard/A2ARegistration/' + id + '?confirm=yes', null, this.authHeader())
+      .pipe(catchError(this.error<any>('putA2ARegistration')));
+  }
+
+  getAvailableA2ARegistrationsCount(filter?: string, orderby?: string, page?: number, pageSize?: number): Observable<number> {
+    const url = this.BASE + 'Safeguard/AvailableA2ARegistrations' + this.buildQueryArguments(true, filter, orderby, page, pageSize);
+    return this.http.get(url, this.authHeader())
+      .pipe(catchError(this.error<any>('getAvailableA2ARegistrationsCount')));
+  }
+
+  getAvailableA2ARegistrations(filter?: string, orderby?: string, page?: number, pageSize?: number): Observable<any[]> {
+    const url = this.BASE + 'Safeguard/AvailableA2ARegistrations' + this.buildQueryArguments(false, filter, orderby, page, pageSize);
+    return this.http.get(url, this.authHeader())
+      .pipe(catchError(this.error<any>('getAvailableA2ARegistrations')));
   }
 
   getClientCertificate(): Observable<any> {
@@ -307,7 +364,7 @@ export class DevOpsServiceClient {
 
   putRetrievableAccounts(accounts: any[]): Observable<any[]> {
     return this.http.put(this.BASE + 'Safeguard/A2ARegistration/RetrievableAccounts', accounts, this.authHeader())
-      .pipe(catchError(this.error<any>('putPluginAccounts')));
+      .pipe(catchError(this.error<any>('putRetrievableAccounts')));
   }
 
   getMonitor(): Observable<any> {
