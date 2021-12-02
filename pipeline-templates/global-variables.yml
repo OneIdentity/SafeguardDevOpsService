@@ -10,8 +10,8 @@
 #
 variables:
   - name: semanticVersion
-    value: "2.0.1"
+    value: "6.12.0"
   - name: isPrerelease
-    value: ${{ true }}
+    value: ${{ false }}
   - name: isReleaseBranch
-    value: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/vault'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
+    value: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
