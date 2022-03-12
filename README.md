@@ -192,6 +192,15 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsMonitoring-1.png)
 
+### Monitoring Password Events and Trouble Shooting
+
+The Safeguard Secrets Broker for DevOps provides ways to monitor the password events and trouble shooting.  This funcitonality can be found under the system menu.  To access the system menu, select the cog icon in the upper right-hand corner of the browser window.  The system menu contains several options such as restarting the Safeguard Secrets Broker for DevOps, deleting the current configuration which resets the system to the default state as well as downloading the system log and viewing the password event history.
+
+- To trouble shoot issues that may arise, select the Download Log option from the System Menu.  The system log will provide details about an system issue or error that may have occured.
+- To view the password events, select the View Monitor Event History option from the System Menu.  The Monitor Events will appear which contains a list of the password events that have taken place since the system was last started.  These events are only stored in memory which means that each time that the Safeguard Secrets Broker for DevOps is restarted, the list will be cleared.
+
+![SafeguardDevOpsService](Images/SafeguardDevOpsServiceMonitorEventsList-1.png)
+
 ### Using the REST API
 
 1. There are two different certificates that Safeguard Secrets Broker for DevOps needs in order to function properly.
