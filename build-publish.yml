@@ -19,7 +19,7 @@ jobs:
       - template: pipeline-templates/windows-build-steps.yml
       - task: GitHubRelease@1
         inputs:
-          gitHubConnection: 'github.ReleaseServiceAccount'
+          gitHubConnection: 'PangaeaBuild-GitHub'
           repositoryName: 'OneIdentity/SafeguardDevOpsService'
           action: 'create'
           target: '$(Build.SourceVersion)'
