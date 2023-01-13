@@ -17,6 +17,11 @@ jobs:
     steps:
       - template: pipeline-templates/windows-setup-and-key-vault.yml
       - template: pipeline-templates/windows-build-steps.yml
+      - bash: |
+          MSI_PATH="$(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\en-us\*.msi"
+          echo "##vso[task.setvariable variable=MSI_PATH]$MSI_PATH"
+          condition: and(eq(variables.isReleaseBranch, true), eq($(isPrerelease), true))
+
       - task: GitHubRelease@1
         inputs:
           gitHubConnection: 'PangaeaBuild-GitHub'
@@ -30,7 +35,7 @@ jobs:
           changeLogCompareToRelease: 'lastFullRelease'
           changeLogType: 'commitBased'
           assets: |
-            $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\en-us\*.msi
+            $(MSI_PATH)
             $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)\*.zip
         displayName: 'Creating and publishing a release to Github'
         condition: and(succeeded(), eq(variables.isReleaseBranch, true))
