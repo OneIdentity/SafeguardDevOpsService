@@ -6,6 +6,7 @@ trigger:
       - master
       - vault
       - release-*
+      - testpipeline
 pr: none
 jobs:
   - job:
@@ -20,7 +21,8 @@ jobs:
       - bash: |
           MSI_PATH="$(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\en-us\*.msi"
           echo "##vso[task.setvariable variable=MSI_PATH]$MSI_PATH"
-          condition: and(eq(variables.isReleaseBranch, true), eq($(isPrerelease), true))
+        displayName: 'Setting the installer artifact path'
+        condition: and(eq(variables.isReleaseBranch, true), eq($(isPrerelease), true))
 
       - task: GitHubRelease@1
         inputs:
