@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Component, OnInit, Inject } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 import * as moment from 'moment-timezone';
 import { saveAs } from 'file-saver';
