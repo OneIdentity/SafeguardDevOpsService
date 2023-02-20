@@ -34,22 +34,6 @@
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
-  <!--<ItemGroup>
-    <Compile Remove="ClientApp\dist\**" />
-    <EmbeddedResource Remove="ClientApp\dist\**" />
-    <None Remove="ClientApp\dist\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Remove="ClientApp\node_modules\**" />
-    <EmbeddedResource Remove="ClientApp\node_modules\**" />
-    <None Remove="ClientApp\node_modules\**" />
-  </ItemGroup>-->
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.4" />
-  </ItemGroup>
-
   <ItemGroup>
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
     <Compile Remove="ClientApp\.vscode\**" />
