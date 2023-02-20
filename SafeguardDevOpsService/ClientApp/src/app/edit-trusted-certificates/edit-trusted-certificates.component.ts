@@ -46,7 +46,7 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     this.certList.selectionChange.subscribe((x) => {
       if (!this.selectedCert) {
-        this.selectedCert = x.option._value;
+        this.selectedCert = x.options[0].value;
         this.localizedValidFrom = moment(this.selectedCert.NotBefore).format('LLL (Z)') + ' - ' + moment(this.selectedCert.NotAfter).format('LLL (Z)');
       }
     });

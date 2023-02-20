@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, Input } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { DevOpsServiceClient } from '../service-client.service';
 import { EditPluginService } from '../edit-plugin.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

@@ -191,9 +191,11 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
 
   /** Selects all rows if they are not all selected; otherwise clear selection. */
   masterToggle(): void {
-    this.isAllSelected() ?
-      this.selection.clear() :
+    if (this.isAllSelected()) {
+      this.selection.clear();
+    } else {
       this.accounts.forEach(row => this.selection.select(row));
+    }
   }
 
   selectRow(event, row): void {
@@ -207,9 +209,11 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
   }
 
   close(): void {
-    this.selectVaultAccount ?
-      this.editPluginService.closeVaultAccount() :
+    if (this.selectVaultAccount) {
+      this.editPluginService.closeVaultAccount();
+    } else {
       this.editPluginService.closeAccounts();
+    }
   }
 
   selectAccounts(): void {
