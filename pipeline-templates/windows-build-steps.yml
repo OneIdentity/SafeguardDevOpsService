@@ -16,20 +16,20 @@ steps:
   - task: VSBuild@1
     inputs:
       solution: '$(setupProject)'
-      msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)/$(codeSigningCertFileName)" /p:buildId=$(Build.BuildId)'
-      platform: '$(buildPlatform)'
-      configuration: '$(buildConfiguration)'
-    displayName: 'Build $(setupProject) with signing'
-    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
-
-  - task: VSBuild@1
-    inputs:
-      solution: '$(setupProject)'
       msbuildArgs: '/p:buildId=$(Build.BuildId)'
       platform: '$(buildPlatform)'
       configuration: '$(buildConfiguration)'
     displayName: 'Build $(setupProject) no signing'
     condition: and(succeeded(), eq(variables.isReleaseBranch, false))
+    
+  - task: VSBuild@1
+    inputs:
+      solution: '$(setupProject)'
+      msbuildArgs: '/p:SignFiles=true /p:CertificatePassword=$(OneIdentity-CodeSigningCertPassword) /p:CertificatePath="$(Build.BinariesDirectory)\$(codeSigningCertFileName)" /p:buildId=$(Build.BuildId)'
+      platform: '$(buildPlatform)'
+      configuration: '$(buildConfiguration)'
+    displayName: 'Build $(setupProject) with signing'
+    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
   - task: DotNetCoreCLI@2
     inputs:
