@@ -164,7 +164,7 @@ PrivateData = @{
          ExternalModuleDependencies = @('safeguard-ps')
 
          # Pre-release tag
-         Prerelease = '-pre'
+         Prerelease = 'pre'
 
          # ReleaseNotes of this module
          ReleaseNotes = @"

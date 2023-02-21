@@ -2,8 +2,6 @@ import { Component, OnInit, AfterViewInit, ElementRef, ViewChild, Inject } from 
 import { DevOpsServiceClient } from '../service-client.service';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import * as moment from 'moment-timezone';
-import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
-import { filter, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 @Component({
