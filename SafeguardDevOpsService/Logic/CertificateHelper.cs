@@ -170,7 +170,9 @@ namespace OneIdentity.DevOps.Logic
             var curDate = DateTime.UtcNow;
             if (curDate < sslCertificate.NotBefore || curDate > sslCertificate.NotAfter)
             {
+                var format = "MM/dd/yyyy HH:mm:ss z";
                 logger.Error("Certificate is expired.");
+                logger.Debug($"\tCurrent Time: {curDate.ToString(format)} Not Before: {sslCertificate.NotBefore.ToString(format)} Not After: {sslCertificate.NotAfter.ToString(format)}");
                 return false;
             }
 
