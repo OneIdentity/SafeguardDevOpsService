@@ -172,7 +172,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var format = "MM/dd/yyyy HH:mm:ss z";
                 logger.Error("Certificate is expired.");
-                logger.Debug($"\tCurrent Time: {curDate.ToString(format)} Not Before: {sslCertificate.NotBefore.ToString(format)} Not After: {sslCertificate.NotAfter.ToString(format)}");
+                logger.Error($"\tCurrent Time: {curDate.ToString(format)} Not Before: {sslCertificate.NotBefore.ToString(format)} Not After: {sslCertificate.NotAfter.ToString(format)}");
                 return false;
             }
 
