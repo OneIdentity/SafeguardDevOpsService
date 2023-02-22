@@ -35,7 +35,7 @@ namespace OneIdentity.DevOps.Logic
         {
             get
             {
-                var pk = cert.PrivateKey;
+                var pk = cert.GetRSAPrivateKey();
                 if (pk == null)
                 {
                     throw new DevOpsException("Certificate is missing the private key.");
@@ -50,7 +50,7 @@ namespace OneIdentity.DevOps.Logic
             get
             {
                 using var tmp = RSA.Create();
-                var pk = cert.PrivateKey;
+                var pk = cert.GetRSAPrivateKey();
                 if (pk == null)
                 {
                     throw new DevOpsException("Certificate is missing the private key.");

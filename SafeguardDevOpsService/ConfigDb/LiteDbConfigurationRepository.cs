@@ -100,7 +100,7 @@ namespace OneIdentity.DevOps.ConfigDb
         private string GeneratePassword()
         {
             var random = new byte[24];
-            var rng = new RNGCryptoServiceProvider();
+            var rng = RandomNumberGenerator.Create();
             rng.GetNonZeroBytes(random);
             return Convert.ToBase64String(random);
         }

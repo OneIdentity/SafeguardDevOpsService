@@ -16,6 +16,7 @@ namespace OneIdentity.DevOps.Logic
         public const string ServiceIdentifier = "svcid";
         public const string CredentialTarget = "SSBfDbgn";
         public const string CredentialEnvVar = "SSBEncPasswd";
+        public const string SessionKeyCookieName = "sessionKey";
 
         public const string PluginInfoClassName = "PluginDescriptor";
 
