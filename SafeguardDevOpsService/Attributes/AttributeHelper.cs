@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
+using OneIdentity.DevOps.Logic;
 using RestSharp.Extensions;
 #pragma warning disable 1591
 
@@ -22,10 +23,10 @@ namespace OneIdentity.DevOps.Attributes
 
         public static string GetSessionKey(HttpContext context)
         {
-            if (context.Request.Cookies.Keys.Contains("SessionKey") &&
-                context.Request.Cookies["SessionKey"].HasValue())
+            if (context.Request.Cookies.Keys.Contains(WellKnownData.SessionKeyCookieName) &&
+                context.Request.Cookies[WellKnownData.SessionKeyCookieName].HasValue())
             {
-                return context.Request.Cookies["SessionKey"];
+                return context.Request.Cookies[WellKnownData.SessionKeyCookieName];
             }
 
             return null;
