@@ -1,0 +1,7 @@
+{
+  "Type": "Plugin",
+ 	"Name": "CircleCISecrets",
+	"DisplayName": "CircleCI Secrets",
+	"Assembly": "CircleCISecrets.dll",
+	"Version": "1.0.0.9999"
+}
