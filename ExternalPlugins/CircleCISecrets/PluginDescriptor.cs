@@ -21,7 +21,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
         private static string _address = "http://circleci.com/api/v2";
         private ContextItem _contextItem = null;
 
-        private const string OranizationId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+        private const string OrganizationId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
         private const string Context = "My Context";
 
         private const string OrganizationIdName = "Organization Id";
@@ -35,7 +35,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
         {
             return _configuration ??= new Dictionary<string, string>
             {
-                { OrganizationIdName, OranizationId },
+                { OrganizationIdName, OrganizationId },
                 { ContextName, Context }
             };
         }
@@ -153,7 +153,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             if (dataTransferObject == null)
             {
-                _logger.Error($"Failed to get the contexts for the organization {OranizationId}.");
+                _logger.Error($"Failed to get the contexts for the organization {OrganizationId}.");
             }
             return dataTransferObject;
         }
