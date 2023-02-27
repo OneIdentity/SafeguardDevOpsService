@@ -6,7 +6,7 @@ using System.Threading;
 using RestSharp;
 using Serilog;
 
-namespace OneIdentity.DevOps.HashiCorpVault
+namespace OneIdentity.DevOps.CircleCISecrets
 {
     internal class VaultConnection
     {
@@ -39,10 +39,10 @@ namespace OneIdentity.DevOps.HashiCorpVault
             var request = new RestRequest(relativeUrl, method);
 
             if (_credential != null)
-                request.AddHeader("X-Vault-Token", _credential);
+                request.AddHeader("Circle-Token", _credential);
 
             if (additionalHeaders != null && !additionalHeaders.ContainsKey("Accept"))
-                request.AddHeader("Accept", "application/json"); // Assume JSON unless specified
+                request.AddHeader("Accept", "application/json"); 
             if (additionalHeaders != null)
             {
                 foreach (var header in additionalHeaders)
