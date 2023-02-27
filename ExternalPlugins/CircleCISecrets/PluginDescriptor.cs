@@ -10,7 +10,7 @@ using OneIdentity.DevOps.Common;
 using RestSharp;
 using Serilog;
 
-namespace OneIdentity.DevOps.HashiCorpVault
+namespace OneIdentity.DevOps.CircleCISecrets
 {
     public class PluginDescriptor : ILoadablePlugin
     {

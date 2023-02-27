@@ -6,7 +6,7 @@ using System.Threading;
 using RestSharp;
 using Serilog;
 
-namespace OneIdentity.DevOps.HashiCorpVault
+namespace OneIdentity.DevOps.CircleCISecrets
 {
     internal class VaultConnection
     {
