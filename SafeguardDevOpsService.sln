@@ -33,7 +33,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AwsSecretsManagerVault", "E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsAddonCommon", "DevOpsAddonCommon\DevOpsAddonCommon.csproj", "{A122B3C3-6D9C-42BB-B427-2F78FD1A1942}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CircleCISecrets", "ExternalPlugins\CircleCISecrets\CircleCISecrets.csproj", "{FD3BEDED-16D8-4060-8332-BC5834396DB9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CircleCISecrets", "ExternalPlugins\CircleCISecrets\CircleCISecrets.csproj", "{FD3BEDED-16D8-4060-8332-BC5834396DB9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GithubSecrets", "ExternalPlugins\GithubSecrets\GithubSecrets.csproj", "{2AB68B7B-8962-4505-AA3E-AE4102373FE9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{597FFDB7-E23A-4250-B5FF-1572F597E730}"
 	ProjectSection(SolutionItems) = preProject
@@ -97,6 +99,10 @@ Global
 		{FD3BEDED-16D8-4060-8332-BC5834396DB9}.Debug|x64.Build.0 = Debug|x64
 		{FD3BEDED-16D8-4060-8332-BC5834396DB9}.Release|x64.ActiveCfg = Release|x64
 		{FD3BEDED-16D8-4060-8332-BC5834396DB9}.Release|x64.Build.0 = Release|x64
+		{2AB68B7B-8962-4505-AA3E-AE4102373FE9}.Debug|x64.ActiveCfg = Debug|x64
+		{2AB68B7B-8962-4505-AA3E-AE4102373FE9}.Debug|x64.Build.0 = Debug|x64
+		{2AB68B7B-8962-4505-AA3E-AE4102373FE9}.Release|x64.ActiveCfg = Release|x64
+		{2AB68B7B-8962-4505-AA3E-AE4102373FE9}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,6 +115,7 @@ Global
 		{B4702447-110E-4560-86E6-15B328EB4BB2} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
 		{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
 		{FD3BEDED-16D8-4060-8332-BC5834396DB9} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
+		{2AB68B7B-8962-4505-AA3E-AE4102373FE9} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {80DE22D2-799B-4F47-9FE5-2ACC4B0E94D8}
