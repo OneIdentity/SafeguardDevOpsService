@@ -1,0 +1,7 @@
+{
+	"Type": "Plugin",
+	"Name": "GithubSecrets",
+	"DisplayName": "Github Secrets",
+	"Assembly": "GithubSecrets.dll",
+	"Version": "1.0.0.9999"
+}
