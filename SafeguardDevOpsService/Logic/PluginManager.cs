@@ -381,6 +381,24 @@ namespace OneIdentity.DevOps.Logic
                             var configuration = pluginInfo.Configuration;
                             if (configuration != null)
                             {
+                                var newConfiguration = pluginInstance.GetPluginInitialConfiguration();
+                                // Check to see if the new configuration is the same as the old configuration. if not,
+                                //  then copy over the values from the old configuration to the new one.
+                                if (!(configuration.Count == newConfiguration.Count &&
+                                      configuration.Keys.SequenceEqual(newConfiguration.Keys)))
+                                {
+                                    foreach (var item in configuration)
+                                    {
+                                        if (newConfiguration.ContainsKey(item.Key))
+                                        {
+                                            newConfiguration[item.Key] = item.Value;
+                                        }
+                                    }
+                                    configuration = newConfiguration;
+                                    pluginInfo.Configuration = newConfiguration;
+                                    _configDb.SavePluginConfiguration(pluginInfo);
+                                }
+
                                 pluginInstance.SetPluginConfiguration(configuration);
                             }
 
