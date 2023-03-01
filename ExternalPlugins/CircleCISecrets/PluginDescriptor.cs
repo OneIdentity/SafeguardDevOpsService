@@ -58,7 +58,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
                 _logger.Information($"Plugin {Name} has been successfully configured.");
                 _rgx = new Regex("[^a-zA-Z0-9-]");
 
-                if (!string.IsNullOrEmpty(configuration[RepositoryUrlName]))
+                if (configuration.ContainsKey(RepositoryUrlName) && !string.IsNullOrEmpty(configuration[RepositoryUrlName]))
                 {
                     var uri = new Uri(configuration[RepositoryUrlName]);
                     if (uri.Host.Contains("github", StringComparison.OrdinalIgnoreCase))
