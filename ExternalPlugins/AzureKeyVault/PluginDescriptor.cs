@@ -36,6 +36,11 @@ namespace OneIdentity.DevOps.AzureKeyVault
 
         public void SetPluginConfiguration(Dictionary<string,string> configuration)
         {
+            // Make sure that the new configuration key is added to the configuration.
+            if (!configuration.ContainsKey(TenantIdName))
+            {
+                configuration.Add(TenantIdName, "");
+            }
             if (configuration != null && configuration.ContainsKey(ApplicationIdName) &&
                 configuration.ContainsKey(VaultUriName) && configuration.ContainsKey(TenantIdName))
             {
