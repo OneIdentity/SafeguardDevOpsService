@@ -1,4 +1,36 @@
-# Developing External Plugins for Safeguard Secrets Broker for DevOps
+# Installion, configuration and development of external plugins for Safeguard Secrets Broker for DevOps
+
+## Installation
+
+To install a plugin, click on the  ```Upload Custom Plugin``` button in the ```What would you like to plug in?``` card. This will display a file selection window that can be used to select a plugin installation file. Once a plugin intallation file as been selected, Secrets Broker will install the plugin and display a new card that can be used to provide addition connection configuration.
+
+Updating a plugin is done in the same way. To update a plugin, click on the ```Upload Custom Plugin``` button and select the new plugin installation file. Updating a plugin will require a restart of the Secrets Broker service.
+
+All of the plugins for Secrets Broker are available on the SafeguardDevOpsService Github project site (<https://github.com/OneIdentity/SafeguardDevOpsService>). Plugins can be downloaded by clicking on the ```View Plugin Repository``` button in the ```What would you like to plug in?``` card.
+
+## Configuration
+
+Once installed, a plugin can be configured by click on the ```Edit Configuration``` link in the respective plugin card. This will cause Secrets Broker to display the ```Plugin Settings``` page.
+
+The Plugin Settings page contains three configuration panels.
+
+**Basic Info** - This panel displays basic information about the plugin which includes the plugin name, description and version. The panel is readonly.
+
+**Configuration** - This panel is used to configure the plugin with connection information. All plugins need to select an account/password that is used to access the third party secret store. The account and password must have been created in SPP prior to configuring the plugin. A checkbox is provided to set the enabled state of the plugin. If ```Disabled``` is checked, the plugin will not monitor SPP for password changes.
+
+* ***Plugin Details*** - Each plugin has a set of plugin specific configuration. Please see the README.md for each individual plugin for addition conifiguration information.
+
+* ***Test Configuration*** - Once the plugin has been completely configured, use the ```Test Configuration``` button to test whether the plugin is able to complete a connection to the third party secret store.
+
+**Managed Accounts** - This panel is used to select all of the accounts from SPP whose passwords should be pushed to the respective secrets storage. Click on the ```Select Accounts``` button to display a list of available accounts from SPP. Each selected account will be displayed in the ```Managed Accounts``` list. Once an account has been selected, an alternate account name can be defined. By default, the plugin will construction an account name by concatenating the asset name with the account name (MyAsset-MyAccount). The constructed name is what will appear in the secrets storage as the account. If an alternate account name is specified, the plugin will push the password to the secrets storage as the alternate account name.
+
+**Other Functions**
+
+* ***Delete Plugin*** - If the plugin is not longer needed or used, it can be removed from Secrets Broker by clicking on the ```Delete Plugin``` button.
+
+* ***Save*** - To save all of the plugin configuration to the Secrets Broker database, click on the ```Save``` button.
+
+## Developing external plugins for Safeguard Secrets Broker for DevOps
 
 The Safeguard Secrets Broker for DevOps is an open source component that can be deployed as a service or as a container in a customer environment and includes plugins that can be added to communicate with various DevOps technologies.  This service discovers A2A secrets that are configured to be pushed to different DevOps secrets solutions. Pushing the secrets to the various DevOps secrets solutions or third party vaults, is the function of the external plugins.
 
@@ -10,40 +42,40 @@ The first step in getting started with developing a new plugin is to clone the S
 
 The Safeguard Secrets Broker solution contain multiple projects. These projects include:
 
-- **SafeguardDevOpsService** - The main Safeguard Secrets Broker for Devops service.
-- **DevOpsPluginCommon** - This project defines the interface between the Safeguard Secrets Broker service and the external plugins. The ILoadablePlugin.cs file contains the interface that must be implemented by each plugin.
-- **ExternalPlugins** - This folder contains each of the currently implemented external plugins. Any of the plugins can be used as an example of building a custom external plugin. The SmsTextEmail plugin is a sample plugin that can be used as a template for new plugin development. (**Note:** The SmsTextEmail plugin should never be used in a production environment. It is sample code only.)
-- **SetupSafeguardDevOpsServer** - This project builds the SafeguardDevOpsServer MSI installable package.
+* **SafeguardDevOpsService** - The main Safeguard Secrets Broker for Devops service.
+* **DevOpsPluginCommon** - This project defines the interface between the Safeguard Secrets Broker service and the external plugins. The ILoadablePlugin.cs file contains the interface that must be implemented by each plugin.
+* **ExternalPlugins** - This folder contains each of the currently implemented external plugins. Any of the plugins can be used as an example of building a custom external plugin. The SmsTextEmail plugin is a sample plugin that can be used as a template for new plugin development. (**Note:** The SmsTextEmail plugin should never be used in a production environment. It is sample code only.)
+* **SetupSafeguardDevOpsServer** - This project builds the SafeguardDevOpsServer MSI installable package.
 
 ### Parts of a Plugin
 
-- Each plugin in the ExternalPlugins folder is a separate Visual Studio project that is part of the entire solution. A plugin must be developed within this environment as a new Visual Studio project.
-- PluginDescriptor.cs - This file is the implementation of the ILoadablePlugin interface. The name of this file and the corresponding class must remain as defined.
-- Manifest.json - Each plugin must include a Manifest.json file. This file defines the following for each plugin:
+* Each plugin in the ExternalPlugins folder is a separate Visual Studio project that is part of the entire solution. A plugin must be developed within this environment as a new Visual Studio project.
+* PluginDescriptor.cs - This file is the implementation of the ILoadablePlugin interface. The name of this file and the corresponding class must remain as defined.
+* Manifest.json - Each plugin must include a Manifest.json file. This file defines the following for each plugin:
 
-  - Name - Name of the external plugin. This name must match the name of the built plugin DLL.
-  - DisplayName - Display name of the plugin that will appear in the Web user interface.
-  - Assembly - Name of the built plugin DLL.
-  - Version - Plugin version.
+  * Name - Name of the external plugin. This name must match the name of the built plugin DLL.
+  * DisplayName - Display name of the plugin that will appear in the Web user interface.
+  * Assembly - Name of the built plugin DLL.
+  * Version - Plugin version.
 
 ### Plugin Interface
 
-- **GetPluginInitialConfiguration()** - Returns a Dictionary that defines the configuration elements that are required by the plugin. The configuration of every plugin is defined as key/value pairs.
-- **SetPluginConfiguration()** - This method is called whenever a new configuration is updated by calling PUT /service/devops/v1/Plugins/{name} API or when the plugin is initially loaded by the Safeguard Secrets Broker service.
-- **SetVaultCredentials()** - This method is called before the TestVaultConnection() method is called or the Safeguard Secrets Broker A2A monitor is enabled. The implementation of this method should establish an authenticated connection with the third party vault and store the connection in memory to be used whenever credentials need to be pushed to the vault.
-- **SetPassword()** - This method is called after the monitor has been enabled, the Safeguard Secrets Broker has been notified that a credential change has happened and the new credential needs to be pushed to the corresponding vault.  The implementation of this method should use the established connection to the vault to push the new credential under the specified account name.
-- **SetLogger()** - This method is called when the plugin is initially loaded by the Safeguard Secrets Broker. It is called with the Safeguard Secrets Broker logger reference so that each plugin can write to the same logger as the Safeguard Secrets Broker itself.
-- **TestVaultConnection()** - This method is called whenever the API /service/devops/v1/Plugins/{name}/TestConnection is called. The implementation of the method should use the authenticated connection that was established when the SetVaultCredentials() method was called and test the connectivity to the third party vault.
-- **Unload()** - This method is called whenever the Safeguard Secrets Broker service is restarted or shutdown. The implementation of this method should include anything that needs to be done to the plugin to cleanly shutdown.
+* **GetPluginInitialConfiguration()** - Returns a Dictionary that defines the configuration elements that are required by the plugin. The configuration of every plugin is defined as key/value pairs.
+* **SetPluginConfiguration()** - This method is called whenever a new configuration is updated by calling PUT /service/devops/v1/Plugins/{name} API or when the plugin is initially loaded by the Safeguard Secrets Broker service.
+* **SetVaultCredential()** - This method is called before the TestVaultConnection() method is called or the Safeguard Secrets Broker A2A monitor is enabled. The implementation of this method should establish an authenticated connection with the third party vault and store the connection in memory to be used whenever credentials need to be pushed to the vault.
+* **SetPassword()** - This method is called after the monitor has been enabled, the Safeguard Secrets Broker has been notified that a credential change has happened and the new credential needs to be pushed to the corresponding vault.  The implementation of this method should use the established connection to the vault to push the new credential under the specified account name.
+* **SetLogger()** - This method is called when the plugin is initially loaded by the Safeguard Secrets Broker. It is called with the Safeguard Secrets Broker logger reference so that each plugin can write to the same logger as the Safeguard Secrets Broker itself.
+* **TestVaultConnection()** - This method is called whenever the API /service/devops/v1/Plugins/{name}/TestConnection is called. The implementation of the method should use the authenticated connection that was established when the SetVaultCredentials() method was called and test the connectivity to the third party vault.
+* **Unload()** - This method is called whenever the Safeguard Secrets Broker service is restarted or shutdown. The implementation of this method should include anything that needs to be done to the plugin to cleanly shutdown.
 
 ### Plugin Dependencies
 
 In many, if not most, cases a third party vault may have a C# client library available to facilitate the interaction between the Safeguard Secrets Broker plugin and the actual vault. Make sure to take advantage of these client libraries when developing a new plugin.
 
-The Safeguard Secrets Broker is configured to build as a .Net Core 3.1 console application. This means that all external plugins should also be built as .Net Core 3.1 assemblies. The plugin .csproj project file should contain the following in the \<PropertyGroup> section.
+The Safeguard Secrets Broker is configured to build as a .Net Core 3.1 console application. This means that all external plugins should also be built as .Net Core 6.0 assemblies. The plugin .csproj project file should contain the following in the \<PropertyGroup> section.
 
 ```Configuration
-  <TargetFramework>netcoreapp3.1</TargetFramework>
+  <TargetFramework>net6.0</TargetFramework>
   <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   <Platforms>x64</Platforms>
