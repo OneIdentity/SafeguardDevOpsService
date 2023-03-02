@@ -6,6 +6,9 @@ trigger:
       - master
       - vault
       - release-*
+  paths:
+    exclude:
+      - /**/*.md
 pr: none
 jobs:
   - job:
