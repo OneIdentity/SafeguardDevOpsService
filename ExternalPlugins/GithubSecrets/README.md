@@ -1,10 +1,11 @@
-# Hashicorp Vault Plugin
+# Github Secrets Plugin
 
-The Hashicorp Vault plugin allows Secrets Broker to pull passwords from Safeguard for Privileged Passwords (SPP) and push them into a Hashicorp vault. The account name and password are added as key/value pairs and can be accessed from the vault using the Hashicorp API or web interface.
+The Github Secrets plugin allows Secrets Broker to pull passwords from Safeguard for Privileged Passwords (SPP) and push them into a Github project secrets environment.
 
-## Hashicorp plugin specific configuration
+## Github Secrets plugin specific configuration
 
 ***Plugin Details***
 
-* Address - Full URL to the Hashicorp vault.
-* Mount Point - Name of the mount point within the Hashicorp vault where the plugin will store the key/value pair secrets.
+* Repository Name - Name of the Github project repository.
+
+An personal access token (PAT) for a Github account that has admin rights for the project, must be created. The access token must be added to an account in SPP as the password for the account. This account must be selected as the vault account on the configuration page of the Github plugin.  The PAT just have been granted ```Full Control``` permissions to the ```repo```.
