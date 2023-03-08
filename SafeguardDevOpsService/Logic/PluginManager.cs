@@ -394,6 +394,7 @@ namespace OneIdentity.DevOps.Logic
                                             newConfiguration[item.Key] = item.Value;
                                         }
                                     }
+
                                     configuration = newConfiguration;
                                     pluginInfo.Configuration = newConfiguration;
                                     _configDb.SavePluginConfiguration(pluginInfo);
@@ -402,10 +403,13 @@ namespace OneIdentity.DevOps.Logic
                                 pluginInstance.SetPluginConfiguration(configuration);
                             }
 
-                            if (!string.Equals(pluginInfo.Name, name, StringComparison.OrdinalIgnoreCase) 
-                                || !string.Equals(pluginInfo.Description, description, StringComparison.OrdinalIgnoreCase) 
-                                || !string.Equals(pluginInfo.DisplayName, displayName, StringComparison.OrdinalIgnoreCase)
-                                || !string.Equals(pluginInfo.Version, pluginVersion, StringComparison.OrdinalIgnoreCase))
+                            if (!string.Equals(pluginInfo.Name, name, StringComparison.OrdinalIgnoreCase)
+                                || !string.Equals(pluginInfo.Description, description,
+                                    StringComparison.OrdinalIgnoreCase)
+                                || !string.Equals(pluginInfo.DisplayName, displayName,
+                                    StringComparison.OrdinalIgnoreCase)
+                                || !string.Equals(pluginInfo.Version, pluginVersion,
+                                    StringComparison.OrdinalIgnoreCase))
                             {
                                 pluginInfo.Name = name;
                                 pluginInfo.DisplayName = displayName;
@@ -418,9 +422,14 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Warning(ex, $"Failed to configure plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
+                        _logger.Warning(ex,
+                            $"Failed to configure plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
                     }
                 }
+            }
+            catch (BadImageFormatException)
+            {
+                // Most likely, this is not a .NET DLL.
             }
             catch (Exception ex)
             {
