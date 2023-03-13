@@ -97,8 +97,8 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 1. Copy the installer MSI package to the local file system of a Windows 10 or Windows Server 2016 or better, computer.
 1. Open a PowerShell command window as an administrator and invoke the above MSI installer package.
-1. Follow all prompts - This should deploy the package and automatically start it as a Windows service.
-1. At start up, Safeguard Secrets Broker for DevOps will create a new folder under the root directory as /SafeguardDevOpsService.  This folder will contain the log file and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins)  The configuration database will be created in the folder.C:\Windows\system32\config\systemprofile\AppData\Roaming\SafeguardDevOpsService\Configuration.db.
+1. Follow all prompts - This will deploy the package and automatically start it as a Windows service.
+1. At start up, Safeguard Secrets Broker for DevOps will create a new folder under the ```/ProgramData``` directory as ```/SafeguardDevOpsService```.  This folder will contain the log file, database and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins).
 1. Make sure that the firewall on the Windows computer has an inbound rule for allowing https port 443.
 1. Acquire a valid login token to SPP.  Use the Powershell cmdlet (See <https://github.com/OneIdentity/safeguard-ps>):
 
@@ -107,15 +107,15 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 ```
 
 7. In a browser navigate to `<https://<your-server-ip>/service/devops/swagger/index.html>`
-1. Click on the "Authorize" button on the upper left-hand side of the Safeguard Secrets Broker for DevOps swagger page.
-Enter `spp-token <paste token>` as the value and click the Authorize button and then Close button
+1. Click on the ```Authorize``` button on the upper left-hand side of the Safeguard Secrets Broker for DevOps swagger page.
+Enter `spp-token <paste token>` as the value and click the ```Authorize``` button and then the ```Close``` button
     - At this point the swagger page has a login token that will be used in every call made to the Safeguard Secrets Broker for DevOps API.
 1. Navigate to and call: `PUT /service/devops/Safeguard`
 
 ```json
     {
     "NetworkAddress": "<your SPP appliance>",
-    "ApiVersion": 3,
+    "ApiVersion": 4,
     "IgnoreSsl": true
     }
 ```
