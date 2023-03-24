@@ -185,13 +185,10 @@ try
 
         Write-Host -ForegroundColor Cyan "Configuring the HashiCorp Vault plugin ..."
         Write-Host -ForegroundColor Green "Downloading the latest HashiCorp Vault plugin from GitHub ..."
-        # $local:ReleaseId = ((Invoke-RestMethod -Method GET https://api.github.com/repos/OneIdentity/SafeguardDevOpsService/releases) | Measure-Object -Property id -Maximum).Maximum
 
         $local:LatestRelease = (Invoke-RestMethod -Method GET "https://api.github.com/repos/OneIdentity/SafeguardDevOpsService/releases/latest")
         $local:HashiCorpAsset = ((Invoke-RestMethod -Method GET -Uri $local:LatestRelease.assets_url) | Where-Object { $_.name -like "HashiCorpVault-*" })
 
-
-        # $local:HashiCorpAsset = ((Invoke-RestMethod -Method GET "https://api.github.com/repos/OneIdentity/SafeguardDevOpsService/releases/$($local:ReleaseId)/assets") | Where-Object { $_.name -like "HashiCorpVault-*.$($local:SgDevOpsBuildNumber).zip)" })
         if (Test-Path "HashiCorpVault.zip")
         {
             Remove-Item "HashiCorpVault.zip"
