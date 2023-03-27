@@ -177,6 +177,73 @@ namespace OneIdentity.DevOps.Controllers.V1
         }
 
         /// <summary>
+        /// Generate and download a backup file.
+        /// </summary>
+        /// <remarks>
+        /// The Safeguard Secrets Broker for DevOps backup file contains the complete configuration of the instance of the service.
+        ///
+        /// This endpoint generates and downloads a backup file.
+        /// </remarks>
+        /// <response code="200">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [SafeguardSessionHandler]
+        [UnhandledExceptionError]
+        [HttpPost("Configuration/Backup")]
+        public async Task<IActionResult> GenerateDownloadBackupFile([FromServices] ISafeguardLogic safeguard)
+        {
+            // Generate the backup file here.
+
+            // try
+            // {
+            //     var memory = new MemoryStream();
+            //     await using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            //     {
+            //         await stream.CopyToAsync(memory);
+            //         memory.Seek(0, SeekOrigin.Begin);
+            //     }
+            //
+            //     return File(memory, "plain/text", $"{WellKnownData.DevOpsServiceName}.log");
+            // }
+            // catch (Exception ex)
+            // {
+            //     throw new DevOpsException("Failed to download the backup file.", ex);
+            // }
+
+            throw new NotImplementedException("Failed to download the backup file.");
+        }
+
+        /// <summary>
+        /// Upload a backup file to restore the Secrets Broker configuration as a multipart-form-data file.
+        /// </summary>
+        /// <remarks>
+        /// The configuration of the Safeguard Secrets Broker for DevOps restored by uploading a backup file.
+        ///
+        /// The backup must be a zip compressed file.
+        /// </remarks>
+        /// <param name="formFile">Zip compressed backup file.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after restore.</param>
+        /// <response code="200">Success. Needing restart</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [DisableRequestSizeLimit]
+        [UnhandledExceptionError]
+        [RequestFormLimits(ValueLengthLimit = (200000*1024), MultipartBodyLengthLimit = (200000*1024))]
+        [HttpPost("Configuration/Restore")]
+        public ActionResult UploadAndRestoreBackupFile([FromServices] ISafeguardLogic safeguard,
+            IFormFile formFile, [FromQuery] bool restart = false)
+        {
+            // Restore backup file here
+
+            if (restart)
+                safeguard.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok(WellKnownData.RestartNotice);
+
+            return NoContent();
+        }
+
+        /// <summary>
         /// Logon to Safeguard Secrets Broker for DevOps.
         /// </summary>
         /// <remarks>
