@@ -17,6 +17,7 @@ namespace OneIdentity.DevOps.Logic
         public const string CredentialTarget = "SSBfDbgn";
         public const string CredentialEnvVar = "SSBEncPasswd";
         public const string SessionKeyCookieName = "sessionKey";
+        public const string DBPasswordFileName = "dbpasswd.key";
 
         public const string PluginInfoClassName = "PluginDescriptor";
 
@@ -36,6 +37,7 @@ namespace OneIdentity.DevOps.Logic
         public const string PluginDirName = "ExternalPlugins";
         public const string PluginStageName = "PluginStaging";
         public const string AddonServiceStageName = "AddonServiceStaging";
+        public const string RestoreServiceStageName = "RestoreServiceStaging";
 
         public const string MonitorEnabled = "Enabled";
         public const string MonitorDisabled = "Disabled";
@@ -63,6 +65,9 @@ namespace OneIdentity.DevOps.Logic
         public const string GenuineInstallerProdCertificate = "GenuineInstallerProd.pem";
         public const string GenuineInstallerTestCertificate = "GenuineInstallerTest.pem";
 
+        public const string DbFileName = "Configuration.db";
+
+        public const string BackupFileName = "SecretsBrokerBackupStageFile.zip";
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
@@ -73,6 +78,7 @@ namespace OneIdentity.DevOps.Logic
         public static readonly string PluginStageDirPath = Path.Combine(ProgramDataPath, PluginStageName);
         public static readonly string AddonServiceStageDirPath = Path.Combine(ProgramDataPath, AddonServiceStageName);
         public static readonly string DeleteAddonStagingDir = Path.Combine(AddonServiceStageDirPath, AddonDeleteStaging);
+        public static readonly string RestoreServiceStageDirPath = Path.Combine(ProgramDataPath, RestoreServiceStageName);
         public static readonly string SvcIdPath = Path.Combine(ServiceDirPath, ServiceIdentifier);
         public static readonly string DeleteAllPlugins = Path.Combine(PluginDirPath, PluginsDeleteFile);
         public static readonly string LogDirPath = Path.Combine(ProgramDataPath, $"{DevOpsServiceName}.log");

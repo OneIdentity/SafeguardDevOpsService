@@ -15,6 +15,9 @@ namespace OneIdentity.DevOps
 
         private static void Main()
         {
+            // Before doing anything, check of there is a staged restore.
+            RestoreManager.CheckForStagedRestore();
+
             Directory.CreateDirectory(WellKnownData.ProgramDataPath);
             var logDirPath = WellKnownData.LogDirPath;
 
