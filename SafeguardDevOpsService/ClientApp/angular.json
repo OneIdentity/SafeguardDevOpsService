@@ -18,7 +18,8 @@
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "allowedCommonJsDependencies": [
-              "moment-timezone"
+              "moment-timezone",
+              "jquery"
             ],
             "outputPath": "dist/",
             "index": "src/index.html",
