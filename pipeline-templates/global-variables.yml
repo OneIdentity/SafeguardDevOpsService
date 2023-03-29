@@ -14,4 +14,4 @@ variables:
   - name: isPrerelease
     value: ${{ true }}
   - name: isReleaseBranch
-    value: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/vault'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
+    value: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), eq(variables['Build.SourceBranch'], 'refs/heads/backuprestore'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
