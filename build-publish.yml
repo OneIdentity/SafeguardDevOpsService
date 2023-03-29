@@ -6,6 +6,9 @@ trigger:
       - master
       - vault
       - release-*
+  paths:
+    exclude:
+      - /**/*.md
 pr: none
 jobs:
   - job:
@@ -68,7 +71,7 @@ jobs:
           KeyVaultName: 'SafeguardBuildSecrets'
           SecretsFilter: 'DockerHubAccessToken,DockerHubPassword'
         displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
-        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true), eq(variables.isPrerelease, false))
 
       - task: Bash@3
         inputs:
@@ -84,7 +87,7 @@ jobs:
 
             docker logout
           failOnStderr: true
-        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true), eq(variables.isPrerelease, false))
         displayName: 'Pushing docker Alpine image to Docker Hub'
 
   - job:
@@ -101,7 +104,7 @@ jobs:
           KeyVaultName: 'SafeguardBuildSecrets'
           SecretsFilter: 'DockerHubAccessToken,DockerHubPassword'
         displayName: 'Get Docker Hub Access Token from Sandbox Azure Key Vault'
-        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true), eq(variables.isPrerelease, false))
 
       - task: Bash@3
         inputs:
@@ -115,5 +118,5 @@ jobs:
 
             docker logout
           failOnStderr: true
-        condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+        condition: and(succeeded(), eq(variables.isReleaseBranch, true), eq(variables.isPrerelease, false))
         displayName: 'Pushing docker ubuntu image to Docker Hub'

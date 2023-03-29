@@ -26,7 +26,7 @@ namespace OneIdentity.DevOps.Attributes
 
             service.SetThreadData(sppToken);
             var managementConnection = AuthorizedCache.Instance.FindByToken(sppToken);
-            context.HttpContext.Response.Cookies.Append("sessionKey", managementConnection.SessionKey, new CookieOptions(){Secure = true});
+            context.HttpContext.Response.Cookies.Append(WellKnownData.SessionKeyCookieName, managementConnection.SessionKey, new CookieOptions(){Secure = true});
         }
     }
 }

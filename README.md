@@ -4,7 +4,9 @@
 
 ## [Note]
 
-Due to an upgraded version of the SignalR technology in Safeguard for Privileged Passwords, a matching SignalR client version had to be upgraded in the Safeguard Secrets Broker for DevOps.  The upgraded SignalR technology that is used to monitor the password change events, is not backwards compatible with previous versions.  Therefore, version 1.5.0 and above of the Safeguard Secrets Broker for DevOps is only compatible with Safeguard for Privileged Passwords 6.8.0 and above.  The Safeguard Secrets Broker for DevOps 1.0.0 must be used with versions of Safeguard for Privileged Passwords 6.7.0 or below.
+* There has been a major library upgrade to the Azure Key Vault plugin version 2.x which will break the configuration for previous versions of the plugin. To fix the Azure Key Vault plugin after upgrading, edit the plugin configuration and add the TenantId/DirectoryId of the key vault. Once the configuration has been updated, the Azure Key Vault plugin should continue to work as expected.
+
+* Due to an upgraded version of the SignalR technology in Safeguard for Privileged Passwords, a matching SignalR client version had to be upgraded in the Safeguard Secrets Broker for DevOps.  The upgraded SignalR technology that is used to monitor the password change events, is not backwards compatible with previous versions.  Therefore, version 1.5.0 and above of the Safeguard Secrets Broker for DevOps is only compatible with Safeguard for Privileged Passwords 6.8.0 and above.  The Safeguard Secrets Broker for DevOps 1.0.0 must be used with versions of Safeguard for Privileged Passwords 6.7.0 or below.
 
 # Safeguard Secrets Broker for DevOps
 
@@ -95,8 +97,8 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 1. Copy the installer MSI package to the local file system of a Windows 10 or Windows Server 2016 or better, computer.
 1. Open a PowerShell command window as an administrator and invoke the above MSI installer package.
-1. Follow all prompts - This should deploy the package and automatically start it as a Windows service.
-1. At start up, Safeguard Secrets Broker for DevOps will create a new folder under the root directory as /SafeguardDevOpsService.  This folder will contain the log file and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins)  The configuration database will be created in the folder.C:\Windows\system32\config\systemprofile\AppData\Roaming\SafeguardDevOpsService\Configuration.db.
+1. Follow all prompts - This will deploy the package and automatically start it as a Windows service.
+1. At start up, Safeguard Secrets Broker for DevOps will create a new folder under the ```/ProgramData``` directory as ```/SafeguardDevOpsService```.  This folder will contain the log file, database and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins).
 1. Make sure that the firewall on the Windows computer has an inbound rule for allowing https port 443.
 1. Acquire a valid login token to SPP.  Use the Powershell cmdlet (See <https://github.com/OneIdentity/safeguard-ps>):
 
@@ -105,15 +107,15 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 ```
 
 7. In a browser navigate to `<https://<your-server-ip>/service/devops/swagger/index.html>`
-1. Click on the "Authorize" button on the upper left-hand side of the Safeguard Secrets Broker for DevOps swagger page.
-Enter `spp-token <paste token>` as the value and click the Authorize button and then Close button
+1. Click on the ```Authorize``` button on the upper left-hand side of the Safeguard Secrets Broker for DevOps swagger page.
+Enter `spp-token <paste token>` as the value and click the ```Authorize``` button and then the ```Close``` button
     - At this point the swagger page has a login token that will be used in every call made to the Safeguard Secrets Broker for DevOps API.
 1. Navigate to and call: `PUT /service/devops/Safeguard`
 
 ```json
     {
     "NetworkAddress": "<your SPP appliance>",
-    "ApiVersion": 3,
+    "ApiVersion": 4,
     "IgnoreSsl": true
     }
 ```

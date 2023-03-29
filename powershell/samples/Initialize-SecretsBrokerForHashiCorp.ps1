@@ -160,6 +160,8 @@ try
 
     Write-Host -ForegroundColor Green "Connecting to Secrets Broker using SPP connection ..."
     Connect-SgDevOps -ServiceAddress $SecretsBrokerAddress -Insecure
+    $local:SgDevOpsStatus = Get-SgDevOpsApplianceStatus
+    $local:SgDevOpsBuildNumber = ($local:SgDevOpsStatus.Version -split "\.") | Select-Object -Last 1
 
     try
     {
@@ -177,14 +179,16 @@ try
         Write-Host -ForegroundColor Green "Registering asset accounts with DevOps (A2A) API ..."
         foreach ($local:MappedAssetAccountObj in $local:MappedAssetAccountObjList)
         {
-            Register-SgDevOpsAssetAccount $local:MappedAssetAccountObj.SystemName $local:MappedAssetAccountObj.Name -Domain $local:MappedAssetAccountObj.DomainName | Format-Table
+            Register-SgDevOpsAssetAccount $local:MappedAssetAccountObj.Asset.Name $local:MappedAssetAccountObj.Name -Domain $local:MappedAssetAccountObj.DomainName | Format-Table
         }
         [Console]::Out.Flush()
 
         Write-Host -ForegroundColor Cyan "Configuring the HashiCorp Vault plugin ..."
         Write-Host -ForegroundColor Green "Downloading the latest HashiCorp Vault plugin from GitHub ..."
-        $local:ReleaseId = ((Invoke-RestMethod -Method GET https://api.github.com/repos/OneIdentity/SafeguardDevOpsService/releases) | Measure-Object -Property id -Maximum).Maximum
-        $local:HashiCorpAsset = ((Invoke-RestMethod -Method GET "https://api.github.com/repos/OneIdentity/SafeguardDevOpsService/releases/$($local:ReleaseId)/assets") | Where-Object { $_.name -eq "HashiCorpVault.zip" })
+
+        $local:LatestRelease = (Invoke-RestMethod -Method GET "https://api.github.com/repos/OneIdentity/SafeguardDevOpsService/releases/latest")
+        $local:HashiCorpAsset = ((Invoke-RestMethod -Method GET -Uri $local:LatestRelease.assets_url) | Where-Object { $_.name -like "HashiCorpVault-*" })
+
         if (Test-Path "HashiCorpVault.zip")
         {
             Remove-Item "HashiCorpVault.zip"
@@ -198,8 +202,8 @@ try
         Start-Sleep 5 # Give the plugin time to load
 
         Write-Host -ForegroundColor Green "Configuring HashiCorp Vault plugin service account ..."
-        Write-Host -ForegroundColor Yellow "Using: $($local:VaultAssetAccountObj.SystemName)\$($local:VaultAssetAccountObj.Name)"
-        Set-SgDevOpsPluginVaultAccount -PluginName "HashiCorpVault" -Asset $local:VaultAssetAccountObj.SystemName -Account $local:VaultAssetAccountObj.Name
+        Write-Host -ForegroundColor Yellow "Using: $($local:VaultAssetAccountObj.Asset.Name)\$($local:VaultAssetAccountObj.Name)"
+        Set-SgDevOpsPluginVaultAccount -PluginName "HashiCorpVault" -Asset $local:VaultAssetAccountObj.Asset.Name -Account $local:VaultAssetAccountObj.Name
         [Console]::Out.Flush()
 
         if ($VaultUseHttps)
@@ -220,7 +224,7 @@ try
         [Console]::Out.Flush()
 
         Write-Host -ForegroundColor Green "Mapping asset accounts to HashiCorp Vault plugin ..."
-        Get-SgDevOpsRegisteredAssetAccount | ForEach-Object {
+        (Get-SgDevOpsRegisteredAssetAccount) | ForEach-Object -Process {
             Add-SgDevOpsMappedAssetAccount "HashiCorpVault" -Asset $_.SystemName -Account $_.AccountName -Domain $_.DomainName | Format-Table
         }
         [Console]::Out.Flush()

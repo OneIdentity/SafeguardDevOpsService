@@ -12,7 +12,7 @@ namespace OneIdentity.DevOps.Attributes
             var sppToken = AttributeHelper.GetSppToken(context.HttpContext);
             var managementConnection = AuthorizedCache.Instance.FindByToken(sppToken);
             if (managementConnection != null)
-                context.HttpContext.Response.Cookies.Append("sessionKey", managementConnection.SessionKey, new CookieOptions(){Secure = true});
+                context.HttpContext.Response.Cookies.Append(WellKnownData.SessionKeyCookieName, managementConnection.SessionKey, new CookieOptions(){Secure = true});
         }
     }
 }

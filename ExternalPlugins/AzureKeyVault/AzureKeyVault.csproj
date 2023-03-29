@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>OneIdentity.DevOps.AzureKeyVault</RootNamespace>
     <AssemblyName>AzureKeyVault</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -20,8 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.5" />
-    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.7" />
+    <PackageReference Include="Azure.Identity" Version="1.8.2" />
+    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.4.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,8 +29,7 @@
   </ItemGroup>
 
   <Target Name="PostBuildWindows" AfterTargets="PostBuildEvent">
-    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;&amp; '$(SolutionDir)zipplugin.ps1' '$(ProjectDir)' '$(OutDir)' '$(SolutionDir)ExternalPlugins\bin\$(Configuration)\' '$(buildId)'&quot;"
-          EchoOff="False" IgnoreExitCode="False" LogStandardErrorAsError="True" ContinueOnError="False" ConsoleToMsBuild="True" />
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;&amp; '$(SolutionDir)zipplugin.ps1' '$(ProjectDir)' '$(OutDir)' '$(SolutionDir)ExternalPlugins\bin\$(Configuration)\' '$(buildId)'&quot;" EchoOff="False" IgnoreExitCode="False" LogStandardErrorAsError="True" ContinueOnError="False" ConsoleToMsBuild="True" />
   </Target>
 
 </Project>

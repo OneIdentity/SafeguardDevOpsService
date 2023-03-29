@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-focal
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-focal
 MAINTAINER support@oneidentity.com
 ENV DOCKER_RUNNING=true
 
@@ -15,6 +15,7 @@ RUN groupadd -r safeguard \
     && /usr/bin/echo -e "{\n    \"HttpsPort\": \"4443\",\n    \"LogLevel\": \"Debug\"\n}" > /home/safeguard/appsettings.json
 
 COPY ["SafeguardDevOpsService/bin/Release/linux-x64/publish/SafeguardDevOpsService", "/home/safeguard/"]
+COPY ["SafeguardDevOpsService/bin/Release/linux-musl-x64/publish/SafeguardDevOpsService.xml", "/home/safeguard"]
 COPY ["SafeguardDevOpsService/bin/Release/linux-x64/publish/ClientApp", "/home/safeguard/ClientApp"]
 COPY ["SafeguardDevOpsService/bin/Release/linux-x64/Certificates", "/home/safeguard/Certificates"]
 COPY ["docker/run-devops.sh", "/home/safeguard/run-devops.sh"]

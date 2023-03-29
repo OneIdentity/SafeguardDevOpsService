@@ -10,7 +10,7 @@
 #
 variables:
   - name: semanticVersion
-    value: "6.12.1"
+    value: "7.0.1"
   - name: isPrerelease
     value: ${{ true }}
   - name: isReleaseBranch

@@ -381,13 +381,35 @@ namespace OneIdentity.DevOps.Logic
                             var configuration = pluginInfo.Configuration;
                             if (configuration != null)
                             {
+                                var newConfiguration = pluginInstance.GetPluginInitialConfiguration();
+                                // Check to see if the new configuration is the same as the old configuration. if not,
+                                //  then copy over the values from the old configuration to the new one.
+                                if (!(configuration.Count == newConfiguration.Count &&
+                                      configuration.Keys.SequenceEqual(newConfiguration.Keys)))
+                                {
+                                    foreach (var item in configuration)
+                                    {
+                                        if (newConfiguration.ContainsKey(item.Key))
+                                        {
+                                            newConfiguration[item.Key] = item.Value;
+                                        }
+                                    }
+
+                                    configuration = newConfiguration;
+                                    pluginInfo.Configuration = newConfiguration;
+                                    _configDb.SavePluginConfiguration(pluginInfo);
+                                }
+
                                 pluginInstance.SetPluginConfiguration(configuration);
                             }
 
-                            if (!string.Equals(pluginInfo.Name, name, StringComparison.OrdinalIgnoreCase) 
-                                || !string.Equals(pluginInfo.Description, description, StringComparison.OrdinalIgnoreCase) 
-                                || !string.Equals(pluginInfo.DisplayName, displayName, StringComparison.OrdinalIgnoreCase)
-                                || !string.Equals(pluginInfo.Version, pluginVersion, StringComparison.OrdinalIgnoreCase))
+                            if (!string.Equals(pluginInfo.Name, name, StringComparison.OrdinalIgnoreCase)
+                                || !string.Equals(pluginInfo.Description, description,
+                                    StringComparison.OrdinalIgnoreCase)
+                                || !string.Equals(pluginInfo.DisplayName, displayName,
+                                    StringComparison.OrdinalIgnoreCase)
+                                || !string.Equals(pluginInfo.Version, pluginVersion,
+                                    StringComparison.OrdinalIgnoreCase))
                             {
                                 pluginInfo.Name = name;
                                 pluginInfo.DisplayName = displayName;
@@ -400,9 +422,14 @@ namespace OneIdentity.DevOps.Logic
                     }
                     catch (Exception ex)
                     {
-                        _logger.Warning(ex, $"Failed to configure plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
+                        _logger.Warning(ex,
+                            $"Failed to configure plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
                     }
                 }
+            }
+            catch (BadImageFormatException)
+            {
+                // Most likely, this is not a .NET DLL.
             }
             catch (Exception ex)
             {
