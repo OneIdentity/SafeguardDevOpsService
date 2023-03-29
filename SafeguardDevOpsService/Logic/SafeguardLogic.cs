@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -25,6 +26,7 @@ using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Extensions;
 using OneIdentity.SafeguardDotNet.A2A;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
+using Microsoft.AspNetCore.Http;
 // ReSharper disable InconsistentNaming
 
 namespace OneIdentity.DevOps.Logic
@@ -114,6 +116,58 @@ namespace OneIdentity.DevOps.Logic
         {
             return sgConnection.InvokeMethodFull(service, method, relativeUrl, body, parameters,
                 AddDevOpsHeader(devOpsInstanceId, additionalHeaders), timeout);
+        }
+
+        private byte[] IV =
+        {
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+            0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16
+        };
+        
+        private byte[] DeriveKeyFromPassPhrase(string passphrase)
+        {
+            const int iterations = 1000;
+            const int desiredKeyLength = 16; // 16 bytes equal 128 bits.
+            var emptySalt = Array.Empty<byte>();
+            var hashMethod = HashAlgorithmName.SHA384;
+            return Rfc2898DeriveBytes.Pbkdf2(Encoding.Unicode.GetBytes(passphrase),
+                emptySalt, iterations, hashMethod, desiredKeyLength);
+        }
+
+        private string Encrypt(string text, string passphrase)
+        {
+            // Don't do anything if the passphrase is null or empty
+            if (string.IsNullOrEmpty(passphrase))
+            {
+                return text;
+            }
+
+            var key = DeriveKeyFromPassPhrase(passphrase);
+            var iv = IV;
+
+            using var algorithm = Aes.Create();
+            var transform = algorithm.CreateEncryptor(key, iv);
+            var inputBuffer = Encoding.Unicode.GetBytes(text);
+            var outputBuffer = transform.TransformFinalBlock(inputBuffer, 0, inputBuffer.Length);
+            return Convert.ToBase64String(outputBuffer);
+        }
+
+        private string Decrypt(string text, string passphrase)
+        {
+            // Don't do anything if the passphrase is null or empty
+            if (string.IsNullOrEmpty(passphrase))
+            {
+                return text;
+            }
+
+            var key = DeriveKeyFromPassPhrase(passphrase);
+            var iv = IV;
+
+            using var algorithm = Aes.Create();
+            var transform = algorithm.CreateDecryptor(key, iv);
+            var inputBuffer = Convert.FromBase64String(text);
+            var outputBuffer = transform.TransformFinalBlock(inputBuffer, 0, inputBuffer.Length);
+            return Encoding.Unicode.GetString(outputBuffer);
         }
 
         public bool SetThreadData(string token)
@@ -2131,6 +2185,148 @@ namespace OneIdentity.DevOps.Logic
             DeleteSecretsBrokerData();
             DevOpsSecretsBrokerCache = null;
             DisconnectWithAccessToken();
+        }
+
+        public string BackupDevOpsConfiguration(string bkPassphrase)
+        {
+            var tempBackupFile = Path.GetTempPath() + WellKnownData.BackupFileName;
+            if (File.Exists(tempBackupFile))
+            {
+                File.Delete(tempBackupFile);
+            }
+
+            // Make sure that monitoring is turned off before starting the backup.
+            _monitoringLogic().EnableMonitoring(false);
+
+            try
+            {
+                using (var tempBackupZipStream = new FileStream(tempBackupFile, FileMode.Create))
+                using (var tempZipArchive = new ZipArchive(tempBackupZipStream, ZipArchiveMode.Create))
+                {
+                    var fileCount = 0;
+                    var folderCount = 0;
+                    var failedCount = 0;
+                    var folders = new Stack<string>();
+
+                    folders.Push(WellKnownData.ProgramDataPath);
+
+                    do
+                    {
+                        var currentFolder = folders.Pop();
+
+                        foreach (var file in Directory.GetFiles(currentFolder))
+                        {
+                            try
+                            {
+                                var entryName = Path.GetRelativePath(WellKnownData.ProgramDataPath, Path.GetFullPath(file));
+                                var entry = tempZipArchive.CreateEntry(entryName);
+                                entry.LastWriteTime = File.GetLastWriteTime(file);
+                                using (var fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                                using (var stream = entry.Open())
+                                {
+                                    fs.CopyTo(stream);
+                                    fileCount++;
+                                }
+                            }
+                            catch
+                            {
+                                failedCount++;
+                            }
+                        }
+
+                        foreach (var dir in Directory.GetDirectories(currentFolder))
+                        {
+                            folders.Push(dir);
+                        }
+                    } while (folders.Count > 0);
+
+                    var svcIdFileInfo = new FileInfo(WellKnownData.SvcIdPath);
+                    tempZipArchive.CreateEntryFromFile(svcIdFileInfo.FullName, svcIdFileInfo.Name);
+                    fileCount++;
+
+                    var dbPasswdEntry = tempZipArchive.CreateEntry(WellKnownData.DBPasswordFileName);
+                    using (var writer = new StreamWriter(dbPasswdEntry.Open()))
+                    {
+                        writer.WriteLine(Encrypt(_configDb.DbPasswd, bkPassphrase));
+                        fileCount++;
+                    }
+
+                    if (File.Exists(WellKnownData.AppSettingsFile))
+                    {
+                        var appSettingsFileInfo = new FileInfo(WellKnownData.AppSettingsFile);
+                        tempZipArchive.CreateEntryFromFile(appSettingsFileInfo.FullName, appSettingsFileInfo.Name);
+                        fileCount++;
+                    }
+
+                    _logger.Information($"Successfully backed up {fileCount} files, {folderCount} folder with {failedCount} failures to {tempBackupFile}.");
+                    return tempBackupFile;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to create the backup file: {ex.Message}", ex);
+            }
+        }
+
+        public void RestoreDevOpsConfiguration(IFormFile formFile, string bkPassphrase)
+        {
+            if (formFile.Length <= 0)
+                throw LogAndException("Plugin cannot be null or empty");
+
+            if (File.Exists(WellKnownData.RestoreServiceStageDirPath))
+            {
+                File.Delete(WellKnownData.RestoreServiceStageDirPath);
+            }
+
+            try
+            {
+                using (var inputStream = formFile.OpenReadStream())
+                using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
+                {
+                    var dbEncryptedKeyEntry = zipArchive.GetEntry(WellKnownData.DBPasswordFileName);
+                    if (dbEncryptedKeyEntry == null)
+                    {
+                        throw LogAndException("Failed to find the database password in the backup file.");
+                    }
+
+                    using (var reader = new StreamReader(dbEncryptedKeyEntry.Open()))
+                    {
+                        try
+                        {
+                            var dbEncryptedKey = reader.ReadToEnd();
+                            var dbPassPhrase = Decrypt(dbEncryptedKey, bkPassphrase);
+                            if (dbPassPhrase != null)
+                            {
+                                _configDb.SavePassword(dbPassPhrase);
+                            }
+                        }
+                        catch
+                        {
+                            throw LogAndException("Failed to restore the backup. Invalid restore passphrase.");
+                        }
+                    }
+
+                    // The backup file must contain at least these elements
+                    if (!ArchiveContains(zipArchive, WellKnownData.DbFileName) ||
+                        !ArchiveContains(zipArchive, Path.GetRelativePath(WellKnownData.ProgramDataPath, WellKnownData.LogDirPath)))
+                    {
+                        throw LogAndException("Invalid backup file. Missing one or more required files or directories.");
+                    }
+
+                    zipArchive.ExtractToDirectory(WellKnownData.RestoreServiceStageDirPath, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to restore the backup. {ex.Message}");
+            }
+
+        }
+
+        private bool ArchiveContains(ZipArchive zipArchive, string restoreElement)
+        {
+            var entry = zipArchive.GetEntry(restoreElement);
+            return entry != null;
         }
 
         public void RestartService()

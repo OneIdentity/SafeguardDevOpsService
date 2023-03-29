@@ -29,8 +29,6 @@ namespace OneIdentity.DevOps.ConfigDb
         private ILiteCollection<TrustedCertificate> _trustedCertificates;
         private string _svcId;
 
-        private const string DbFileName = "Configuration.db";
-
         private const string SettingsTableName = "settings";
         private const string AccountMappingsTableName = "accountmappings";
         private const string PluginsTableName = "plugins";
@@ -72,7 +70,7 @@ namespace OneIdentity.DevOps.ConfigDb
         {
             if (!Directory.Exists(WellKnownData.ProgramDataPath))
                 Directory.CreateDirectory(WellKnownData.ProgramDataPath);
-            var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
+            var dbPath = Path.Combine(WellKnownData.ProgramDataPath, WellKnownData.DbFileName);
             _logger.Information($"Loading configuration database at {dbPath}.");
 
             var passwd = GetPassword();
@@ -105,7 +103,7 @@ namespace OneIdentity.DevOps.ConfigDb
             return Convert.ToBase64String(random);
         }
 
-        private string SavePassword(string password)
+        public string SavePassword(string password)
         {
             try
             {
@@ -399,6 +397,8 @@ namespace OneIdentity.DevOps.ConfigDb
                 File.WriteAllText(WellKnownData.SvcIdPath, value);
             }
         }
+
+        public string DbPasswd => GetPassword();
 
         public bool? IgnoreSsl
         {
@@ -745,7 +745,7 @@ namespace OneIdentity.DevOps.ConfigDb
         public void DropDatabase()
         {
             Dispose();
-            var dbPath = Path.Combine(WellKnownData.ProgramDataPath, DbFileName);
+            var dbPath = Path.Combine(WellKnownData.ProgramDataPath, WellKnownData.DbFileName);
             File.Delete(dbPath);
             DeletePassword();
             _logger.Information($"Dropped the database at {dbPath}.");
