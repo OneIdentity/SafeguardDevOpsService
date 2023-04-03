@@ -189,7 +189,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [SafeguardSessionHandler]
         [UnhandledExceptionError]
-        [HttpPost("Configuration/Backup")]
+        [HttpGet("Configuration/Backup")]
         public async Task<IActionResult> GenerateDownloadBackupFile([FromServices] ISafeguardLogic safeguard, [FromQuery] string passphrase = null)
         {
             var backupFile = safeguard.BackupDevOpsConfiguration(passphrase);
@@ -202,8 +202,10 @@ namespace OneIdentity.DevOps.Controllers.V1
                     await stream.CopyToAsync(memory);
                     memory.Seek(0, SeekOrigin.Begin);
                 }
-            
-                return File(memory, "application/octet-stream", $"{WellKnownData.DevOpsServiceName}.sbbf");
+                var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+                var backupFileName = $"{WellKnownData.DevOpsServiceName}-{timeStamp}.sbbf";
+
+                return File(memory, "application/octet-stream", backupFileName);
             }
             catch (Exception ex)
             {

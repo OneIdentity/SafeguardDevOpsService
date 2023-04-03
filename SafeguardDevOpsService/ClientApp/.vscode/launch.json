@@ -7,16 +7,29 @@
     {
       "name": "Launch Chrome",
       "request": "launch",
-      "type": "pwa-chrome",
+      "type": "chrome",
       "url": "https://localhost:4200",
-      "webRoot": "${workspaceFolder}"
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Launch Chrome against localhost",
+      "url": "https://localhost:4200",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+          "webpack:///./src/app/*": "${workspaceFolder}/src/app/*"
+      }
     },
     {
       "type": "firefox",
       "request": "launch",
       "reAttach": true,
+      "breakOnLoad": true,
+      "sourceMaps": true,
       "name": "Launch localhost",
-      "url": "http://localhost/index.html",
+      "url": "https://localhost:4200",
       "webRoot": "${workspaceFolder}"
     },
     {
@@ -25,14 +38,21 @@
       "reAttach": true,
       "name": "Launch Firefox localhost (angular)",
       "url": "https://localhost:4200",
-      "webRoot": "${workspaceFolder}"
+      "pathMappings": [
+        {
+            "url": "webpack:///src/app",
+            "path": "${workspaceFolder}/src/app"
+        }]
     },
     {
-        "type": "pwa-msedge",
-        "request": "launch",
-        "name": "Launch Edge against localhost",
-        "url": "http://localhost:8080",
-        "webRoot": "${workspaceFolder}"
+      "type": "pwa-msedge",
+      "request": "launch",
+      "name": "Launch Edge against localhost",
+      "url": "https://localhost:4200",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+          "webpack:///./src/app/*": "${workspaceFolder}/src/app/*"
+      }
     }
   ]
 }

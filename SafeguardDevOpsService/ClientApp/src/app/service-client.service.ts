@@ -414,4 +414,22 @@ export class DevOpsServiceClient {
     return this.http.delete(this.BASE + 'Safeguard/TrustedCertificates/' + encodeURIComponent(thumbprint), this.authHeader())
       .pipe(catchError(this.error<any>('deleteTrustedCertificate')));
   }
+
+  getBackup(passphrase?: string): Observable<HttpResponse<Blob>> {
+    const options = Object.assign({ reportProgress: true, responseType: 'blob', observe: 'response', params: { passphrase: passphrase }}, this.authHeader());
+
+    return this.http.get(this.BASE + 'Safeguard/Configuration/Backup', options)
+      .pipe(catchError(this.error<any>('getBackup')));
+  }
+
+  postRestore(file: File, passphrase?: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('formFile', file);
+    formData.append('type', file.type);
+
+    const options = Object.assign({ responseType: 'text', params: { restart: true, passphrase: passphrase } }, this.authHeader());
+
+    return this.http.post(this.BASE + 'Safeguard/Configuration/Restore', formData, options)
+      .pipe(catchError(this.error<any>('postRestore')));
+  }
 }

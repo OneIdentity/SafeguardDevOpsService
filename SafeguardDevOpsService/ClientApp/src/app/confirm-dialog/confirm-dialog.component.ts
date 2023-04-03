@@ -14,8 +14,10 @@ export class ConfirmDialogComponent implements OnInit {
   showCancel = true;
   showRestart = false;
   showSecretsBrokerOnly = false;
+  showPassphrase = false;
   restart = true;
   secretsBrokerOnly = true;
+  passphrase = '';
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -28,6 +30,7 @@ export class ConfirmDialogComponent implements OnInit {
     this.showCancel = this.data.showCancel ?? this.showCancel;
     this.showRestart = this.data.showRestart ?? this.showRestart;
     this.showSecretsBrokerOnly = this.data.showSecretsBrokerOnly ?? this.showSecretsBrokerOnly;
+    this.showPassphrase = this.data.showPassphrase ?? this.showPassphrase;
   }
 
   close(): void {
@@ -35,6 +38,6 @@ export class ConfirmDialogComponent implements OnInit {
   }
 
   confirm(): void {
-    this.dialogRef.close({ result: 'OK', restart: this.restart, secretsBrokerOnly: this.secretsBrokerOnly });
+    this.dialogRef.close({ result: 'OK', restart: this.restart, secretsBrokerOnly: this.secretsBrokerOnly, passphrase: this.passphrase });
   }
 }

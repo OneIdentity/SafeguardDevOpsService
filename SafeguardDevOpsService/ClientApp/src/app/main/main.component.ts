@@ -54,7 +54,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   plugins = [];
   addons = [];
   isLoading: boolean = false;
-  isUploading = { Plugin: false, Addon: false, Certificate: false, Registration: false };
+  isUploading = { Plugin: false, Addon: false, Certificate: false, Registration: false, Backup: false };
   isRestarting: boolean = false;
   openDrawer: string;
   openWhat: string;
@@ -67,6 +67,8 @@ export class MainComponent implements OnInit, AfterViewInit {
   unconfiguredDiv: any;
   footerAbsolute: boolean = true;
   restartingProgress: string = 'Restarting Service';
+  logFileName: string = 'SafeguardSecretsBroker.log';
+  backupFileName: string = 'SafeguardDevOpsService.sbbf';
   hasAvailableRegistrations: boolean = false;
   showAvailableRegistrations: boolean = false;
   needsClientCertificate: boolean = true;
@@ -77,6 +79,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   isAssetAdmin: boolean = false;
   certificateUploaded: boolean = false;
   passedTrustChainValidation: boolean = false;
+  passphrase: string;
 
   certificateUploading = {
     Client: false,
@@ -750,7 +753,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         this.snackBar.open('Downloading log file...');
       })
     ).subscribe((data) => {
-      this.downloadFile(data);
+      this.downloadFile(data, this.logFileName);
       this.snackBar.open('Download complete.', 'Dismiss', { duration: this.snackBarDuration });
     },
       error => {
@@ -759,9 +762,8 @@ export class MainComponent implements OnInit, AfterViewInit {
       });
   }
 
-  private downloadFile(data: HttpResponse<Blob>) {
+  private downloadFile(data: HttpResponse<Blob>, fileName: string) {
     var contentDisposition = data.headers.get('Content-Disposition');
-    var fileName = 'SafeguardSecretsBroker.log';
     if (contentDisposition != null) {
       var result = contentDisposition.split(';')[1].trim().split('=')[1];
       fileName = result.replace(/"/g, '');
@@ -772,6 +774,97 @@ export class MainComponent implements OnInit, AfterViewInit {
     a.href = URL.createObjectURL(downloadedFile);
     a.download = fileName;
     a.click();
+  }
+
+  backupConfiguration(): void {
+    this.error = null;
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        showPassphrase: true,
+        title: 'Backup Configuration',
+        message: '<p>Please provide a passphrase to encrypt the database key stored in the backup data. If no passphrase is provided, the backup will be generated with no encryption.</p?>' +
+          '<p>Once the backup file has been generated, the file will be downloaded automatically.</p>'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(
+      filter((dlgResult) => dlgResult?.result === 'OK'),
+      tap((dlgResult) => {
+        this.passphrase = dlgResult?.passphrase;
+        this.snackBar.open('Generating backup file...');
+        // Show overlay to disable clicking on anything
+        this.drawer.open();
+      }),
+      switchMap((dlgResult) => this.serviceClient.getBackup(dlgResult?.passphrase))
+    ).subscribe((data) => {
+      this.downloadFile(data, this.backupFileName);
+      this.drawer.close();
+      this.snackBar.dismiss();
+    },
+      error => {
+        this.error = error;
+      });
+  }
+
+  restoreConfiguration(): void {
+    this.error = null;
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        showPassphrase: true,
+        title: 'Restore Configuration',
+        message: '<p>Please provide a passphrase to decrypt the database key stored in the backup data. If no passphrase is provided, the restore process will assume that the key was stored unencrypted.</p?>' +
+          '<p>Once the restore is finished, Secrets Broker will automatically restart the service.</p>'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(
+      filter((dlgResult) => dlgResult?.result === 'OK'),
+      tap((dlgResult) => {
+        this.uploadAndRestore(dlgResult?.passphrase);
+        this.snackBar.open('Restoring configuration...');
+        // Show overlay to disable clicking on anything
+        this.drawer.open();
+      }),
+    ).subscribe(() => {
+      this.drawer.close();
+      this.snackBar.dismiss();
+      //this.window.sessionStorage.setItem('ApplianceAddress', '');
+    },
+      error => {
+        this.error = error;
+      });
+  }
+
+  private uploadAndRestore(passphrase: string) {
+    var fileInput = $('<input type="file" accept=".sbbf" />');
+
+    fileInput.on('change', () => {
+      var file = fileInput.prop('files')[0];
+
+      if (!file) {
+        return;
+      }
+
+      this.isUploading.Backup = true;
+
+      this.serviceClient.postRestore(file, passphrase)
+        .subscribe((x: any) => {
+          if (typeof x === 'string') {
+            this.snackBar.open(x, 'OK', { duration: 10000 });
+          } else {
+            setTimeout(() => {
+              this.isUploading.Backup = false;
+              this.window.location.reload();
+            }, 3000);
+          }
+        },
+          error => {
+            this.isUploading.Backup = false;
+            this.error = this.parseError(error);
+          });
+    });
+
+    fileInput.trigger('click');
   }
 
   restart(): void {
