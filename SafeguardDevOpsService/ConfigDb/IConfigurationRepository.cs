@@ -54,6 +54,7 @@ namespace OneIdentity.DevOps.ConfigDb
 
         DevOpsSecretsBroker DevOpsSecretsBroker { get; }
 
+        void CheckPoint();
         void DropDatabase();
         string SavePassword(string password);
     }

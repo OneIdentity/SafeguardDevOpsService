@@ -742,6 +742,11 @@ namespace OneIdentity.DevOps.ConfigDb
             }
         }
 
+        public void CheckPoint()
+        {
+            _configurationDb.Checkpoint();
+        }
+
         public void DropDatabase()
         {
             Dispose();

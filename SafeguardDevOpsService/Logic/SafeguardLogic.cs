@@ -2197,6 +2197,7 @@ namespace OneIdentity.DevOps.Logic
 
             // Make sure that monitoring is turned off before starting the backup.
             _monitoringLogic().EnableMonitoring(false);
+            _configDb.CheckPoint();
 
             try
             {
@@ -2302,7 +2303,7 @@ namespace OneIdentity.DevOps.Logic
                         }
                         catch
                         {
-                            throw LogAndException("Failed to restore the backup. Invalid restore passphrase.");
+                            throw LogAndException("Invalid restore passphrase.");
                         }
                     }
 
