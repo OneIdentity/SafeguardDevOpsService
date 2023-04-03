@@ -102,8 +102,8 @@
 
   <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" ContinueOnError="WarnAndContinue" />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --prod" />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build:ssr -- --prod" Condition=" '$(BuildServerSideRenderer)' == 'true' " />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --configuration production" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build:ssr -- --configuration production" Condition=" '$(BuildServerSideRenderer)' == 'true' " />
     <!--<Exec WorkingDirectory="$(SpaRoot)" Command="xcopy dist $(TargetDir)dist /S /I /Y" />-->
 
     <!-- Include the newly-built files in the publish output -->
