@@ -2248,7 +2248,7 @@ namespace OneIdentity.DevOps.Logic
                     var dbPasswdEntry = tempZipArchive.CreateEntry(WellKnownData.DBPasswordFileName);
                     using (var writer = new StreamWriter(dbPasswdEntry.Open()))
                     {
-                        writer.WriteLine(Encrypt(_configDb.DbPasswd, bkPassphrase));
+                        writer.Write(Encrypt(_configDb.DbPasswd, bkPassphrase));
                         fileCount++;
                     }
 
@@ -2269,52 +2269,37 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public void RestoreDevOpsConfiguration(IFormFile formFile, string bkPassphrase)
+        public void RestoreDevOpsConfiguration(string base64Backup, string passphrase)
+        {
+            if (base64Backup == null)
+                throw LogAndException("Backup cannot be null");
+
+            var bytes = Convert.FromBase64String(base64Backup);
+
+            try
+            {
+                using (var zipArchive = new ZipArchive(new MemoryStream(bytes), ZipArchiveMode.Read))
+                {
+                    RestoreBackup(zipArchive, passphrase);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to restore the backup. {ex.Message}");
+            }
+        }
+
+        public void RestoreDevOpsConfiguration(IFormFile formFile, string passphrase)
         {
             if (formFile.Length <= 0)
                 throw LogAndException("Plugin cannot be null or empty");
-
-            if (File.Exists(WellKnownData.RestoreServiceStageDirPath))
-            {
-                File.Delete(WellKnownData.RestoreServiceStageDirPath);
-            }
 
             try
             {
                 using (var inputStream = formFile.OpenReadStream())
                 using (var zipArchive = new ZipArchive(inputStream, ZipArchiveMode.Read))
                 {
-                    var dbEncryptedKeyEntry = zipArchive.GetEntry(WellKnownData.DBPasswordFileName);
-                    if (dbEncryptedKeyEntry == null)
-                    {
-                        throw LogAndException("Failed to find the database password in the backup file.");
-                    }
-
-                    using (var reader = new StreamReader(dbEncryptedKeyEntry.Open()))
-                    {
-                        try
-                        {
-                            var dbEncryptedKey = reader.ReadToEnd();
-                            var dbPassPhrase = Decrypt(dbEncryptedKey, bkPassphrase);
-                            if (dbPassPhrase != null)
-                            {
-                                _configDb.SavePassword(dbPassPhrase);
-                            }
-                        }
-                        catch
-                        {
-                            throw LogAndException("Invalid restore passphrase.");
-                        }
-                    }
-
-                    // The backup file must contain at least these elements
-                    if (!ArchiveContains(zipArchive, WellKnownData.DbFileName) ||
-                        !ArchiveContains(zipArchive, Path.GetRelativePath(WellKnownData.ProgramDataPath, WellKnownData.LogDirPath)))
-                    {
-                        throw LogAndException("Invalid backup file. Missing one or more required files or directories.");
-                    }
-
-                    zipArchive.ExtractToDirectory(WellKnownData.RestoreServiceStageDirPath, true);
+                    RestoreBackup(zipArchive, passphrase);
                 }
             }
             catch (Exception ex)
@@ -2322,6 +2307,53 @@ namespace OneIdentity.DevOps.Logic
                 throw LogAndException($"Failed to restore the backup. {ex.Message}");
             }
 
+        }
+
+        private void RestoreBackup(ZipArchive zipArchive, string passphrase)
+        {
+            if (File.Exists(WellKnownData.RestoreServiceStageDirPath))
+            {
+                File.Delete(WellKnownData.RestoreServiceStageDirPath);
+            }
+
+            try
+            {
+                var dbEncryptedKeyEntry = zipArchive.GetEntry(WellKnownData.DBPasswordFileName);
+                if (dbEncryptedKeyEntry == null)
+                {
+                    throw LogAndException("Failed to find the database password in the backup file.");
+                }
+
+                using (var reader = new StreamReader(dbEncryptedKeyEntry.Open()))
+                {
+                    try
+                    {
+                        var dbEncryptedKey = reader.ReadToEnd();
+                        var dbPassPhrase = Decrypt(dbEncryptedKey, passphrase);
+                        if (dbPassPhrase != null)
+                        {
+                            _configDb.SavePassword(dbPassPhrase);
+                        }
+                    }
+                    catch
+                    {
+                        throw LogAndException("Invalid restore passphrase.");
+                    }
+                }
+
+                // The backup file must contain at least these elements
+                if (!ArchiveContains(zipArchive, WellKnownData.DbFileName) ||
+                    !ArchiveContains(zipArchive, Path.GetRelativePath(WellKnownData.ProgramDataPath, WellKnownData.LogDirPath)))
+                {
+                    throw LogAndException("Invalid backup file. Missing one or more required files or directories.");
+                }
+
+                zipArchive.ExtractToDirectory(WellKnownData.RestoreServiceStageDirPath, true);
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to restore the backup. {ex.Message}");
+            }
         }
 
         private bool ArchiveContains(ZipArchive zipArchive, string restoreElement)
