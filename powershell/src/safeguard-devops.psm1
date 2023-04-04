@@ -466,7 +466,7 @@ function Invoke-Internal
                 }
                 else
                 {
-                    Invoke-WithoutBody $HttpSession $Method $Url $Headers -Parameters $Parameters -Timeout $Timeout
+                    Invoke-WithoutBody $HttpSession $Method $Url $Headers -Parameters $Parameters -Timeout $Timeout -OutFile $OutFile
                 }
                 break
             }
@@ -485,9 +485,15 @@ function Invoke-Internal
     }
     catch
     {
+        if ($_.ErrorDetails.Message)
+        {
+            $messageObject = $_.ErrorDetails.Message | ConvertFrom-Json
+            Write-Host -foreground Red $messageObject.Message
+        }
         Out-SgDevOpsExceptionIfPossible $_.Exception
     }
 }
+
 
 
 <#
@@ -834,7 +840,9 @@ function Invoke-SgDevOpsMethod
         [Parameter(Mandatory=$false)]
         [string]$JsonBody,
         [Parameter(Mandatory=$false)]
-        [HashTable]$ExtraHeaders
+        [HashTable]$ExtraHeaders,
+        [Parameter(Mandatory=$false)]
+        [string]$OutFile = $null
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
@@ -870,7 +878,7 @@ function Invoke-SgDevOpsMethod
 
         $local:Headers["Authorization"] = "spp-token $($SgDevOpsSession.AccessToken)"
 
-        Invoke-Internal $SgDevOpsSession.Session $Method $local:Url $local:Headers -Parameters $Parameters -Body $Body -JsonBody $JsonBody
+        Invoke-Internal $SgDevOpsSession.Session $Method $local:Url $local:Headers -Parameters $Parameters -Body $Body -JsonBody $JsonBody -OutFile $OutFile
     }
     finally
     {
@@ -1206,6 +1214,7 @@ function Restart-SgDevOps
         Write-Host -ForegroundColor Yellow "Operation canceled."
     }
 }
+
 <#
 .SYNOPSIS
 Get Secrets Broker logs.
@@ -1250,5 +1259,152 @@ function Get-SgDevOpsLog
         }
         Invoke-SgDevOpsMethod Get "Safeguard/Log" | Out-File -Force -Encoding utf8 -FilePath $OutFile
         Write-Host "Log file written to $OutFile."
+    }
+}
+
+<#
+.SYNOPSIS
+Get Secrets Broker configuration backup.
+
+.DESCRIPTION
+Get Secrets Broker backup of the current configuration.
+
+.PARAMETER Passphrase
+Passphrase used to encrypt the database key in the backup file. If no
+passphrase is provided, the database key will be written to the backup
+file unencrypted.
+
+.PARAMETER OutFile
+File location to write the backup file.
+
+.EXAMPLE
+Get-SgDevOpsBackup
+
+.EXAMPLE
+Get-SgDevOpsBackup -OutFile mysecretsbrokerconfig.sbbf
+#>
+function Get-SgDevOpsBackup
+{
+    [CmdletBinding(DefaultParameterSetName="File")]
+    Param(
+        [Parameter(ParameterSetName="Passphrase",Mandatory=$false)]
+        [securestring]$Passphrase,
+        [Parameter(ParameterSetName="File",Mandatory=$false,Position=0)]
+        [string]$OutFile
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if (-not $Passphrase)
+    {
+        Write-Host "For no passphrase just press enter..."
+        $Passphrase = (Read-host "Passphrase" -AsSecureString)
+    }
+
+    $local:Parameters = @{}
+    $local:passphrasePlainText = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($Passphrase))
+    if ($local:passphrasePlainText)
+    {
+        $local:Parameters.passphrase = $local:passphrasePlainText
+    }
+
+    $local:outFile = "sgdevops-Backup-$((Get-Date).ToString("yyyyMMddTHHmmssZz")).sbbf"
+    if (-not $OutFile)
+    {
+        $local:outFile = $OutFile
+    }
+
+    $local:ExtraHeaders = @{
+        "Accept" = "Application/Octet-Stream";
+    }
+
+    Invoke-SgDevOpsMethod Get "Safeguard/Configuration/Backup" -Parameters $local:Parameters -ExtraHeaders $local:ExtraHeaders -OutFile $local:outFile
+
+    Write-Host "Log file written to $local:outFile."
+}
+
+<#
+.SYNOPSIS
+Upload and restore a Secrets Broker backup file.
+
+.DESCRIPTION
+Upload and restore a Secrets Broker backup file. This will replace the current
+configuration after Secrets Broker service has been restarted.
+
+.PARAMETER BackupFile
+The full path and file name of the backup file used to restore the configuration.
+
+.PARAMETER Passphrase
+Passphrase used to decrypt the database key in the backup file. If no passphrase
+is provided, the restore process will not attempt to decrypt the database key.
+
+.PARAMETER DoNotRestart
+A flag that indicates that the Secrets Broker service should not be restarted
+automatically after restoring the configuration. If set, the Secrets Broker service
+will need to be restarted manually to complete the restore.
+
+.EXAMPLE
+Restore-SgDevOpsBackup c:\my\backup\path\myconfigurationbackup.sbbf
+
+#>
+function Restore-SgDevOpsBackup
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$BackupFile,
+        [Parameter(ParameterSetName="Passphrase",Mandatory=$false)]
+        [securestring]$Passphrase,
+        [Parameter(Mandatory=$false)]
+        [switch]$DoNotRestart
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    if (-not $Passphrase)
+    {
+        Write-Host "For no passphrase just press enter..."
+        $Passphrase = (Read-host "Passphrase" -AsSecureString)
+    }
+
+    $local:Parameters = @{
+        restart = $([bool]$DoNotRestart -eq $false)
+    }
+
+    $local:passphrasePlainText = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($Passphrase))
+
+    if ($local:passphrasePlainText)
+    {
+        $local:Parameters.passphrase = $local:passphrasePlainText
+    }
+
+    try
+    {
+        $BackupFile = (Resolve-Path $BackupFile)
+        $local:Bytes = [System.IO.File]::ReadAllBytes($BackupFile)
+    }
+    catch
+    {
+        Write-Host -ForegroundColor Magenta "Unable to read the backup file."
+        Write-Host -ForegroundColor Red $_
+        throw "Invalid backup file specified"
+    }
+
+    $local:Base64BackupData = [System.Convert]::ToBase64String($local:Bytes)
+    Invoke-SgDevOpsMethod POST "Safeguard/Configuration/Restore" -Parameters $local:Parameters -Body @{
+            Base64BackupData = $local:Base64BackupData
+        }
+
+    Write-Host "Backup has been restored."
+
+    if ($DoNotRestart)
+    {
+        Write-Host "The Secrets Broker service must be restarted to complete the backup restore."
+    }
+    else
+    {
+        Write-Host "The Secrets Broker service will restart, you must reconnect using Connect-SgDevOps."
     }
 }

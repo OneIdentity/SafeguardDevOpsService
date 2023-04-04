@@ -68,6 +68,7 @@ namespace OneIdentity.DevOps.Logic
 
         string BackupDevOpsConfiguration(string bkPassphrase);
         void RestoreDevOpsConfiguration(IFormFile formFile, string bkPassphrase);
+        void RestoreDevOpsConfiguration(string base64Backup, string passphrase);
 
         void RestartService();
 

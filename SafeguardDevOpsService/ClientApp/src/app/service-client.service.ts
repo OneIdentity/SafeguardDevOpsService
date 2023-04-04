@@ -429,7 +429,7 @@ export class DevOpsServiceClient {
 
     const options = Object.assign({ responseType: 'text', params: { restart: true, passphrase: passphrase } }, this.authHeader());
 
-    return this.http.post(this.BASE + 'Safeguard/Configuration/Restore', formData, options)
+    return this.http.post(this.BASE + 'Safeguard/Configuration/Restore/File', formData, options)
       .pipe(catchError(this.error<any>('postRestore')));
   }
 }

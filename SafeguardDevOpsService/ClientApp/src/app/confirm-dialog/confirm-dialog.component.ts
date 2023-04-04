@@ -15,6 +15,7 @@ export class ConfirmDialogComponent implements OnInit {
   showRestart = false;
   showSecretsBrokerOnly = false;
   showPassphrase = false;
+  passwordHidden = true;
   restart = true;
   secretsBrokerOnly = true;
   passphrase = '';

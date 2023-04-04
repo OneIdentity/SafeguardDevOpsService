@@ -231,12 +231,49 @@ namespace OneIdentity.DevOps.Controllers.V1
         [DisableRequestSizeLimit]
         [UnhandledExceptionError]
         [RequestFormLimits(ValueLengthLimit = (200000*1024), MultipartBodyLengthLimit = (200000*1024))]
-        [HttpPost("Configuration/Restore")]
+        [HttpPost("Configuration/Restore/File")]
         public ActionResult UploadAndRestoreBackupFile([FromServices] ISafeguardLogic safeguard,
             IFormFile formFile, [FromQuery] bool restart = false, [FromQuery] string passphrase = null)
         {
             // Restore backup file here
             safeguard.RestoreDevOpsConfiguration(formFile, passphrase);
+
+            if (restart)
+                safeguard.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok(WellKnownData.RestartNotice);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Upload a backup file to restore the Secrets Broker configuration.
+        /// </summary>
+        /// <remarks>
+        /// The configuration of the Safeguard Secrets Broker for DevOps restored by uploading a backup file.
+        /// 
+        /// The backup file must be converted to a base64 string.&lt;br /&gt;
+        /// Powershell example:&lt;br /&gt;
+        ///   $fileContentBytes = get-content 'backup-file' -Encoding Byte&lt;br /&gt;
+        ///   [System.Convert]::ToBase64String($fileContentBytes) | Out-File 'backup-file.txt'&lt;br /&gt;
+        ///
+        /// (See POST /service/devops/{version}/Safeguard/Configuration/Restore/File to upload a backup file using multipart-form-data)
+        /// </remarks>
+        /// <param name="backupInfo">Secrets Broker backup containing the base64 encoded zip file.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after restore.</param>
+        /// <param name="passphrase">Pass phrase used to decrypt the database key.</param>
+        /// <response code="200">Success. Needing restart</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad request</response>
+        [SafeguardSessionKeyAuthorization]
+        [DisableRequestSizeLimit]
+        [UnhandledExceptionError]
+        [RequestFormLimits(ValueLengthLimit = (200000*1024), MultipartBodyLengthLimit = (200000*1024))]
+        [HttpPost("Configuration/Restore")]
+        public ActionResult UploadAndRestoreBackup([FromServices] ISafeguardLogic safeguard,
+            Backup backupInfo, [FromQuery] bool restart = false, [FromQuery] string passphrase = null)
+        {
+            safeguard.RestoreDevOpsConfiguration(backupInfo.Base64BackupData, passphrase);
 
             if (restart)
                 safeguard.RestartService();
@@ -1018,7 +1055,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Safeguard Secrets Broker for DevOps can be modified to provide additional functionality such as credential vault
         /// capability that is compatible with the HashiCorp API.  &lt;br /&gt;
         ///
-        /// (See POST /service/devops/{version}/Plugins/File to upload a plugin file using multipart-form-data)
+        /// (See POST /service/devops/{version}/Addons/File to upload an add-on file using multipart-form-data)
         /// </remarks>
         /// <param name="addonInfo">Secrets Broker add-on containing the base64 encoded zip file.</param>
         /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after add-on install.</param>
