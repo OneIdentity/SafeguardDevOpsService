@@ -15,22 +15,30 @@
     </button>
     <mat-menu #settingsMenu="matMenu">
       <button mat-menu-item (click)="uploadAddon()"
-        [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting || !isLicensed'>
-        <mat-icon>cloud_upload</mat-icon>Upload Add-on
+        [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting || !isLicensed'>
+        <mat-icon>upload</mat-icon>Upload Add-on
       </button>
       <button mat-menu-item (click)="downloadLog()"
-        [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>
-        <mat-icon>cloud_download</mat-icon>Download Log
+        [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
+        <mat-icon>download</mat-icon>Download Log
+      </button>
+      <button mat-menu-item (click)="backupConfiguration()"
+        [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
+        <mat-icon>cloud_download</mat-icon>Backup Configuration
+      </button>
+      <button mat-menu-item (click)="restoreConfiguration()"
+        [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
+        <mat-icon>cloud_upload</mat-icon>Restore Configuration
       </button>
       <button mat-menu-item (click)="viewMonitorEvents()"
-        [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>
+        [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
         <mat-icon>history</mat-icon>View Monitor Event History
       </button>
-      <button mat-menu-item (click)="restart()" [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>
+      <button mat-menu-item (click)="restart()" [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
         <mat-icon>refresh</mat-icon>Restart Secrets Broker
       </button>
       <button mat-menu-item (click)="deleteConfig()"
-        [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>
+        [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
         <mat-icon>delete</mat-icon>Delete Current Configuration
       </button>
     </mat-menu>
@@ -67,9 +75,9 @@
         </div>
         <button mat-flat-button class="monitoring-button start-monitoring"
           *ngIf="!isMonitoring && isMonitoringAvailable && !needsSSLEnabled" (click)="updateMonitoring(true)"
-          [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>Start Monitoring</button>
+          [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Start Monitoring</button>
         <button mat-flat-button class="monitoring-button stop-monitoring" *ngIf="isMonitoring && isMonitoringAvailable"
-          (click)="updateMonitoring(false)" [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting'>Stop
+          (click)="updateMonitoring(false)" [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Stop
           Monitoring</button>
       </div>
 
@@ -124,7 +132,7 @@
             <div>
               <button mat-button class="link-button cert-link" color="primary"
                 (click)="viewCertificate($event, 'Client')"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' disableRipple>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' disableRipple>
                 <mat-icon class="green-icon" inline=true *ngIf="passedTrustChainValidation">check_circle</mat-icon>
                 <mat-icon class="yellow-icon" inline=true *ngIf="!passedTrustChainValidation">error_outline</mat-icon>
                 &nbsp;View Details
@@ -138,13 +146,13 @@
 
             <div *ngIf="!webServerCertAdded || needsWebCertificate">
               <button mat-button class="link-button cert-link" (click)="addCertificate($event, 'Web Server')"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' color='primary' disableRipple>
                 <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>&nbsp;View Details
               </button>
             </div>
             <div *ngIf="webServerCertAdded && !needsWebCertificate">
               <button mat-button class="link-button cert-link" (click)="viewCertificate($event,'Web Server')"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' color='primary' disableRipple>
                 <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
               </button>
             </div>
@@ -153,12 +161,12 @@
             <div class="info-label">Trusted Certificates</div>
             <div *ngIf="!trustedCertificates?.length || needsTrustedCertificates">
               <button mat-button class="link-button cert-link" (click)='viewTrustedCertificates($event)'
-                [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary'
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' color='primary'
                 disableRipple>Add/Import Certificates</button>
             </div>
             <div *ngIf="trustedCertificates?.length">
               <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isRestarting' color='primary' disableRipple>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' color='primary' disableRipple>
                 <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
               </button>
             </div>
@@ -245,7 +253,7 @@
                     [visible]="isUploading.Plugin">
                   </app-progress-spinner>
                   <button mat-stroked-button class="plugin-button" (click)="uploadPlugin()" *ngIf="!isUploading.Plugin"
-                    [disabled]="isUploading.Addon || isRestarting">
+                    [disabled]="isUploading.Addon || isUploading.Backup || isRestarting">
                     Upload Plugin
                   </button>
                 </div>
@@ -259,7 +267,7 @@
       <div class="plugin-container unconfigured" *ngIf="plugins.length > 0" #unconfigured>
         <div class="header">
           <p>What would you like to plug in?</p>
-          <div *ngIf="!isUploading.Plugin && !isUploading.Addon && !isRestarting">
+          <div *ngIf="!isUploading.Plugin && !isUploading.Addon && !isUploading.Backup && !isRestarting">
             <a href='https://github.com/OneIdentity/SafeguardDevOpsService/releases/' target='_blank'
               title="This will open a new tab to an external site.">View plugin repository</a>
           </div>
@@ -272,7 +280,7 @@
                   [visible]="isUploading.Plugin">
                 </app-progress-spinner>
                 <button mat-stroked-button class="plugin-button" (click)="uploadPlugin()" *ngIf="!isUploading.Plugin"
-                  [disabled]="isUploading.Addon || isRestarting">
+                  [disabled]="isUploading.Addon || isUploading.Backup || isRestarting">
                   {{plugin.DisplayName}}
                 </button>
               </div>
@@ -280,7 +288,7 @@
             <div class='button-container'>
               <button mat-stroked-button class="plugin-button" (click)="editPlugin(plugin)"
                 *ngIf="!plugin.IsConfigurationSetup && !plugin.IsUploadCustom"
-                [disabled]="isUploading.Plugin || isUploading.Addon || isRestarting">
+                [disabled]="isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting">
                 {{plugin.DisplayName}}
               </button>
             </div>

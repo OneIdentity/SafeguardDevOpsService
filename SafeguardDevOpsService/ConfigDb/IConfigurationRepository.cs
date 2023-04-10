@@ -26,6 +26,7 @@ namespace OneIdentity.DevOps.ConfigDb
         string SafeguardAddress { get; set; }
         int? ApiVersion { get; set; }
         string SvcId { get; set; }
+        string DbPasswd { get; }
         bool? IgnoreSsl { get; set; }
         int? A2aUserId { get; set; }
         int? A2aRegistrationId { get; set; }
@@ -53,6 +54,8 @@ namespace OneIdentity.DevOps.ConfigDb
 
         DevOpsSecretsBroker DevOpsSecretsBroker { get; }
 
+        void CheckPoint();
         void DropDatabase();
+        string SavePassword(string password);
     }
 }

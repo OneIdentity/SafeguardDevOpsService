@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
@@ -62,6 +65,10 @@ namespace OneIdentity.DevOps.Logic
         DevOpsSecretsBroker GetDevOpsConfiguration(ISafeguardConnection sgConnection);
         DevOpsSecretsBroker ConfigureDevOpsService();
         void DeleteDevOpsConfiguration(ISafeguardConnection sgConnection, bool secretsBrokerOnly);
+
+        string BackupDevOpsConfiguration(string bkPassphrase);
+        void RestoreDevOpsConfiguration(IFormFile formFile, string bkPassphrase);
+        void RestoreDevOpsConfiguration(string base64Backup, string passphrase);
 
         void RestartService();
 

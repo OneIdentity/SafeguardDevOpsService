@@ -15,6 +15,17 @@
 <br/>
 <mat-checkbox *ngIf="showRestart" [(ngModel)]="restart">Restart Safeguard Secrets Broker for DevOps Service
 </mat-checkbox>
+<mat-form-field *ngIf="showPassphrase && passwordHidden" appearance="outline">
+  <mat-label><span>Passphrase</span></mat-label>
+  <input matInput type="password" autocomplete='off' name="Passphrase" [(ngModel)]="passphrase" />
+  <mat-icon matSuffix (click)="passwordHidden = false" [matTooltip]="show">visibility</mat-icon>
+</mat-form-field>
+<mat-form-field *ngIf="showPassphrase && !passwordHidden" appearance="outline">
+  <mat-label><span>Passphrase</span></mat-label>
+  <input matInput autocomplete='off' name="Passphrase" [(ngModel)]="passphrase" />
+  <mat-icon matSuffix (click)="passwordHidden = true" [matTooltip]="hide">visibility_off</mat-icon>
+</mat-form-field>
+
 <div mat-dialog-actions align='end'>
    <button mat-button (click)="close()" cdkFocusInitial *ngIf="showCancel">Cancel</button>
    <button mat-flat-button color='primary' (click)="confirm()">{{confirmText}}</button>
