@@ -11,10 +11,10 @@ namespace OneIdentity.DevOps.AzureKeyVault
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static SecretClient _secretsClient;
-        private static Dictionary<string,string> _configuration;
-        private static ILogger _logger;
-        private static Regex _rgx;
+        private SecretClient _secretsClient;
+        private Dictionary<string,string> _configuration;
+        private Regex _rgx;
+        private ILogger _logger;
 
         private const string ApplicationIdName = "applicationId";
         private const string VaultUriName = "vaultUri";

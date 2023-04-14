@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using OneIdentity.DevOps.Common;
 using RestSharp;
 using Serilog;
@@ -10,10 +9,10 @@ namespace OneIdentity.DevOps.HashiCorpVault
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static VaultConnection _vaultClient;
-        private static Dictionary<string,string> _configuration;
-        private static ILogger _logger;
-        private static Regex _rgx;
+        private VaultConnection _vaultClient;
+        private Dictionary<string,string> _configuration;
+        private Regex _rgx;
+        private ILogger _logger;
 
         private const string Address = "http://127.0.0.1:8200";
         private const string MountPoint = "oneidentity";
