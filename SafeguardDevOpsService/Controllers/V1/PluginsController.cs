@@ -497,7 +497,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <param name="name">Name of an existing plugin</param>
         /// <param name="copyConfig">Copy the configuration of the existing plugin to the new plugin instance</param>
         /// <response code="200">Success</response>
-        /// <response code="400">Failed test</response>
+        /// <response code="400">Bad Request</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
@@ -522,7 +522,6 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </remarks>
         /// <param name="name">Name of a plugin</param>
         /// <response code="200">Success</response>
-        /// <response code="400">Failed test</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
