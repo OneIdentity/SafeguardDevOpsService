@@ -495,15 +495,16 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// This endpoint creates a new instance of a plugin from an existing plugin. The new instance can be configured independently from the original plugin instance.
         /// </remarks>
         /// <param name="name">Name of an existing plugin</param>
+        /// <param name="copyConfig">Copy the configuration of the existing plugin to the new plugin instance</param>
         /// <response code="200">Success</response>
         /// <response code="400">Failed test</response>
         /// <response code="404">Not found</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost("{name}/Instances")]
-        public ActionResult DuplicatePluginByName([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        public ActionResult DuplicatePluginByName([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromQuery] bool copyConfig = false)
         {
-            var plugin = pluginsLogic.CreatePluginInstanceByName(name);
+            var plugin = pluginsLogic.CreatePluginInstanceByName(name, copyConfig);
             if (plugin == null)
                 return NotFound();
 

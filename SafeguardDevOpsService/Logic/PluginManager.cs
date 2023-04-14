@@ -490,7 +490,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public Plugin DuplicatePlugin(string pluginName)
+        public Plugin DuplicatePlugin(string pluginName, bool copyConfig)
         {
             if (!IsLoadedPlugin(pluginName))
             {
@@ -537,7 +537,7 @@ namespace OneIdentity.DevOps.Logic
                 Name = name,
                 DisplayName = displayName,
                 Description = description,
-                Configuration = loadablePlugin.GetPluginInitialConfiguration(),
+                Configuration = copyConfig ? originalPluginInfo.Configuration : loadablePlugin.GetPluginInitialConfiguration(),
                 IsRootPlugin = false,
                 Version = originalPluginInfo.Version
             };

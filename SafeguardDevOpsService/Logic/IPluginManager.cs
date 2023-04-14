@@ -16,7 +16,7 @@ namespace OneIdentity.DevOps.Logic
         bool IsLoadedPlugin(string name);
         bool IsDisabledPlugin(string name);
 
-        Plugin DuplicatePlugin(string name);
+        Plugin DuplicatePlugin(string name, bool copyConfig);
 
         void RefreshPluginCredentials();
     }

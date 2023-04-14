@@ -143,9 +143,9 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public Plugin CreatePluginInstanceByName(string name)
+        public Plugin CreatePluginInstanceByName(string name, bool copyConfig)
         {
-            return _pluginManager.DuplicatePlugin(name);
+            return _pluginManager.DuplicatePlugin(name, copyConfig);
         }
 
         public Plugin GetPluginByName(string name)

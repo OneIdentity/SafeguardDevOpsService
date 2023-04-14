@@ -20,7 +20,7 @@ namespace OneIdentity.DevOps.Logic
         void DeletePluginByName(string name);
         void DeleteAllPluginInstancesByName(string name);
         Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name);
-        Plugin CreatePluginInstanceByName(string name);
+        Plugin CreatePluginInstanceByName(string name, bool copyConfig);
 
         IEnumerable<AccountMapping> GetAccountMappings(string name);
         AccountMapping GetAccountMappingById(string name, int accountId);
