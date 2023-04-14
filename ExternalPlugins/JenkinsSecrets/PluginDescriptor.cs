@@ -12,10 +12,10 @@ namespace OneIdentity.DevOps.JenkinsSecrets
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static HttpClient _secretsClient;
-        private static Dictionary<string,string> _configuration;
-        private static ILogger _logger;
-        private static Regex _rgx;
+        private HttpClient _secretsClient;
+        private Dictionary<string,string> _configuration;
+        private Regex _rgx;
+        private ILogger _logger;
 
         private const string Address = "https://127.0.0.1:8443";
         private const string User = "User Name";

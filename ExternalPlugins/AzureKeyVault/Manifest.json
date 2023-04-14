@@ -3,5 +3,5 @@
 	"Name": "AzureKeyVault",
 	"DisplayName": "Azure Key Vault",
 	"Assembly": "AzureKeyVault.dll",
-	"Version": "2.0.0.9999"
+	"Version": "2.1.0.9999"
 }

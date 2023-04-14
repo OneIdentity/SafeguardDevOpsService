@@ -3,10 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Serialization;
 using OneIdentity.DevOps.Common;
 using RestSharp;
@@ -24,8 +21,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
         private string _vcsOrganization = null;
         private string _vcsProject = null;
         private string _vcsSlug = null;
-
-        private static ILogger _logger;
+        private ILogger _logger;
 
         private const string _address = "http://circleci.com/api/v2";
         private const string OrganizationId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";

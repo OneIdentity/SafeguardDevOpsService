@@ -3,5 +3,5 @@
 	"Name": "KubernetesSecrets",
 	"DisplayName": "Kubernetes Secrets",
 	"Assembly": "KubernetesSecrets.dll",
-	"Version": "1.0.0.9999"
+	"Version": "1.1.0.9999"
 }
