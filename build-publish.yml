@@ -5,6 +5,7 @@ trigger:
     include:
       - master
       - release-*
+      - multipleplugininstance
   paths:
     exclude:
       - /**/*.md
