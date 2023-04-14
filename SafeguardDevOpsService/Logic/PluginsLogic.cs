@@ -47,6 +47,18 @@ namespace OneIdentity.DevOps.Logic
             return plugins.Where(x => x.IsDeleted == false).ToList();
         }
 
+        public IEnumerable<Plugin> GetAllPluginInstancesByName(string name, bool includeDeleted = false)
+        {
+            var plugins = _configDb.GetPluginInstancesByName(name).ToList();
+            plugins.ForEach(x => x.IsLoaded = _pluginManager.IsLoadedPlugin(x.Name));
+            plugins.ForEach(x => x.MappedAccountsCount = GetAccountMappingsCount(x.Name));
+
+            if (includeDeleted)
+                return plugins;
+
+            return plugins.Where(x => x.IsDeleted == false).ToList();
+        }
+
         private void InstallPlugin(ZipArchive zipArchive)
         {
             var manifestEntry = zipArchive.GetEntry(WellKnownData.ManifestPattern);
@@ -131,6 +143,11 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        public Plugin CreatePluginInstanceByName(string name)
+        {
+            return _pluginManager.DuplicatePlugin(name);
+        }
+
         public Plugin GetPluginByName(string name)
         {
             var plugin = _configDb.GetPluginByName(name);
@@ -145,12 +162,39 @@ namespace OneIdentity.DevOps.Logic
 
         public void DeletePluginByName(string name)
         {
-            //Don't actually delete the plugin configuration yet.  Mark the plugin to be deleted
-            // and then delete it on the next restart.
-            if (_configDb.DeletePluginByName(name))
+            var pluginInfo = _configDb.GetPluginByName(name);
+            if (pluginInfo != null)
             {
-                RestartManager.Instance.ShouldRestart = true;
+                // If the plugin is not the root plugin, then hard delete it and move on.
+                // If it is the root plugin, then don't actually delete the plugin configuration yet.
+                // Mark the plugin to be deleted and then delete it on the next restart.
+                if (_configDb.DeletePluginByName(name, !pluginInfo.IsRootPlugin) && pluginInfo.IsRootPlugin)
+                {
+                    RestartManager.Instance.ShouldRestart = true;
+                }
             }
+        }
+
+        public void DeleteAllPluginInstancesByName(string name)
+        {
+            var pluginInstances = _configDb.GetPluginInstancesByName(name);
+            foreach (var pluginInstance in pluginInstances)
+            {
+                DeleteAccountMappings(name);
+                RemovePluginVaultAccount(name);
+
+                if (pluginInstance.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Just soft delete the original plugin.
+                    _configDb.DeletePluginByName(name);
+                    continue;
+                }
+
+                // Hard delete all of the other instances.
+                _configDb.DeletePluginByName(name, true);
+            }
+
+            RestartManager.Instance.ShouldRestart = true;
         }
 
 

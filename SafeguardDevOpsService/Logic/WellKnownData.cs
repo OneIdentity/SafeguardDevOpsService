@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Policy;
 using Microsoft.AspNetCore.Http;
 using OneIdentity.DevOps.Common;
 
@@ -89,6 +90,7 @@ namespace OneIdentity.DevOps.Logic
         public static readonly string RestartNotice =
             "Safeguard Secrets Broker for DevOps needs to be restarted to complete installing this action.";
 
+        public static readonly int RandomStringLength = 10;
 
 
         public static string GetSppToken(HttpContext context)
@@ -164,5 +166,19 @@ namespace OneIdentity.DevOps.Logic
             return "UnknownConfig-UnknownVersion";
         }
 
+        public static string GenerateRandomId()
+        {
+            try
+            {
+                var random = new Random((int)DateTime.Now.Ticks);
+                const string pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+                var chars = Enumerable.Range(0, RandomStringLength).Select(x => pool[random.Next(0, pool.Length)]);
+                return new string(chars.ToArray());
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }

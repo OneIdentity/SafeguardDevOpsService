@@ -9,6 +9,7 @@ namespace OneIdentity.DevOps.ConfigDb
     {
         IEnumerable<Plugin> GetAllPlugins();
         Plugin GetPluginByName(string name);
+        IEnumerable<Plugin> GetPluginInstancesByName(string name);
         Plugin SavePluginConfiguration(Plugin plugin);
         bool DeletePluginByName(string name, bool hardDelete = false);
     }

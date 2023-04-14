@@ -1,4 +1,5 @@
 ﻿using System.Security;
+using OneIdentity.DevOps.Data;
 using OneIdentity.SafeguardDotNet;
 
 #pragma warning disable 1591
@@ -14,6 +15,8 @@ namespace OneIdentity.DevOps.Logic
         bool SendPassword(string name, string assetName, string accountName, SecureString password, string altAccountName = null);
         bool IsLoadedPlugin(string name);
         bool IsDisabledPlugin(string name);
+
+        Plugin DuplicatePlugin(string name);
 
         void RefreshPluginCredentials();
     }

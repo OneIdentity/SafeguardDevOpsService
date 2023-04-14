@@ -16,22 +16,21 @@ namespace OneIdentity.DevOps.CircleCISecrets
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static VaultConnection _secretsClient;
-        private static Dictionary<string,string> _configuration;
-        private static ILogger _logger;
-        private static Regex _rgx;
-        private static string _address = "http://circleci.com/api/v2";
+        private VaultConnection _secretsClient;
+        private Dictionary<string,string> _configuration;
+        private Regex _rgx;
         private ContextItem _contextItem = null;
         private string _vcsType = null;
         private string _vcsOrganization = null;
         private string _vcsProject = null;
         private string _vcsSlug = null;
 
-        private const string OrganizationId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
+        private static ILogger _logger;
 
+        private const string _address = "http://circleci.com/api/v2";
+        private const string OrganizationId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
         private const string OrganizationIdName = "Organization Id";
         private const string ContextName = "Context Name";
-
         private const string RepositoryUrlName = "Repository Url";
 
         public string Name => "CircleCISecrets";

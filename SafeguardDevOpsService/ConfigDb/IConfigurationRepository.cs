@@ -15,6 +15,7 @@ namespace OneIdentity.DevOps.ConfigDb
         void SaveAccountMappings(IEnumerable<AccountMapping> accounts);
         void DeleteAccountMappingsByKey(string key);
         void DeleteAccountMappings();
+        Plugin SetRootPlugin(string name, bool isRoot);
 
         IEnumerable<TrustedCertificate> GetAllTrustedCertificates();
         TrustedCertificate GetTrustedCertificateByThumbPrint(string thumbprint);

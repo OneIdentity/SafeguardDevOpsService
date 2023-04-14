@@ -10,6 +10,7 @@ using System.Threading;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Exceptions;
 using OneIdentity.SafeguardDotNet;
 
 namespace OneIdentity.DevOps.Logic
@@ -37,6 +38,12 @@ namespace OneIdentity.DevOps.Logic
             SslPolicyErrors sslPolicyErrors)
         {
             return CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger, _configDb);
+        }
+
+        private DevOpsException LogAndException(string msg, Exception ex = null)
+        {
+            _logger.Error(msg);
+            return new DevOpsException(msg, ex);
         }
 
         private void OnDirectoryCreate(object source, FileSystemEventArgs e)
@@ -119,17 +126,26 @@ namespace OneIdentity.DevOps.Logic
             {
                 if (plugin.IsDeleted)
                 {
-                    try
+                    var rootName = plugin.RootPluginName;
+                    var pluginInstances = _configDb.GetPluginInstancesByName(rootName);
+                    if (pluginInstances == null || pluginInstances.Count() == 1)
+                    {
+                        try
+                        {
+                            _configDb.DeletePluginByName(plugin.Name, true);
+
+                            var dirPath = Path.Combine(WellKnownData.PluginDirPath, plugin.Name);
+                            if (Directory.Exists(dirPath))
+                                Directory.Delete(dirPath, true);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error(ex, $"Failed to clean up the external plugin {plugin.Name}. {ex.Message}");
+                        }
+                    }
+                    else if (!plugin.IsRootPlugin)
                     {
                         _configDb.DeletePluginByName(plugin.Name, true);
-
-                        var dirPath = Path.Combine(WellKnownData.PluginDirPath, plugin.Name);
-                        if (Directory.Exists(dirPath)) 
-                            Directory.Delete(dirPath, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error(ex, $"Failed to clean up the external plugin {plugin.Name}. {ex.Message}");
                     }
                 }
 
@@ -188,7 +204,11 @@ namespace OneIdentity.DevOps.Logic
             var pluginFiles = Directory.GetFiles(pluginDirPath, WellKnownData.DllPattern);
             foreach (var file in pluginFiles)
             {
-                LoadRegisterPlugin(file);
+                var pluginInfo = LoadRegisterPlugin(file);
+                if (pluginInfo != null)
+                {
+                    LoadRegisterPluginInstances(pluginInfo);
+                }
             }
         }
 
@@ -314,7 +334,7 @@ namespace OneIdentity.DevOps.Logic
             return version;
         }
 
-        private void LoadRegisterPlugin(string pluginPath)
+        private Plugin LoadRegisterPlugin(string pluginPath)
         {
             try
             {
@@ -326,22 +346,22 @@ namespace OneIdentity.DevOps.Logic
                                 typeof(ILoadablePlugin).IsAssignableFrom(t)))
                 {
                     _logger.Information($"Loading plugin from path {pluginPath}.");
-                    var plugin = (ILoadablePlugin) Activator.CreateInstance(type);
+                    var loadablePlugin = (ILoadablePlugin) Activator.CreateInstance(type);
 
-                    if (plugin == null)
+                    if (loadablePlugin == null)
                     {
                         _logger.Warning($"Unable to instantiate plugin from {pluginPath}");
                         continue;
                     }
                     
-                    var name = plugin.Name;
-                    var displayName = plugin.DisplayName;
-                    var description = plugin.Description;
-                    plugin.SetLogger(_logger);
+                    var name = loadablePlugin.Name;
+                    var displayName = loadablePlugin.DisplayName;
+                    var description = loadablePlugin.Description;
+                    loadablePlugin.SetLogger(_logger);
 
                     _logger.Information($"Successfully loaded plugin {name} : {description}.");
 
-                    var pluginInstance = plugin;
+                    var pluginInstance = loadablePlugin;
 
                     var pluginInfo = _configDb.GetPluginByName(name);
 
@@ -366,6 +386,7 @@ namespace OneIdentity.DevOps.Logic
                                 DisplayName = displayName,
                                 Description = description,
                                 Configuration = pluginInstance.GetPluginInitialConfiguration(),
+                                IsRootPlugin = true,
                                 Version = pluginVersion
                             };
 
@@ -403,22 +424,11 @@ namespace OneIdentity.DevOps.Logic
                                 pluginInstance.SetPluginConfiguration(configuration);
                             }
 
-                            if (!string.Equals(pluginInfo.Name, name, StringComparison.OrdinalIgnoreCase)
-                                || !string.Equals(pluginInfo.Description, description,
-                                    StringComparison.OrdinalIgnoreCase)
-                                || !string.Equals(pluginInfo.DisplayName, displayName,
-                                    StringComparison.OrdinalIgnoreCase)
-                                || !string.Equals(pluginInfo.Version, pluginVersion,
-                                    StringComparison.OrdinalIgnoreCase))
-                            {
-                                pluginInfo.Name = name;
-                                pluginInfo.DisplayName = displayName;
-                                pluginInfo.Description = description;
-                                pluginInfo.Version = pluginVersion;
-
-                                _configDb.SavePluginConfiguration(pluginInfo);
-                            }
+                            _configDb.SetRootPlugin(pluginInstance.Name, true);
+                            pluginInfo = UpdatePluginInfo(new Plugin {Name = name, DisplayName = displayName, Description = description, Version = pluginVersion}, pluginInfo);
                         }
+
+                        return pluginInfo;
                     }
                     catch (Exception ex)
                     {
@@ -435,6 +445,128 @@ namespace OneIdentity.DevOps.Logic
             {
                 _logger.Error(ex, $"Failed to load plugin {Path.GetFileName(pluginPath)}: {ex.Message}.");
             }
+
+            return null;
+        }
+
+        private void LoadRegisterPluginInstances(Plugin pluginInfo)
+        {
+            var originalPluginInstance = LoadedPlugins[pluginInfo.Name];
+            var pluginInstances = _configDb.GetPluginInstancesByName(pluginInfo.Name);
+
+            foreach (var pluginInstance in pluginInstances)
+            {
+                if (pluginInstance.Name.Equals(pluginInfo.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                ILoadablePlugin loadablePlugin;
+                try
+                {
+                    var type = originalPluginInstance.GetType();
+                    loadablePlugin = Activator.CreateInstance(type) as ILoadablePlugin;
+
+                    if (loadablePlugin == null)
+                    {
+                        _logger.Error($"Unable to create a new instance of plugin from {pluginInstance.Name}");
+                        continue;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failed to create an instance of plugin {pluginInstance.Name} : {ex.Message}.");
+                    continue;
+                }
+
+                loadablePlugin.SetLogger(_logger);
+                loadablePlugin.SetPluginConfiguration(pluginInstance.Configuration);
+
+                UpdatePluginInfo(pluginInfo, _configDb.SetRootPlugin(pluginInstance.Name, false));
+
+                _logger.Information($"Successfully configured a new instance of plugin {pluginInstance.Name}.");
+
+                LoadedPlugins.Add(pluginInstance.Name, loadablePlugin);
+            }
+        }
+
+        public Plugin DuplicatePlugin(string pluginName)
+        {
+            if (!IsLoadedPlugin(pluginName))
+            {
+                throw LogAndException($"A existing plugin with the name {pluginName} not found.");
+            }
+
+            var originalPluginInstance = LoadedPlugins[pluginName];
+            ILoadablePlugin loadablePlugin;
+            try
+            {
+                var type = originalPluginInstance.GetType();
+                loadablePlugin = Activator.CreateInstance(type) as ILoadablePlugin;
+
+                if (loadablePlugin == null)
+                {
+                    throw LogAndException($"Unable to create a new instance of plugin from {pluginName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw LogAndException($"Failed to create an instance of plugin {pluginName}.", ex);
+            }
+
+            _logger.Information($"Successfully created a new instance of plugin {loadablePlugin.Name}.");
+
+            var name = Plugin.GetNewPluginInstanceName(loadablePlugin.Name);
+            if (name == null)
+            {
+                throw LogAndException($"Unable to create a unique plugin identifier for {loadablePlugin.Name}");
+            }
+                    
+            var displayName = loadablePlugin.DisplayName;
+            var description = loadablePlugin.Description;
+            loadablePlugin.SetLogger(_logger);
+
+            var originalPluginInfo = _configDb.GetPluginByName(pluginName);
+            if (originalPluginInfo == null)
+            {
+                throw LogAndException($"Cannot create a new instance of plugin {pluginName}. Failed to find the original plugin configuration.");
+            }
+
+            var pluginInfo = new Plugin 
+            {
+                Name = name,
+                DisplayName = displayName,
+                Description = description,
+                Configuration = loadablePlugin.GetPluginInitialConfiguration(),
+                IsRootPlugin = false,
+                Version = originalPluginInfo.Version
+            };
+
+            _configDb.SavePluginConfiguration(pluginInfo);
+            _logger.Information($"Successfully configured a new instance of plugin {name}.");
+
+            LoadedPlugins.Add(name, loadablePlugin);
+
+            return pluginInfo;
+        }
+
+        private Plugin UpdatePluginInfo(Plugin srcPlugin, Plugin dstPlugin)
+        {
+            if (!string.Equals(srcPlugin.Description, dstPlugin.Description,
+                    StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(srcPlugin.DisplayName, dstPlugin.DisplayName,
+                    StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(srcPlugin.Version, dstPlugin.Version,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                dstPlugin.DisplayName = srcPlugin.DisplayName;
+                dstPlugin.Description = srcPlugin.Description;
+                dstPlugin.Version = srcPlugin.Version;
+
+                _configDb.SavePluginConfiguration(dstPlugin);
+            }
+
+            return dstPlugin;
         }
 
         private Plugin ConfigureIfSystemOwned(Plugin plugin)
