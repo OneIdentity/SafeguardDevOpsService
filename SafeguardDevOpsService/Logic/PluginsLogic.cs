@@ -180,18 +180,18 @@ namespace OneIdentity.DevOps.Logic
             var pluginInstances = _configDb.GetPluginInstancesByName(name);
             foreach (var pluginInstance in pluginInstances)
             {
-                DeleteAccountMappings(name);
-                RemovePluginVaultAccount(name);
+                DeleteAccountMappings(pluginInstance.Name);
+                RemovePluginVaultAccount(pluginInstance.Name);
 
                 if (pluginInstance.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
                 {
                     // Just soft delete the original plugin.
-                    _configDb.DeletePluginByName(name);
+                    _configDb.DeletePluginByName(pluginInstance.Name);
                     continue;
                 }
 
                 // Hard delete all of the other instances.
-                _configDb.DeletePluginByName(name, true);
+                _configDb.DeletePluginByName(pluginInstance.Name, true);
             }
 
             RestartManager.Instance.ShouldRestart = true;

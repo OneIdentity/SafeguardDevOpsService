@@ -526,3 +526,114 @@ function Remove-SgDevOpsMappedAssetAccount
     # return the current list
     Get-SgDevOpsMappedAssetAccount $PluginName
 }
+
+<#
+.SYNOPSIS
+Get all of the instances of a plugin by name.
+
+.DESCRIPTION
+The Secrets Broker uses individualized plugins that are capable of pushing
+credentials to a specific third party vault. Secrets Broker is capable of
+creating and managing mutliple instances of each plugin. This cmdlet gets all of the
+instances of a plugin given the plugin name.
+
+.PARAMETER PluginName
+The name of an existing plugin.
+
+.PARAMETER IncludeDeleted
+Include any plugins that are marked to be deleted on the next restart.
+
+.EXAMPLE
+Get-SgDevOpsPluginInstances -PluginName HashiCorpVault -IncludeDeleted
+#>
+function Get-SgDevOpsPluginInstances
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$PluginName,
+        [Parameter(Mandatory=$false)]
+        [switch]$IncludeDeleted
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    Invoke-SgDevOpsMethod GET "Plugins/$PluginName/Instances" -Parameters @{ includeDeleted = [bool]$IncludeDeleted }
+}
+
+<#
+.SYNOPSIS
+Add a new instance of a plugin by name.
+
+.DESCRIPTION
+The Secrets Broker uses individualized plugins that are capable of pushing
+credentials to a specific third party vault. Secrets Broker is capable of
+creating and managing mutliple instances of each plugin. This cmdlet creates
+a new instance of an existing plugin and optionally copies the configuration
+of the original plugin to the new plugin instance.
+
+.PARAMETER PluginName
+The name of an exiting plugin.
+
+.PARAMETER CopyConfig
+Copy the configuration of the exiting plugin to the new plugin instance.
+
+.EXAMPLE
+Add-SgDevOpsPluginInstances -PluginName HashiCorpVault -CopyConfig
+#>
+function Add-SgDevOpsPluginInstances
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$PluginName,
+        [Parameter(Mandatory=$false)]
+        [switch]$CopyConfig
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    Invoke-SgDevOpsMethod POST "Plugins/$PluginName/Instances" -Parameters @{ copyConfig = [bool]$CopyConfig }
+}
+
+<#
+.SYNOPSIS
+Remove all instances of a plugin by name.
+
+.DESCRIPTION
+The Secrets Broker uses individualized plugins that are capable of pushing
+credentials to a specific third party vault. Secrets Broker is capable of
+creating and managing mutliple instances of each plugin. This cmdlet deletes
+all instances of a plugin by name and removes the plugin from Secrets Broker.
+
+.PARAMETER PluginName
+The name of an installed plugin.
+
+.PARAMETER Restart
+A boolean that indicates whether the Secrets Broker should be restarted
+after deleting all instances of the plugin.
+
+.EXAMPLE
+Delete-SgDevOpsPluginInstances
+
+.EXAMPLE
+Remove-SgDevOpsPluginInstances -PluginName HashiCorpVault -Restart
+#>
+function Remove-SgDevOpsPluginInstances
+{
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$PluginName,
+        [Parameter(Mandatory=$false)]
+        [switch]$Restart
+    )
+
+    if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
+    if (-not $PSBoundParameters.ContainsKey("Verbose")) { $VerbosePreference = $PSCmdlet.GetVariableValue("VerbosePreference") }
+
+    Invoke-SgDevOpsMethod DELETE "Plugins/$PluginName/Instances" -Parameters @{ restart = [bool]$Restart }
+}
+
