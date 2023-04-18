@@ -137,7 +137,11 @@ namespace OneIdentity.DevOps.Logic
         {
             try
             {
-                _eventListener?.Stop();
+                try
+                {
+                    _eventListener?.Stop();
+                } catch { }
+
                 _a2AContext?.Dispose();
                 _logger.Information("Password change monitoring has been stopped.");
             }

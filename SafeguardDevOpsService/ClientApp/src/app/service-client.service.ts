@@ -249,7 +249,7 @@ export class DevOpsServiceClient {
       // Ignore 404 Not Found, when there is no vault account
       .pipe(catchError((err) => {
         if (err.status === 404) {
-          return throwError(of(undefined));
+          return of(null);
         } else {
           return throwError(this.error<any>('getPluginVaultAccount'));
         }
