@@ -32,6 +32,8 @@ namespace OneIdentity.DevOps.CircleCISecrets
         public string Name => "CircleCISecrets";
         public string DisplayName => "CircleCI Secrets";
         public string Description => "This is the CircleCI Secrets plugin for updating passwords";
+        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password};
+        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -219,6 +221,18 @@ namespace OneIdentity.DevOps.CircleCISecrets
             }
 
             return true;
+        }
+
+        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        {
+            _logger.Error("This plugin instance does not handle the SshKey credential type.");
+            return false;
+        }
+
+        public bool SetApiKey(string asset, string account, string clientId, string clientSecret, string altAccountName = null)
+        {
+            _logger.Error("This plugin instance does not handle the ApiKey credential type.");
+            return false;
         }
 
         public void SetLogger(ILogger logger)

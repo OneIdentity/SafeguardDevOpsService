@@ -21,6 +21,8 @@ namespace OneIdentity.DevOps.KubernetesSecrets
         public string Name => "KubernetesSecrets";
         public string DisplayName => "Kubernetes Secrets";
         public string Description => "This is the Kubernetes Secrets plugin for updating passwords";
+        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password};
+        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -147,6 +149,18 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                 _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return false;
             }
+        }
+
+        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        {
+            _logger.Error("This plugin instance does not handle the SshKey credential type.");
+            return false;
+        }
+
+        public bool SetApiKey(string asset, string account, string clientId, string clientSecret, string altAccountName = null)
+        {
+            _logger.Error("This plugin instance does not handle the ApiKey credential type.");
+            return false;
         }
 
         public void SetLogger(ILogger logger)

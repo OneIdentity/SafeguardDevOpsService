@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Mail;
 using OneIdentity.DevOps.Common;
 using Serilog;
@@ -22,7 +23,9 @@ namespace OneIdentity.DevOps.SmsTextEmail
 
         public string Name => "SmsTextEmail";
         public string DisplayName => "Sms Text & Email";
-        public string Description => "This is the SMS email to text plugin";
+        public string Description => "This is the SMS email to text plugin. DO NOT USE IN PRODUCTION";
+        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
+        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -61,6 +64,12 @@ namespace OneIdentity.DevOps.SmsTextEmail
 
         public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
+            if (AssignedCredentialType != CredentialType.Password)
+            {
+                _logger.Error("This plugin instance does not handle the Password credential type.");
+                return false;
+            }
+
             var message = new MailMessage()
             {
                 From = new MailAddress(_configuration[FromAddressName]),
@@ -68,15 +77,43 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 Body = altAccountName != null ? $"{altAccountName}\n{password}" : $"{asset} - {account}\n{password}"
             };
 
-            foreach (var address in _toAddresses)
-            {
-                message.To.Add(new MailAddress(address));
-            }
-            
-            var client = new SmtpClient(_configuration[SmtpServerAddressName]);
-            client.Send(message);
+            return StoreCredential(message);
+        }
 
-            return true;
+        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.SshKey)
+            {
+                _logger.Error("This plugin instance does not handle the SshKey credential type.");
+                return false;
+            }
+
+            var message = new MailMessage()
+            {
+                From = new MailAddress(_configuration[FromAddressName]),
+                Subject = "Message from Safeguard Secrets Broker for DevOps",
+                Body = altAccountName != null ? $"{altAccountName}\n{sshKey}" : $"{asset} - {account}\n{sshKey}"
+            };
+
+            return StoreCredential(message);
+        }
+
+        public bool SetApiKey(string asset, string account, string clientId, string clientSecret, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.ApiKey)
+            {
+                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
+                return false;
+            }
+
+            var message = new MailMessage()
+            {
+                From = new MailAddress(_configuration[FromAddressName]),
+                Subject = "Message from Safeguard Secrets Broker for DevOps",
+                Body = altAccountName != null ? $"{altAccountName}\n{clientId}\n{clientSecret}" : $"{asset} - {account}\n{clientId}\n{clientSecret}"
+            };
+
+            return StoreCredential(message);
         }
 
         public void SetLogger(ILogger logger)
@@ -95,6 +132,19 @@ namespace OneIdentity.DevOps.SmsTextEmail
             _logger = null;
             _configuration.Clear();
             _configuration = null;
+        }
+
+        private bool StoreCredential(MailMessage message)
+        {
+            foreach (var address in _toAddresses)
+            {
+                message.To.Add(new MailAddress(address));
+            }
+            
+            var client = new SmtpClient(_configuration[SmtpServerAddressName]);
+            client.Send(message);
+
+            return true;
         }
     }
 }

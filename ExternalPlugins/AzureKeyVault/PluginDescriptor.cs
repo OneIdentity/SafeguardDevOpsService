@@ -23,6 +23,8 @@ namespace OneIdentity.DevOps.AzureKeyVault
         public string Name => "AzureKeyVault";
         public string DisplayName => "Azure Key Vault";
         public string Description => "This is the Azure Key Vault plugin for updating passwords";
+        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
+        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -88,6 +90,12 @@ namespace OneIdentity.DevOps.AzureKeyVault
 
         public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
+            if (AssignedCredentialType != CredentialType.Password)
+            {
+                _logger.Error("This plugin instance does not handle the Password credential type.");
+                return false;
+            }
+
             if (_secretsClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
             {
                 _logger.Error("No vault connection. Make sure that the plugin has been configured.");
@@ -105,6 +113,38 @@ namespace OneIdentity.DevOps.AzureKeyVault
                 _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return false;
             }
+        }
+
+        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.SshKey)
+            {
+                _logger.Error("This plugin instance does not handle the SshKey credential type.");
+                return false;
+            }
+
+            if (_secretsClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
+            {
+                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return false;
+            }
+            throw new NotImplementedException();
+        }
+
+        public bool SetApiKey(string asset, string account, string clientId, string clientSecret, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.ApiKey)
+            {
+                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
+                return false;
+            }
+
+            if (_secretsClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
+            {
+                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return false;
+            }
+            throw new NotImplementedException();
         }
 
         public void SetLogger(ILogger logger)

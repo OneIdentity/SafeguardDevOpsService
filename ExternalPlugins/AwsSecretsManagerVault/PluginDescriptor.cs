@@ -21,6 +21,8 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
         public string Name => "AwsSecretsManagerVault";
         public string DisplayName => "AWS Secrets Manager Vault";
         public string Description => "This is the AWS Secrets Manager Vault plugin for updating passwords";
+        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
+        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
 
         private bool ConfigurationIsValid => _configuration != null &&
             _configuration.ContainsKey(AccessKeyId) &&
@@ -37,6 +39,12 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
 
         public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
+            if (AssignedCredentialType != CredentialType.Password)
+            {
+                _logger.Error("This plugin instance does not handle the Password credential type.");
+                return false;
+            }
+
             if (_awsClient == null || !ConfigurationIsValid)
             {
                 _logger.Error("No vault connection. Make sure that the plugin has been configured.");
@@ -77,6 +85,38 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                     return false;
                 }
             }
+        }
+
+        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.SshKey)
+            {
+                _logger.Error("This plugin instance does not handle the SshKey credential type.");
+                return false;
+            }
+
+            if (_awsClient == null || !ConfigurationIsValid)
+            {
+                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return false;
+            }
+            throw new NotImplementedException();
+        }
+
+        public bool SetApiKey(string asset, string account, string clientId, string clientSecret, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.ApiKey)
+            {
+                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
+                return false;
+            }
+
+            if (_awsClient == null || !ConfigurationIsValid)
+            {
+                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return false;
+            }
+            throw new NotImplementedException();
         }
 
         public void SetPluginConfiguration(Dictionary<string, string> configuration)

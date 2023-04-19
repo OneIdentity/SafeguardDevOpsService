@@ -13,6 +13,7 @@ using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Logic;
+using CredentialType = CredentialManagement.CredentialType;
 
 namespace OneIdentity.DevOps.ConfigDb
 {

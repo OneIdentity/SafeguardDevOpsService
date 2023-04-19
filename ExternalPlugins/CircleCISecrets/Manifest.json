@@ -3,5 +3,5 @@
  	"Name": "CircleCISecrets",
 	"DisplayName": "CircleCI Secrets",
 	"Assembly": "CircleCISecrets.dll",
-	"Version": "1.1.0.9999"
+	"Version": "2.0.0.9999"
 }

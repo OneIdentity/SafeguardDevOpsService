@@ -3,5 +3,5 @@
 	"Name": "AwsSecretsManagerVault",
 	"DisplayName": "AWS Secrets Vault",
 	"Assembly": "AwsSecretsManagerVault.dll",
-	"Version": "1.2.0.9999"
+	"Version": "2.0.0.9999"
 }

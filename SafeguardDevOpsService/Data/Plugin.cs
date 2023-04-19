@@ -120,7 +120,7 @@ namespace OneIdentity.DevOps.Data
             return pluginId == null ? null : $"{pluginName}-{pluginId}";
         }
 
-        public static string GetPluginId(string pluginName)
+        private static string GetPluginId(string pluginName)
         {
             if (string.IsNullOrEmpty(pluginName))
             {
@@ -140,7 +140,7 @@ namespace OneIdentity.DevOps.Data
             return null;
         }
 
-        public static string GetRootPluginName(string pluginName)
+        private static string GetRootPluginName(string pluginName)
         {
             var idStr = GetPluginId(pluginName);
             if (idStr != null)
