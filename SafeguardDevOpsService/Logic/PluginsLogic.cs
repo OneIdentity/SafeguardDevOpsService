@@ -269,9 +269,10 @@ namespace OneIdentity.DevOps.Logic
             return new PluginState() {Disabled = plugin.IsDisabled};
         }
 
-        public IEnumerable<AccountMapping> GetAccountMappings(string name)
+        public IEnumerable<AccountMapping> GetAccountMappings(string name, bool includeAllInstances = false)
         {
-            if (_configDb.GetPluginByName(name) == null)
+            var plugin = _configDb.GetPluginByName(name);
+            if (plugin == null)
             {
                 var msg = $"Plugin {name} not found";
                 _logger.Error(msg);
@@ -280,7 +281,9 @@ namespace OneIdentity.DevOps.Logic
 
             var mappings = _configDb.GetAccountMappings();
 
-            var accountMappings = mappings.Where(x => x.VaultName.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+            var accountMappings = includeAllInstances ? mappings.Where(x => x.VaultName.StartsWith(plugin.RootPluginName, StringComparison.InvariantCultureIgnoreCase)) :
+                mappings.Where(x => x.VaultName.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+
             return accountMappings;
         }
 
