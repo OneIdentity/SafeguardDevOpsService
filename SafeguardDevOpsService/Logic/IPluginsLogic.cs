@@ -22,7 +22,7 @@ namespace OneIdentity.DevOps.Logic
         Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name);
         Plugin CreatePluginInstanceByName(string name, bool copyConfig);
 
-        IEnumerable<AccountMapping> GetAccountMappings(string name);
+        IEnumerable<AccountMapping> GetAccountMappings(string name, bool includeAllInstances = false);
         AccountMapping GetAccountMappingById(string name, int accountId);
         IEnumerable<AccountMapping> SaveAccountMappings(ISafeguardConnection sgConnection, string name, IEnumerable<A2ARetrievableAccount> accounts);
         void DeleteAccountMappings(string name);

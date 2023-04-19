@@ -242,9 +242,15 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("{name}/Accounts")]
-        public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromServices] IPluginsLogic pluginsLogic, 
+            [FromRoute] string name, [FromQuery] bool count = false, [FromQuery] bool includeAllInstances = false)
         {
-            var accountMappings = pluginsLogic.GetAccountMappings(name);
+            var accountMappings = pluginsLogic.GetAccountMappings(name, includeAllInstances);
+
+            if (count)
+            {
+                return Ok(accountMappings.Count());
+            }
 
             return Ok(accountMappings);
         }
