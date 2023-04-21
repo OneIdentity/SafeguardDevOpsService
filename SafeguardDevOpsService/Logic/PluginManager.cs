@@ -3,6 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -163,6 +164,7 @@ namespace OneIdentity.DevOps.Logic
                 if (configuration != null)
                 {
                     pluginInstance.SetPluginConfiguration(configuration);
+                    pluginInstance.AssignedCredentialType = pluginInfo.AssignedCredentialType;
                 }
             }
             else
@@ -171,17 +173,27 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public bool SendPassword(string name, string assetName, string accountName, SecureString password, string altAccountName)
+        public bool SendCredential(string name, string assetName, string accountName, string[] credential, CredentialType assignedCredentialType, string altAccountName = null)
         {
             if (LoadedPlugins.ContainsKey(name))
             {
                 var pluginInstance = LoadedPlugins[name];
-                if (pluginInstance != null)
-                    return pluginInstance.SetPassword(assetName, accountName, password.ToInsecureString(), altAccountName);
+                if (pluginInstance != null && credential.Length > 0)
+                {
+                    switch (assignedCredentialType)
+                    {
+                        case CredentialType.Password:
+                            return pluginInstance.SetPassword(assetName, accountName, credential.FirstOrDefault(), altAccountName);
+                        case CredentialType.SshKey:
+                            return pluginInstance.SetSshKey(assetName, accountName, credential.FirstOrDefault(), altAccountName);
+                        case CredentialType.ApiKey:
+                            return pluginInstance.SetApiKey(assetName, accountName, credential, altAccountName);
+                    }
+                }
             }
             else
             {
-                _logger.Error($"Send password to plugin failed.  No plugin {name} found.");
+                _logger.Error($"Send credential to plugin failed.  No plugin {name} found or missing credential.");
             }
 
             return false;
@@ -212,7 +224,7 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        public void SendPluginVaultCredentials(string name, string apiKey)
+        private void SendPluginVaultCredentials(string name, string apiKey)
         {
             var pluginInstance = LoadedPlugins[name];
             if (pluginInstance != null)
@@ -288,25 +300,66 @@ namespace OneIdentity.DevOps.Logic
 
         private string GetPluginCredential(string name, string apiKey)
         {
+            var credential = GetAccountCredential(name, apiKey, CredentialType.Password);
+            return credential?.FirstOrDefault();
+        }
+
+        public string[] GetAccountCredential(string name, string a2AApiKey, CredentialType assignedType)
+        {
             var sppAddress = _configDb.SafeguardAddress;
             var userCertificate = _configDb.UserCertificateBase64Data;
             var passPhrase = _configDb.UserCertificatePassphrase?.ToSecureString();
             var apiVersion = _configDb.ApiVersion;
             var ignoreSsl = _configDb.IgnoreSsl;
 
-            if (sppAddress != null && userCertificate != null && apiVersion.HasValue && ignoreSsl.HasValue && apiKey != null)
+            if (sppAddress != null && userCertificate != null && apiVersion.HasValue && ignoreSsl.HasValue && a2AApiKey != null)
             {
-                // connect to Safeguard
-                var a2AContext = (ignoreSsl == true) ? 
-                    Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, apiVersion.Value, true) : 
-                    Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
-                using (var password = a2AContext.RetrievePassword(apiKey.ToSecureString()))
+                try
                 {
-                    return password.ToInsecureString();
+                    // connect to Safeguard
+                    var a2AContext = (ignoreSsl == true)
+                        ? Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase,
+                            apiVersion.Value, true)
+                        : Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase,
+                            CertificateValidationCallback, apiVersion.Value);
+                    switch (assignedType)
+                    {
+                        case CredentialType.Password:
+                        {
+                            using var password = a2AContext.RetrievePassword(a2AApiKey.ToSecureString());
+                            return new[] { password.ToInsecureString() };
+                        }
+                        case CredentialType.SshKey:
+                        {
+                            using var sshKey = a2AContext.RetrievePrivateKey(a2AApiKey.ToSecureString());
+                            return new[] { sshKey.ToInsecureString().ReplaceLineEndings(string.Empty) };
+                        }
+                        case CredentialType.ApiKey:
+                        {
+                            var apiKeySecrets = a2AContext.RetrieveApiKeySecret(a2AApiKey.ToSecureString());
+                            var apiKeys = new List<string>();
+                            foreach (var apiKey in apiKeySecrets)
+                            {
+                                using (apiKey)
+                                {
+                                    apiKeys.Add(apiKey.ToString());
+                                }
+                            }
+
+                            return apiKeys.ToArray();
+                        }
+                        default:
+                            _logger.Error($"Failed to recognize the assigned credential for the {name} plugin.");
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Unable to get the credential for {name} plugin: {ex.Message}.", ex);
                 }
             }
 
-            _logger.Error($"Unable to get the vault credential for {name} plugin.");
+            _logger.Error($"Unable to get the credential for {name} plugin.");
             return null;
         }
 
@@ -357,9 +410,8 @@ namespace OneIdentity.DevOps.Logic
                     var name = loadablePlugin.Name;
                     var displayName = loadablePlugin.DisplayName;
                     var description = loadablePlugin.Description;
+                    var supportedCredentialTypes = loadablePlugin.SupportedCredentialTypes;
                     loadablePlugin.SetLogger(_logger);
-
-                    _logger.Information($"Successfully loaded plugin {name} : {description}.");
 
                     var pluginInstance = loadablePlugin;
 
@@ -385,6 +437,7 @@ namespace OneIdentity.DevOps.Logic
                                 Name = name,
                                 DisplayName = displayName,
                                 Description = description,
+                                SupportedCredentialTypes = supportedCredentialTypes,
                                 Configuration = pluginInstance.GetPluginInitialConfiguration(),
                                 IsRootPlugin = true,
                                 Version = pluginVersion
@@ -422,10 +475,19 @@ namespace OneIdentity.DevOps.Logic
                                 }
 
                                 pluginInstance.SetPluginConfiguration(configuration);
+                                pluginInstance.AssignedCredentialType = pluginInfo.AssignedCredentialType;
+
                             }
 
                             _configDb.SetRootPlugin(pluginInstance.Name, true);
-                            pluginInfo = UpdatePluginInfo(new Plugin {Name = name, DisplayName = displayName, Description = description, Version = pluginVersion}, pluginInfo);
+                            pluginInfo = UpdatePluginInfo(new Plugin
+                            {
+                                Name = name, 
+                                DisplayName = displayName, 
+                                Description = description, 
+                                SupportedCredentialTypes = supportedCredentialTypes, 
+                                Version = pluginVersion
+                            }, pluginInfo);
                         }
 
                         return pluginInfo;
@@ -481,8 +543,11 @@ namespace OneIdentity.DevOps.Logic
 
                 loadablePlugin.SetLogger(_logger);
                 loadablePlugin.SetPluginConfiguration(pluginInstance.Configuration);
+                loadablePlugin.AssignedCredentialType = pluginInstance.AssignedCredentialType;
 
-                UpdatePluginInfo(pluginInfo, _configDb.SetRootPlugin(pluginInstance.Name, false));
+                var dstPluginInstance = _configDb.SetRootPlugin(pluginInstance.Name, false);
+
+                UpdatePluginInfo(pluginInfo, dstPluginInstance);
 
                 _logger.Information($"Successfully configured a new instance of plugin {pluginInstance.Name}.");
 
@@ -538,6 +603,7 @@ namespace OneIdentity.DevOps.Logic
                 DisplayName = displayName,
                 Description = description,
                 Configuration = copyConfig ? originalPluginInfo.Configuration : loadablePlugin.GetPluginInitialConfiguration(),
+                SupportedCredentialTypes = loadablePlugin.SupportedCredentialTypes,
                 IsRootPlugin = false,
                 Version = originalPluginInfo.Version
             };
@@ -556,11 +622,15 @@ namespace OneIdentity.DevOps.Logic
                     StringComparison.OrdinalIgnoreCase)
                 || !string.Equals(srcPlugin.DisplayName, dstPlugin.DisplayName,
                     StringComparison.OrdinalIgnoreCase)
+                || (srcPlugin.SupportedCredentialTypes != null && 
+                    dstPlugin.SupportedCredentialTypes != null && 
+                    !srcPlugin.SupportedCredentialTypes.SequenceEqual(dstPlugin.SupportedCredentialTypes))
                 || !string.Equals(srcPlugin.Version, dstPlugin.Version,
-                    StringComparison.OrdinalIgnoreCase))
+                StringComparison.OrdinalIgnoreCase))
             {
                 dstPlugin.DisplayName = srcPlugin.DisplayName;
                 dstPlugin.Description = srcPlugin.Description;
+                dstPlugin.SupportedCredentialTypes = srcPlugin.SupportedCredentialTypes;
                 dstPlugin.Version = srcPlugin.Version;
 
                 _configDb.SavePluginConfiguration(dstPlugin);
@@ -642,17 +712,6 @@ namespace OneIdentity.DevOps.Logic
         public bool IsLoadedPlugin(string name)
         {
             return (LoadedPlugins.ContainsKey(name));
-        }
-
-        public bool IsDisabledPlugin(string name)
-        {
-            if (LoadedPlugins.ContainsKey(name))
-            {
-                var plugin = _configDb.GetPluginByName(name);
-                return plugin.IsDisabled;
-            }
-
-            return true;
         }
 
         public void Dispose()

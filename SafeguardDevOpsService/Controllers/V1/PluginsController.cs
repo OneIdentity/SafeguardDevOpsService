@@ -147,7 +147,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin must be installed and configured individually.
         ///
-        /// This endpoint sets the configuration for a specific plugin by name.
+        /// This endpoint sets the configuration for a specific plugin by name. The contents of the configuration dictionary are plugin
+        /// specific. Each plugin will have isn't own set of configuration parameters. The AssignedCredentialType property specifies
+        /// what type of credential the plugin instance will handle. The valid types are Password, ApiKey and SshKey.
         /// </remarks>
         /// <param name="pluginConfiguration">Object containing a JSON configuration string.</param>
         /// <param name="name">Name of plugin to update</param>

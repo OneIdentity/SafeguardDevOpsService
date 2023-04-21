@@ -103,7 +103,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             throw new NotImplementedException();
         }
 
-        public bool SetApiKey(string asset, string account, string clientId, string clientSecret, string altAccountName = null)
+        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
         {
             if (AssignedCredentialType != CredentialType.ApiKey)
             {
@@ -116,7 +116,10 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                 _logger.Error("No vault connection. Make sure that the plugin has been configured.");
                 return false;
             }
-            throw new NotImplementedException();
+
+            // The rest of the implementation goes here.
+
+            return true;
         }
 
         public void SetPluginConfiguration(Dictionary<string, string> configuration)

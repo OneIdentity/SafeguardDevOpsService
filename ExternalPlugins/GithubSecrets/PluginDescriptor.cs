@@ -143,7 +143,7 @@ namespace OneIdentity.DevOps.GithubSecrets
             return false;
         }
 
-        public bool SetApiKey(string asset, string account, string clientId, string clientSecret, string altAccountName = null)
+        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
         {
             _logger.Error("This plugin instance does not handle the ApiKey credential type.");
             return false;

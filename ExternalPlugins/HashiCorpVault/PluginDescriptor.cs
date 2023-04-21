@@ -126,7 +126,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
             return StoreCredential(name, "sshkey", sshKey);
         }
 
-        public bool SetApiKey(string asset, string account, string clientId, string clientSecret, string altAccountName = null)
+        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
         {
             if (AssignedCredentialType != CredentialType.ApiKey)
             {
@@ -142,7 +142,8 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
-            return StoreCredential(name, clientId, clientSecret);
+            // Need to send all of the keys. Convert each apiKey from a JSON string and send it.
+            return StoreCredential(name, null, null);
         }
 
         public void SetLogger(ILogger logger)

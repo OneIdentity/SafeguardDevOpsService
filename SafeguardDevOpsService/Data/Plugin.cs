@@ -1,9 +1,11 @@
 ﻿
 using System.Collections.Generic;
 using LiteDB;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Logic;
+using JsonHelper = OneIdentity.DevOps.Logic.JsonHelper;
 
 namespace OneIdentity.DevOps.Data
 {
@@ -27,6 +29,11 @@ namespace OneIdentity.DevOps.Data
         /// Description of the plugin
         /// </summary>
         public string Description { get; set; }
+
+        /// <summary>
+        /// List of credential types that the plugin supports
+        /// </summary>
+        public CredentialType[] SupportedCredentialTypes { get; set; }
 
         /// <summary>
         /// Base64 representation of the plugin (write-only)

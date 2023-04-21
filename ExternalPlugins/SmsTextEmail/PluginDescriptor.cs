@@ -98,7 +98,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
             return StoreCredential(message);
         }
 
-        public bool SetApiKey(string asset, string account, string clientId, string clientSecret, string altAccountName = null)
+        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
         {
             if (AssignedCredentialType != CredentialType.ApiKey)
             {
@@ -106,11 +106,13 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 return false;
             }
 
+            // Need to send all of the keys. For this plugin just concatenate them all together and send one text.
             var message = new MailMessage()
             {
                 From = new MailAddress(_configuration[FromAddressName]),
                 Subject = "Message from Safeguard Secrets Broker for DevOps",
-                Body = altAccountName != null ? $"{altAccountName}\n{clientId}\n{clientSecret}" : $"{asset} - {account}\n{clientId}\n{clientSecret}"
+                //Body = altAccountName != null ? $"{altAccountName}\n{clientId}\n{clientSecret}" : $"{asset} - {account}\n{clientId}\n{clientSecret}"
+                Body = altAccountName != null ? $"{altAccountName}\n{string.Empty}\n{string.Empty}" : $"{asset} - {account}\n{string.Empty}\n{string.Empty}"
             };
 
             return StoreCredential(message);
