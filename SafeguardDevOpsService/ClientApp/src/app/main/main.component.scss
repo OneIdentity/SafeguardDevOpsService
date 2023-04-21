@@ -209,11 +209,16 @@ mat-drawer-container {
   .header {
     font-size: 2em;
     font-weight: 300;
+    margin-right: 20px;
     margin-bottom: 10px;
   }
 
   .edit-text {
     color: $iris-blue;
+  }
+
+  .alert-text {
+    color: $phoenix-red;
   }
 
   .pointer {
@@ -223,13 +228,18 @@ mat-drawer-container {
   .accounts-container {
     float: right;
     display: flex;
+    align-items: center;
     color: $black-9;
 
     .count {
       font-size: 3em;
       font-weight: 400;
       color: $black-6;
-      padding: 10px 8px 0 0;
+      padding: 0 10px 0 0;
+    }
+
+    .space {
+      margin-left: 20px;
     }
   }
 }

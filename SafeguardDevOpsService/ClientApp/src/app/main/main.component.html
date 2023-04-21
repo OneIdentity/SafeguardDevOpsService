@@ -34,7 +34,8 @@
         [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
         <mat-icon>history</mat-icon>View Monitor Event History
       </button>
-      <button mat-menu-item (click)="restart()" [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
+      <button mat-menu-item (click)="restart()"
+        [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
         <mat-icon>refresh</mat-icon>Restart Secrets Broker
       </button>
       <button mat-menu-item (click)="deleteConfig()"
@@ -75,9 +76,11 @@
         </div>
         <button mat-flat-button class="monitoring-button start-monitoring"
           *ngIf="!isMonitoring && isMonitoringAvailable && !needsSSLEnabled" (click)="updateMonitoring(true)"
-          [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Start Monitoring</button>
+          [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Start
+          Monitoring</button>
         <button mat-flat-button class="monitoring-button stop-monitoring" *ngIf="isMonitoring && isMonitoringAvailable"
-          (click)="updateMonitoring(false)" [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Stop
+          (click)="updateMonitoring(false)"
+          [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Stop
           Monitoring</button>
       </div>
 
@@ -132,7 +135,8 @@
             <div>
               <button mat-button class="link-button cert-link" color="primary"
                 (click)="viewCertificate($event, 'Client')"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' disableRipple>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
+                disableRipple>
                 <mat-icon class="green-icon" inline=true *ngIf="passedTrustChainValidation">check_circle</mat-icon>
                 <mat-icon class="yellow-icon" inline=true *ngIf="!passedTrustChainValidation">error_outline</mat-icon>
                 &nbsp;View Details
@@ -146,13 +150,15 @@
 
             <div *ngIf="!webServerCertAdded || needsWebCertificate">
               <button mat-button class="link-button cert-link" (click)="addCertificate($event, 'Web Server')"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' color='primary' disableRipple>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
+                color='primary' disableRipple>
                 <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>&nbsp;View Details
               </button>
             </div>
             <div *ngIf="webServerCertAdded && !needsWebCertificate">
               <button mat-button class="link-button cert-link" (click)="viewCertificate($event,'Web Server')"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' color='primary' disableRipple>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
+                color='primary' disableRipple>
                 <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
               </button>
             </div>
@@ -161,12 +167,13 @@
             <div class="info-label">Trusted Certificates</div>
             <div *ngIf="!trustedCertificates?.length || needsTrustedCertificates">
               <button mat-button class="link-button cert-link" (click)='viewTrustedCertificates($event)'
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' color='primary'
-                disableRipple>Add/Import Certificates</button>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
+                color='primary' disableRipple>Add/Import Certificates</button>
             </div>
             <div *ngIf="trustedCertificates?.length">
               <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting' color='primary' disableRipple>
+                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
+                color='primary' disableRipple>
                 <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
               </button>
             </div>
@@ -215,17 +222,24 @@
     </mat-card>
 
     <ng-container *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations">
-      <ng-container *ngFor="let plugin of plugins">
+      <ng-container *ngFor="let plugin of plugins; let index = index, trackBy: trackByFunc">
         <div [ngClass]="['plugin-container','configured',isMonitoring?'monitored':'','disabled:'+plugin.IsDisabled]"
-          (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup">
+          (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup && !plugin.Rendered">
 
           <ng-container *ngIf="plugin.IsLoaded">
             <div class="accounts-container">
-              <div class="count">{{plugin.MappedAccountsCount}}</div>
+              <div class="count" *ngIf="pluginInstances[plugin.RootPluginName].Count > 1">
+                {{pluginInstances[plugin.RootPluginName].Count}}
+              </div>
+              <div *ngIf="pluginInstances[plugin.RootPluginName].Count > 1">
+                <div>Instances</div>
+              </div>
+              <div class="space" *ngIf="pluginInstances[plugin.RootPluginName].Count > 1"></div>
+              <div class="count">{{pluginInstances[plugin.RootPluginName].AllMappedAccountsCount}}</div>
               <div>
                 <div>Managed</div>
-                <div *ngIf="plugin.MappedAccountsCount == 1">Account</div>
-                <div *ngIf="plugin.MappedAccountsCount != 1">Accounts</div>
+                <div *ngIf="pluginInstances[plugin.RootPluginName].AllMappedAccountsCount == 1">Account</div>
+                <div *ngIf="pluginInstances[plugin.RootPluginName].AllMappedAccountsCount != 1">Accounts</div>
               </div>
             </div>
             <div class="header">{{plugin.DisplayName}}</div>
@@ -238,11 +252,18 @@
 
           <ng-container *ngIf="!plugin.IsLoaded">
             <div class="accounts-container pointer">
-              <div class="count">{{plugin.MappedAccountsCount}}</div>
+              <div class="count" *ngIf="pluginInstances[plugin.RootPluginName].Count > 1">
+                {{pluginInstances[plugin.RootPluginName].Count}}
+              </div>
+              <div *ngIf="pluginInstances[plugin.RootPluginName].Count > 1">
+                <div>Instances</div>
+              </div>
+              <div class="space" *ngIf="pluginInstances[plugin.RootPluginName].Count > 1"></div>
+              <div class="count">{{pluginInstances[plugin.RootPluginName].AllMappedAccountsCount}}</div>
               <div>
                 <div>Managed</div>
-                <div *ngIf="plugin.MappedAccountsCount == 1">Account</div>
-                <div *ngIf="plugin.MappedAccountsCount != 1">Accounts</div>
+                <div *ngIf="pluginInstances[plugin.RootPluginName].AllMappedAccountsCount == 1">Account</div>
+                <div *ngIf="pluginInstances[plugin.RootPluginName].AllMappedAccountsCount != 1">Accounts</div>
               </div>
             </div>
             <div class="restore-container pointer">
@@ -259,7 +280,7 @@
                 </div>
               </div>
             </div>
-            <div class="edit-text pointer">This plugin needs to be restored or upgraded.</div>
+            <div class="alert-text pointer">This plugin needs to be restored or upgraded.</div>
           </ng-container>
         </div>
       </ng-container>

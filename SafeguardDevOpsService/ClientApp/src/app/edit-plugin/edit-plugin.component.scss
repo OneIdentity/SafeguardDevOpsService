@@ -127,3 +127,23 @@ table {
     margin-right: 15px;
   }
 }
+
+.selection-header {
+  display: flex;
+  width: 100%;
+  padding-bottom: 20px;
+
+  div.center {
+    line-height: 36px;
+  }
+
+  .selection-row {
+    flex: 1 0 auto;
+    text-align: right;
+  }
+
+  .spacer {
+    flex: 1;
+    text-align: left;
+  }
+}

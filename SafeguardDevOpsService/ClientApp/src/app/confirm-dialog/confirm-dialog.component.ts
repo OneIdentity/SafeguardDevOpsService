@@ -12,6 +12,7 @@ export class ConfirmDialogComponent implements OnInit {
   message = '';
   confirmText = 'OK';
   showCancel = true;
+  showNo = false;
   showRestart = false;
   showSecretsBrokerOnly = false;
   showPassphrase = false;
@@ -29,6 +30,7 @@ export class ConfirmDialogComponent implements OnInit {
     this.message = this.data.message ?? this.message;
     this.confirmText = this.data.confirmText ?? ((this.title.length > 0) ? this.title : this.confirmText);
     this.showCancel = this.data.showCancel ?? this.showCancel;
+    this.showNo = this.data.showNo ?? this.showNo;
     this.showRestart = this.data.showRestart ?? this.showRestart;
     this.showSecretsBrokerOnly = this.data.showSecretsBrokerOnly ?? this.showSecretsBrokerOnly;
     this.showPassphrase = this.data.showPassphrase ?? this.showPassphrase;
@@ -38,7 +40,7 @@ export class ConfirmDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 
-  confirm(): void {
-    this.dialogRef.close({ result: 'OK', restart: this.restart, secretsBrokerOnly: this.secretsBrokerOnly, passphrase: this.passphrase });
+  confirm(confirm: boolean): void {
+    this.dialogRef.close({ result: confirm ? 'OK' : 'No', restart: this.restart, secretsBrokerOnly: this.secretsBrokerOnly, passphrase: this.passphrase });
   }
 }
