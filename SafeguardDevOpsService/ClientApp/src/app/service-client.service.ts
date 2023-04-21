@@ -222,6 +222,13 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('postPlugin')));
   }
 
+  postPluginInstance(name: string, copyConfig: boolean = false): Observable<any> {
+    const options = Object.assign({ params: { copyConfig: copyConfig } }, this.authHeader());
+
+    return this.http.post(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Instances', null, options)
+      .pipe(catchError(this.error<any>('postPluginInstance')));
+  }
+
   getPluginAccounts(name: string): Observable<any[]> {
     return this.http.get(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Accounts', this.authHeader())
       .pipe(catchError(this.error<any>('getPluginAccounts')));
@@ -272,12 +279,20 @@ export class DevOpsServiceClient {
     .pipe(catchError(this.error<any>('putPluginConfiguration')));
   }
 
-  deletePluginConfiguration(name: string, restartService: boolean): Observable<any> {
+  deletePluginConfiguration(name: string, restartService: boolean = false): Observable<any> {
     const options = Object.assign({ responseType: 'text', params: { restart: restartService } }, this.authHeader());
 
     return this.http.delete(this.BASE + 'Plugins/' + encodeURIComponent(name), options)
     .pipe(catchError(this.error<any>('deletePluginConfiguration')));
   }
+
+  deleteAllPluginConfigurations(name: string, restartService: boolean = false): Observable<any> {
+    const options = Object.assign({ responseType: 'text', params: { restart: restartService } }, this.authHeader());
+
+    return this.http.delete(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Instances', options)
+    .pipe(catchError(this.error<any>('deleteAllPluginConfigurations')));
+  }
+
 
   getPluginDisableState(name: string): Observable<any> {
     return this.http.get(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Disabled', this.authHeader())
@@ -285,7 +300,7 @@ export class DevOpsServiceClient {
   }
 
   postPluginDisableState(name: string, state: boolean): Observable<any> {
-    return this.http.post(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Disabled', { Disabled: state}, this.authHeader())
+    return this.http.post(this.BASE + 'Plugins/' + encodeURIComponent(name) + '/Disabled', { Disabled: state }, this.authHeader())
       .pipe(catchError(this.error<any>('postPluginDisableState')));
   }
 
