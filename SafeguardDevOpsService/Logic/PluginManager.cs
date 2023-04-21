@@ -159,18 +159,22 @@ namespace OneIdentity.DevOps.Logic
             {
                 var pluginInstance = LoadedPlugins[name];
                 var pluginInfo = _configDb.GetPluginByName(name);
-                var configuration = pluginInfo?.Configuration;
-
-                if (configuration != null)
+                if (pluginInfo != null)
                 {
-                    pluginInstance.SetPluginConfiguration(configuration);
+                    var configuration = pluginInfo.Configuration;
+
+                    if (configuration != null)
+                    {
+                        pluginInstance.SetPluginConfiguration(configuration);
+                    }
+
                     pluginInstance.AssignedCredentialType = pluginInfo.AssignedCredentialType;
+
+                    return;
                 }
             }
-            else
-            {
-                _logger.Error($"Plugin configuration failed. No plugin {name} found.");
-            }
+
+            _logger.Error($"Plugin configuration failed. No plugin {name} found.");
         }
 
         public bool SendCredential(string name, string assetName, string accountName, string[] credential, CredentialType assignedCredentialType, string altAccountName = null)
@@ -342,7 +346,16 @@ namespace OneIdentity.DevOps.Logic
                             {
                                 using (apiKey)
                                 {
-                                    apiKeys.Add(apiKey.ToString());
+                                    var pluginApiKey = new ApiKey()
+                                    {
+                                        Id = apiKey.Id,
+                                        Name = apiKey.Name,
+                                        Description = apiKey.Description,
+                                        ClientId = apiKey.ClientId,
+                                        ClientSecret = apiKey.ClientSecret.ToInsecureString(),
+                                        ClientSecretId = apiKey.ClientSecretId
+                                    };
+                                    apiKeys.Add(pluginApiKey.ToString());
                                 }
                             }
 
@@ -475,9 +488,15 @@ namespace OneIdentity.DevOps.Logic
                                 }
 
                                 pluginInstance.SetPluginConfiguration(configuration);
-                                pluginInstance.AssignedCredentialType = pluginInfo.AssignedCredentialType;
-
                             }
+
+                            if (pluginInfo.AssignedCredentialType == CredentialType.Unknown)
+                            {
+                                pluginInfo.AssignedCredentialType = pluginInfo.AssignedCredentialType == CredentialType.Unknown ? 
+                                    CredentialType.Password : pluginInfo.AssignedCredentialType;
+                                _configDb.SavePluginConfiguration(pluginInfo);
+                            }
+                            pluginInstance.AssignedCredentialType = pluginInfo.AssignedCredentialType;
 
                             _configDb.SetRootPlugin(pluginInstance.Name, true);
                             pluginInfo = UpdatePluginInfo(new Plugin

@@ -20,6 +20,6 @@ namespace OneIdentity.DevOps.Data
         /// Valid values are Password, ApiKey and SshKey.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Unknown;
     }
 }

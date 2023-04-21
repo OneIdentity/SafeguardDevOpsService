@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
@@ -216,8 +217,15 @@ namespace OneIdentity.DevOps.Logic
                 throw new DevOpsException(msg, HttpStatusCode.BadRequest);
             }
 
-            plugin.Configuration = pluginConfiguration.Configuration;
-            plugin.AssignedCredentialType = pluginConfiguration.AssignedCredentialType;
+            if (pluginConfiguration.Configuration != null)
+            {
+                plugin.Configuration = pluginConfiguration.Configuration;
+            }
+            if (pluginConfiguration.AssignedCredentialType != CredentialType.Unknown)
+            {
+                plugin.AssignedCredentialType = pluginConfiguration.AssignedCredentialType;
+            }
+
             plugin = _configDb.SavePluginConfiguration(plugin);
             plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
             _pluginManager.SetConfigurationForPlugin(name);
