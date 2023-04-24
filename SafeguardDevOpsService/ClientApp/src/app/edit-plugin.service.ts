@@ -22,7 +22,6 @@ export class EditPluginService {
 
   public instanceIndex: number = 0;
   public pluginInstances = [];
-  private originalPluginInstances = [];
 
   public get plugin() {
     return this.pluginInstances[this.instanceIndex];
@@ -80,8 +79,7 @@ export class EditPluginService {
 
   openProperties(pluginInstances: any): void {
     this.instanceIndex = 0;
-    this.originalPluginInstances = pluginInstances;
-    this.pluginInstances = Object.assign([], pluginInstances);
+    this.pluginInstances = pluginInstances;
 
     pluginInstances.forEach(p => {
       p.Accounts = [];
@@ -112,7 +110,7 @@ export class EditPluginService {
 
   closeProperties(saved: boolean = false, reload: boolean = false): void {
     this.notifyEventSource.next({
-      plugin: saved ? this.pluginInstances[0] : this.originalPluginInstances[0],
+      plugin: null,
       mode: EditPluginMode.None,
       restartMonitoring: saved,
       reload: reload

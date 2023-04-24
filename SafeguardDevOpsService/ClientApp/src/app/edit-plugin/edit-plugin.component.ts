@@ -49,9 +49,6 @@ export class EditPluginComponent implements OnInit {
   public get instanceCount() {
     return this.editPluginService.pluginInstances.length;
   }
-  public get isPluginDisabled() {
-    return this.plugin.IsDisabled;
-  }
 
   ngOnInit(): void {
     this.editPluginService.pluginInstances.forEach(p => {
@@ -240,10 +237,6 @@ export class EditPluginComponent implements OnInit {
             this.snackBar.open('Test configuration failed: ' + this.error);
           });
     }
-  }
-
-  updatePluginDisabled(): void {
-    this.plugin.IsDisabled = this.isPluginDisabled;
   }
 
   private mapConfiguration(plugin: any): void {

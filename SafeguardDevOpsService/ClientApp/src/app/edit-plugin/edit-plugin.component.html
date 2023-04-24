@@ -71,7 +71,7 @@
         </div>
         <div class="field-text">This account will be used by Secrets Broker to pull new passwords from Safeguard</div>
       </div>
-      <mat-checkbox *ngIf="!plugin.IsSystemOwned" [(ngModel)]="isPluginDisabled" (change)="updatePluginDisabled()"
+      <mat-checkbox *ngIf="!plugin.IsSystemOwned" [(ngModel)]="plugin.IsDisabled"
         matTooltip="Disable the plugin to prevent monitoring the associated accounts">Disabled</mat-checkbox>
       <div *ngIf="!plugin.IsSystemOwned" class="sub-title-2">Plugin Details</div>
       <div *ngIf="!plugin.IsSystemOwned">
