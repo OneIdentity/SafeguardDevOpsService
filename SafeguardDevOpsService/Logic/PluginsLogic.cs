@@ -22,6 +22,8 @@ namespace OneIdentity.DevOps.Logic
         private readonly IPluginManager _pluginManager;
         private readonly ISafeguardLogic _safeguardLogic;
 
+        private object _pluginLock = new object();
+
         public PluginsLogic(IConfigurationRepository configDb, IPluginManager pluginManager, ISafeguardLogic safeguardLogic)
         {
             _configDb = configDb;
@@ -151,48 +153,57 @@ namespace OneIdentity.DevOps.Logic
 
         public Plugin GetPluginByName(string name)
         {
-            var plugin = _configDb.GetPluginByName(name);
-            if (plugin != null)
+            lock (_pluginLock)
             {
-                plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
-                plugin.MappedAccountsCount = GetAccountMappingsCount(plugin.Name);
-            }
+                var plugin = _configDb.GetPluginByName(name);
+                if (plugin != null)
+                {
+                    plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
+                    plugin.MappedAccountsCount = GetAccountMappingsCount(plugin.Name);
+                }
 
-            return plugin;
+                return plugin;
+            }
         }
 
         public void DeletePluginByName(string name)
         {
-            var pluginInfo = _configDb.GetPluginByName(name);
-            if (pluginInfo != null)
+            lock (_pluginLock)
             {
-                // If the plugin is not the root plugin, then hard delete it and move on.
-                // If it is the root plugin, then don't actually delete the plugin configuration yet.
-                // Mark the plugin to be deleted and then delete it on the next restart.
-                if (_configDb.DeletePluginByName(name, !pluginInfo.IsRootPlugin) && pluginInfo.IsRootPlugin)
+                var pluginInfo = _configDb.GetPluginByName(name);
+                if (pluginInfo != null)
                 {
-                    RestartManager.Instance.ShouldRestart = true;
+                    // If the plugin is not the root plugin, then hard delete it and move on.
+                    // If it is the root plugin, then don't actually delete the plugin configuration yet.
+                    // Mark the plugin to be deleted and then delete it on the next restart.
+                    if (_configDb.DeletePluginByName(name, !pluginInfo.IsRootPlugin) && pluginInfo.IsRootPlugin)
+                    {
+                        RestartManager.Instance.ShouldRestart = true;
+                    }
                 }
             }
         }
 
         public void DeleteAllPluginInstancesByName(string name)
         {
-            var pluginInstances = _configDb.GetPluginInstancesByName(name);
-            foreach (var pluginInstance in pluginInstances)
+            lock (_pluginLock)
             {
-                DeleteAccountMappings(pluginInstance.Name);
-                RemovePluginVaultAccount(pluginInstance.Name);
-
-                if (pluginInstance.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                var pluginInstances = _configDb.GetPluginInstancesByName(name);
+                foreach (var pluginInstance in pluginInstances)
                 {
-                    // Just soft delete the original plugin.
-                    _configDb.DeletePluginByName(pluginInstance.Name);
-                    continue;
-                }
+                    DeleteAccountMappings(pluginInstance.Name);
+                    RemovePluginVaultAccount(pluginInstance.Name);
 
-                // Hard delete all of the other instances.
-                _configDb.DeletePluginByName(pluginInstance.Name, true);
+                    if (pluginInstance.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Just soft delete the original plugin.
+                        _configDb.DeletePluginByName(pluginInstance.Name);
+                        continue;
+                    }
+
+                    // Hard delete all of the other instances.
+                    _configDb.DeletePluginByName(pluginInstance.Name, true);
+                }
             }
 
             RestartManager.Instance.ShouldRestart = true;
@@ -201,81 +212,97 @@ namespace OneIdentity.DevOps.Logic
 
         public Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name)
         {
-            var plugin = _configDb.GetPluginByName(name);
-
-            if (plugin == null)
+            lock (_pluginLock)
             {
-                var msg = $"Failed to save the safeguardConnection. No plugin {name} was found.";
-                _logger.Error(msg);
-                throw new DevOpsException(msg, HttpStatusCode.NotFound);
-            }
+                var plugin = _configDb.GetPluginByName(name);
 
-            if (plugin.IsSystemOwned)
-            {
-                var msg = $"Failed to save the safeguardConnection. The plugin {name} is system owned.";
-                _logger.Error(msg);
-                throw new DevOpsException(msg, HttpStatusCode.BadRequest);
-            }
+                if (plugin == null)
+                {
+                    var msg = $"Failed to save the safeguardConnection. No plugin {name} was found.";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg, HttpStatusCode.NotFound);
+                }
 
-            if (pluginConfiguration.Configuration != null)
-            {
-                plugin.Configuration = pluginConfiguration.Configuration;
-            }
-            if (pluginConfiguration.AssignedCredentialType != CredentialType.Unknown)
-            {
-                plugin.AssignedCredentialType = pluginConfiguration.AssignedCredentialType;
-            }
+                if (plugin.IsSystemOwned)
+                {
+                    var msg = $"Failed to save the safeguardConnection. The plugin {name} is system owned.";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg, HttpStatusCode.BadRequest);
+                }
 
-            plugin = _configDb.SavePluginConfiguration(plugin);
-            plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
-            _pluginManager.SetConfigurationForPlugin(name);
+                if (pluginConfiguration.Configuration != null)
+                {
+                    plugin.Configuration = pluginConfiguration.Configuration;
+                }
+                if (pluginConfiguration.AssignedCredentialType != CredentialType.Unknown)
+                {
+                    plugin.AssignedCredentialType = pluginConfiguration.AssignedCredentialType;
+                }
+                if (plugin.AssignedCredentialType == CredentialType.Unknown)
+                {
+                    plugin.AssignedCredentialType = CredentialType.Password;
+                }
 
-            return plugin;
+                plugin = _configDb.SavePluginConfiguration(plugin);
+                plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
+                _pluginManager.SetConfigurationForPlugin(name);
+
+                return plugin;
+            }
         }
 
         public bool TestPluginConnectionByName(ISafeguardConnection sgConnection, string name)
         {
-            var plugin = _configDb.GetPluginByName(name);
-
-            if (plugin == null)
+            lock (_pluginLock)
             {
-                var msg = $"Failed to test the safeguardConnection. No plugin {name} was found.";
-                _logger.Error(msg);
-                throw new DevOpsException(msg, HttpStatusCode.NotFound);
-            }
+                var plugin = _configDb.GetPluginByName(name);
 
-            return _pluginManager.TestPluginVaultConnection(sgConnection, name);
+                if (plugin == null)
+                {
+                    var msg = $"Failed to test the safeguardConnection. No plugin {name} was found.";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg, HttpStatusCode.NotFound);
+                }
+
+                return _pluginManager.TestPluginVaultConnection(sgConnection, name);
+            }
         }
 
         public PluginState GetPluginDisabledState(string name)
         {
-            var plugin = _configDb.GetPluginByName(name);
-
-            if (plugin == null)
+            lock (_pluginLock)
             {
-                var msg = $"Plugin {name} not found";
-                _logger.Error(msg);
-                throw new DevOpsException(msg, HttpStatusCode.NotFound);
-            }
+                var plugin = _configDb.GetPluginByName(name);
 
-            return new PluginState() {Disabled = plugin.IsDisabled};
+                if (plugin == null)
+                {
+                    var msg = $"Plugin {name} not found";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg, HttpStatusCode.NotFound);
+                }
+
+                return new PluginState() { Disabled = plugin.IsDisabled };
+            }
         }
 
         public PluginState UpdatePluginDisabledState(string name, bool state)
         {
-            var plugin = _configDb.GetPluginByName(name);
-
-            if (plugin == null)
+            lock (_pluginLock)
             {
-                var msg = $"Plugin {name} not found";
-                _logger.Error(msg);
-                throw new DevOpsException(msg, HttpStatusCode.NotFound);
+                var plugin = _configDb.GetPluginByName(name);
+
+                if (plugin == null)
+                {
+                    var msg = $"Plugin {name} not found";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg, HttpStatusCode.NotFound);
+                }
+
+                plugin.IsDisabled = state;
+                _configDb.SavePluginConfiguration(plugin);
+
+                return new PluginState() { Disabled = plugin.IsDisabled };
             }
-
-            plugin.IsDisabled = state;
-            _configDb.SavePluginConfiguration(plugin);
-
-            return new PluginState() {Disabled = plugin.IsDisabled};
         }
 
         public IEnumerable<AccountMapping> GetAccountMappings(string name, bool includeAllInstances = false)
@@ -516,71 +543,86 @@ namespace OneIdentity.DevOps.Logic
 
         public A2ARetrievableAccount SavePluginVaultAccount(ISafeguardConnection sgConnection, string name, AssetAccount sppAccount)
         {
-            var plugin = _configDb.GetPluginByName(name);
-            if (plugin == null)
+            lock (_pluginLock)
             {
-                throw LogAndException($"Plugin {name} not found.");
-            }
-            if (sppAccount == null)
-            {
-                throw LogAndException("Invalid account.");
-            }
+                var plugin = _configDb.GetPluginByName(name);
+                if (plugin == null)
+                {
+                    throw LogAndException($"Plugin {name} not found.");
+                }
 
-            var account = _safeguardLogic.GetAssetAccount(sgConnection, sppAccount.Id);
-            if (account == null)
-            {
-                throw LogAndException($"Account {sppAccount.Id} not found.");
-            }
+                if (sppAccount == null)
+                {
+                    throw LogAndException("Invalid account.");
+                }
 
-            // Make sure that the vault account isn't being used by another plugin before we delete it.
-            if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
-            {
-                _safeguardLogic.DeleteA2ARetrievableAccount(sgConnection, plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
-            }
+                var account = _safeguardLogic.GetAssetAccount(sgConnection, sppAccount.Id);
+                if (account == null)
+                {
+                    throw LogAndException($"Account {sppAccount.Id} not found.");
+                }
 
-            var accounts = _safeguardLogic.AddA2ARetrievableAccounts(sgConnection, new List<SppAccount>() {new SppAccount() {Id = account.Id, Name = account.Name}}, A2ARegistrationType.Vault);
+                // Make sure that the vault account isn't being used by another plugin before we delete it.
+                if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
+                {
+                    _safeguardLogic.DeleteA2ARetrievableAccount(sgConnection, plugin.VaultAccountId.Value,
+                        A2ARegistrationType.Vault);
+                }
 
-            var a2aAccount = accounts.FirstOrDefault(x => x.AccountId == account.Id);
-            if (a2aAccount != null)
-            {
-                plugin.VaultAccountId = a2aAccount.AccountId;
-                _configDb.SavePluginConfiguration(plugin);
-            }
-            else
-            {
-                throw LogAndException($"Failed to add the account to the A2A vault registration.  {account.Id} - {account.Name}.");
-            }
+                var accounts = _safeguardLogic.AddA2ARetrievableAccounts(sgConnection,
+                    new List<SppAccount>() { new() { Id = account.Id, Name = account.Name } },
+                    A2ARegistrationType.Vault);
 
-            return a2aAccount;
+                var a2aAccount = accounts.FirstOrDefault(x => x.AccountId == account.Id);
+                if (a2aAccount != null)
+                {
+                    plugin.VaultAccountId = a2aAccount.AccountId;
+                    _configDb.SavePluginConfiguration(plugin);
+                }
+                else
+                {
+                    throw LogAndException(
+                        $"Failed to add the account to the A2A vault registration.  {account.Id} - {account.Name}.");
+                }
+
+                return a2aAccount;
+            }
         }
 
         public void RemovePluginVaultAccount(string name)
         {
-            var plugin = _configDb.GetPluginByName(name);
-            if (plugin == null)
+            lock (_pluginLock)
             {
-                throw LogAndException($"Plugin {name} not found.");
-            }
+                var plugin = _configDb.GetPluginByName(name);
+                if (plugin == null)
+                {
+                    throw LogAndException($"Plugin {name} not found.");
+                }
 
-            // Make sure that the vault account isn't being used by another plugin before we delete it.
-            if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
-            {
-                _safeguardLogic.DeleteA2ARetrievableAccount(null, plugin.VaultAccountId.Value, A2ARegistrationType.Vault);
-            }
+                // Make sure that the vault account isn't being used by another plugin before we delete it.
+                if (plugin.VaultAccountId != null && (VaultAccountUsage(plugin.VaultAccountId.Value) <= 1))
+                {
+                    _safeguardLogic.DeleteA2ARetrievableAccount(null, plugin.VaultAccountId.Value,
+                        A2ARegistrationType.Vault);
+                }
 
-            plugin.VaultAccountId = null;
-            _configDb.SavePluginConfiguration(plugin);
+                plugin.VaultAccountId = null;
+                _configDb.SavePluginConfiguration(plugin);
+            }
         }
 
         // This method just removes the vault account mappings in the local database.  It does
         //  not remove the vault A2A registration.
         public void ClearMappedPluginVaultAccounts()
         {
-            var plugins = _configDb.GetAllPlugins();
-            foreach (var plugin in plugins)
+            lock (_pluginLock)
             {
-                plugin.VaultAccountId = null;
-                _configDb.SavePluginConfiguration(plugin);
+                var plugins = _configDb.GetAllPlugins();
+                foreach (var plugin in plugins)
+                {
+                    plugin.VaultAccountId = null;
+                    _configDb.SavePluginConfiguration(plugin);
+                }
             }
         }
 

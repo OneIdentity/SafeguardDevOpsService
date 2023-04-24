@@ -106,7 +106,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
-            return StoreCredential(name, "pw", password);
+            return StoreCredential(name, "{\"data\": {\"pw\":\""+password+"\"}}");
         }
 
         public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
@@ -125,7 +125,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
-            return StoreCredential(name, "sshkey", sshKey);
+            return StoreCredential(name, "{\"data\": {\"sshkey\":\""+sshKey+"\"}}");
         }
 
         public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
@@ -160,7 +160,9 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 }
             }
 
-            if (!StoreCredential(name, keys))
+            var data = keys.Select(apiKey => "\"" + apiKey.ClientId + "\":\"" + apiKey.ClientSecret + "\"").Aggregate(string.Empty, (current, d) => string.IsNullOrEmpty(current) ? d : current + ", " + d);
+
+            if (!StoreCredential(name, "{\"data\": {"+data+"}}"))
             {
                 _logger.Error($"Failed to save the ApiKeys for {name} to the {this.DisplayName} vault.");
                 retval = false;
@@ -182,31 +184,11 @@ namespace OneIdentity.DevOps.HashiCorpVault
             _configuration = null;
         }
 
-        private bool StoreCredential(string name, string key, string value)
+        private bool StoreCredential(string name, string payload)
         {
 
             try
             {
-                var payload = "{\"data\": {\""+key+"\":\""+value+"\"}}";
-                var response = _vaultClient.InvokeMethodFull(Method.POST, $"v1/{_configuration[MountPointName]}/data/{name}", payload);
-
-                _logger.Information($"The secret for {name} has been successfully stored in the vault.");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, $"Failed to set the secret for {name}: {ex.Message}.");
-                return false;
-            }
-        }
-
-        private bool StoreCredential(string name, IEnumerable<ApiKey> apiKeys)
-        {
-            try
-            {
-                var data = apiKeys.Select(apiKey => "\"" + apiKey.ClientId + "\":\"" + apiKey.ClientSecret + "\"").Aggregate(string.Empty, (current, d) => string.IsNullOrEmpty(current) ? d : current + ", " + d);
-
-                var payload = "{\"data\": {"+data+"}}";
                 var response = _vaultClient.InvokeMethodFull(Method.POST, $"v1/{_configuration[MountPointName]}/data/{name}", payload);
 
                 _logger.Information($"The secret for {name} has been successfully stored in the vault.");
