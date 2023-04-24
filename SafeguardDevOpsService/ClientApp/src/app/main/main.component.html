@@ -233,6 +233,8 @@
               </div>
               <div *ngIf="pluginInstances[plugin.RootPluginName].Count > 1">
                 <div>Instances</div>
+                <div *ngIf="pluginInstances[plugin.RootPluginName].Disabled > 0">
+                  ({{pluginInstances[plugin.RootPluginName].Disabled}} Disabled)</div>
               </div>
               <div class="space" *ngIf="pluginInstances[plugin.RootPluginName].Count > 1"></div>
               <div class="count">{{pluginInstances[plugin.RootPluginName].AllMappedAccountsCount}}</div>
@@ -257,6 +259,8 @@
               </div>
               <div *ngIf="pluginInstances[plugin.RootPluginName].Count > 1">
                 <div>Instances</div>
+                <div *ngIf="pluginInstances[plugin.RootPluginName].Disabled > 0">
+                  ({{pluginInstances[plugin.RootPluginName].Disabled}} Disabled)</div>
               </div>
               <div class="space" *ngIf="pluginInstances[plugin.RootPluginName].Count > 1"></div>
               <div class="count">{{pluginInstances[plugin.RootPluginName].AllMappedAccountsCount}}</div>
