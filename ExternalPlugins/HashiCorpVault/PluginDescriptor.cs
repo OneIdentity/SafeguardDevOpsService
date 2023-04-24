@@ -125,7 +125,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
-            return StoreCredential(name, "{\"data\": {\"sshkey\":\""+sshKey+"\"}}");
+            return StoreCredential(name, "{\"data\": {\"sshkey\":\""+sshKey.ReplaceLineEndings(string.Empty)+"\"}}");
         }
 
         public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)

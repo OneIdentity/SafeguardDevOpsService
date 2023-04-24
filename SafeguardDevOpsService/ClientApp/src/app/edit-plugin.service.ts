@@ -79,6 +79,7 @@ export class EditPluginService {
   }
 
   openProperties(pluginInstances: any): void {
+    this.instanceIndex = 0;
     this.originalPluginInstances = pluginInstances;
     this.pluginInstances = Object.assign([], pluginInstances);
 

@@ -336,7 +336,7 @@ namespace OneIdentity.DevOps.Logic
                         case CredentialType.SshKey:
                         {
                             using var sshKey = a2AContext.RetrievePrivateKey(a2AApiKey.ToSecureString());
-                            return new[] { sshKey.ToInsecureString().ReplaceLineEndings(string.Empty) };
+                            return new[] { sshKey.ToInsecureString() };
                         }
                         case CredentialType.ApiKey:
                         {
