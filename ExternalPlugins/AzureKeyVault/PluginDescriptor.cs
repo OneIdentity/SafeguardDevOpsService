@@ -146,7 +146,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
                 var apiKey = JsonHelper.DeserializeObject<ApiKey>(apiKeyJson);
                 if (apiKey != null)
                 {
-                    StoreCredential($"{name}-{apiKey.Name}", $"{apiKey.ClientId}.{apiKey.ClientSecret}");
+                    StoreCredential($"{name}-{apiKey.Name}", $"{apiKey.ClientId}:{apiKey.ClientSecret}");
                 }
                 else
                 {
