@@ -19,7 +19,8 @@
           "options": {
             "allowedCommonJsDependencies": [
               "moment-timezone",
-              "jquery"
+              "jquery",
+              "lodash"
             ],
             "outputPath": "dist/",
             "index": "src/index.html",
