@@ -632,14 +632,13 @@ export class MainComponent implements OnInit, AfterViewInit {
                 filter((dlgResult) => dlgResult?.result === 'OK'),
               ).subscribe(() => {
                 if (data.reload === true) {
-                  // Added or Deleted an Instance.
                   this.window.location.reload();
                 }
-              }
-              );
+              });
+            } else if (data.reload === true) {
+              this.window.location.reload();
             }
           } else if (data.reload === true) {
-            // Added or Deleted an Instance.
             this.window.location.reload();
           }
           break;

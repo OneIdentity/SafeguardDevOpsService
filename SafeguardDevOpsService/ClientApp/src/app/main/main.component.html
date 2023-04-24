@@ -223,7 +223,8 @@
 
     <ng-container *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations">
       <ng-container *ngFor="let plugin of plugins; let index = index, trackBy: trackByFunc">
-        <div [ngClass]="['plugin-container','configured',isMonitoring?'monitored':'','disabled:'+plugin.IsDisabled]"
+        <div
+          [ngClass]="['plugin-container','configured',isMonitoring?'monitored':'','disabled:'+(pluginInstances[plugin.RootPluginName].Disabled==pluginInstances[plugin.RootPluginName].Count)]"
           (click)="editPlugin(plugin)" *ngIf="plugin.IsConfigurationSetup && !plugin.Rendered">
 
           <ng-container *ngIf="plugin.IsLoaded">
