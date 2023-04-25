@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Mail;
+using System.Xml.Linq;
 using OneIdentity.DevOps.Common;
 using Serilog;
 
@@ -106,13 +107,27 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 return false;
             }
 
-            // Need to send all of the keys. For this plugin just concatenate them all together and send one text.
+            var body = string.Empty;
+            foreach (var apiKeyJson in apiKeys)
+            {
+                var apiKey = JsonHelper.DeserializeObject<ApiKey>(apiKeyJson);
+                if (apiKey != null)
+                {
+                    body += altAccountName != null
+                        ? $"{altAccountName}\n{apiKey.ClientId}\n{apiKey.ClientSecret}"
+                        : $"{asset} - {account} - {apiKey.Name}\n{apiKey.ClientId}\n{apiKey.ClientSecret}\n";
+                }
+                else
+                {
+                    _logger.Error($"The ApiKey {asset} - {account} - {apiKey.Name} {apiKey.ClientId} failed to save to the {this.DisplayName} vault.");
+                }
+            }
+
             var message = new MailMessage()
             {
                 From = new MailAddress(_configuration[FromAddressName]),
                 Subject = "Message from Safeguard Secrets Broker for DevOps",
-                //Body = altAccountName != null ? $"{altAccountName}\n{clientId}\n{clientSecret}" : $"{asset} - {account}\n{clientId}\n{clientSecret}"
-                Body = altAccountName != null ? $"{altAccountName}\n{string.Empty}\n{string.Empty}" : $"{asset} - {account}\n{string.Empty}\n{string.Empty}"
+                Body = body
             };
 
             return StoreCredential(message);
