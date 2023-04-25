@@ -53,7 +53,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
             {
                 _configuration = configuration;
                 _logger.Information($"Plugin {Name} has been successfully configured.");
-                _rgx = new Regex("[^a-zA-Z0-9-]");
+                _rgx = new Regex("[^a-zA-Z0-9_]");
 
                 if (configuration.ContainsKey(RepositoryUrlName) && !string.IsNullOrEmpty(configuration[RepositoryUrlName]))
                 {
@@ -224,7 +224,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
                 var apiKey = JsonHelper.DeserializeObject<ApiKey>(apiKeyJson);
                 if (apiKey != null)
                 {
-                    var n = $"{name}-{apiKey.Name}";
+                    var n = $"{name}_{_rgx.Replace(apiKey.Name, "_")}";
                     var k = $"{apiKey.ClientId}:{apiKey.ClientSecret}";
                     StoreCredential(n, "{\"value\":\""+k+"\"}", "{\"name\":\""+n+"\",\"value\":\""+k+"\"}");
                 }
