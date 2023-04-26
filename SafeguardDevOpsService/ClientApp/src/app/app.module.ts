@@ -45,6 +45,7 @@ import { ProgressSpinnerComponent } from './progress-spinner/progress-spinner.co
 import { ErrorBarComponent } from './error-bar/error-bar.component';
 import { ViewMonitorEventsComponent } from './view-monitor-events/view-monitor-events.component';
 import { RegistrationsComponent } from './registrations/registrations.component';
+import { MatSelectModule } from '@angular/material/select';
 
 @NgModule({
   declarations: [
@@ -91,7 +92,8 @@ import { RegistrationsComponent } from './registrations/registrations.component'
     MatTooltipModule,
     MatSortModule,
     MatProgressSpinnerModule,
-    MatPaginatorModule
+    MatPaginatorModule,
+    MatSelectModule
   ],
   entryComponents: [
     UploadCertificateComponent
