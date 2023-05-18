@@ -7,8 +7,8 @@ namespace OneIdentity.DevOps.SmsTextEmail
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static Dictionary<string,string> _configuration;
-        private static ILogger _logger;
+        private Dictionary<string,string> _configuration;
+        private ILogger _logger;
 
         private const string SmtpServer = "smtp.server.test";
         private const string FromAddress = "someone@somewhere.test";

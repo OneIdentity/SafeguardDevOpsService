@@ -11,12 +11,12 @@ namespace OneIdentity.DevOps.GithubSecrets
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static GitHubClient _secretsClient;
-        private static Dictionary<string,string> _configuration;
-        private static ILogger _logger;
-        private static Regex _rgx;
+        private GitHubClient _secretsClient;
+        private Dictionary<string,string> _configuration;
+        private Regex _rgx;
         private Repository _repository;
         private SecretsPublicKey _publicKey; 
+        private ILogger _logger;
 
         private const string RepositoryName = "Repository Name";
 

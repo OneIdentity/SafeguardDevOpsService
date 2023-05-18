@@ -3,5 +3,5 @@
  	"Name": "HashiCorpVault",
 	"DisplayName": "HashiCorp Vault",
 	"Assembly": "HashiCorpVault.dll",
-	"Version": "1.1.0.9999"
+	"Version": "1.2.0.9999"
 }

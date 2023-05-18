@@ -54,6 +54,11 @@ namespace OneIdentity.DevOps.Data
         public bool IsDisabled { get; set; } = false;
 
         /// <summary>
+        /// Is this the root plugin
+        /// </summary>
+        public bool IsRootPlugin { get; set; } = false;
+
+        /// <summary>
         /// Is the plugin system owned
         /// </summary>
         public bool IsSystemOwned { get; set; } = false;
@@ -67,6 +72,11 @@ namespace OneIdentity.DevOps.Data
         /// Mapped accounts count
         /// </summary>
         public int MappedAccountsCount { get; set; }
+
+        /// <summary>
+        /// Root plugin name
+        /// </summary>
+        public string RootPluginName => GetRootPluginName(this.Name);
 
 
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
@@ -102,6 +112,47 @@ namespace OneIdentity.DevOps.Data
             Configuration = JsonHelper.DeserializeObject<Dictionary<string,string>>(devOpsPlugin.Configuration);
             if (int.TryParse(devOpsPlugin.MappedVaultAccounts, out var x))
                 VaultAccountId = x;
+        }
+
+        public static string GetNewPluginInstanceName(string pluginName)
+        {
+            var pluginId = WellKnownData.GenerateRandomId();
+            return pluginId == null ? null : $"{pluginName}-{pluginId}";
+        }
+
+        public static string GetPluginId(string pluginName)
+        {
+            if (string.IsNullOrEmpty(pluginName))
+            {
+                return null;
+            }
+
+            var idDelimeter = pluginName.LastIndexOf('-');
+            if (idDelimeter > 0)
+            {
+                var idStr = pluginName.Substring(pluginName.LastIndexOf('-'));
+                if (!string.IsNullOrEmpty(idStr) && idStr.Length == WellKnownData.RandomStringLength + 1)
+                {
+                    return idStr.Substring(1);
+                }
+            }
+
+            return null;
+        }
+
+        public static string GetRootPluginName(string pluginName)
+        {
+            var idStr = GetPluginId(pluginName);
+            if (idStr != null)
+            {
+                try
+                {
+                    return pluginName.Remove(pluginName.Length - (WellKnownData.RandomStringLength + 1));
+                }
+                catch {}
+            }
+
+            return pluginName;
         }
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 

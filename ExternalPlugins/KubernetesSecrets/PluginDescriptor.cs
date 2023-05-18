@@ -10,14 +10,13 @@ namespace OneIdentity.DevOps.KubernetesSecrets
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static Kubernetes _client;
-        private static Dictionary<string,string> _configuration;
-        private static ILogger _logger;
+        private Kubernetes _client;
+        private Dictionary<string,string> _configuration;
+        private ILogger _logger;
 
         private const string ConfigFilePathName = "configFilePath";
         private const string VaultNamespaceName = "vaultNamespace";
-
-        private static string _defaultNamespace = "default";
+        private const string DefaultNamespace = "default";
 
         public string Name => "KubernetesSecrets";
         public string DisplayName => "Kubernetes Secrets";
@@ -28,7 +27,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             return _configuration ??= new Dictionary<string, string>
             {
                 { ConfigFilePathName, "" },
-                { VaultNamespaceName, _defaultNamespace }
+                { VaultNamespaceName, DefaultNamespace }
             };
         }
 
@@ -69,7 +68,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             if (_client == null)
                 return false;
 
-            var vaultNamespace = _defaultNamespace;
+            var vaultNamespace = DefaultNamespace;
             if (_configuration != null && _configuration.ContainsKey(VaultNamespaceName))
             {
                 vaultNamespace = _configuration[VaultNamespaceName];
@@ -97,7 +96,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                 return false;
             }
 
-            var vaultNamespace = _defaultNamespace;
+            var vaultNamespace = DefaultNamespace;
             if (_configuration != null && _configuration.ContainsKey(VaultNamespaceName))
             {
                 vaultNamespace = _configuration[VaultNamespaceName];

@@ -3,7 +3,7 @@ import { EditPluginService } from '../edit-plugin.service';
 import { DevOpsServiceClient } from '../service-client.service';
 import { ServiceClientHelper as SCH } from '../service-client-helper';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { switchMap, filter, tap } from 'rxjs/operators';
+import { switchMap, filter, tap, finalize } from 'rxjs/operators';
 import { of, forkJoin, Observable } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
@@ -26,31 +26,44 @@ export class EditPluginComponent implements OnInit {
     private snackBar: MatSnackBar
   ) { }
 
-  plugin: any;
-  configs = [];
   error: any;
   isSaving = false;
   isTesting = false;
   isRestarting = false;
   isDeleting = false;
+  reload = false;
   displayedColumns: string[] = ['asset', 'account', 'altaccount', 'delete'];
-  isPluginDisabled: boolean;
+
+  public get plugin() {
+    return this.editPluginService.plugin;
+  }
+  public set plugin(value: any) {
+    this.editPluginService.plugin = value;
+  }
+  public get instanceIndex() {
+    return this.editPluginService.instanceIndex;
+  }
+  public get isMultiInstance() {
+    return this.editPluginService.pluginInstances.length > 1;
+  }
+  public get instanceCount() {
+    return this.editPluginService.pluginInstances.length;
+  }
 
   ngOnInit(): void {
-    this.plugin = this.editPluginService.plugin;
-    this.isPluginDisabled = this.plugin.IsDisabled;
+    this.editPluginService.pluginInstances.forEach(p => {
+      p.configs = [];
+      Object.keys(p.Configuration).forEach(key => {
+        p.configs.push({ key, value: p.Configuration[key] });
+      });
 
-    this.configs.splice(0);
-    Object.keys(this.plugin.Configuration).forEach(key => {
-      this.configs.push({ key, value: this.plugin.Configuration[key] });
+      p.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(p.VaultAccount);
     });
-
-    this.plugin.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(this.plugin.VaultAccount);
   }
 
   selectVaultAccount(): void {
     // Save the current configuration first
-    this.mapConfiguration();
+    this.mapConfiguration(this.plugin);
 
     this.editPluginService.openVaultAccount();
   }
@@ -62,7 +75,7 @@ export class EditPluginComponent implements OnInit {
 
   selectAccounts(): void {
     // Save the current configuration first
-    this.mapConfiguration();
+    this.mapConfiguration(this.plugin);
 
     this.editPluginService.openAccounts(this.plugin.Accounts);
   }
@@ -82,19 +95,85 @@ export class EditPluginComponent implements OnInit {
   }
 
   close(): void {
-    this.editPluginService.closeProperties();
+    this.editPluginService.closeProperties(false, this.reload);
+  }
+
+  goBack(): void {
+    this.editPluginService.instanceIndex--;
+  }
+
+  goNext(): void {
+    this.editPluginService.instanceIndex++;
+  }
+
+  instance(): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        showNo: true,
+        title: 'New Instance',
+        message: 'Would you like the new instance to copy settings from the current configuration?',
+        confirmText: 'Yes'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(
+      filter((dlgResult) => dlgResult?.result === 'OK' || dlgResult?.result === 'No'),
+    ).subscribe((dlgResult) => {
+      this.editPluginService.createInstance(this.plugin.Name, dlgResult?.result === 'OK')
+        .subscribe(p => {
+          p.configs = [];
+          Object.keys(p.Configuration).forEach(key => {
+            p.configs.push({ key, value: p.Configuration[key] });
+          });
+          p.Accounts = [];
+          p.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(p.VaultAccount);
+          
+          this.editPluginService.pluginInstances.push(p);
+          this.editPluginService.instanceIndex = this.editPluginService.pluginInstances.length - 1;
+          this.reload = true;
+        });
+    },
+      error => this.error = SCH.parseError(error)
+    );
+  }
+
+  deleteInstance(): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Delete Instance',
+        message: 'Are you sure you want to remove the configuration for this plugin instance?',
+        confirmText: 'Delete Instance'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(
+      filter((dlgResult) => dlgResult?.result === 'OK'),
+      tap(() => this.isDeleting = true),
+      switchMap(() => this.serviceClient.deletePluginConfiguration(this.plugin.Name)),
+      finalize(() => this.isDeleting = false)
+    ).subscribe(() => {
+      this.editPluginService.pluginInstances.splice(this.instanceIndex, 1);
+
+      if (this.editPluginService.instanceIndex > 0) {
+        this.editPluginService.instanceIndex--;
+      }
+      this.reload = true;
+    },
+      error => this.error = SCH.parseError(error)
+    );
   }
 
   delete(): void {
+    var message = this.isMultiInstance ? ' all instances of ' : '';
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         showRestart: true,
-        title: 'Delete Plugin',
+        title: this.isMultiInstance ? 'Delete All Instances' : 'Delete Plugin',
         message:
-          '<p>Are you sure you want to remove the configuration for this plugin and unregister the plugin from Safeguard Secrets Broker for DevOps?</p>' +
+          '<p>Are you sure you want to remove the configuration for' + message + 'this plugin and unregister the plugin from Safeguard Secrets Broker for DevOps?</p>' +
           '<p>This does not remove the plugin from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder at this point.</p>' +
           '<p>The Safeguard Secrets Broker for DevOps service must be restarted to completely remove the deleted plugin.</p>',
-        confirmText: 'Delete Plugin'
+        confirmText: this.isMultiInstance ? 'Delete All Instances' : 'Delete Plugin'
       }
     });
 
@@ -104,7 +183,7 @@ export class EditPluginComponent implements OnInit {
         this.isRestarting = dlgResult?.restart;
         this.isDeleting = true;
       }),
-      switchMap((dlgResult) => this.serviceClient.deletePluginConfiguration(this.plugin.Name, dlgResult?.restart))
+      switchMap((dlgResult) => this.editPluginService.deletePluginConfiguration(this.plugin.Name, this.isMultiInstance, dlgResult?.restart))
     ).subscribe(() => {
       this.editPluginService.deletePlugin();
       if (!this.isRestarting) {
@@ -132,7 +211,7 @@ export class EditPluginComponent implements OnInit {
   testConnection(): void {
     this.error = null;
     this.isTesting = true;
-    
+
     if (!this.plugin.IsSystemOwned) {
       this.saveConfiguration().pipe(
         switchMap(() =>
@@ -144,6 +223,7 @@ export class EditPluginComponent implements OnInit {
           error => {
             this.isTesting = false;
             this.error = SCH.parseError(error);
+            this.snackBar.open('Test configuration failed: ' + this.error);
           });
     } else {
       this.serviceClient.postPluginTestConnection(this.plugin.Name)
@@ -154,94 +234,81 @@ export class EditPluginComponent implements OnInit {
           error => {
             this.isTesting = false;
             this.error = SCH.parseError(error);
+            this.snackBar.open('Test configuration failed: ' + this.error);
           });
     }
   }
 
-  updatePluginDisabled(): void {
-    this.plugin.IsDisabled = this.isPluginDisabled;
-  }
-
-  private mapConfiguration(): void {
-    this.configs.forEach(config => {
-      this.plugin.Configuration[config.key] = config.value;
+  private mapConfiguration(plugin: any): void {
+    plugin.configs.forEach(config => {
+      plugin.Configuration[config.key] = config.value;
     });
   }
 
-  save(): void {
+  saveAll(): void {
     this.error = null;
     this.isSaving = true;
 
-    this.mapConfiguration();
+    var batch = [];
+    this.editPluginService.pluginInstances.forEach(p => {
+      batch.push(this.save(p));
+    });
+
+    forkJoin(batch).pipe(
+      untilDestroyed(this)
+    ).subscribe(() => {
+      this.editPluginService.closeProperties(true, true);
+    },
+      error => {
+        this.isSaving = false;
+        this.error = SCH.parseError(error);
+      }
+    );
+  }
+
+  save(plugin: any): Observable<any> {
+    this.mapConfiguration(plugin);
 
     // Make sure the accounts have AccountId, which PUT Plugin/Accounts expects
-    this.plugin.Accounts.forEach(x => x.AccountId = x.Id);
+    plugin.Accounts.forEach(x => x.AccountId = x.Id);
 
-    const obs1 = this.serviceClient.getPluginAccounts(this.plugin.Name).pipe(
+    const obs1 = this.serviceClient.getPluginAccounts(plugin.Name).pipe(
       switchMap((accts) => {
         const deleted = [];
         accts.forEach(a => {
-          if (!this.plugin.Accounts.find(x => x.AccountId === a.AccountId)) {
+          if (!plugin.Accounts.find(x => x.AccountId === a.AccountId)) {
             deleted.push(a);
           }
         });
         if (deleted.length > 0) {
-          return this.serviceClient.deletePluginAccounts(this.plugin.Name, deleted);
+          return this.serviceClient.deletePluginAccounts(plugin.Name, deleted);
         } else {
           return of({});
         }
       }),
-      switchMap(() => this.plugin.Accounts.length > 0 ?
-        this.serviceClient.putRetrievableAccounts(this.plugin.Accounts) : of({})),
-      switchMap(() => this.plugin.Accounts.length > 0 ?
-        this.serviceClient.putPluginAccounts(this.plugin.Name, this.plugin.Accounts) : of([]))
+      switchMap(() => plugin.Accounts.length > 0 ?
+        this.serviceClient.putRetrievableAccounts(plugin.Accounts) : of({})),
+      switchMap(() => plugin.Accounts.length > 0 ?
+        this.serviceClient.putPluginAccounts(plugin.Name, plugin.Accounts) : of([]))
     );
 
-    if (!this.plugin.IsSystemOwned) {
-      const obs2 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
+    if (!plugin.IsSystemOwned) {
+      const obs2 = this.serviceClient.putPluginConfiguration(plugin.Name, plugin.Configuration);
 
-      const obs3 = this.plugin.VaultAccount ?
-        this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.plugin.VaultAccount) :
-        this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
+      const obs3 = plugin.VaultAccount ?
+        this.serviceClient.putPluginVaultAccount(plugin.Name, plugin.VaultAccount) :
+        this.serviceClient.deletePluginVaultAccount(plugin.Name);
 
-      const obs4 = this.serviceClient.postPluginDisableState(this.plugin.Name, this.plugin.IsDisabled);
+      const obs4 = this.serviceClient.postPluginDisableState(plugin.Name, plugin.IsDisabled);
 
-      forkJoin([obs1, obs2, obs3, obs4]).pipe(
-        untilDestroyed(this)
-      ).subscribe(
-        (data) => {
-          this.plugin = data[1];
-          this.plugin.Accounts = data[0];
-          this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
-          this.plugin.IsDisabled = data[3].Disabled;
-
-          this.editPluginService.closeProperties(this.plugin);
-        },
-        error => {
-          this.isSaving = false;
-          this.error = SCH.parseError(error);
-        }
-      );
+      return forkJoin([obs1, obs2, obs3, obs4]);
     } else {
-      forkJoin([obs1]).pipe(
-        untilDestroyed(this)
-      ).subscribe(
-        (data) => {
-          this.plugin.Accounts = data[0];
-          this.plugin.MappedAccountsCount = this.plugin.Accounts.length;
-
-          this.editPluginService.closeProperties(this.plugin);
-        },
-        error => {
-          this.isSaving = false;
-          this.error = SCH.parseError(error);
-        }
-      );
+      return forkJoin([obs1]);
     }
   }
 
   saveConfiguration(): Observable<any> {
-    this.mapConfiguration();
+    this.mapConfiguration(this.plugin);
 
     const obs1 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
     const obs2 = this.plugin.VaultAccount ?

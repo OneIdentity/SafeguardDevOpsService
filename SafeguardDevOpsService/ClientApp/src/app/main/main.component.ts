@@ -19,6 +19,7 @@ import { EditTrustedCertificatesComponent } from '../edit-trusted-certificates/e
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { HttpResponse } from '@angular/common/http';
 import { ViewMonitorEventsComponent } from '../view-monitor-events/view-monitor-events.component';
+import { cloneDeep } from 'lodash';
 
 @UntilDestroy()
 @Component({
@@ -74,12 +75,13 @@ export class MainComponent implements OnInit, AfterViewInit {
   needsClientCertificate: boolean = true;
   needsWebCertificate: boolean = true;
   needsTrustedCertificates: boolean = true;
-  needsSSLEnabled:boolean = true;
+  needsSSLEnabled: boolean = true;
   isLicensed: boolean = false;
   isAssetAdmin: boolean = false;
   certificateUploaded: boolean = false;
   passedTrustChainValidation: boolean = false;
   passphrase: string;
+  pluginInstances = [];
 
   certificateUploading = {
     Client: false,
@@ -172,11 +174,24 @@ export class MainComponent implements OnInit, AfterViewInit {
     };
     this.plugins.push(custom);
 
+    this.pluginInstances = [];
     return this.serviceClient.getPlugins().pipe(
       tap((plugins: any[]) => {
         plugins.forEach(plugin => {
           plugin.IsConfigurationSetup = true;
           this.plugins.push(plugin);
+
+          if (!this.pluginInstances[plugin.RootPluginName]) {
+            this.pluginInstances[plugin.RootPluginName] = { Count: 0, AllMappedAccountsCount: 0, Disabled: 0 };
+          } else {
+            plugin.Rendered = true;
+          }
+          this.pluginInstances[plugin.RootPluginName].Count++;
+          this.pluginInstances[plugin.RootPluginName].AllMappedAccountsCount += plugin.MappedAccountsCount;
+
+          if (plugin.IsDisabled) {
+            this.pluginInstances[plugin.RootPluginName].Disabled++;
+          }
         });
 
         this.updateMonitoringAvailable();
@@ -570,7 +585,8 @@ export class MainComponent implements OnInit, AfterViewInit {
     }
 
     this.error = null;
-    this.editPluginService.openProperties(plugin);
+    let pluginInstances = cloneDeep(this.plugins.filter(p => p.RootPluginName == plugin.RootPluginName));
+    this.editPluginService.openProperties(pluginInstances);
     this.openWhat = 'plugin';
     this.openDrawer = 'properties';
     this.drawer.open();
@@ -598,17 +614,12 @@ export class MainComponent implements OnInit, AfterViewInit {
         case EditPluginMode.None:
           this.drawer.close();
           this.openDrawer = '';
-          const indx = this.plugins.findIndex(x => x.Name === plugin.Name);
-          if (indx > -1) {
-            if (data.plugin) {
-              this.plugins[indx] = data.plugin;
-            } else {
-              this.plugins.splice(indx, 1);
-            }
+
+          if (data.restartMonitoring === true) {
             this.updateMonitoringAvailable();
 
-            if (data.saved === true && this.isMonitoring) {
-              this.dialog.open(ConfirmDialogComponent, {
+            if (this.isMonitoring) {
+              const dialogRef = this.dialog.open(ConfirmDialogComponent, {
                 data: {
                   title: 'Plugin Configuration Changed',
                   message: 'Restart the monitor to apply the new plugin configuration.',
@@ -616,7 +627,19 @@ export class MainComponent implements OnInit, AfterViewInit {
                   confirmText: 'OK'
                 }
               });
+
+              dialogRef.afterClosed().pipe(
+                filter((dlgResult) => dlgResult?.result === 'OK'),
+              ).subscribe(() => {
+                if (data.reload === true) {
+                  this.window.location.reload();
+                }
+              });
+            } else if (data.reload === true) {
+              this.window.location.reload();
             }
+          } else if (data.reload === true) {
+            this.window.location.reload();
           }
           break;
       }
@@ -639,6 +662,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       this.serviceClient.postPluginFile(file)
         .subscribe((x: any) => {
           if (typeof x === 'string') {
+            this.isUploading.Plugin = false;
             this.snackBar.open(x, 'OK', { duration: 10000 });
           } else {
             setTimeout(() => {
@@ -672,6 +696,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       this.serviceClient.postAddonFile(file)
         .subscribe((x: any) => {
           if (typeof x === 'string') {
+            this.isUploading.Addon = false;
             this.snackBar.open(x, 'OK', { duration: 10000 });
           } else {
             this.isUploading.Addon = false;
@@ -944,7 +969,7 @@ export class MainComponent implements OnInit, AfterViewInit {
     dialogRef.afterClosed().subscribe(
       (result) => {
         if (result?.result === ViewCertificateResult.RemovedCertificate) {
-            this.window.location.reload();
+          this.window.location.reload();
         } else if (result?.result === ViewCertificateResult.AddCertificate) {
           this.addCertificate(null, certType);
         } else if (reload) {

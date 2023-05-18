@@ -8,6 +8,34 @@
   </mat-toolbar>
 
   <div class="main-container">
+    <div class="selection-header">
+      <button mat-flat-button color="primary" (click)="instance()"
+        [disabled]="isSaving || isTesting || isDeleting || plugin.LoadingPluginAccounts">
+        <mat-icon>add</mat-icon>New Instance
+      </button>
+
+      <ng-container *ngIf="isMultiInstance">
+        <div class="spacer"></div>
+        <button mat-button (click)="goBack()"
+          [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts || instanceIndex == 0" disableRipple>
+          <mat-icon>arrow_back_ios</mat-icon>
+        </button>
+        <button mat-button (click)="goNext()"
+          [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts || instanceIndex == instanceCount - 1"
+          disableRipple>
+          <mat-icon>arrow_forward_ios</mat-icon>
+        </button>
+        <div class="spacer"></div>
+        <div class="center">Instance {{instanceIndex + 1}} of {{instanceCount}}</div>
+        <div class="selection-row">
+          <button mat-button color="primary" *ngIf="!isDeleting && !plugin.IsSystemOwned" (click)="deleteInstance()"
+            [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts" disableRipple>
+            Delete Instance
+          </button>
+        </div>
+      </ng-container>
+    </div>
+
     <mat-card>
       <div class="basic-info-header">
         <h2>Basic Info</h2>
@@ -43,11 +71,11 @@
         </div>
         <div class="field-text">This account will be used by Secrets Broker to pull new passwords from Safeguard</div>
       </div>
-      <mat-checkbox *ngIf="!plugin.IsSystemOwned" [(ngModel)]="isPluginDisabled" (change)="updatePluginDisabled()"
+      <mat-checkbox *ngIf="!plugin.IsSystemOwned" [(ngModel)]="plugin.IsDisabled"
         matTooltip="Disable the plugin to prevent monitoring the associated accounts">Disabled</mat-checkbox>
       <div *ngIf="!plugin.IsSystemOwned" class="sub-title-2">Plugin Details</div>
       <div *ngIf="!plugin.IsSystemOwned">
-        <ng-container *ngFor="let config of configs">
+        <ng-container *ngFor="let config of plugin.configs">
           <div class="field-container">
             <mat-form-field appearance="outline">
               <mat-label>{{config.key}}</mat-label>
@@ -128,8 +156,11 @@
       Plugin</button>
     <div class="spacer"></div>
     <app-progress-spinner color="accent" diameter="20" [visible]="isSaving"></app-progress-spinner>
-    <button mat-flat-button color="primary" (click)="save()" *ngIf="!isDeleting"
-      [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts"><span *ngIf="!isSaving">Save</span><span
-        *ngIf="isSaving">Saving</span></button>
+    <button mat-flat-button color="primary" (click)="saveAll()" *ngIf="!isDeleting"
+      [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts">
+      <span *ngIf="!isSaving && !isMultiInstance">Save</span>
+      <span *ngIf="!isSaving && isMultiInstance">Save All</span>
+      <span *ngIf="isSaving">Saving</span>
+    </button>
   </mat-toolbar>
 </div>

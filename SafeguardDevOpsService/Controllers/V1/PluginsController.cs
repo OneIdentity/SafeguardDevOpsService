@@ -242,9 +242,15 @@ namespace OneIdentity.DevOps.Controllers.V1
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("{name}/Accounts")]
-        public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name)
+        public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromServices] IPluginsLogic pluginsLogic, 
+            [FromRoute] string name, [FromQuery] bool count = false, [FromQuery] bool includeAllInstances = false)
         {
-            var accountMappings = pluginsLogic.GetAccountMappings(name);
+            var accountMappings = pluginsLogic.GetAccountMappings(name, includeAllInstances);
+
+            if (count)
+            {
+                return Ok(accountMappings.Count());
+            }
 
             return Ok(accountMappings);
         }
@@ -483,6 +489,88 @@ namespace OneIdentity.DevOps.Controllers.V1
             var result = pluginsLogic.UpdatePluginDisabledState(name, pluginState.Disabled);
 
             return Ok(result);
+        }
+
+        /// <summary>
+        /// Create a new instance of a plugin from an existing plugin instance.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint creates a new instance of a plugin from an existing plugin. The new instance can be configured independently from the original plugin instance.
+        /// </remarks>
+        /// <param name="name">Name of an existing plugin</param>
+        /// <param name="copyConfig">Copy the configuration of the existing plugin to the new plugin instance</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad Request</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPost("{name}/Instances")]
+        public ActionResult DuplicatePluginByName([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromQuery] bool copyConfig = false)
+        {
+            var plugin = pluginsLogic.CreatePluginInstanceByName(name, copyConfig);
+            if (plugin == null)
+                return NotFound();
+
+            return Ok(plugin);
+        }
+
+        /// <summary>
+        /// Get all instances of a plugin from a plugin name.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint gets a list of all instances of a plugin given the plugin name.
+        /// </remarks>
+        /// <param name="name">Name of a plugin</param>
+        /// <response code="200">Success</response>
+        /// <response code="404">Not found</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("{name}/Instances")]
+        public ActionResult<IEnumerable<Plugin>> GetAllPluginInstancesByName([FromServices] IPluginsLogic pluginsLogic, 
+            [FromRoute] string name, [FromQuery] bool includeDeleted = false)
+        {
+            var plugins = pluginsLogic.GetAllPluginInstancesByName(name, includeDeleted);
+            if (plugins == null)
+                return NotFound();
+
+            return Ok(plugins.ToArray());
+        }
+
+        /// <summary>
+        /// Delete the configuration for all instances of a specific plugin.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
+        /// party vault. Each plugin must be installed and configured individually.
+        ///
+        /// This endpoint deletes the configuration for all istances of a plugin, marks the plugin as deleted and unregisters the plugin from Safeguard Secrets Broker for DevOps.
+        /// However, this endpoint does not remove the plugin from the \ProgramData\SafeguardDevOpsService\ExternalPlugins folder. The
+        /// Safeguard Secrets Broker for DevOps service must be restarted so that the plugin files can be removed.
+        /// </remarks>
+        /// <param name="name">Name of the plugin.</param>
+        /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after plugin install.</param>
+        /// <response code="200">Success - needing restart</response>
+        /// <response code="204">Success</response>
+        /// <response code="400">Bad Request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpDelete("{name}/Instances")]
+        public ActionResult DeleteAllPluginInstancesByName([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromQuery] bool restart = false)
+        {
+            pluginsLogic.DeleteAllPluginInstancesByName(name);
+        
+            if (restart)
+                pluginsLogic.RestartService();
+            else if (RestartManager.Instance.ShouldRestart)
+                return Ok("Safeguard Secrets Broker for DevOps needs to be restarted to finish removing the plugin.");
+
+            return NoContent();
         }
     }
 }

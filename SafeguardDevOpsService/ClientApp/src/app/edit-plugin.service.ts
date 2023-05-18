@@ -20,8 +20,15 @@ export class EditPluginService {
     private window: Window) {
   }
 
-  public plugin: any;
-  private originalPlugin: any;
+  public instanceIndex: number = 0;
+  public pluginInstances = [];
+
+  public get plugin() {
+    return this.pluginInstances[this.instanceIndex];
+  }
+  public set plugin(value: any) {
+    this.pluginInstances[this.instanceIndex] = value;
+  }
 
   getAvailableAccounts(): Observable<any[]> {
     this.plugin.LoadingAvailableAccounts = true;
@@ -70,17 +77,20 @@ export class EditPluginService {
     this.availableAccounts.splice(0);
   }
 
-  openProperties(plugin: any): void {
-    this.originalPlugin = plugin;
-    this.plugin = Object.assign({}, plugin);
-    this.plugin.Accounts = [];
-    this.plugin.VaultAccount = null;
-    this.plugin.VaultAccountDisplayName = '';
-    this.plugin.LoadingPluginAccounts = true;
-    this.initializePluginAccounts();
+  openProperties(pluginInstances: any): void {
+    this.instanceIndex = 0;
+    this.pluginInstances = pluginInstances;
+
+    pluginInstances.forEach(p => {
+      p.Accounts = [];
+      p.VaultAccount = null;
+      p.VaultAccountDisplayName = '';
+      p.LoadingPluginAccounts = true;
+      this.initializePluginAccounts(p);
+    });
 
     this.notifyEventSource.next({
-      plugin: this.plugin,
+      plugin: null,
       mode: EditPluginMode.Properties
     });
   }
@@ -92,11 +102,18 @@ export class EditPluginService {
     });
   }
 
-  closeProperties(plugin?: any): void {
+  deletePluginConfiguration(name: string, deleteAll: boolean, restartService: boolean = false): Observable<any> {
+    return deleteAll ?
+      this.serviceClient.deleteAllPluginConfigurations(name, restartService) :
+      this.serviceClient.deletePluginConfiguration(name, restartService);
+  }
+
+  closeProperties(saved: boolean = false, reload: boolean = false): void {
     this.notifyEventSource.next({
-      plugin: plugin ? Object.assign(this.plugin, plugin) : this.originalPlugin,
+      plugin: null,
       mode: EditPluginMode.None,
-      saved: plugin ? true : false
+      restartMonitoring: saved,
+      reload: reload
     });
     this.notifyEventSource.complete();
     this.notifyEventSource = new Subject<EditPluginEvent>();
@@ -146,27 +163,31 @@ export class EditPluginService {
     });
   }
 
-  private initializePluginAccounts(): void {
+  createInstance(name: string, copyConfig: boolean): Observable<any> {
+    return this.serviceClient.postPluginInstance(name, copyConfig);
+  }
+
+  private initializePluginAccounts(plugin: any): void {
     forkJoin([
-      this.serviceClient.getPluginAccounts(this.plugin.Name),
-      this.serviceClient.getPluginVaultAccount(this.plugin.Name)
+      this.serviceClient.getPluginAccounts(plugin.Name),
+      this.serviceClient.getPluginVaultAccount(plugin.Name)
     ]).pipe(
       tap(([managedAccounts, vaultAccount]) => {
         this.mapRetrievableToAvailableAccount(managedAccounts);
-        this.plugin.Accounts = managedAccounts;
+        plugin.Accounts = managedAccounts;
 
         if (vaultAccount) {
-          this.plugin.VaultAccount = {
+          plugin.VaultAccount = {
             Id: vaultAccount.AccountId,
             Name: vaultAccount.AccountName,
             DomainName: vaultAccount.DomainName,
             SystemName: vaultAccount.SystemName,
             SystemNetworkAddress: vaultAccount.NetworkAddress
           };
-          this.plugin.VaultAccountDisplayName = this.getVaultAccountDisplay(this.plugin.VaultAccount);
+          plugin.VaultAccountDisplayName = this.getVaultAccountDisplay(plugin.VaultAccount);
         }
       }),
-      finalize(() => this.plugin.LoadingPluginAccounts = false)
+      finalize(() => plugin.LoadingPluginAccounts = false)
     ).subscribe();
   }
 
@@ -192,7 +213,8 @@ export class EditPluginService {
 export class EditPluginEvent {
   plugin: any;
   mode: EditPluginMode;
-  saved?: boolean;
+  restartMonitoring?: boolean;
+  reload?: boolean;
 }
 
 export enum EditPluginMode {

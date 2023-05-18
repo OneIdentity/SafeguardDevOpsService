@@ -28,5 +28,6 @@
 
 <div mat-dialog-actions align='end'>
    <button mat-button (click)="close()" cdkFocusInitial *ngIf="showCancel">Cancel</button>
-   <button mat-flat-button color='primary' (click)="confirm()">{{confirmText}}</button>
+   <button mat-button (click)="confirm(false)" *ngIf="showNo">No</button>
+   <button mat-flat-button color='primary' (click)="confirm(true)">{{confirmText}}</button>
 </div>

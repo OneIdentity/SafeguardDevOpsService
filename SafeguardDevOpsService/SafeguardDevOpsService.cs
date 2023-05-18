@@ -158,10 +158,7 @@ namespace OneIdentity.DevOps
             {
                 try
                 {
-                    var random = new Random((int) DateTime.Now.Ticks);
-                    const string pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                    var chars = Enumerable.Range(0, 10).Select(x => pool[random.Next(0, pool.Length)]);
-                    var id = new string(chars.ToArray());
+                    var id = WellKnownData.GenerateRandomId();
 
                     File.WriteAllText(WellKnownData.SvcIdPath, id);
                     svcId = id;

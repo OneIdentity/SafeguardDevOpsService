@@ -15,11 +15,14 @@ namespace OneIdentity.DevOps.Logic
         void InstallPlugin(IFormFile formFile);
 
         IEnumerable<Plugin> GetAllPlugins(bool includeDeleted = false);
+        IEnumerable<Plugin> GetAllPluginInstancesByName(string name, bool includeDeleted = false);
         Plugin GetPluginByName(string name);
         void DeletePluginByName(string name);
+        void DeleteAllPluginInstancesByName(string name);
         Plugin SavePluginConfigurationByName(PluginConfiguration pluginConfiguration, string name);
+        Plugin CreatePluginInstanceByName(string name, bool copyConfig);
 
-        IEnumerable<AccountMapping> GetAccountMappings(string name);
+        IEnumerable<AccountMapping> GetAccountMappings(string name, bool includeAllInstances = false);
         AccountMapping GetAccountMappingById(string name, int accountId);
         IEnumerable<AccountMapping> SaveAccountMappings(ISafeguardConnection sgConnection, string name, IEnumerable<A2ARetrievableAccount> accounts);
         void DeleteAccountMappings(string name);
@@ -35,5 +38,6 @@ namespace OneIdentity.DevOps.Logic
         bool TestPluginConnectionByName(ISafeguardConnection sgConnection, string name);
         PluginState GetPluginDisabledState(string name);
         PluginState UpdatePluginDisabledState(string name, bool isDisabled);
+
     }
 }

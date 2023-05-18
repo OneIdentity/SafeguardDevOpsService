@@ -11,9 +11,9 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
 {
     public class PluginDescriptor : ILoadablePlugin
     {
-        private static AmazonSecretsManagerClient _awsClient;
-        private static Dictionary<string, string> _configuration;
-        private static ILogger _logger;
+        private AmazonSecretsManagerClient _awsClient;
+        private Dictionary<string, string> _configuration;
+        private ILogger _logger;
 
         private const string AccessKeyId = "accessKeyId";
         private const string AwsRegion = "awsRegion";

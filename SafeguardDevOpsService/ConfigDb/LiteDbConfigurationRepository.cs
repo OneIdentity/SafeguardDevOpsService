@@ -204,6 +204,12 @@ namespace OneIdentity.DevOps.ConfigDb
             return _plugins.FindById(name);
         }
 
+        public IEnumerable<Plugin> GetPluginInstancesByName(string name)
+        {
+            var instances = _plugins.FindAll();
+            return instances.Where(x => x.Name.StartsWith(name));
+        }
+
         public Plugin SavePluginConfiguration(Plugin plugin)
         {
             _plugins.Upsert(plugin);
@@ -225,6 +231,18 @@ namespace OneIdentity.DevOps.ConfigDb
             }
 
             return true;
+        }
+
+        public Plugin SetRootPlugin(string name, bool isRoot)
+        {
+            var plugin = GetPluginByName(name);
+            if (plugin != null && plugin.IsRootPlugin != isRoot)
+            {
+                plugin.IsRootPlugin = isRoot;
+                SavePluginConfiguration(plugin);
+            }
+
+            return plugin;
         }
 
         public IEnumerable<Addon> GetAllAddons()
