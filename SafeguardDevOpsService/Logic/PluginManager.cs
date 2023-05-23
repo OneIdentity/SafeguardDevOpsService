@@ -570,7 +570,15 @@ namespace OneIdentity.DevOps.Logic
 
                 _logger.Information($"Successfully configured a new instance of plugin {pluginInstance.Name}.");
 
-                LoadedPlugins.Add(pluginInstance.Name, loadablePlugin);
+                try
+                {
+                    LoadedPlugins.Add(pluginInstance.Name, loadablePlugin);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Information($"{ex.Message}.");
+                }
+
             }
         }
 
