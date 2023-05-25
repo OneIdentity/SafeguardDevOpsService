@@ -22,9 +22,11 @@ namespace OneIdentity.DevOps.HashiCorpVault
             _credential = credential;
             _logger = logger;
 
-            _vaultClient = new RestClient(connectionUrl);
-
-            _vaultClient.RemoteCertificateValidationCallback += (sender, certificate, chain, errors) => true;
+            var options = new RestClientOptions(connectionUrl)
+            {
+                RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true
+            };
+            _vaultClient = new RestClient(options);
         }
 
         public FullResponse InvokeMethodFull(Method method, string relativeUrl, string body = null, IDictionary<string, string> parameters = null,
@@ -48,7 +50,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 foreach (var header in additionalHeaders)
                     request.AddHeader(header.Key, header.Value);
             }
-            if ((method == Method.POST || method == Method.PUT) && body != null)
+            if ((method == Method.Post || method == Method.Put) && body != null)
                 request.AddParameter("application/json", body, ParameterType.RequestBody);
             if (parameters != null)
             {
@@ -61,12 +63,12 @@ namespace OneIdentity.DevOps.HashiCorpVault
                     ? int.MaxValue : (int)timeout.Value.TotalMilliseconds;
             }
 
-            LogRequestDetails(method, new Uri(_vaultClient.BaseUrl + $"/{relativeUrl}"), parameters, additionalHeaders);
+            LogRequestDetails(method, new Uri(_vaultClient.Options.BaseUrl + $"/{relativeUrl}"), parameters, additionalHeaders);
             
             var response = _vaultClient.Execute(request);
             _logger.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
             if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new Exception($"Unable to connect to web service {_vaultClient.BaseUrl}, Error: " + response.ErrorMessage);
+                throw new Exception($"Unable to connect to web service {_vaultClient.Options.BaseUrl}, Error: " + response.ErrorMessage);
 
             if (response.StatusCode == HttpStatusCode.TemporaryRedirect)
             {
@@ -74,7 +76,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 Thread.Sleep(TimeSpan.FromSeconds(2));
                 response = _vaultClient.Execute(request);
                 if (response.ResponseStatus != ResponseStatus.Completed)
-                    throw new Exception($"Unable to connect to web service {_vaultClient.BaseUrl}, Error: " + response.ErrorMessage);
+                    throw new Exception($"Unable to connect to web service {_vaultClient.Options.BaseUrl}, Error: " + response.ErrorMessage);
             }
 
             if (!response.IsSuccessful && response.StatusCode != HttpStatusCode.ServiceUnavailable)
