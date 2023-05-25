@@ -13,12 +13,14 @@ namespace OneIdentity.DevOps.SppSecrets
         private ISafeguardConnection _sppConnection;
         private Dictionary<string,string> _configuration;
         private A2ARegistration _a2aRegistration;
+        private AccountGroup _accountGroup;
         private ILogger _logger;
 
         private const string SppAppliance = "Spp Appliance";
         private const string SppUser = "Spp User";
         private const string SppA2aRegistrationName = "Spp A2A Registration Name";
         private const string SppA2aCertificateUser = "Spp A2A Certificate User";
+        private const string SppAccountGroup = "Spp Account Group";
 
         public string Name => "SppSecrets";
         public string DisplayName => "Safeguard for Privileged Passwords Secrets";
@@ -33,7 +35,8 @@ namespace OneIdentity.DevOps.SppSecrets
                 { SppAppliance, "" },
                 { SppUser, "" },
                 { SppA2aRegistrationName, "" },
-                { SppA2aCertificateUser, "" }
+                { SppA2aCertificateUser, "" },
+                { SppAccountGroup, "" }
             };
         }
 
@@ -194,6 +197,14 @@ namespace OneIdentity.DevOps.SppSecrets
                     }
                 }
 
+                if (_accountGroup != null)
+                {
+                    if (!_accountGroup.Accounts.Any(x => x.Name.Equals(account.Name, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        AddAccountToGroup(account);
+                    }
+                }
+
                 switch (AssignedCredentialType)
                 {
                     case CredentialType.Password:
@@ -322,6 +333,17 @@ namespace OneIdentity.DevOps.SppSecrets
                 _a2aRegistration = CreateA2ARegistration();
                 if (_a2aRegistration == null )
                     return false; 
+            }
+
+            if (!string.IsNullOrEmpty(_configuration[SppAccountGroup]))
+            {
+                _accountGroup = GetAccountGroup();
+
+                // If the account group is not found by name, then create one.
+                if (_accountGroup == null)
+                {
+                    _accountGroup = CreateAccountGroup();
+                }
             }
 
             return true;
@@ -553,6 +575,88 @@ namespace OneIdentity.DevOps.SppSecrets
             return null;
         }
 
+        private AccountGroup CreateAccountGroup()
+        {
+            if (_sppConnection == null)
+                return null;
+
+            var accountGroup = new AccountGroup()
+            {
+                Id = 0,
+                Name =  _configuration[SppAccountGroup],
+                Description = "Account group created by DevOps Secrets Broker",
+            };
+
+            var accountGroupBody = JsonHelper.SerializeObject(accountGroup);
+            try
+            {
+                var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Post, "AccountGroups", accountGroupBody);
+                if (result.StatusCode == HttpStatusCode.Created)
+                {
+                    accountGroup = JsonHelper.DeserializeObject<AccountGroup>(result.Body);
+                    return accountGroup;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Failed to create an asset for {_configuration[SppAccountGroup]}: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private AccountGroup GetAccountGroup()
+        {
+            if (_sppConnection == null)
+                return null;
+
+            try
+            {
+                var p = new Dictionary<string, string>
+                    {{"filter", $"Name eq '{_configuration[SppAccountGroup]}'"}};
+
+                FullResponse result = _sppConnection.InvokeMethodFull(Service.Core, Method.Get, "AccountGroups", null, p);
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    var foundAccountGroups = JsonHelper.DeserializeObject<List<AccountGroup>>(result.Body);
+
+                    if (foundAccountGroups.Count > 0)
+                    {
+                        var asset = foundAccountGroups.FirstOrDefault();
+                        return asset;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Failed to get the asset by name {_configuration[SppAccountGroup]}: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        private bool AddAccountToGroup(Account account)
+        {
+            if (_sppConnection == null)
+                return false;
+
+            var accountBody = JsonHelper.SerializeObject(new[] {account});
+            try
+            {
+                var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Post, $"AccountGroups/{_accountGroup.Id}/Accounts/Add", accountBody);
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Failed to add the account {account.Name} to account group {_accountGroup.Name}: {ex.Message}");
+            }
+
+            return false;
+        }
+
         private ApiKey CreateApiKey(Account account, ApiKey apiKey)
         {
             if (_sppConnection == null)
@@ -690,4 +794,13 @@ namespace OneIdentity.DevOps.SppSecrets
         public bool Disabled { get; set; }
         public Asset Asset { get; set; }
     }
+
+    public class AccountGroup
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public Account[] Accounts { get; set; }
+    }
+
 }
