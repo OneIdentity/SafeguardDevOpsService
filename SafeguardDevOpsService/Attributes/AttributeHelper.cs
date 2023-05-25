@@ -23,8 +23,7 @@ namespace OneIdentity.DevOps.Attributes
 
         public static string GetSessionKey(HttpContext context)
         {
-            if (context.Request.Cookies.Keys.Contains(WellKnownData.SessionKeyCookieName) &&
-                context.Request.Cookies[WellKnownData.SessionKeyCookieName].HasValue())
+            if (context.Request.Cookies.Keys.Contains(WellKnownData.SessionKeyCookieName))
             {
                 return context.Request.Cookies[WellKnownData.SessionKeyCookieName];
             }
