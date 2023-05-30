@@ -78,7 +78,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             try
             {
-                var response = _vaultClient.InvokeMethodFull(Method.GET, $"v1/{_configuration[MountPointName]}/config");
+                var response = _vaultClient.InvokeMethodFull(Method.Get, $"v1/{_configuration[MountPointName]}/config");
                 _logger.Information($"Test vault connection for {DisplayName}: Result = {response.Body}");
                 return true;
             }
@@ -189,7 +189,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             try
             {
-                var response = _vaultClient.InvokeMethodFull(Method.POST, $"v1/{_configuration[MountPointName]}/data/{name}", payload);
+                var response = _vaultClient.InvokeMethodFull(Method.Post, $"v1/{_configuration[MountPointName]}/data/{name}", payload);
 
                 _logger.Information($"The secret for {name} has been successfully stored in the vault.");
                 return true;
