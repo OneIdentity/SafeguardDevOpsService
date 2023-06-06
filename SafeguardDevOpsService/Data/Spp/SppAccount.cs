@@ -30,17 +30,13 @@
         /// </summary>
         public bool Disabled { get; set; }
         /// <summary>
-        /// Asset Id
+        /// Asset 
         /// </summary>
-        public int SystemId { get; set; }
-        /// <summary>
-        /// Asset name
-        /// </summary>
-        public string SystemName { get; set; }
-        /// <summary>
-        /// Asset network address
-        /// </summary>
-        public string SystemNetworkAddress { get; set; }
+        public Asset Asset { get; set; }
+    }
+
+    public class RequestProperties
+    {
         /// <summary>
         /// Allow password request
         /// </summary>

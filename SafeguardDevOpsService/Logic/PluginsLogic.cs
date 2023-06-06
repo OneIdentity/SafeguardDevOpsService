@@ -422,8 +422,8 @@ namespace OneIdentity.DevOps.Logic
                                 AltAccountName = account.AltAccountName,
                                 AccountId = retrievableAccount.AccountId,
                                 ApiKey = retrievableAccount.ApiKey,
-                                AssetName = retrievableAccount.SystemName,
-                                SystemId = retrievableAccount.SystemId,
+                                AssetName = retrievableAccount.AssetName,
+                                SystemId = retrievableAccount.AssetId,
                                 DomainName = retrievableAccount.DomainName,
                                 NetworkAddress = retrievableAccount.NetworkAddress,
                                 VaultName = name
@@ -512,16 +512,16 @@ namespace OneIdentity.DevOps.Logic
                 {
                     AccountName = WellKnownData.DevOpsCredentialName(plugin.Name, _configDb.SvcId),
                     AccountDescription = "Internal account",
-                    SystemName = WellKnownData.DevOpsAssetName(_configDb.SvcId),
-                    SystemDescription = WellKnownData.DevOpsAssetName(_configDb.SvcId)
+                    AssetName = WellKnownData.DevOpsAssetName(_configDb.SvcId),
+                    AssetDescription = WellKnownData.DevOpsAssetName(_configDb.SvcId)
                 };
 
                 var addon = _configDb.GetAllAddons().FirstOrDefault(a => a.Manifest.PluginName.Equals(plugin.Name));
                 if (addon != null)
                 {
                     account.AccountName = addon.VaultAccountName;
-                    account.SystemName = addon.Name;
-                    account.SystemDescription = addon.Name;
+                    account.AssetName = addon.Name;
+                    account.AssetDescription = addon.Name;
                 }
 
                 return account;

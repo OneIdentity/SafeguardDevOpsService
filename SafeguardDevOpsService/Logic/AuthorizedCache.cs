@@ -53,8 +53,8 @@ namespace OneIdentity.DevOps.Logic
             return Cache.Values.FirstOrDefault(x =>
                 x.Appliance.ApplianceAddress.Equals(managementConnection.Appliance.ApplianceAddress) 
                 && x.User != null  
-                && x.User.IdentityProviderName.Equals(managementConnection.User?.IdentityProviderName) 
-                && x.User.UserName.Equals(managementConnection.User?.UserName));
+                && x.User.PrimaryAuthenticationProvider.Name.Equals(managementConnection.User?.PrimaryAuthenticationProvider?.Name) 
+                && x.User.Name.Equals(managementConnection.User?.Name));
         }
 
         public void Remove(string sessionKey)

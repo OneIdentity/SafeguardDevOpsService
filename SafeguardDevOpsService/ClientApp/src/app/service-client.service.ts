@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
 
 export class DevOpsServiceClient {
 
-  BASE = '/service/devops/v1/';
+  BASE = '/service/devops/v2/';
   applianceAddress: string;
 
   constructor(

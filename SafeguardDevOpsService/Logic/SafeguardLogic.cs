@@ -263,7 +263,7 @@ namespace OneIdentity.DevOps.Logic
                     // ApplianceSupportsDevOps = ApplianceSupportsDevOps ?? GetSafeguardDevOpsSupport(sg, address ?? _configDb.SafeguardAddress),
                     ApplianceSupportsDevOps = false,  
                     DevOpsInstanceId = _configDb.SvcId,
-                    UserName = servConfig?.User?.UserName,
+                    UserName = servConfig?.User?.Name,
                     UserDisplayName = servConfig?.User?.DisplayName,
                     AdminRoles = servConfig?.User?.AdminRoles,
                     Version = WellKnownData.DevOpsServiceVersion()
@@ -501,8 +501,8 @@ namespace OneIdentity.DevOps.Logic
             {
                 a2aUser = new A2AUser()
                 {
-                    UserName = WellKnownData.DevOpsUserName(_configDb.SvcId),
-                    PrimaryAuthenticationIdentity = thumbprint
+                    Name = WellKnownData.DevOpsUserName(_configDb.SvcId),
+                    PrimaryAuthenticationProvider = new AuthenticationProvider() {Identity = thumbprint}
                 };
 
                 var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
@@ -531,12 +531,12 @@ namespace OneIdentity.DevOps.Logic
             }
             else
             {
-                if (!a2aUser.PrimaryAuthenticationIdentity.Equals(thumbprint,
+                if (!a2aUser.PrimaryAuthenticationProvider.Identity.Equals(thumbprint,
                     StringComparison.InvariantCultureIgnoreCase))
                 {
                     try
                     {
-                        a2aUser.PrimaryAuthenticationIdentity = thumbprint;
+                        a2aUser.PrimaryAuthenticationProvider.Identity = thumbprint;
                         var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
                         var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put, $"Users/{a2aUser.Id}", a2aUserStr);
                         if (result.StatusCode == HttpStatusCode.OK)
@@ -1112,7 +1112,7 @@ namespace OneIdentity.DevOps.Logic
                         Name = WellKnownData.DevOpsAssetPartitionName(_configDb.SvcId),
                         ManagedBy = new[] {new Identity
                         {
-                            Name = user.UserName,
+                            Name = user.Name,
                             Id = user.Id
                         }}
                     };
@@ -3042,7 +3042,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                throw LogAndException($"Failed to add the account {account.Name} to safeguard for '{account.AssetName}': {ex.Message}", ex);
+                throw LogAndException($"Failed to add the account {account.Name} to safeguard for '{account.Asset.Name}': {ex.Message}", ex);
             }
 
             return null;
@@ -3484,7 +3484,7 @@ namespace OneIdentity.DevOps.Logic
                                     Id = 0,
                                     Name = credential.Key,
                                     Description = addon.Manifest.DisplayName + " account",
-                                    AssetId = DevOpsSecretsBrokerCache.Asset.Id,
+                                    Asset = new Asset() {Id = DevOpsSecretsBrokerCache.Asset.Id},
                                     Password = credential.Value
                                 });
                             }
@@ -3522,8 +3522,8 @@ namespace OneIdentity.DevOps.Logic
                             {
                                 addon.VaultAccountId = vaultAccount.Id;
                                 addon.VaultAccountName = vaultAccount.Name;
-                                addon.VaultAssetId = vaultAccount.AssetId;
-                                addon.VaultAssetName = vaultAccount.AssetName;
+                                addon.VaultAssetId = vaultAccount.Asset.Id;
+                                addon.VaultAssetName = vaultAccount.Asset.Name;
                                 _configDb.SaveAddon(addon);
                             }
                         }

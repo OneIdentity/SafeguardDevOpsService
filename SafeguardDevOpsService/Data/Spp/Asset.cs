@@ -33,9 +33,9 @@ namespace OneIdentity.DevOps.Data.Spp
         public int AssetPartitionId { get; set; }
 
         /// <summary>
-        /// Display name asset partition
+        /// Name asset partition
         /// </summary>
-        public string AssetPartitionDisplayName { get; set; }
+        public string AssetPartitionName { get; set; }
 
         /// <summary>
         /// Date this entity was created
