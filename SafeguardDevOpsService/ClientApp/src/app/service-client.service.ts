@@ -273,8 +273,8 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('putPluginVaultAccount')));
   }
 
-  putPluginConfiguration(name: string, config: any): Observable<any> {
-    const payload = { Configuration: config };
+  putPluginConfiguration(name: string, config: any, assignedCredentialType: string): Observable<any> {
+    const payload = { Configuration: config, AssignedCredentialType: assignedCredentialType };
     return this.http.put(this.BASE + 'Plugins/' + encodeURIComponent(name), payload, this.authHeader())
     .pipe(catchError(this.error<any>('putPluginConfiguration')));
   }

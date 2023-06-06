@@ -23,6 +23,8 @@ namespace OneIdentity.DevOps.AzureKeyVault
         public string Name => "AzureKeyVault";
         public string DisplayName => "Azure Key Vault";
         public string Description => "This is the Azure Key Vault plugin for updating passwords";
+        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
+        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -88,23 +90,72 @@ namespace OneIdentity.DevOps.AzureKeyVault
 
         public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
+            if (AssignedCredentialType != CredentialType.Password)
+            {
+                _logger.Error("This plugin instance does not handle the Password credential type.");
+                return false;
+            }
+
             if (_secretsClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
             {
                 _logger.Error("No vault connection. Make sure that the plugin has been configured.");
                 return false;
             }
 
-            try
+            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            return StoreCredential(name, password);
+        }
+
+        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.SshKey)
             {
-                var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
-                Task.Run(async () => await _secretsClient.SetSecretAsync(name, password));
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
+                _logger.Error("This plugin instance does not handle the SshKey credential type.");
                 return false;
             }
+
+            if (_secretsClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
+            {
+                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return false;
+            }
+
+            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            return StoreCredential(name, sshKey);
+        }
+
+        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.ApiKey)
+            {
+                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
+                return false;
+            }
+
+            if (_secretsClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
+            {
+                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return false;
+            }
+
+            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            var retval = true;
+
+            foreach (var apiKeyJson in apiKeys)
+            {
+                var apiKey = JsonHelper.DeserializeObject<ApiKey>(apiKeyJson);
+                if (apiKey != null)
+                {
+                    StoreCredential($"{name}-{apiKey.Name}", $"{apiKey.ClientId}:{apiKey.ClientSecret}");
+                }
+                else
+                {
+                    _logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {this.DisplayName} vault.");
+                    retval = false;
+                }
+            }
+
+            return retval;
         }
 
         public void SetLogger(ILogger logger)
@@ -114,6 +165,22 @@ namespace OneIdentity.DevOps.AzureKeyVault
 
         public void Unload()
         {
+        }
+
+        private bool StoreCredential(string name, string payload)
+        {
+            try
+            {
+                Task.Run(async () => await _secretsClient.SetSecretAsync(name, payload));
+
+                _logger.Information($"The secret for {name} has been successfully stored in the vault.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Failed to set the secret for {name}: {ex.Message}.");
+                return false;
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System.Security;
+﻿using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.SafeguardDotNet;
 
@@ -10,11 +10,12 @@ namespace OneIdentity.DevOps.Logic
     {
         void Run();
         void SetConfigurationForPlugin(string name);
-        void SendPluginVaultCredentials(string plugin, string apiKey);
         bool TestPluginVaultConnection(ISafeguardConnection sgConnection, string plugin);
-        bool SendPassword(string name, string assetName, string accountName, SecureString password, string altAccountName = null);
+
+        bool SendCredential(string name, string assetName, string accountName, string[] credential, CredentialType assignedCredentialType, string altAccountName = null);
+        string[] GetAccountCredential(string name, string a2AApiKey, CredentialType assignedType);
+
         bool IsLoadedPlugin(string name);
-        bool IsDisabledPlugin(string name);
 
         Plugin DuplicatePlugin(string name, bool copyConfig);
 

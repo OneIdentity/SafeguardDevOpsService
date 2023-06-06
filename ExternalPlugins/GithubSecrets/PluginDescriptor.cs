@@ -23,6 +23,8 @@ namespace OneIdentity.DevOps.GithubSecrets
         public string Name => "GithubSecrets";
         public string DisplayName => "Github Secrets";
         public string Description => "This is the Github Secrets plugin for updating passwords";
+        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password};
+        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -133,6 +135,18 @@ namespace OneIdentity.DevOps.GithubSecrets
                 _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return false;
             }
+        }
+
+        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        {
+            _logger.Error("This plugin instance does not handle the SshKey credential type.");
+            return false;
+        }
+
+        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        {
+            _logger.Error("This plugin instance does not handle the ApiKey credential type.");
+            return false;
         }
 
         public void SetLogger(ILogger logger)

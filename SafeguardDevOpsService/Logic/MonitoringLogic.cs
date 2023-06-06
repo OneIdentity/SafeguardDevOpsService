@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Security;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Exceptions;
@@ -24,7 +25,7 @@ namespace OneIdentity.DevOps.Logic
         private static ISafeguardEventListener _eventListener;
         private static ISafeguardA2AContext _a2AContext;
         private static List<AccountMapping> _retrievableAccounts;
-        private static FixedSizeQueue<MonitorEvent> _lastEventsQueue = new FixedSizeQueue<MonitorEvent>(1000);
+        private static FixedSizeQueue<MonitorEvent> _lastEventsQueue = new FixedSizeQueue<MonitorEvent>(10000);
 
         public MonitoringLogic(IConfigurationRepository configDb, IPluginManager pluginManager)
         {
@@ -204,43 +205,61 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void PullAndPushPasswordByApiKey(string apiKey, IEnumerable<AccountMapping> selectedAccounts)
+        private void PullAndPushPasswordByApiKey(string a2AApiKey, IEnumerable<AccountMapping> selectedAccounts)
         {
-            using var password = _a2AContext.RetrievePassword(apiKey.ToSecureString());
+            var credentialCache = new Dictionary<CredentialType, string[]>();
 
             foreach (var account in selectedAccounts)
             {
+                var pluginInfo = _configDb.GetPluginByName(account.VaultName);
+                var credentialType = Enum.GetName(typeof(CredentialType), pluginInfo.AssignedCredentialType);
+
                 var monitorEvent = new MonitorEvent()
                 {
-                    Event = $"Sending password for account {account.AccountName} to {account.VaultName}.",
+                    Event = $"Sending {credentialType} for account {account.AccountName} to {account.VaultName}.",
                     Result = WellKnownData.SentPasswordSuccess,
                     Date = DateTime.UtcNow
                 };
 
-                if (_pluginManager.IsDisabledPlugin(account.VaultName))
+                if (!_pluginManager.IsLoadedPlugin(account.VaultName) || pluginInfo.IsDisabled)
                 {
-                    monitorEvent.Event = $"{account.VaultName} is disabled or not loaded. No password sent for account {account.AccountName}.";
-                    monitorEvent.Event = WellKnownData.SentPasswordFailure;
+                    monitorEvent.Event = $"{account.VaultName} is disabled or not loaded. No {credentialType} sent for account {account.AccountName}.";
+                    monitorEvent.Result = WellKnownData.SentPasswordFailure;
                 }
                 else
                 {
+                    if (!credentialCache.ContainsKey(pluginInfo.AssignedCredentialType))
+                    {
+                        var credential = _pluginManager.GetAccountCredential(pluginInfo.Name, a2AApiKey, pluginInfo.AssignedCredentialType);
+                        if (credential is { Length: <= 0 })
+                        {
+                            monitorEvent.Event = $"Failed to get the {credentialType} from Safeguard for plugin {account.VaultName}. No {credentialType} sent for account {account.AccountName}.";
+                            monitorEvent.Result = WellKnownData.SentPasswordFailure;
+                            _lastEventsQueue.Enqueue(monitorEvent);
+                            _logger.Error(monitorEvent.Event);
+                            continue;
+                        }
+
+                        credentialCache.Add(pluginInfo.AssignedCredentialType, credential);
+                    }
+
                     try
                     {
                         _logger.Information(monitorEvent.Event);
-                        if (!_pluginManager.SendPassword(account.VaultName, 
-                            account.AssetName, account.AccountName, password, 
-                            string.IsNullOrEmpty(account.AltAccountName) ? null : account.AltAccountName))
+                        if (!_pluginManager.SendCredential(account.VaultName, 
+                                account.AssetName, account.AccountName, credentialCache[pluginInfo.AssignedCredentialType], pluginInfo.AssignedCredentialType, 
+                                string.IsNullOrEmpty(account.AltAccountName) ? null : account.AltAccountName))
                         {
-                            _logger.Error(
-                                $"Unable to set the password for {account.AccountName} to {account.VaultName}.");
+                            monitorEvent.Event = $"Unable to set the {credentialType} for {account.AccountName} to {account.VaultName}.";
                             monitorEvent.Result = WellKnownData.SentPasswordFailure;
+                            _logger.Error(monitorEvent.Event);
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(ex,
-                            $"Unable to set the password for {account.AccountName} to {account.VaultName}: {ex.Message}.");
+                        monitorEvent.Event = $"Unable to set the {credentialType} for {account.AccountName} to {account.VaultName}: {ex.Message}.";
                         monitorEvent.Result = WellKnownData.SentPasswordFailure;
+                        _logger.Error(ex, monitorEvent.Event);
                     }
                 }
 

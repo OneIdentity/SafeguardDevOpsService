@@ -75,6 +75,16 @@
         matTooltip="Disable the plugin to prevent monitoring the associated accounts">Disabled</mat-checkbox>
       <div *ngIf="!plugin.IsSystemOwned" class="sub-title-2">Plugin Details</div>
       <div *ngIf="!plugin.IsSystemOwned">
+        <div class="field-container">
+          <mat-form-field appearance="outline">
+            <mat-label>Credential Type - Assign the credential type the plugin instance should handle</mat-label>
+            <mat-select name="AssignedCredentialType" [(ngModel)]="plugin.AssignedCredentialType" [disabled]="isSaving">
+              <mat-option *ngFor="let credentialType of plugin.SupportedCredentialTypes" [value]="credentialType">
+                {{credentialType}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
         <ng-container *ngFor="let config of plugin.configs">
           <div class="field-container">
             <mat-form-field appearance="outline">

@@ -916,6 +916,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         this.snackBar.open('Safeguard Secrets Broker for DevOps service restarted.', null, { duration: this.snackBarDuration });
         // Hide overlay
         this.drawer.close();
+        this.window.location.reload();
       })
     ).subscribe();
   }

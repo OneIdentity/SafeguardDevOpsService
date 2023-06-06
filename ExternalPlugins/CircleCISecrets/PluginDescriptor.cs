@@ -32,6 +32,8 @@ namespace OneIdentity.DevOps.CircleCISecrets
         public string Name => "CircleCISecrets";
         public string DisplayName => "CircleCI Secrets";
         public string Description => "This is the CircleCI Secrets plugin for updating passwords";
+        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
+        public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -51,7 +53,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
             {
                 _configuration = configuration;
                 _logger.Information($"Plugin {Name} has been successfully configured.");
-                _rgx = new Regex("[^a-zA-Z0-9-]");
+                _rgx = new Regex("[^a-zA-Z0-9_]");
 
                 if (configuration.ContainsKey(RepositoryUrlName) && !string.IsNullOrEmpty(configuration[RepositoryUrlName]))
                 {
@@ -111,8 +113,8 @@ namespace OneIdentity.DevOps.CircleCISecrets
                 {
                     try
                     {
-                        var response = _secretsClient.InvokeMethodFull(Method.GET, $"/context?owner-id={_configuration[OrganizationIdName]}");
-                        var contexts = DeserializeObject<ContextItems>(response.Body);
+                        var response = _secretsClient.InvokeMethodFull(Method.Get, $"/context?owner-id={_configuration[OrganizationIdName]}");
+                        var contexts = JsonHelper.DeserializeObject<ContextItems>(response.Body);
                         if (contexts?.items != null)
                         {
                             _contextItem = contexts.items.ToArray()
@@ -129,8 +131,8 @@ namespace OneIdentity.DevOps.CircleCISecrets
                 {
                     try
                     {
-                        var response = _secretsClient.InvokeMethodFull(Method.GET, $"/project/{_vcsType}/{_vcsOrganization}/{_vcsProject}");
-                        var project = DeserializeObject<ProjectItem>(response.Body);
+                        var response = _secretsClient.InvokeMethodFull(Method.Get, $"/project/{_vcsType}/{_vcsOrganization}/{_vcsProject}");
+                        var project = JsonHelper.DeserializeObject<ProjectItem>(response.Body);
                         _vcsSlug = project?.slug;
                     }
                     catch (Exception ex)
@@ -164,6 +166,12 @@ namespace OneIdentity.DevOps.CircleCISecrets
 
         public bool SetPassword(string asset, string account, string password, string altAccountName = null)
         {
+            if (AssignedCredentialType != CredentialType.Password)
+            {
+                _logger.Error("This plugin instance does not handle the Password credential type.");
+                return false;
+            }
+
             if (_configuration == null || _secretsClient == null || (_contextItem == null && _vcsSlug == null))
             {
                 _logger.Error("No vault connection. Make sure that the plugin has been configured.");
@@ -171,54 +179,63 @@ namespace OneIdentity.DevOps.CircleCISecrets
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}_{account}", "_");
-            if (_contextItem != null)
-            {
-                try
-                {
-                    var payload = "{\"value\":\""+password+"\"}";
-                    var response = _secretsClient.InvokeMethodFull(Method.PUT, $"/context/{_contextItem.id}/environment-variable/{name}", payload);
 
-                    if (response.StatusCode == HttpStatusCode.OK)
-                    {
-                        _logger.Information($"Password for {name} has been successfully stored in the context.");
-                    }
-                    else
-                    {
-                        _logger.Error($"Failed to set the context secret for {name}: {response.Body}.");
-                    }
-                }
-                catch (Exception ex)
+            return StoreCredential(name, "{\"value\":\""+password+"\"}", "{\"name\":\""+name+"\",\"value\":\""+password+"\"}");
+        }
+
+        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.SshKey)
+            {
+                _logger.Error("This plugin instance does not handle the SshKey credential type.");
+                return false;
+            }
+
+            if (_configuration == null || _secretsClient == null || (_contextItem == null && _vcsSlug == null))
+            {
+                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return false;
+            }
+
+            var name = _rgx.Replace(altAccountName ?? $"{asset}_{account}", "_") + "_sshkey";
+
+            return StoreCredential(name, "{\"value\":\""+sshKey+"\"}", "{\"name\":\""+name+"\",\"value\":\""+sshKey+"\"}");
+        }
+
+        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        {
+            if (AssignedCredentialType != CredentialType.ApiKey)
+            {
+                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
+                return false;
+            }
+
+            if (_configuration == null || _secretsClient == null || (_contextItem == null && _vcsSlug == null))
+            {
+                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return false;
+            }
+
+            var name = _rgx.Replace(altAccountName ?? $"{asset}_{account}", "_");
+            var retval = true;
+
+            foreach (var apiKeyJson in apiKeys)
+            {
+                var apiKey = JsonHelper.DeserializeObject<ApiKey>(apiKeyJson);
+                if (apiKey != null)
                 {
-                    _logger.Error(ex, $"Failed to set the context secret for {name}: {ex.Message}.");
-                    return false;
+                    var n = $"{name}_{_rgx.Replace(apiKey.Name, "_")}";
+                    var k = $"{apiKey.ClientId}:{apiKey.ClientSecret}";
+                    StoreCredential(n, "{\"value\":\""+k+"\"}", "{\"name\":\""+n+"\",\"value\":\""+k+"\"}");
+                }
+                else
+                {
+                    _logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {this.DisplayName} vault.");
+                    retval = false;
                 }
             }
 
-            if (_vcsSlug != null)
-            {
-                try
-                {
-                    var payload = "{\"name\":\""+name+"\",\"value\":\""+password+"\"}";
-                    var response = _secretsClient.InvokeMethodFull(Method.POST, $"/project/{_vcsSlug}/envvar", payload);
-
-                    if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Created)
-                    {
-                        _logger.Information(
-                            $"Password for {name} has been successfully stored in the project environment.");
-                    }
-                    else
-                    {
-                        _logger.Error($"Failed to set the project secret for {name}: {response.Body}.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, $"Failed to set the project secret for {name}: {ex.Message}.");
-                    return false;
-                }
-            }
-
-            return true;
+            return retval;
         }
 
         public void SetLogger(ILogger logger)
@@ -234,27 +251,57 @@ namespace OneIdentity.DevOps.CircleCISecrets
             _configuration = null;
         }
 
-        private T DeserializeObject<T>(string rawJson) where T : class
+        private bool StoreCredential(string name, string contextPayload, string projectPayload)
         {
-            T dataTransferObject = JsonConvert.DeserializeObject<T>(rawJson,
-                new JsonSerializerSettings
-                {
-                    Error = HandleDeserializationError,
-                    DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate
-                });
+            var retval = true;
 
-            if (dataTransferObject == null)
+            if (_contextItem != null)
             {
-                _logger.Error($"Failed to get the contexts for the organization {OrganizationId}.");
-            }
-            return dataTransferObject;
-        }
+                try
+                {
+                    var response = _secretsClient.InvokeMethodFull(Method.Put, $"/context/{_contextItem.id}/environment-variable/{name}", contextPayload);
 
-        private void HandleDeserializationError(object sender, ErrorEventArgs errorArgs)
-        {
-            var currentError = errorArgs.ErrorContext.Error.Message;
-            _logger.Error(currentError);
-            errorArgs.ErrorContext.Handled = true;
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        _logger.Information($"The secret for {name} has been successfully stored in the context.");
+                    }
+                    else
+                    {
+                        _logger.Error($"Failed to set the context secret for {name}: {response.Body}.");
+                        retval = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, $"Failed to set the context secret for {name}: {ex.Message}.");
+                    retval = false;
+                }
+            }
+
+            if (_vcsSlug != null)
+            {
+                try
+                {
+                    var response = _secretsClient.InvokeMethodFull(Method.Post, $"/project/{_vcsSlug}/envvar", projectPayload);
+
+                    if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Created)
+                    {
+                        _logger.Information($"The secret for {name} has been successfully stored in the project environment.");
+                    }
+                    else
+                    {
+                        _logger.Error($"Failed to set the project environment secret for {name}: {response.Body}.");
+                        retval = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, $"Failed to set the project environment secret for {name}: {ex.Message}.");
+                    retval = false;
+                }
+            }
+
+            return retval;
         }
 
         class ContextItems

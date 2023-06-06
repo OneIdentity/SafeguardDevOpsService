@@ -127,7 +127,7 @@ export class EditPluginComponent implements OnInit {
           });
           p.Accounts = [];
           p.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(p.VaultAccount);
-          
+
           this.editPluginService.pluginInstances.push(p);
           this.editPluginService.instanceIndex = this.editPluginService.pluginInstances.length - 1;
           this.reload = true;
@@ -293,7 +293,7 @@ export class EditPluginComponent implements OnInit {
     );
 
     if (!plugin.IsSystemOwned) {
-      const obs2 = this.serviceClient.putPluginConfiguration(plugin.Name, plugin.Configuration);
+      const obs2 = this.serviceClient.putPluginConfiguration(plugin.Name, plugin.Configuration, plugin.AssignedCredentialType);
 
       const obs3 = plugin.VaultAccount ?
         this.serviceClient.putPluginVaultAccount(plugin.Name, plugin.VaultAccount) :
@@ -310,7 +310,7 @@ export class EditPluginComponent implements OnInit {
   saveConfiguration(): Observable<any> {
     this.mapConfiguration(this.plugin);
 
-    const obs1 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration);
+    const obs1 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration, this.plugin.AssignedCredentialType);
     const obs2 = this.plugin.VaultAccount ?
       this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.plugin.VaultAccount) :
       this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
@@ -320,6 +320,7 @@ export class EditPluginComponent implements OnInit {
         const plugin = data[0];
         if (plugin) {
           this.plugin.Configuration = plugin.Configuration;
+          this.plugin.AssignedCredentialType = plugin.AssignedCredentialType;
         }
 
         const vaultAccount = data[1];
