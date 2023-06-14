@@ -27,12 +27,14 @@ namespace OneIdentity.DevOps.Logic
 
         private readonly IConfigurationRepository _configDb;
         private readonly ISafeguardLogic _safeguardLogic;
+        private readonly ICredentialManager _credentialManager;
 
-        internal PluginManager(IConfigurationRepository configDb, ISafeguardLogic safeguardLogic)
+        internal PluginManager(IConfigurationRepository configDb, ISafeguardLogic safeguardLogic, ICredentialManager credentialManager)
         {
             _configDb = configDb;
             _safeguardLogic = safeguardLogic;
             _logger = Serilog.Log.Logger;
+            _credentialManager = credentialManager;
         }
 
         bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain,
@@ -106,7 +108,7 @@ namespace OneIdentity.DevOps.Logic
             DetectPlugins(pluginDirPath);
         }
 
-        public void CleanUpDeletedPlugins()
+        private void CleanUpDeletedPlugins()
         {
             // If the DeleteAllPlugins file exists, just remove the entire external plugins directory.
             if (File.Exists(WellKnownData.DeleteAllPlugins))
@@ -169,6 +171,7 @@ namespace OneIdentity.DevOps.Logic
                     }
 
                     pluginInstance.AssignedCredentialType = pluginInfo.AssignedCredentialType;
+                    pluginInstance.ReverseFlowEnabled = pluginInfo.ReverseFlowEnabled;
 
                     return;
                 }
@@ -177,28 +180,47 @@ namespace OneIdentity.DevOps.Logic
             _logger.Error($"Plugin configuration failed. No plugin {name} found.");
         }
 
-        public bool SendCredential(string name, string assetName, string accountName, string[] credential, CredentialType assignedCredentialType, string altAccountName = null)
+        public bool SendCredential(AccountMapping account, string[] credential, CredentialType assignedCredentialType)
         {
-            if (LoadedPlugins.ContainsKey(name))
+            if (LoadedPlugins.ContainsKey(account.VaultName))
             {
-                var pluginInstance = LoadedPlugins[name];
+                var pluginInstance = LoadedPlugins[account.VaultName];
                 if (pluginInstance != null && credential.Length > 0)
                 {
-                    switch (assignedCredentialType)
-                    {
-                        case CredentialType.Password:
-                            return pluginInstance.SetPassword(assetName, accountName, credential.FirstOrDefault(), altAccountName);
-                        case CredentialType.SshKey:
-                            return pluginInstance.SetSshKey(assetName, accountName, credential.FirstOrDefault(), altAccountName);
-                        case CredentialType.ApiKey:
-                            return pluginInstance.SetApiKey(assetName, accountName, credential, altAccountName);
-                    }
+                    var altAccountName = string.IsNullOrEmpty(account.AltAccountName) ? null : account.AltAccountName;
+                    var storedCredential = pluginInstance.SetCredential(assignedCredentialType, account.AssetName, account.AccountName, credential, altAccountName);
+
+                    if (storedCredential != null)
+                        _credentialManager.Upsert(storedCredential, account, assignedCredentialType);
+
+                    return storedCredential != null;
                 }
             }
             else
             {
-                _logger.Error($"Send credential to plugin failed.  No plugin {name} found or missing credential.");
+                _logger.Error($"Send credential to plugin failed.  No plugin {account.VaultName} found or missing credential.");
             }
+
+            return false;
+        }
+
+        public bool GetCredential(AccountMapping account, CredentialType assignedCredentialType)
+        {
+            if (LoadedPlugins.ContainsKey(account.VaultName))
+            {
+                var pluginInstance = LoadedPlugins[account.VaultName];
+                var altAccountName = string.IsNullOrEmpty(account.AltAccountName) ? null : account.AltAccountName;
+                var fetchedCredential = pluginInstance.GetCredential(assignedCredentialType, account.AssetName, account.AccountName, altAccountName);
+
+                if (fetchedCredential != null && !_credentialManager.Matches(fetchedCredential, account, assignedCredentialType))
+                {
+                    // Push the credential back to SPP here.
+                }
+
+                return fetchedCredential != null;
+            }
+
+            _logger.Error($"Get credential from the plugin failed.  No plugin {account.VaultName} found.");
 
             return false;
         }
@@ -424,7 +446,8 @@ namespace OneIdentity.DevOps.Logic
                     var displayName = loadablePlugin.DisplayName;
                     var description = loadablePlugin.Description;
                     var supportedCredentialTypes = loadablePlugin.SupportedCredentialTypes;
-                    loadablePlugin.SetLogger(_logger);
+                    var supportsReverseFlow = loadablePlugin.SupportsReverseFlow;
+                    loadablePlugin.Logger = _logger;
 
                     var pluginInstance = loadablePlugin;
 
@@ -451,6 +474,7 @@ namespace OneIdentity.DevOps.Logic
                                 DisplayName = displayName,
                                 Description = description,
                                 SupportedCredentialTypes = supportedCredentialTypes,
+                                SupportsReverseFlow = supportsReverseFlow,
                                 Configuration = pluginInstance.GetPluginInitialConfiguration(),
                                 IsRootPlugin = true,
                                 Version = pluginVersion
@@ -497,6 +521,7 @@ namespace OneIdentity.DevOps.Logic
                                 _configDb.SavePluginConfiguration(pluginInfo);
                             }
                             pluginInstance.AssignedCredentialType = pluginInfo.AssignedCredentialType;
+                            pluginInstance.ReverseFlowEnabled = pluginInfo.ReverseFlowEnabled;
 
                             _configDb.SetRootPlugin(pluginInstance.Name, true);
                             pluginInfo = UpdatePluginInfo(new Plugin
@@ -505,6 +530,7 @@ namespace OneIdentity.DevOps.Logic
                                 DisplayName = displayName, 
                                 Description = description, 
                                 SupportedCredentialTypes = supportedCredentialTypes, 
+                                SupportsReverseFlow = supportsReverseFlow,
                                 Version = pluginVersion
                             }, pluginInfo);
                         }
@@ -560,9 +586,10 @@ namespace OneIdentity.DevOps.Logic
                     continue;
                 }
 
-                loadablePlugin.SetLogger(_logger);
+                loadablePlugin.Logger = _logger;
                 loadablePlugin.SetPluginConfiguration(pluginInstance.Configuration);
                 loadablePlugin.AssignedCredentialType = pluginInstance.AssignedCredentialType;
+                loadablePlugin.ReverseFlowEnabled = pluginInstance.ReverseFlowEnabled;
 
                 var dstPluginInstance = _configDb.SetRootPlugin(pluginInstance.Name, false);
 
@@ -608,7 +635,7 @@ namespace OneIdentity.DevOps.Logic
                     
             var displayName = loadablePlugin.DisplayName;
             var description = loadablePlugin.Description;
-            loadablePlugin.SetLogger(_logger);
+            loadablePlugin.Logger = _logger;
 
             var originalPluginInfo = _configDb.GetPluginByName(pluginName);
             if (originalPluginInfo == null)
@@ -623,6 +650,7 @@ namespace OneIdentity.DevOps.Logic
                 Description = description,
                 Configuration = copyConfig ? originalPluginInfo.Configuration : loadablePlugin.GetPluginInitialConfiguration(),
                 SupportedCredentialTypes = loadablePlugin.SupportedCredentialTypes,
+                SupportsReverseFlow = loadablePlugin.SupportsReverseFlow,
                 IsRootPlugin = false,
                 Version = originalPluginInfo.Version
             };
@@ -644,12 +672,14 @@ namespace OneIdentity.DevOps.Logic
                 || (srcPlugin.SupportedCredentialTypes != null && 
                     dstPlugin.SupportedCredentialTypes != null && 
                     !srcPlugin.SupportedCredentialTypes.SequenceEqual(dstPlugin.SupportedCredentialTypes))
+                || srcPlugin.SupportsReverseFlow != dstPlugin.SupportsReverseFlow
                 || !string.Equals(srcPlugin.Version, dstPlugin.Version,
                 StringComparison.OrdinalIgnoreCase))
             {
                 dstPlugin.DisplayName = srcPlugin.DisplayName;
                 dstPlugin.Description = srcPlugin.Description;
                 dstPlugin.SupportedCredentialTypes = srcPlugin.SupportedCredentialTypes;
+                dstPlugin.SupportsReverseFlow = srcPlugin.SupportsReverseFlow;
                 dstPlugin.Version = srcPlugin.Version;
 
                 _configDb.SavePluginConfiguration(dstPlugin);

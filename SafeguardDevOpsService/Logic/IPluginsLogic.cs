@@ -38,6 +38,7 @@ namespace OneIdentity.DevOps.Logic
         bool TestPluginConnectionByName(ISafeguardConnection sgConnection, string name);
         PluginState GetPluginDisabledState(string name);
         PluginState UpdatePluginDisabledState(string name, bool isDisabled);
-
+        PluginReverseFlowState GetPluginReverseFlowState(string name);
+        PluginReverseFlowState UpdatePluginReverseFlowState(string name, bool isDisabled);
     }
 }

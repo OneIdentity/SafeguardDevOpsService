@@ -36,6 +36,11 @@ namespace OneIdentity.DevOps.Data
         public CredentialType[] SupportedCredentialTypes { get; set; }
 
         /// <summary>
+        /// Is reverse flow supported in the plugin
+        /// </summary>
+        public bool SupportsReverseFlow { get; set; }
+
+        /// <summary>
         /// Base64 representation of the plugin (write-only)
         /// </summary>
         public string Base64PluginData { get; set; }

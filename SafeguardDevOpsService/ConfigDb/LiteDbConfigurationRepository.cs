@@ -211,6 +211,12 @@ namespace OneIdentity.DevOps.ConfigDb
             return instances.Where(x => x.Name.StartsWith(name));
         }
 
+        public IEnumerable<Plugin> GetAllReverseFlowPluginInstances()
+        {
+            var instances = _plugins.FindAll();
+            return instances.Where(x => x.ReverseFlowEnabled);
+        }
+
         public Plugin SavePluginConfiguration(Plugin plugin)
         {
             _plugins.Upsert(plugin);

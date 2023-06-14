@@ -9,6 +9,7 @@ namespace OneIdentity.DevOps.Logic
         void EnableMonitoring(bool enable);
         MonitorState GetMonitorState();
         IEnumerable<MonitorEvent> GetMonitorEvents(int size);
+        void PollReverseFlow();
         void Run();
     }
 }

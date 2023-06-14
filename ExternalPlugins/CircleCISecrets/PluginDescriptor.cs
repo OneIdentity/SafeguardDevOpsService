@@ -21,7 +21,6 @@ namespace OneIdentity.DevOps.CircleCISecrets
         private string _vcsOrganization = null;
         private string _vcsProject = null;
         private string _vcsSlug = null;
-        private ILogger _logger;
 
         private const string _address = "http://circleci.com/api/v2";
         private const string OrganizationId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx";
@@ -32,8 +31,12 @@ namespace OneIdentity.DevOps.CircleCISecrets
         public string Name => "CircleCISecrets";
         public string DisplayName => "CircleCI Secrets";
         public string Description => "This is the CircleCI Secrets plugin for updating passwords";
+        public bool SupportsReverseFlow => false;
+
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public bool ReverseFlowEnabled { get; set; } = false;
+        public ILogger Logger { get; set; }
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -52,7 +55,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
                     || configuration.ContainsKey(RepositoryUrlName)))
             {
                 _configuration = configuration;
-                _logger.Information($"Plugin {Name} has been successfully configured.");
+                Logger.Information($"Plugin {Name} has been successfully configured.");
                 _rgx = new Regex("[^a-zA-Z0-9_]");
 
                 if (configuration.ContainsKey(RepositoryUrlName) && !string.IsNullOrEmpty(configuration[RepositoryUrlName]))
@@ -91,7 +94,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
             }
             else
             {
-                _logger.Error("Some parameters are missing from the configuration.");
+                Logger.Error("Some parameters are missing from the configuration.");
             }
         }
 
@@ -101,12 +104,12 @@ namespace OneIdentity.DevOps.CircleCISecrets
             {
                 try
                 {
-                    _secretsClient = new VaultConnection(_address, credential, _logger);
-                    _logger.Information($"Plugin {Name} successfully authenticated.");
+                    _secretsClient = new VaultConnection(_address, credential, Logger);
+                    Logger.Information($"Plugin {Name} successfully authenticated.");
                 }
                 catch (Exception ex)
                 {
-                    _logger.Information(ex, $"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
+                    Logger.Information(ex, $"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
                 }
 
                 if (_configuration[OrganizationIdName] != null)
@@ -123,7 +126,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
+                        Logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                     }
                 }
 
@@ -138,13 +141,13 @@ namespace OneIdentity.DevOps.CircleCISecrets
                     catch (Exception ex)
                     {
                         _vcsSlug = null;
-                        _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
+                        Logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                     }
                 }
             }
             else
             {
-                _logger.Error("The plugin configuration or credential is missing.");
+                Logger.Error("The plugin configuration or credential is missing.");
             }
         }
 
@@ -155,7 +158,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
 
             if (_contextItem == null && _vcsSlug == null)
             {
-                _logger.Information($"Organization context {_configuration[ContextName] ?? "undefined"} not found for {DisplayName} or project not found for {_configuration[RepositoryUrlName] ?? "undefined"}.");
+                Logger.Information($"Organization context {_configuration[ContextName] ?? "undefined"} not found for {DisplayName} or project not found for {_configuration[RepositoryUrlName] ?? "undefined"}.");
                 return false;
             }
 
@@ -164,56 +167,130 @@ namespace OneIdentity.DevOps.CircleCISecrets
             return true;
         }
 
-        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
+        public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.Password)
+            switch (credentialType)
             {
-                _logger.Error("This plugin instance does not handle the Password credential type.");
-                return false;
+                case CredentialType.Password:
+                    return GetPassword(asset, account, altAccountName);
+                case CredentialType.SshKey:
+                    return GetSshKey(asset, account, altAccountName);
+                case CredentialType.ApiKey:
+                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
+                    break;
+                default:
+                    Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public string SetCredential(CredentialType credentialType, string asset, string account, string[] credential, string altAccountName)
+        {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return SetPassword(asset, account, credential, altAccountName);
+                case CredentialType.SshKey:
+                    return SetSshKey(asset, account, credential, altAccountName);
+                case CredentialType.ApiKey:
+                    return SetApiKey(asset, account, credential, altAccountName);
+                default:
+                    Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public void Unload()
+        {
+            Logger = null;
+            _secretsClient = null;
+            _configuration.Clear();
+            _configuration = null;
+        }
+
+        private string GetPassword(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
+            return null;
+        }
+
+        private string GetSshKey(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
+            {
+                return null;
+            }
+
+            return null;
+        }
+
+        private string SetPassword(string asset, string account, string[] password, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
             }
 
             if (_configuration == null || _secretsClient == null || (_contextItem == null && _vcsSlug == null))
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error($"No vault connection. Make sure that the {DisplayName} plugin has been configured.");
+                return null;
+            }
+
+            if (password is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}_{account}", "_");
 
-            return StoreCredential(name, "{\"value\":\""+password+"\"}", "{\"name\":\""+name+"\",\"value\":\""+password+"\"}");
+            return StoreCredential(name, "{\"value\":\""+password[0]+"\"}", "{\"name\":\""+name+"\",\"value\":\""+password[0]+"\"}") ? password[0] : null;
         }
 
-        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.SshKey)
+            if (!ValidationHelper.CanHandleSshKey(this))
             {
-                _logger.Error("This plugin instance does not handle the SshKey credential type.");
-                return false;
+                return null;
             }
 
             if (_configuration == null || _secretsClient == null || (_contextItem == null && _vcsSlug == null))
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error($"No vault connection. Make sure that the {DisplayName} plugin has been configured.");
+                return null;
+            }
+
+            if (sshKey is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}_{account}", "_") + "_sshkey";
 
-            return StoreCredential(name, "{\"value\":\""+sshKey+"\"}", "{\"name\":\""+name+"\",\"value\":\""+sshKey+"\"}");
+            return StoreCredential(name, "{\"value\":\""+sshKey[0]+"\"}", "{\"name\":\""+name+"\",\"value\":\""+sshKey[0]+"\"}") ? sshKey[0] : null;
         }
 
-        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.ApiKey)
+            if (!ValidationHelper.CanHandleApiKey(this))
             {
-                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
-                return false;
+                return null;
             }
 
             if (_configuration == null || _secretsClient == null || (_contextItem == null && _vcsSlug == null))
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error($"No vault connection. Make sure that the {DisplayName} plugin has been configured.");
+                return null;
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}_{account}", "_");
@@ -230,25 +307,12 @@ namespace OneIdentity.DevOps.CircleCISecrets
                 }
                 else
                 {
-                    _logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {this.DisplayName} vault.");
+                    Logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {this.DisplayName} vault.");
                     retval = false;
                 }
             }
 
-            return retval;
-        }
-
-        public void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public void Unload()
-        {
-            _logger = null;
-            _secretsClient = null;
-            _configuration.Clear();
-            _configuration = null;
+            return retval ? "" : null;
         }
 
         private bool StoreCredential(string name, string contextPayload, string projectPayload)
@@ -263,17 +327,17 @@ namespace OneIdentity.DevOps.CircleCISecrets
 
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
-                        _logger.Information($"The secret for {name} has been successfully stored in the context.");
+                        Logger.Information($"The secret for {name} has been successfully stored in the context.");
                     }
                     else
                     {
-                        _logger.Error($"Failed to set the context secret for {name}: {response.Body}.");
+                        Logger.Error($"Failed to set the context secret for {name}: {response.Body}.");
                         retval = false;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, $"Failed to set the context secret for {name}: {ex.Message}.");
+                    Logger.Error(ex, $"Failed to set the context secret for {name}: {ex.Message}.");
                     retval = false;
                 }
             }
@@ -286,17 +350,17 @@ namespace OneIdentity.DevOps.CircleCISecrets
 
                     if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Created)
                     {
-                        _logger.Information($"The secret for {name} has been successfully stored in the project environment.");
+                        Logger.Information($"The secret for {name} has been successfully stored in the project environment.");
                     }
                     else
                     {
-                        _logger.Error($"Failed to set the project environment secret for {name}: {response.Body}.");
+                        Logger.Error($"Failed to set the project environment secret for {name}: {response.Body}.");
                         retval = false;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex, $"Failed to set the project environment secret for {name}: {ex.Message}.");
+                    Logger.Error(ex, $"Failed to set the project environment secret for {name}: {ex.Message}.");
                     retval = false;
                 }
             }

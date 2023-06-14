@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Reflection.Metadata.Ecma335;
+using System.Security.Principal;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OneIdentity.DevOps.Common;
 using RestSharp;
@@ -14,19 +18,25 @@ namespace OneIdentity.DevOps.HashiCorpVault
         private VaultConnection _vaultClient;
         private Dictionary<string, string> _configuration;
         private Regex _rgx;
-        private ILogger _logger;
 
         private const string Address = "http://127.0.0.1:8200";
         private const string MountPoint = "oneidentity";
 
         private const string AddressName = "address";
         private const string MountPointName = "mountPoint";
+        private const string passwordKey = "pw";
+        private const string sshkeyKey = "sshkey";
+        private string FormatAccountName(string altAccountName, string asset, string account) => _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
         public string Name => "HashiCorpVault";
         public string DisplayName => "HashiCorp Vault";
         public string Description => "This is the HashiCorp Vault plugin for updating passwords";
+        public bool SupportsReverseFlow => true;
+
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public bool ReverseFlowEnabled { get; set; } = false;
+        public ILogger Logger { get; set; }
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -42,12 +52,12 @@ namespace OneIdentity.DevOps.HashiCorpVault
             if (configuration != null && configuration.ContainsKey(AddressName) && configuration.ContainsKey(MountPointName))
             {
                 _configuration = configuration;
-                _logger.Information($"Plugin {Name} has been successfully configured.");
+                Logger.Information($"Plugin {Name} has been successfully configured.");
                 _rgx = new Regex("[^a-zA-Z0-9-]");
             }
             else
             {
-                _logger.Error("Some parameters are missing from the configuration.");
+                Logger.Error("Some parameters are missing from the configuration.");
             }
         }
 
@@ -57,17 +67,17 @@ namespace OneIdentity.DevOps.HashiCorpVault
             {
                 try
                 {
-                    _vaultClient = new VaultConnection(_configuration[AddressName], credential, _logger);
-                    _logger.Information($"Plugin {Name} successfully authenticated.");
+                    _vaultClient = new VaultConnection(_configuration[AddressName], credential, Logger);
+                    Logger.Information($"Plugin {Name} successfully authenticated.");
                 }
                 catch (Exception ex)
                 {
-                    _logger.Information(ex, $"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
+                    Logger.Information(ex, $"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
                 }
             }
             else
             {
-                _logger.Error("The plugin configuration or credential is missing.");
+                Logger.Error("The plugin configuration or credential is missing.");
             }
         }
 
@@ -79,67 +89,147 @@ namespace OneIdentity.DevOps.HashiCorpVault
             try
             {
                 var response = _vaultClient.InvokeMethodFull(Method.Get, $"v1/{_configuration[MountPointName]}/config");
-                _logger.Information($"Test vault connection for {DisplayName}: Result = {response.Body}");
+                Logger.Information($"Test vault connection for {DisplayName}: Result = {response.Body}");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
+                Logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
 
         }
 
-        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
+        public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.Password)
+            switch (credentialType)
             {
-                _logger.Error("This plugin instance does not handle the Password credential type.");
-                return false;
+                case CredentialType.Password:
+                    return GetPassword(asset, account, altAccountName);
+                case CredentialType.SshKey:
+                    return GetSshKey(asset, account, altAccountName);
+                case CredentialType.ApiKey:
+                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
+                    break;
+                default:
+                    Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public string SetCredential(CredentialType credentialType, string asset, string account, string[] credential, string altAccountName)
+        {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return SetPassword(asset, account, credential, altAccountName);
+                case CredentialType.SshKey:
+                    return SetSshKey(asset, account, credential, altAccountName);
+                case CredentialType.ApiKey:
+                    return SetApiKey(asset, account, credential, altAccountName);
+                default:
+                    Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public void Unload()
+        {
+            Logger = null;
+            _vaultClient = null;
+            _configuration.Clear();
+            _configuration = null;
+        }
+
+        private string GetPassword(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
+            return FetchCredential(FormatAccountName(altAccountName, asset, account), passwordKey);
+        }
+
+        private string GetSshKey(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
+            {
+                return null;
+            }
+
+            return FetchCredential(FormatAccountName(altAccountName, asset, account), sshkeyKey);
+        }
+
+        private string SetPassword(string asset, string account, string[] password, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
             }
 
             if (_configuration == null || _vaultClient == null)
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error($"No vault connection. Make sure that the {DisplayName} plugin has been configured.");
+                return null;
+            }
+
+            if (password is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
-            return StoreCredential(name, "{\"data\": {\"pw\":\""+password+"\"}}");
+            return StoreCredential(name, "{\"data\": {\""+ passwordKey + "\":\"" + password[0] + "\"}}") ? password[0] : null;
         }
 
-        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.SshKey)
+            if (!ValidationHelper.CanHandleSshKey(this))
             {
-                _logger.Error("This plugin instance does not handle the SshKey credential type.");
-                return false;
+                return null;
             }
 
             if (_configuration == null || _vaultClient == null)
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error($"No vault connection. Make sure that the {DisplayName} plugin has been configured.");
+                return null;
+            }
+
+            if (sshKey is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
-            return StoreCredential(name, "{\"data\": {\"sshkey\":\""+sshKey.ReplaceLineEndings(string.Empty)+"\"}}");
+            return StoreCredential(name, "{\"data\": {\"" + sshkeyKey + "\":\""+sshKey[0].ReplaceLineEndings(string.Empty)+"\"}}") ? sshKey[0] : null;
         }
 
-        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.ApiKey)
+            if (!ValidationHelper.CanHandleApiKey(this))
             {
-                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
-                return false;
+                return null;
             }
 
             if (_configuration == null || _vaultClient == null)
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error($"No vault connection. Make sure that the {DisplayName} plugin has been configured.");
+                return null;
+            }
+
+            if (apiKeys == null || apiKeys.Length == 0)
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
@@ -155,7 +245,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 }
                 else
                 {
-                    _logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {this.DisplayName} vault.");
+                    Logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {DisplayName} vault.");
                     retval = false;
                 }
             }
@@ -164,41 +254,60 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             if (!StoreCredential(name, "{\"data\": {"+data+"}}"))
             {
-                _logger.Error($"Failed to save the ApiKeys for {name} to the {this.DisplayName} vault.");
+                Logger.Error($"Failed to save the ApiKeys for {name} to the {this.DisplayName} vault.");
                 retval = false;
             }
 
-            return retval;
-        }
-
-        public void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public void Unload()
-        {
-            _logger = null;
-            _vaultClient = null;
-            _configuration.Clear();
-            _configuration = null;
+            return retval ? "" : null;
         }
 
         private bool StoreCredential(string name, string payload)
         {
-
             try
             {
                 var response = _vaultClient.InvokeMethodFull(Method.Post, $"v1/{_configuration[MountPointName]}/data/{name}", payload);
 
-                _logger.Information($"The secret for {name} has been successfully stored in the vault.");
-                return true;
+                if (response is { StatusCode: HttpStatusCode.OK })
+                {
+                    Logger.Information($"The secret for {name} has been successfully stored in the {DisplayName} vault.");
+                    return true;
+                }
+
+                Logger.Error($"Failed to set the secret for {name} in plugin {DisplayName}.");
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to set the secret for {name}: {ex.Message}.");
-                return false;
+                Logger.Error(ex, $"Failed to set the secret for {name} in plugin {DisplayName}: {ex.Message}.");
             }
+
+            return false;
+        }
+
+        private string FetchCredential(string name, string type)
+        {
+            try
+            {
+                string secret = null;
+                var response = _vaultClient.InvokeMethodFull(Method.Get, $"v1/{_configuration[MountPointName]}/data/{name}");
+                if (response is { StatusCode: HttpStatusCode.OK })
+                {
+                    dynamic data = JsonConvert.DeserializeObject(response.Body);
+                    if (data != null)
+                    {
+                        secret = data["data"]["data"][type];
+                        Logger.Information($"The secret for {name} has been fetched from the {DisplayName} vault.");
+                        return secret;
+                    }
+                }
+                Logger.Error($"Failed to fetch the secret for {name} in the vault {DisplayName}.");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Failed to fetch the secret for {name} in the vault {DisplayName}: {ex.Message}.");
+                return null;
+            }
+
+            return null;
         }
     }
 }

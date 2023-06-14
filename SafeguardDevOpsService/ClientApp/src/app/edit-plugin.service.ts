@@ -42,7 +42,7 @@ export class EditPluginService {
         const dir =  sortDirection === 'desc' ? '-' : '';
 
         if (sortColumn === 'asset') {
-          sortby = `${dir}SystemName,${dir}SystemNetworkAddress`;
+          sortby = `${dir}Asset.Name,${dir}Asset.NetworkAddress`;
         } else {
           sortby = `${dir}Name,${dir}DomainName`;
         }
@@ -181,8 +181,8 @@ export class EditPluginService {
             Id: vaultAccount.AccountId,
             Name: vaultAccount.AccountName,
             DomainName: vaultAccount.DomainName,
-            SystemName: vaultAccount.SystemName,
-            SystemNetworkAddress: vaultAccount.NetworkAddress
+            AssetName: vaultAccount.AssetName,
+            AssetNetworkAddress: vaultAccount.NetworkAddress
           };
           plugin.VaultAccountDisplayName = this.getVaultAccountDisplay(plugin.VaultAccount);
         }
@@ -195,7 +195,7 @@ export class EditPluginService {
     if (!vaultAccount) {
       return '';
     }
-    const system = vaultAccount.DomainName ?? (vaultAccount.SystemName ?? vaultAccount.SystemNetworkAddress);
+    const system = vaultAccount.DomainName ?? (vaultAccount.AssetName ?? vaultAccount.AssetNetworkAddress);
 
     return `${vaultAccount.Name} (${system})`;
   }
@@ -204,8 +204,7 @@ export class EditPluginService {
     accounts.forEach(a => {
       a.Id = a.AccountId;
       a.Name = a.AccountName;
-      a.SystemName = a.AssetName;
-      a.SystemNetworkAddress = a.NetworkAddress;
+      a.AssetNetworkAddress = a.NetworkAddress;
     });
   }
 }

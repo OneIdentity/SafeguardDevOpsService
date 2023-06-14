@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using k8s;
 using k8s.Models;
@@ -12,7 +13,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
     {
         private Kubernetes _client;
         private Dictionary<string,string> _configuration;
-        private ILogger _logger;
+        private Regex _rgx;
 
         private const string ConfigFilePathName = "configFilePath";
         private const string VaultNamespaceName = "vaultNamespace";
@@ -21,8 +22,12 @@ namespace OneIdentity.DevOps.KubernetesSecrets
         public string Name => "KubernetesSecrets";
         public string DisplayName => "Kubernetes Secrets";
         public string Description => "This is the Kubernetes Secrets plugin for updating passwords";
+        public bool SupportsReverseFlow => false;
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password};
+
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public bool ReverseFlowEnabled { get; set; } = false;
+        public ILogger Logger { get; set; }
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -38,6 +43,12 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             if (configuration != null)
             {
                 _configuration = configuration;
+                Logger.Information($"Plugin {Name} has been successfully configured.");
+                _rgx = new Regex("[^a-zA-Z0-9-]");
+            }
+            else
+            {
+                Logger.Error("Some parameters are missing from the configuration.");
             }
         }
 
@@ -61,7 +72,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             }
             else
             {
-                _logger.Error("Some parameters are missing from the configuration or the configuration file is invalid.");
+                Logger.Error("Some parameters are missing from the configuration or the configuration file is invalid.");
             }
         }
 
@@ -80,22 +91,94 @@ namespace OneIdentity.DevOps.KubernetesSecrets
             {
                 var task = Task.Run(async () => await _client.ListNamespacedSecretAsync(vaultNamespace));
                 var result = task.Result;
-                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
+                Logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
+                Logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
         }
 
-        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
+        public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return GetPassword(asset, account, altAccountName);
+                case CredentialType.SshKey:
+                    return GetSshKey(asset, account, altAccountName);
+                case CredentialType.ApiKey:
+                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
+                    break;
+                default:
+                    Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public string SetCredential(CredentialType credentialType, string asset, string account, string[] credential, string altAccountName)
+        {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return SetPassword(asset, account, credential, altAccountName);
+                case CredentialType.SshKey:
+                    return SetSshKey(asset, account, credential, altAccountName);
+                case CredentialType.ApiKey:
+                    return SetApiKey(asset, account, credential, altAccountName);
+                default:
+                    Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public void Unload()
+        {
+        }
+
+        private string GetPassword(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
+            return null;
+        }
+
+        private string GetSshKey(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
+            {
+                return null;
+            }
+
+            return null;
+        }
+
+        private string SetPassword(string asset, string account, string[] password, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
             if (_client == null)
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error($"No vault connection. Make sure that the {DisplayName} plugin has been configured.");
+                return null;
+            }
+
+            if (password is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var vaultNamespace = DefaultNamespace;
@@ -104,13 +187,14 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                 vaultNamespace = _configuration[VaultNamespaceName];
             }
 
-            var passwordData = new Dictionary<string, string> {{"password", password}};
+            var passwordData = new Dictionary<string, string> {{"password", password[0]}};
             var data = new Dictionary<string, byte[]>();
+            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
             V1Secret secret = null;
             try
             {
-                secret = _client.ReadNamespacedSecret(altAccountName ?? $"{asset}-{account}", vaultNamespace);
+                secret = _client.ReadNamespacedSecret(name, vaultNamespace);
             }
             catch (Exception)
             {
@@ -129,7 +213,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                         StringData = passwordData,
                         Metadata = new V1ObjectMeta()
                         {
-                            Name = $"{asset}-{altAccountName ?? account}",
+                            Name = name,
                             NamespaceProperty = vaultNamespace
                         }
                     };
@@ -141,35 +225,34 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                     _client.ReplaceNamespacedSecret(secret, $"{asset}-{altAccountName ?? account}", vaultNamespace);
                 }
 
-                _logger.Information($"Password for {asset}-{altAccountName ?? account} has been successfully stored in the vault.");
-                return true;
+                Logger.Information($"Password for {name} has been successfully stored in the vault.");
+                return password[0];
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
-                return false;
+                Logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
+                return null;
             }
         }
 
-        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
         {
-            _logger.Error("This plugin instance does not handle the SshKey credential type.");
-            return false;
+            if (!ValidationHelper.CanHandleSshKey(this))
+            {
+                return null;
+            }
+
+            return null;
         }
 
-        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
         {
-            _logger.Error("This plugin instance does not handle the ApiKey credential type.");
-            return false;
-        }
+            if (!ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
 
-        public void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public void Unload()
-        {
+            return null;
         }
     }
 }

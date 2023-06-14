@@ -12,7 +12,9 @@ namespace OneIdentity.DevOps.Logic
         void SetConfigurationForPlugin(string name);
         bool TestPluginVaultConnection(ISafeguardConnection sgConnection, string plugin);
 
-        bool SendCredential(string name, string assetName, string accountName, string[] credential, CredentialType assignedCredentialType, string altAccountName = null);
+        bool SendCredential(AccountMapping account, string[] credential, CredentialType assignedCredentialType);
+        bool GetCredential(AccountMapping account, CredentialType assignedCredentialType);
+
         string[] GetAccountCredential(string name, string a2AApiKey, CredentialType assignedType);
 
         bool IsLoadedPlugin(string name);

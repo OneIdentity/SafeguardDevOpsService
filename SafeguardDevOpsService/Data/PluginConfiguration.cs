@@ -21,5 +21,10 @@ namespace OneIdentity.DevOps.Data
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Unknown;
+
+        /// <summary>
+        /// Current reverse flow state of the plugin.
+        /// </summary>
+        public bool ReverseFlowEnabled { get; set; } = false;
     }
 }

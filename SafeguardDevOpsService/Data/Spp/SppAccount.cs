@@ -34,20 +34,4 @@
         /// </summary>
         public Asset Asset { get; set; }
     }
-
-    public class RequestProperties
-    {
-        /// <summary>
-        /// Allow password request
-        /// </summary>
-        public bool AllowPasswordRequest { get; set; }
-        /// <summary>
-        /// Allow session request
-        /// </summary>
-        public bool AllowSessionRequest { get; set; }
-        /// <summary>
-        /// Allow Ssh key request
-        /// </summary>
-        public bool AllowSshKeyRequest { get; set; }
-    }
 }

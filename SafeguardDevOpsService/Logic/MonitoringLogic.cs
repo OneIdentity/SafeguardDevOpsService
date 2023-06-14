@@ -3,8 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Security;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
@@ -21,17 +25,19 @@ namespace OneIdentity.DevOps.Logic
         private readonly Serilog.ILogger _logger;
         private readonly IConfigurationRepository _configDb;
         private readonly IPluginManager _pluginManager;
+        private readonly ICredentialManager _credentialManager;
 
         private static ISafeguardEventListener _eventListener;
         private static ISafeguardA2AContext _a2AContext;
         private static List<AccountMapping> _retrievableAccounts;
         private static FixedSizeQueue<MonitorEvent> _lastEventsQueue = new FixedSizeQueue<MonitorEvent>(10000);
 
-        public MonitoringLogic(IConfigurationRepository configDb, IPluginManager pluginManager)
+        public MonitoringLogic(IConfigurationRepository configDb, IPluginManager pluginManager, ICredentialManager credentialManager)
         {
             _configDb = configDb;
             _pluginManager = pluginManager;
             _logger = Serilog.Log.Logger;
+            _credentialManager = credentialManager;
         }
 
         bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
@@ -64,6 +70,19 @@ namespace OneIdentity.DevOps.Logic
             if (size > _lastEventsQueue.Count)
                 size = _lastEventsQueue.Count;
             return _lastEventsQueue.TakeLast(size).Reverse();
+        }
+
+        public void PollReverseFlow()
+        {
+            // If monitoring is running then we can assume that the plugins have
+            // proper vault credentials.  If not then we need to refresh the
+            // vault credentials.
+            if (!GetMonitorState().Enabled)
+            {
+                _pluginManager.RefreshPluginCredentials();
+            }
+
+            Task.Run(() => PollReverseFlowInternal());
         }
 
         public void Run()
@@ -109,6 +128,9 @@ namespace OneIdentity.DevOps.Logic
             //  the monitor can be stopped and restarted which will cause a refresh of the vault credentials.
             _pluginManager.RefreshPluginCredentials();
 
+            // Make sure that the credentialManager cache is empty.
+            _credentialManager.Clear();
+
             // connect to Safeguard
             _a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
             // figure out what API keys to monitor
@@ -132,6 +154,10 @@ namespace OneIdentity.DevOps.Logic
             InitialPasswordPull();
 
             _logger.Information("Password change monitoring has been started.");
+
+            StartReverseFlowMonitor();
+            _logger.Information("Reverse flow monitoring has been started.");
+
         }
 
         private void StopMonitoring()
@@ -143,6 +169,8 @@ namespace OneIdentity.DevOps.Logic
                     _eventListener?.Stop();
                 } catch { }
 
+                StopReverseFlowMonitor();
+
                 _a2AContext?.Dispose();
                 _logger.Information("Password change monitoring has been stopped.");
             }
@@ -151,6 +179,7 @@ namespace OneIdentity.DevOps.Logic
                 _eventListener = null;
                 _a2AContext = null;
                 _retrievableAccounts = null;
+                _credentialManager.Clear();
             }
         }
 
@@ -245,14 +274,23 @@ namespace OneIdentity.DevOps.Logic
 
                     try
                     {
-                        _logger.Information(monitorEvent.Event);
-                        if (!_pluginManager.SendCredential(account.VaultName, 
-                                account.AssetName, account.AccountName, credentialCache[pluginInfo.AssignedCredentialType], pluginInfo.AssignedCredentialType, 
-                                string.IsNullOrEmpty(account.AltAccountName) ? null : account.AltAccountName))
+                        if (pluginInfo.SupportsReverseFlow && pluginInfo.ReverseFlowEnabled)
                         {
-                            monitorEvent.Event = $"Unable to set the {credentialType} for {account.AccountName} to {account.VaultName}.";
-                            monitorEvent.Result = WellKnownData.SentPasswordFailure;
-                            _logger.Error(monitorEvent.Event);
+                            // Only store passwords and ssh keys in the credential manager for reverse flow comparison. API keys are not supported yet.
+                            if (pluginInfo.AssignedCredentialType != CredentialType.ApiKey)
+                            {
+                                _credentialManager.Insert(credentialCache[pluginInfo.AssignedCredentialType][0], account, pluginInfo.AssignedCredentialType);
+                            }
+                        }
+                        else
+                        {
+                            _logger.Information(monitorEvent.Event);
+                            if (!_pluginManager.SendCredential(account, credentialCache[pluginInfo.AssignedCredentialType], pluginInfo.AssignedCredentialType))
+                            {
+                                monitorEvent.Event = $"Unable to set the {credentialType} for {account.AccountName} to {account.VaultName}.";
+                                monitorEvent.Result = WellKnownData.SentPasswordFailure;
+                                _logger.Error(monitorEvent.Event);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -267,5 +305,94 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
+        private CancellationTokenSource _cts = null;
+        // private Thread _reverseFlowMonitor = null;
+
+        private void StartReverseFlowMonitor()
+        {
+            if (_cts == null)
+            {
+                _cts = new CancellationTokenSource();
+
+                Task.Run(() => ReverseFlowMonitorThread(_cts.Token), _cts.Token);
+            }
+            else
+            {
+                _logger.Information("Reverse monitor thread shutting down.");
+            }
+        }
+
+        private void StopReverseFlowMonitor()
+        {
+            _cts.Cancel();
+            _cts = null;
+        }
+
+        private async Task ReverseFlowMonitorThread(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(WellKnownData.ReverseFlowMonitorPollingInterval), token);
+                }
+                catch (OperationCanceledException e)
+                {
+                    _logger.Information("Reverse flow monitor thread shutting down.");
+                }
+                if (token.IsCancellationRequested || !GetMonitorState().Enabled)
+                    break;
+
+                PollReverseFlowInternal();
+            }
+        }
+
+        private static object _lockReverseFlow = new object();
+
+        private void PollReverseFlowInternal()
+        {
+            lock (_lockReverseFlow)
+            {
+                var reverseFlowInstances = _configDb.GetAllReverseFlowPluginInstances().ToList();
+                foreach (var pluginInstance in reverseFlowInstances)
+                {
+                    if (_pluginManager.IsLoadedPlugin(pluginInstance.Name) && !pluginInstance.IsDisabled)
+                    {
+                        var accounts = _configDb.GetAccountMappings(pluginInstance.Name);
+                        foreach (var account in accounts)
+                        {
+                            var monitorEvent = new MonitorEvent()
+                            {
+                                Event =
+                                    $"Getting {pluginInstance.AssignedCredentialType} for account {account.AccountName} to {account.VaultName}.",
+                                Result = WellKnownData.GetPasswordSuccess,
+                                Date = DateTime.UtcNow
+                            };
+
+                            try
+                            {
+                                _logger.Information(monitorEvent.Event);
+                                if (!_pluginManager.GetCredential(account, pluginInstance.AssignedCredentialType))
+                                {
+                                    monitorEvent.Event =
+                                        $"Unable to get the {pluginInstance.AssignedCredentialType} for {account.AccountName} to {account.VaultName}.";
+                                    monitorEvent.Result = WellKnownData.GetPasswordFailure;
+                                    _logger.Error(monitorEvent.Event);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                monitorEvent.Event =
+                                    $"Unable to get the {pluginInstance.AssignedCredentialType} for {account.AccountName} to {account.VaultName}: {ex.Message}.";
+                                monitorEvent.Result = WellKnownData.GetPasswordFailure;
+                                _logger.Error(ex, monitorEvent.Event);
+                            }
+
+                            _lastEventsQueue.Enqueue(monitorEvent);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

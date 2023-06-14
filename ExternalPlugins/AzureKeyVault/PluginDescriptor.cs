@@ -14,7 +14,6 @@ namespace OneIdentity.DevOps.AzureKeyVault
         private SecretClient _secretsClient;
         private Dictionary<string,string> _configuration;
         private Regex _rgx;
-        private ILogger _logger;
 
         private const string ApplicationIdName = "applicationId";
         private const string VaultUriName = "vaultUri";
@@ -23,8 +22,12 @@ namespace OneIdentity.DevOps.AzureKeyVault
         public string Name => "AzureKeyVault";
         public string DisplayName => "Azure Key Vault";
         public string Description => "This is the Azure Key Vault plugin for updating passwords";
+        public bool SupportsReverseFlow => false;
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
+
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public bool ReverseFlowEnabled { get; set; } = false;
+        public ILogger Logger { get; set; }
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -47,12 +50,12 @@ namespace OneIdentity.DevOps.AzureKeyVault
                 configuration.ContainsKey(VaultUriName) && configuration.ContainsKey(TenantIdName))
             {
                 _configuration = configuration;
-                _logger.Information($"Plugin {Name} has been successfully configured.");
+                Logger.Information($"Plugin {Name} has been successfully configured.");
                 _rgx = new Regex("[^a-zA-Z0-9-]");
             }
             else
             {
-                _logger.Error("Some parameters are missing from the configuration.");
+                Logger.Error("Some parameters are missing from the configuration.");
             }
         }
 
@@ -62,11 +65,11 @@ namespace OneIdentity.DevOps.AzureKeyVault
             {
                 _secretsClient = new SecretClient(new Uri(_configuration[VaultUriName]),
                     new ClientSecretCredential(_configuration[TenantIdName], _configuration[ApplicationIdName], credential));
-                _logger.Information($"Plugin {Name} has been successfully authenticated to the Azure vault.");
+                Logger.Information($"Plugin {Name} has been successfully authenticated to the Azure vault.");
             }
             else
             {
-                _logger.Error("The plugin is missing the configuration.");
+                Logger.Error("The plugin is missing the configuration.");
             }
         }
 
@@ -78,64 +81,140 @@ namespace OneIdentity.DevOps.AzureKeyVault
             try
             {
                 var result = _secretsClient.GetDeletedSecrets();
-                _logger.Information($"Test vault connection for {DisplayName}: Result = {result != null}");
+                Logger.Information($"Test vault connection for {DisplayName}: Result = {result != null}");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
+                Logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
         }
 
-        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
+        public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.Password)
+            switch (credentialType)
             {
-                _logger.Error("This plugin instance does not handle the Password credential type.");
-                return false;
+                case CredentialType.Password:
+                    return GetPassword(asset, account, altAccountName);
+                case CredentialType.SshKey:
+                    return GetSshKey(asset, account, altAccountName);
+                case CredentialType.ApiKey:
+                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
+                    break;
+                default:
+                    Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public string SetCredential(CredentialType credentialType, string asset, string account, string[] credential, string altAccountName)
+        {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return SetPassword(asset, account, credential, altAccountName);
+                case CredentialType.SshKey:
+                    return SetSshKey(asset, account, credential, altAccountName);
+                case CredentialType.ApiKey:
+                    return SetApiKey(asset, account, credential, altAccountName);
+                default:
+                    Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public void Unload()
+        {
+        }
+
+        private string GetPassword(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
+            return null;
+        }
+
+        public string GetSshKey(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
+            {
+                return null;
+            }
+
+            return null;
+        }
+
+        private string SetPassword(string asset, string account, string[] password, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
             }
 
             if (_secretsClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return null;
+            }
+
+            if (password is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
-            return StoreCredential(name, password);
+            return StoreCredential(name, password[0]) ? password[0] : null;
         }
 
-        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.SshKey)
+            if (!ValidationHelper.CanHandleSshKey(this))
             {
-                _logger.Error("This plugin instance does not handle the SshKey credential type.");
-                return false;
+                return null;
             }
 
             if (_secretsClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return null;
+            }
+
+            if (sshKey is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
-            return StoreCredential(name, sshKey);
+            return StoreCredential(name, sshKey[0]) ? sshKey[0] : null;
         }
 
-        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.ApiKey)
+            if (!ValidationHelper.CanHandleApiKey(this))
             {
-                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
-                return false;
+                return null;
             }
 
             if (_secretsClient == null || _configuration == null || !_configuration.ContainsKey(VaultUriName))
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return null;
+            }
+
+            if (apiKeys == null || apiKeys.Length == 0)
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
@@ -150,21 +229,12 @@ namespace OneIdentity.DevOps.AzureKeyVault
                 }
                 else
                 {
-                    _logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {this.DisplayName} vault.");
+                    Logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {DisplayName} vault.");
                     retval = false;
                 }
             }
 
-            return retval;
-        }
-
-        public void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public void Unload()
-        {
+            return retval ? "" : null;
         }
 
         private bool StoreCredential(string name, string payload)
@@ -173,12 +243,12 @@ namespace OneIdentity.DevOps.AzureKeyVault
             {
                 Task.Run(async () => await _secretsClient.SetSecretAsync(name, payload));
 
-                _logger.Information($"The secret for {name} has been successfully stored in the vault.");
+                Logger.Information($"The secret for {name} has been successfully stored in the vault.");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to set the secret for {name}: {ex.Message}.");
+                Logger.Error(ex, $"Failed to set the secret for {name}: {ex.Message}.");
                 return false;
             }
         }
