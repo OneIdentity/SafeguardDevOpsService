@@ -25,7 +25,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
         public string Name => "JenkinsSecrets";
         public string DisplayName => "Jenkins Secrets";
         public string Description => "This is the Jenkins Secrets plugin for updating passwords";
-        public bool SupportsReverseFlow => false;
+        public bool SupportsReverseFlow => false; //Jenkins secrets can only be fetched by a build job.
 
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password};
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
@@ -122,20 +122,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
 
         public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
-            switch (credentialType)
-            {
-                case CredentialType.Password:
-                    return GetPassword(asset, account, altAccountName);
-                case CredentialType.SshKey:
-                    return GetSshKey(asset, account, altAccountName);
-                case CredentialType.ApiKey:
-                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
-                    break;
-                default:
-                    Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
-                    break;
-            }
-
+            ValidationHelper.CanReverseFlow(this);
             return null;
         }
 
@@ -146,9 +133,11 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                 case CredentialType.Password:
                     return SetPassword(asset, account, credential, altAccountName);
                 case CredentialType.SshKey:
-                    return SetSshKey(asset, account, credential, altAccountName);
+                    ValidationHelper.CanHandleSshKey(this);
+                    break;
                 case CredentialType.ApiKey:
-                    return SetApiKey(asset, account, credential, altAccountName);
+                    ValidationHelper.CanHandleApiKey(this);
+                    break;
                 default:
                     Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
                     break;
@@ -164,26 +153,6 @@ namespace OneIdentity.DevOps.JenkinsSecrets
             _secretsClient = null;
             _configuration.Clear();
             _configuration = null;
-        }
-
-        private string GetPassword(string asset, string account, string altAccountName)
-        {
-            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandlePassword(this))
-            {
-                return null;
-            }
-
-            return null;
-        }
-
-        private string GetSshKey(string asset, string account, string altAccountName)
-        {
-            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
-            {
-                return null;
-            }
-
-            return null;
         }
 
         private string SetPassword(string asset, string account, string[] password, string altAccountName)
@@ -245,26 +214,6 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                 Logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return null;
             }
-        }
-
-        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
-        {
-            if (!ValidationHelper.CanHandleSshKey(this))
-            {
-                return null;
-            }
-
-            return null;
-        }
-
-        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
-        {
-            if (!ValidationHelper.CanHandleApiKey(this))
-            {
-                return null;
-            }
-
-            return null;
         }
     }
 }

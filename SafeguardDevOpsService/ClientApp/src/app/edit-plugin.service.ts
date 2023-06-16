@@ -195,7 +195,7 @@ export class EditPluginService {
     if (!vaultAccount) {
       return '';
     }
-    const system = vaultAccount.DomainName ?? (vaultAccount.AssetName ?? vaultAccount.AssetNetworkAddress);
+    const system = vaultAccount.DomainName ?? (vaultAccount.Asset.Name ?? vaultAccount.Asset.NetworkAddress);
 
     return `${vaultAccount.Name} (${system})`;
   }

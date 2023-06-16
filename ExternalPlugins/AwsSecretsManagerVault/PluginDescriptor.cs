@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Amazon.Runtime.Internal;
 using System.Security.Principal;
 using System.Xml.Linq;
+using System.Net.Sockets;
 
 
 namespace OneIdentity.DevOps.AwsSecretsManagerVault
@@ -21,11 +22,12 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
 
         private const string AccessKeyId = "accessKeyId";
         private const string AwsRegion = "awsRegion";
-        
+        private string FormatAccountName(string altAccountName, string asset, string account) => _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+
         public string Name => "AwsSecretsManagerVault";
         public string DisplayName => "AWS Secrets Manager Vault";
         public string Description => "This is the AWS Secrets Manager Vault plugin for updating passwords";
-        public bool SupportsReverseFlow => false;
+        public bool SupportsReverseFlow => true;
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
 
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
@@ -163,7 +165,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                 return null;
             }
 
-            return null;
+            return FetchCredential(FormatAccountName(altAccountName, asset, account));
         }
 
         private string GetSshKey(string asset, string account, string altAccountName)
@@ -173,7 +175,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                 return null;
             }
 
-            return null;
+            return FetchCredential(FormatAccountName(altAccountName, asset, account)+"-sshkey");
         }
 
         private string SetPassword(string asset, string account, string[] password, string altAccountName)
@@ -195,7 +197,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                 return null;
             }
 
-            return StoreCredential(_rgx.Replace(altAccountName ?? $"{asset}-{account}", "-"), password[0]) ? password[0] : null;
+            return StoreCredential(FormatAccountName(altAccountName, asset, account), password[0]) ? password[0] : null;
         }
 
         private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
@@ -217,7 +219,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                 return null;
             }
 
-            return StoreCredential(_rgx.Replace(altAccountName ?? $"{asset}-{account}", "-")+"-sshkey", sshKey[0]) ? sshKey[0] : null;
+            return StoreCredential(FormatAccountName(altAccountName, asset, account)+"-sshkey", sshKey[0]) ? sshKey[0] : null;
         }
 
         private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
@@ -233,7 +235,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                 return null;
             }
 
-            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            var name = FormatAccountName(altAccountName, asset, account);
             var retval = true;
 
             foreach (var apiKeyJson in apiKeys)
@@ -313,5 +315,31 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             }
         }
 
+        private string FetchCredential(string secretId)
+        {
+            try
+            {
+                var request = new GetSecretValueRequest()
+                {
+                    SecretId = secretId
+                };
+
+                var res = Task.Run(async () => await _awsClient.GetSecretValueAsync(request));
+
+                if (res.Result.HttpStatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    Logger.Information($"The secret for {secretId} has been fetched from the {DisplayName} vault.");
+                    return res.Result.SecretString;
+                }
+
+                Logger.Error($"Failed to fetch the secret for {secretId} in the vault {DisplayName}.");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Failed to fetch the secret for {secretId} in the vault {DisplayName}: {ex.Message}.");
+            }
+
+            return null;
+        }
     }
 }

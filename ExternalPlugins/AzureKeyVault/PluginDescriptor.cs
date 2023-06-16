@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Newtonsoft.Json;
 using OneIdentity.DevOps.Common;
 using Serilog;
 
@@ -18,11 +20,12 @@ namespace OneIdentity.DevOps.AzureKeyVault
         private const string ApplicationIdName = "applicationId";
         private const string VaultUriName = "vaultUri";
         private const string TenantIdName = "tenantId";
+        private string FormatAccountName(string altAccountName, string asset, string account) => _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
         public string Name => "AzureKeyVault";
         public string DisplayName => "Azure Key Vault";
         public string Description => "This is the Azure Key Vault plugin for updating passwords";
-        public bool SupportsReverseFlow => false;
+        public bool SupportsReverseFlow => true;
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
 
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
@@ -99,6 +102,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
                     return GetPassword(asset, account, altAccountName);
                 case CredentialType.SshKey:
                     return GetSshKey(asset, account, altAccountName);
+                    break;
                 case CredentialType.ApiKey:
                     Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
                     break;
@@ -139,17 +143,18 @@ namespace OneIdentity.DevOps.AzureKeyVault
                 return null;
             }
 
-            return null;
+            return FetchCredential(FormatAccountName(altAccountName, asset, account));
+
         }
 
-        public string GetSshKey(string asset, string account, string altAccountName)
+        private string GetSshKey(string asset, string account, string altAccountName)
         {
             if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
             {
                 return null;
             }
 
-            return null;
+            return FetchCredential(FormatAccountName(altAccountName, asset, account));
         }
 
         private string SetPassword(string asset, string account, string[] password, string altAccountName)
@@ -171,7 +176,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
                 return null;
             }
 
-            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            var name = FormatAccountName(altAccountName, asset, account);
             return StoreCredential(name, password[0]) ? password[0] : null;
         }
 
@@ -194,7 +199,7 @@ namespace OneIdentity.DevOps.AzureKeyVault
                 return null;
             }
 
-            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            var name = FormatAccountName(altAccountName, asset, account);
             return StoreCredential(name, sshKey[0]) ? sshKey[0] : null;
         }
 
@@ -251,6 +256,27 @@ namespace OneIdentity.DevOps.AzureKeyVault
                 Logger.Error(ex, $"Failed to set the secret for {name}: {ex.Message}.");
                 return false;
             }
+        }
+
+        private string FetchCredential(string name)
+        {
+            try
+            {
+                var secret = Task.Run(async () => await _secretsClient.GetSecretAsync(name)).Result;
+                Logger.Information($"The secret for {name} has been fetched from the {DisplayName} vault.");
+
+                if (secret != null)
+                    return secret.Value.Value;
+
+                Logger.Error($"Failed to fetch the secret for {name} in the vault {DisplayName}.");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Failed to fetch the secret for {name} in the vault {DisplayName}: {ex.Message}.");
+                return null;
+            }
+
+            return null;
         }
     }
 }

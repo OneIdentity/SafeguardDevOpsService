@@ -31,7 +31,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
         public string Name => "CircleCISecrets";
         public string DisplayName => "CircleCI Secrets";
         public string Description => "This is the CircleCI Secrets plugin for updating passwords";
-        public bool SupportsReverseFlow => false;
+        public bool SupportsReverseFlow => false;  // CircleCI only allows an outside caller to get a masked credential. 
 
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
@@ -169,20 +169,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
 
         public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
-            switch (credentialType)
-            {
-                case CredentialType.Password:
-                    return GetPassword(asset, account, altAccountName);
-                case CredentialType.SshKey:
-                    return GetSshKey(asset, account, altAccountName);
-                case CredentialType.ApiKey:
-                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
-                    break;
-                default:
-                    Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
-                    break;
-            }
-
+            ValidationHelper.CanReverseFlow(this);
             return null;
         }
 
@@ -210,26 +197,6 @@ namespace OneIdentity.DevOps.CircleCISecrets
             _secretsClient = null;
             _configuration.Clear();
             _configuration = null;
-        }
-
-        private string GetPassword(string asset, string account, string altAccountName)
-        {
-            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandlePassword(this))
-            {
-                return null;
-            }
-
-            return null;
-        }
-
-        private string GetSshKey(string asset, string account, string altAccountName)
-        {
-            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
-            {
-                return null;
-            }
-
-            return null;
         }
 
         private string SetPassword(string asset, string account, string[] password, string altAccountName)

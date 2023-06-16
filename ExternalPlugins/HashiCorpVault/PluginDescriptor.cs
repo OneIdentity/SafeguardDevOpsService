@@ -184,7 +184,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 return null;
             }
 
-            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            var name = FormatAccountName(altAccountName, asset, account);
 
             return StoreCredential(name, "{\"data\": {\""+ passwordKey + "\":\"" + password[0] + "\"}}") ? password[0] : null;
         }
@@ -208,7 +208,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 return null;
             }
 
-            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            var name = FormatAccountName(altAccountName, asset, account);
 
             return StoreCredential(name, "{\"data\": {\"" + sshkeyKey + "\":\""+sshKey[0].ReplaceLineEndings(string.Empty)+"\"}}") ? sshKey[0] : null;
         }
@@ -232,7 +232,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
                 return null;
             }
 
-            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            var name = FormatAccountName(altAccountName, asset, account);
             var keys = new List<ApiKey>();
             var retval = true;
 

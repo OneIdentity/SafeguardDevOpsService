@@ -26,7 +26,7 @@ namespace OneIdentity.DevOps.GithubSecrets
 
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password};
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
-        public bool ReverseFlowEnabled { get; set; } = false;
+        public bool ReverseFlowEnabled { get; set; } = false; //Github only stores secrets that can be used in an action. The secret cannot be fetched.
         public ILogger Logger { get; set; }
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
@@ -109,20 +109,7 @@ namespace OneIdentity.DevOps.GithubSecrets
 
         public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
-            switch (credentialType)
-            {
-                case CredentialType.Password:
-                    return GetPassword(asset, account, altAccountName);
-                case CredentialType.SshKey:
-                    return GetSshKey(asset, account, altAccountName);
-                case CredentialType.ApiKey:
-                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
-                    break;
-                default:
-                    Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
-                    break;
-            }
-
+            ValidationHelper.CanReverseFlow(this);
             return null;
         }
 
@@ -133,9 +120,11 @@ namespace OneIdentity.DevOps.GithubSecrets
                 case CredentialType.Password:
                     return SetPassword(asset, account, credential, altAccountName);
                 case CredentialType.SshKey:
-                    return SetSshKey(asset, account, credential, altAccountName);
+                    ValidationHelper.CanHandleSshKey(this);
+                    break;
                 case CredentialType.ApiKey:
-                    return SetApiKey(asset, account, credential, altAccountName);
+                    ValidationHelper.CanHandleApiKey(this);
+                    break;
                 default:
                     Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
                     break;
@@ -146,26 +135,6 @@ namespace OneIdentity.DevOps.GithubSecrets
         
         public void Unload()
         {
-        }
-
-        private string GetPassword(string asset, string account, string altAccountName)
-        {
-            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandlePassword(this))
-            {
-                return null;
-            }
-
-            return null;
-        }
-
-        private string GetSshKey(string asset, string account, string altAccountName)
-        {
-            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
-            {
-                return null;
-            }
-
-            return null;
         }
 
         private string SetPassword(string asset, string account, string[] password, string altAccountName)
@@ -210,26 +179,6 @@ namespace OneIdentity.DevOps.GithubSecrets
                 Logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return null;
             }
-        }
-
-        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
-        {
-            if (!ValidationHelper.CanHandleSshKey(this))
-            {
-                return null;
-            }
-
-            return null;
-        }
-
-        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
-        {
-            if (!ValidationHelper.CanHandleApiKey(this))
-            {
-                return null;
-            }
-
-            return null;
         }
     }
 }

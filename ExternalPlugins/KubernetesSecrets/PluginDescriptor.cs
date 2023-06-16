@@ -18,11 +18,12 @@ namespace OneIdentity.DevOps.KubernetesSecrets
         private const string ConfigFilePathName = "configFilePath";
         private const string VaultNamespaceName = "vaultNamespace";
         private const string DefaultNamespace = "default";
+        private string FormatAccountName(string altAccountName, string asset, string account) => _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
 
         public string Name => "KubernetesSecrets";
         public string DisplayName => "Kubernetes Secrets";
         public string Description => "This is the Kubernetes Secrets plugin for updating passwords";
-        public bool SupportsReverseFlow => false;
+        public bool SupportsReverseFlow => true;
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password};
 
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
@@ -108,9 +109,8 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                 case CredentialType.Password:
                     return GetPassword(asset, account, altAccountName);
                 case CredentialType.SshKey:
-                    return GetSshKey(asset, account, altAccountName);
                 case CredentialType.ApiKey:
-                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
+                    ValidationHelper.CanReverseFlow(this);
                     break;
                 default:
                     Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
@@ -127,9 +127,11 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                 case CredentialType.Password:
                     return SetPassword(asset, account, credential, altAccountName);
                 case CredentialType.SshKey:
-                    return SetSshKey(asset, account, credential, altAccountName);
+                    ValidationHelper.CanHandleSshKey(this);
+                    break;
                 case CredentialType.ApiKey:
-                    return SetApiKey(asset, account, credential, altAccountName);
+                    ValidationHelper.CanHandleApiKey(this);
+                    break;
                 default:
                     Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
                     break;
@@ -149,14 +151,30 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                 return null;
             }
 
-            return null;
-        }
-
-        private string GetSshKey(string asset, string account, string altAccountName)
-        {
-            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
+            if (_client == null)
             {
+                Logger.Error($"No vault connection. Make sure that the {DisplayName} plugin has been configured.");
                 return null;
+            }
+
+            var vaultNamespace = DefaultNamespace;
+            if (_configuration != null && _configuration.ContainsKey(VaultNamespaceName))
+            {
+                vaultNamespace = _configuration[VaultNamespaceName];
+            }
+
+            var name = FormatAccountName(altAccountName, asset, account);
+
+            try
+            {
+                var secret = _client.ReadNamespacedSecret(name, vaultNamespace);
+
+                Logger.Information($"The secret for {name} has been fetched from the {DisplayName} vault.");
+                return secret.StringData["password"];
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Failed to fetch the secret for {name} in the vault {DisplayName}: {ex.Message}.");
             }
 
             return null;
@@ -189,7 +207,7 @@ namespace OneIdentity.DevOps.KubernetesSecrets
 
             var passwordData = new Dictionary<string, string> {{"password", password[0]}};
             var data = new Dictionary<string, byte[]>();
-            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            var name = FormatAccountName(altAccountName, asset, account);
 
             V1Secret secret = null;
             try
@@ -233,26 +251,6 @@ namespace OneIdentity.DevOps.KubernetesSecrets
                 Logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
                 return null;
             }
-        }
-
-        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
-        {
-            if (!ValidationHelper.CanHandleSshKey(this))
-            {
-                return null;
-            }
-
-            return null;
-        }
-
-        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
-        {
-            if (!ValidationHelper.CanHandlePassword(this))
-            {
-                return null;
-            }
-
-            return null;
         }
     }
 }
