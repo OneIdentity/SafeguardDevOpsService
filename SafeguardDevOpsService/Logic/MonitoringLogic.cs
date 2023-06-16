@@ -260,7 +260,7 @@ namespace OneIdentity.DevOps.Logic
                     if (!credentialCache.ContainsKey(pluginInfo.AssignedCredentialType))
                     {
                         var credential = _pluginManager.GetAccountCredential(pluginInfo.Name, a2AApiKey, pluginInfo.AssignedCredentialType);
-                        if (credential is { Length: <= 0 })
+                        if (credential == null || credential.Length <= 0)
                         {
                             monitorEvent.Event = $"Failed to get the {credentialType} from Safeguard for plugin {account.VaultName}. No {credentialType} sent for account {account.AccountName}.";
                             monitorEvent.Result = WellKnownData.SentPasswordFailure;

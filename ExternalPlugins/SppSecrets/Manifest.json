@@ -1,0 +1,7 @@
+{
+	"Type": "Plugin",
+	"Name": "SppSecrets",
+	"DisplayName": "Safeguard for Privileged Passwords Secrets",
+	"Assembly": "SppSecrets.dll",
+	"Version": "1.0.0.9999"
+}

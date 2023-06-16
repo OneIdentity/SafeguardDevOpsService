@@ -50,6 +50,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{597FFD
 		run-docker.sh = run-docker.sh
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SppSecrets", "ExternalPlugins\SppSecrets\SppSecrets.csproj", "{503D8D03-90DD-42EE-AB70-77B8AEAFA25D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -103,6 +105,10 @@ Global
 		{2AB68B7B-8962-4505-AA3E-AE4102373FE9}.Debug|x64.Build.0 = Debug|x64
 		{2AB68B7B-8962-4505-AA3E-AE4102373FE9}.Release|x64.ActiveCfg = Release|x64
 		{2AB68B7B-8962-4505-AA3E-AE4102373FE9}.Release|x64.Build.0 = Release|x64
+		{503D8D03-90DD-42EE-AB70-77B8AEAFA25D}.Debug|x64.ActiveCfg = Debug|x64
+		{503D8D03-90DD-42EE-AB70-77B8AEAFA25D}.Debug|x64.Build.0 = Debug|x64
+		{503D8D03-90DD-42EE-AB70-77B8AEAFA25D}.Release|x64.ActiveCfg = Release|x64
+		{503D8D03-90DD-42EE-AB70-77B8AEAFA25D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -116,6 +122,7 @@ Global
 		{FB4B5D77-D7FD-4098-9C6B-F02E727D0DB4} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
 		{FD3BEDED-16D8-4060-8332-BC5834396DB9} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
 		{2AB68B7B-8962-4505-AA3E-AE4102373FE9} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
+		{503D8D03-90DD-42EE-AB70-77B8AEAFA25D} = {0A551322-33E5-4401-BB8A-5A54BC87EB87}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {80DE22D2-799B-4F47-9FE5-2ACC4B0E94D8}
