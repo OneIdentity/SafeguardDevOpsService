@@ -181,8 +181,10 @@ export class EditPluginService {
             Id: vaultAccount.AccountId,
             Name: vaultAccount.AccountName,
             DomainName: vaultAccount.DomainName,
-            AssetName: vaultAccount.AssetName,
-            AssetNetworkAddress: vaultAccount.NetworkAddress
+            Asset: {
+              Name: vaultAccount.AssetName,
+              NetworkAddress: vaultAccount.NetworkAddress
+            }
           };
           plugin.VaultAccountDisplayName = this.getVaultAccountDisplay(plugin.VaultAccount);
         }

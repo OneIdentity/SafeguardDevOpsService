@@ -14,7 +14,6 @@ namespace OneIdentity.DevOps.SppSecrets
         private Dictionary<string,string> _configuration;
         private A2ARegistration _a2aRegistration;
         private AccountGroup _accountGroup;
-        private ILogger _logger;
 
         private const string SppAppliance = "Spp Appliance";
         private const string SppUser = "Spp User";
@@ -23,10 +22,14 @@ namespace OneIdentity.DevOps.SppSecrets
         private const string SppAccountGroup = "Spp Account Group";
 
         public string Name => "SppSecrets";
-        public string DisplayName => "Safeguard for Privileged Passwords Secrets";
-        public string Description => "This is the Safeguard for Privileged Passwords Secrets plugin for updating passwords";
-        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey};
+        public string DisplayName => "Safeguard for Privileged Passwords";
+        public string Description => "This is the Safeguard for Privileged Passwords plugin for updating passwords";
+        public bool SupportsReverseFlow => false;
+
+        public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public bool ReverseFlowEnabled { get; set; } = false;
+        public ILogger Logger { get; set; }
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -46,11 +49,11 @@ namespace OneIdentity.DevOps.SppSecrets
                 configuration.ContainsKey(SppA2aCertificateUser) && configuration.ContainsKey(SppA2aRegistrationName))
             {
                 _configuration = configuration;
-                _logger.Information($"Plugin {Name} has been successfully configured.");
+                Logger.Information($"Plugin {Name} has been successfully configured.");
             }
             else
             {
-                _logger.Error("Some parameters are missing from the configuration.");
+                Logger.Error("Some parameters are missing from the configuration.");
             }
         }
 
@@ -59,16 +62,16 @@ namespace OneIdentity.DevOps.SppSecrets
             if (_configuration != null)
             {
                 _sppConnection = Safeguard.Connect(_configuration[SppAppliance], "local", _configuration[SppUser], credential.ToSecureString(), ignoreSsl: true);
-                _logger.Information($"Plugin {Name} has been successfully authenticated to the Azure vault.");
+                Logger.Information($"Plugin {Name} has been successfully authenticated to the Azure vault.");
 
                 if (!CheckOrAddExternalA2aRegistration())
                 {
-                    _logger.Error($"Failed to find or add the A2A registration {_configuration[SppA2aRegistrationName]}.");
+                    Logger.Error($"Failed to find or add the A2A registration {_configuration[SppA2aRegistrationName]}.");
                 }
             }
             else
             {
-                _logger.Error("The plugin is missing the configuration.");
+                Logger.Error("The plugin is missing the configuration.");
             }
         }
 
@@ -81,15 +84,15 @@ namespace OneIdentity.DevOps.SppSecrets
             {
                 var meResult = _sppConnection.InvokeMethodFull(Service.Core, Method.Get, "/Me");
                 var me = JsonHelper.DeserializeObject<User>(meResult.Body);
-                _logger.Information($"Test vault connection for {me.DisplayName}");
+                Logger.Information($"Test vault connection for {me.DisplayName}");
                 if (me.Disabled || me.Locked)
                 {
-                    _logger.Error($"Failed the connection test for {DisplayName}. The specified user is unavailable.");
+                    Logger.Error($"Failed the connection test for {DisplayName}. The specified user is unavailable.");
                     return false;
                 }
                 if (!me.AdminRoles.Contains("PolicyAdmin"))
                 {
-                    _logger.Error($"Failed the connection test for {DisplayName}. The specified user must be an SPP Policy Administrator.");
+                    Logger.Error($"Failed the connection test for {DisplayName}. The specified user must be an SPP Policy Administrator.");
                     return false;
                 }
 
@@ -97,57 +100,94 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
+                Logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
         }
 
-        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
+        public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.Password)
-            {
-                _logger.Error("This plugin instance does not handle the Password credential type.");
-                return false;
-            }
-
-            if (_sppConnection == null || _configuration == null)
-            {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
-            }
-
-            return StoreCredential(asset, altAccountName ?? account, password);
+            ValidationHelper.CanReverseFlow(this);
+            return null;
         }
 
-        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        public string SetCredential(CredentialType credentialType, string asset, string account, string[] credential, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.SshKey)
+            switch (credentialType)
             {
-                _logger.Error("This plugin instance does not handle the SshKey credential type.");
-                return false;
+                case CredentialType.Password:
+                    return SetPassword(asset, account, credential, altAccountName);
+                case CredentialType.SshKey:
+                    return SetSshKey(asset, account, credential, altAccountName);
+                case CredentialType.ApiKey:
+                    return SetApiKey(asset, account, credential, altAccountName);
+                default:
+                    Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
+                    break;
             }
 
-            if (_sppConnection == null || _configuration == null)
-            {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
-            }
-
-            return StoreCredential(asset, altAccountName ?? account, sshKey);
+            return null;
         }
 
-        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        public void Unload()
         {
-            if (AssignedCredentialType != CredentialType.ApiKey)
+        }
+
+        private string SetPassword(string asset, string account, string[] password, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandlePassword(this))
             {
-                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
-                return false;
+                return null;
             }
 
             if (_sppConnection == null || _configuration == null)
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return null;
+            }
+
+            if (password is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
+            }
+
+            return StoreCredential(asset, altAccountName ?? account, password[0]) ? password[0] : null;
+        }
+
+        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandleSshKey(this))
+            {
+                return null;
+            }
+
+            if (_sppConnection == null || _configuration == null)
+            {
+                Logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return null;
+            }
+
+            if (sshKey is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
+            }
+
+            return StoreCredential(asset, altAccountName ?? account, sshKey[0]) ? sshKey[0] : null;
+        }
+
+        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandleApiKey(this))
+            {
+                return null;
+            }
+
+            if (_sppConnection == null || _configuration == null)
+            {
+                Logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return null;
             }
 
             var retval = true;
@@ -159,16 +199,7 @@ namespace OneIdentity.DevOps.SppSecrets
                 }
             }
 
-            return retval;
-        }
-
-        public void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public void Unload()
-        {
+            return retval ? "" : null;
         }
 
         private bool StoreCredential(string assetName, string accountName, string payload = null)
@@ -181,7 +212,7 @@ namespace OneIdentity.DevOps.SppSecrets
                     asset = CreateAsset(assetName);
                     if (asset == null)
                     {
-                        _logger.Information($"Failed to store the secret due to a failure to create an asset for {assetName}.");
+                        Logger.Information($"Failed to store the secret due to a failure to create an asset for {assetName}.");
                         return false;
                     }
                 }
@@ -192,7 +223,7 @@ namespace OneIdentity.DevOps.SppSecrets
                     account = CreateAccount(asset, accountName);
                     if (account == null)
                     {
-                        _logger.Information($"Failed to store the secret due to a failure to create an account for {accountName}.");
+                        Logger.Information($"Failed to store the secret due to a failure to create an account for {accountName}.");
                         return false;
                     }
                 }
@@ -217,12 +248,12 @@ namespace OneIdentity.DevOps.SppSecrets
                         SaveAccountApiKey(account, payload);
                         break;
                 }
-                _logger.Information($"The secret for {assetName}-{accountName} has been successfully stored in the vault.");
+                Logger.Information($"The secret for {assetName}-{accountName} has been successfully stored in the vault.");
 
                 // Look up A2A Registration and create one if needed.
                 if (!CheckOrAddExternalA2aRegistration())
                 {
-                    _logger.Error($"Failed to add the secret to the A2A registration {_configuration[SppA2aRegistrationName]}.");
+                    Logger.Error($"Failed to add the secret to the A2A registration {_configuration[SppA2aRegistrationName]}.");
                     return false;
                 }
 
@@ -235,7 +266,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to set the secret for {assetName}-{accountName}: {ex.Message}.");
+                Logger.Error(ex, $"Failed to set the secret for {assetName}-{accountName}: {ex.Message}.");
                 return false;
             }
         }
@@ -250,13 +281,13 @@ namespace OneIdentity.DevOps.SppSecrets
                 var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Put, $"AssetAccounts/{account.Id}/Password", $"\"{password}\"");
                 if (result.StatusCode != HttpStatusCode.NoContent)
                 {
-                    _logger.Error(
+                    Logger.Error(
                         $"Failed to save the password for asset {account.Asset.Name} account {account.Name}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex,
+                Logger.Error(ex,
                     $"Failed to save the password for asset {account.Asset.Name} account {account.Name}: {ex.Message}");
             }
         }
@@ -271,13 +302,13 @@ namespace OneIdentity.DevOps.SppSecrets
                 var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Put, $"AssetAccounts/{account.Id}/SshKey", $"{{\"PrivateKey\":\"{sshKey.ReplaceLineEndings(string.Empty)}\"}}");
                 if (result.StatusCode != HttpStatusCode.OK)
                 {
-                    _logger.Error(
+                    Logger.Error(
                         $"Failed to save the SSH key for asset {account.Asset.Name} account {account.Name}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex,
+                Logger.Error(ex,
                     $"Failed to save the SSH key for asset {account.Asset.Name} account {account.Name}: {ex.Message}");
             }
         }
@@ -292,33 +323,34 @@ namespace OneIdentity.DevOps.SppSecrets
                 var apiKey = JsonHelper.DeserializeObject<ApiKey>(apiKeyJson);
                 if (apiKey != null)
                 {
-                    if (!HasApiKey(account, apiKey))
+                    var newApiKey = GetApiKey(account, apiKey);
+                    if (newApiKey == null)
                     {
                         apiKey = CreateApiKey(account, apiKey);
                         if (apiKey == null)
                         {
-                            _logger.Information($"Failed to store the API key secret due to a failure to create the API key for the account {account.Name}.");
+                            Logger.Information($"Failed to store the API key secret due to a failure to create the API key for the account {account.Name}.");
                             return;
                         }
                     }
 
                     var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Put,
-                        $"AssetAccounts/{account.Id}/ApiKeys/{apiKey.ClientSecret}/ClientSecret", apiKeyJson);
+                        $"AssetAccounts/{account.Id}/ApiKeys/{newApiKey.Id}/ClientSecret", apiKeyJson);
                     if (result.StatusCode != HttpStatusCode.NoContent)
                     {
-                        _logger.Error(
+                        Logger.Error(
                             $"Failed to save the API key secret for account {account.Name} API key {apiKey.Name} to {DisplayName}.");
                     }
                 }
                 else
                 {
-                    _logger.Error($"The ApiKey {apiKey.Name} failed to save to {DisplayName}.");
+                    Logger.Error($"The ApiKey {apiKey.Name} failed to save to {DisplayName}.");
                 }
 
             }
             catch (Exception ex)
             {
-                _logger.Error(ex,
+                Logger.Error(ex,
                     $"Failed to save the Api key for account {account.Name} to {DisplayName}: {ex.Message}");
             }
         }
@@ -358,7 +390,7 @@ namespace OneIdentity.DevOps.SppSecrets
 
             if (a2aUser == null)
             {
-                _logger.Error($"Failed to create the A2A registration for {_configuration[SppA2aRegistrationName]}. The A2A certificate user is missing and needs to be created.");
+                Logger.Error($"Failed to create the A2A registration for {_configuration[SppA2aRegistrationName]}. The A2A certificate user is missing and needs to be created.");
                 return null;
             }
 
@@ -382,7 +414,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to create the A2A registration for {_configuration[SppA2aRegistrationName]}: {ex.Message}.");
+                Logger.Error(ex, $"Failed to create the A2A registration for {_configuration[SppA2aRegistrationName]}: {ex.Message}.");
             }
 
             return null;
@@ -412,7 +444,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to get the A2A registration by name {SppA2aRegistrationName}: {ex.Message}");
+                Logger.Error(ex, $"Failed to get the A2A registration by name {SppA2aRegistrationName}: {ex.Message}");
             }
 
             return null;
@@ -442,7 +474,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to get the A2A user by name: {ex.Message}");
+                Logger.Error(ex, $"Failed to get the A2A user by name: {ex.Message}");
             }
 
             return null;
@@ -474,7 +506,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to create an asset for {assetName}: {ex.Message}");
+                Logger.Error(ex, $"Failed to create an asset for {assetName}: {ex.Message}");
             }
 
             return null;
@@ -504,7 +536,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to get the asset by name {assetName}: {ex.Message}");
+                Logger.Error(ex, $"Failed to get the asset by name {assetName}: {ex.Message}");
             }
 
             return null;
@@ -533,13 +565,13 @@ namespace OneIdentity.DevOps.SppSecrets
                 if (result.StatusCode == HttpStatusCode.Created)
                 {
                     account = JsonHelper.DeserializeObject<Account>(result.Body);
-                    _logger.Information($"Successfully added asset account {account.Name} to safeguard.");
+                    Logger.Information($"Successfully added asset account {account.Name} to safeguard.");
                     return account;
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to add the account {account.Name} to safeguard for '{asset.Name}': {ex.Message}");
+                Logger.Error(ex, $"Failed to add the account {account.Name} to safeguard for '{asset.Name}': {ex.Message}");
             }
             
             return null;
@@ -569,7 +601,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to get the account by name for asset {asset.Name} account {accountName}: {ex.Message}");
+                Logger.Error(ex, $"Failed to get the account by name for asset {asset.Name} account {accountName}: {ex.Message}");
             }
 
             return null;
@@ -599,7 +631,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to create an asset for {_configuration[SppAccountGroup]}: {ex.Message}");
+                Logger.Error(ex, $"Failed to create an asset for {_configuration[SppAccountGroup]}: {ex.Message}");
             }
 
             return null;
@@ -629,7 +661,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to get the asset by name {_configuration[SppAccountGroup]}: {ex.Message}");
+                Logger.Error(ex, $"Failed to get the asset by name {_configuration[SppAccountGroup]}: {ex.Message}");
             }
 
             return null;
@@ -651,7 +683,7 @@ namespace OneIdentity.DevOps.SppSecrets
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to add the account {account.Name} to account group {_accountGroup.Name}: {ex.Message}");
+                Logger.Error(ex, $"Failed to add the account {account.Name} to account group {_accountGroup.Name}: {ex.Message}");
             }
 
             return false;
@@ -676,37 +708,45 @@ namespace OneIdentity.DevOps.SppSecrets
                 if (result.StatusCode == HttpStatusCode.Created)
                 {
                     newApiKey = JsonHelper.DeserializeObject<ApiKey>(result.Body);
-                    _logger.Information($"Successfully added API key {newApiKey.Name} to account {account.Name}.");
+                    Logger.Information($"Successfully added API key {newApiKey.Name} to account {account.Name}.");
                     return newApiKey;
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to add the account {account.Name} to safeguard': {ex.Message}");
+                Logger.Error(ex, $"Failed to add the account {account.Name} to safeguard': {ex.Message}");
             }
             
             return null;
         }
 
-        private bool HasApiKey(Account account, ApiKey apiKey)
+        private ApiKey GetApiKey(Account account, ApiKey apiKey)
         {
             if (_sppConnection == null)
-                return false;
+                return null;
 
             try
             {
-                var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Get, $"AssetAccounts/{account.Id}/ApiKeys/{apiKey.Id}");
+                var p = new Dictionary<string, string>
+                    {{"filter", $"Name eq '{apiKey.Name}'"}};
+
+                var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Get, $"AssetAccounts/{account.Id}/ApiKeys", null, p);
                 if (result.StatusCode == HttpStatusCode.OK)
                 {
-                    return true;
+                    var foundApiKeys = JsonHelper.DeserializeObject<List<ApiKey>>(result.Body);
+
+                    if (foundApiKeys.Count > 0)
+                    {
+                        return foundApiKeys.FirstOrDefault();
+                    }
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to check the API key for the account {account.Name}: {ex.Message}");
+                Logger.Error(ex, $"Failed to get the API key for the account {account.Name}: {ex.Message}");
             }
 
-            return false;
+            return null;
         }
 
         private bool AddA2ARetrievableAccount(Account account)
@@ -716,7 +756,7 @@ namespace OneIdentity.DevOps.SppSecrets
 
             if (_a2aRegistration == null)
             {
-                _logger.Error(
+                Logger.Error(
                     $"Failed to add the A2A registration for asset {account.Asset.Name} account {account.Name}. The A2A registration {_configuration[SppA2aRegistrationName]} does not exist.");
                 return false;
             }
@@ -728,17 +768,17 @@ namespace OneIdentity.DevOps.SppSecrets
                     $"{{\"AccountId\":{account.Id}, \"IpRestrictions\":[]}}");
                 if (result.StatusCode != HttpStatusCode.OK && result.StatusCode != HttpStatusCode.Created)
                 {
-                    _logger.Error(
+                    Logger.Error(
                         $"Failed to add account {account.Id} - {account.Name} to the A2A registration {_a2aRegistration.AppName}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to add account {account.Id} - {account.Name} to the A2A registration {_a2aRegistration.AppName}: {ex.Message}");
+                Logger.Error(ex, $"Failed to add account {account.Id} - {account.Name} to the A2A registration {_a2aRegistration.AppName}: {ex.Message}");
                 return false;
             }
 
-            _logger.Information($"Successfully added account {account.Name} to A2A registration {_a2aRegistration.AppName}.");
+            Logger.Information($"Successfully added account {account.Name} to A2A registration {_a2aRegistration.AppName}.");
             return true;
         }
     }

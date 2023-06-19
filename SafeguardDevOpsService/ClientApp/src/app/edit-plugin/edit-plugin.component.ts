@@ -330,8 +330,10 @@ export class EditPluginComponent implements OnInit {
             Id: vaultAccount.AccountId,
             Name: vaultAccount.AccountName,
             DomainName: vaultAccount.DomainName,
-            AssetName: vaultAccount.AssetName,
-            AssetNetworkAddress: vaultAccount.NetworkAddress
+            Asset: {
+              Name: vaultAccount.AssetName,
+              NetworkAddress: vaultAccount.NetworkAddress
+            }
           };
           this.plugin.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(this.plugin.VaultAccount);
         }
