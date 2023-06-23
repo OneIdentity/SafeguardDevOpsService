@@ -104,7 +104,8 @@ namespace OneIdentity.DevOps.Controllers.V2
         [HttpPost("ReverseFlow")]
         public ActionResult PollReverseFlow([FromServices] IMonitoringLogic monitoringLogic)
         {
-            monitoringLogic.PollReverseFlow();
+            if (!monitoringLogic.PollReverseFlow())
+                return BadRequest("Reverse flow monitoring not available.");
 
             return Ok();
         }

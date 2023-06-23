@@ -502,7 +502,7 @@ namespace OneIdentity.DevOps.Logic
                 a2aUser = new A2AUser()
                 {
                     Name = WellKnownData.DevOpsUserName(_configDb.SvcId),
-                    PrimaryAuthenticationProvider = new AuthenticationProvider() {Identity = thumbprint}
+                    PrimaryAuthenticationProvider = new AuthenticationProvider() {Id = -2, Identity = thumbprint}
                 };
 
                 var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
