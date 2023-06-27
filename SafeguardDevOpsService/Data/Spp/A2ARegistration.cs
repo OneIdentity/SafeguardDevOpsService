@@ -32,6 +32,10 @@ namespace OneIdentity.DevOps.Data.Spp
         /// </summary>
         public bool VisibleToCertificateUsers { get; set; }
         /// <summary>
+        /// Does the registration allow bidirectional credentials
+        /// </summary>
+        public bool? BidirectionalEnabled { get; set; }
+        /// <summary>
         /// Certificate user Id
         /// </summary>
         public int CertificateUserId { get; set; }

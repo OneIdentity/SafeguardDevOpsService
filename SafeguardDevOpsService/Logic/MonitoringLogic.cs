@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Security;
 using System.Runtime.CompilerServices;
 using System.Security;
@@ -12,6 +13,7 @@ using Newtonsoft.Json.Linq;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
+using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
 using OneIdentity.SafeguardDotNet;
 using OneIdentity.SafeguardDotNet.A2A;
@@ -26,18 +28,22 @@ namespace OneIdentity.DevOps.Logic
         private readonly IConfigurationRepository _configDb;
         private readonly IPluginManager _pluginManager;
         private readonly ICredentialManager _credentialManager;
+        private readonly ISafeguardLogic _safeguardLogic;
 
         private static ISafeguardEventListener _eventListener;
         private static ISafeguardA2AContext _a2AContext;
         private static List<AccountMapping> _retrievableAccounts;
         private static FixedSizeQueue<MonitorEvent> _lastEventsQueue = new FixedSizeQueue<MonitorEvent>(10000);
+        private static bool _reverseFlowEnabled = false;
 
-        public MonitoringLogic(IConfigurationRepository configDb, IPluginManager pluginManager, ICredentialManager credentialManager)
+        public MonitoringLogic(IConfigurationRepository configDb, IPluginManager pluginManager, 
+            ICredentialManager credentialManager, ISafeguardLogic safeguardLogic)
         {
             _configDb = configDb;
             _pluginManager = pluginManager;
             _logger = Serilog.Log.Logger;
             _credentialManager = credentialManager;
+            _safeguardLogic = safeguardLogic;
         }
 
         bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
@@ -59,7 +65,8 @@ namespace OneIdentity.DevOps.Logic
         {
             return new MonitorState()
             {
-                Enabled = _eventListener != null && _a2AContext != null
+                Enabled = _eventListener != null && _a2AContext != null,
+                ReverseFlowEnabled = _reverseFlowEnabled
             };
         }
 
@@ -72,17 +79,32 @@ namespace OneIdentity.DevOps.Logic
             return _lastEventsQueue.TakeLast(size).Reverse();
         }
 
-        public void PollReverseFlow()
+        public bool PollReverseFlow()
         {
-            // If monitoring is running then we can assume that the plugins have
-            // proper vault credentials.  If not then we need to refresh the
-            // vault credentials.
-            if (!GetMonitorState().Enabled)
+            if (ReverseFlowMonitoringAvailable())
             {
-                _pluginManager.RefreshPluginCredentials();
+
+                // If monitoring is running then we can assume that the plugins have
+                // proper vault credentials.  If not then we need to refresh the
+                // vault credentials.
+                if (!GetMonitorState().Enabled)
+                {
+                    _pluginManager.RefreshPluginCredentials();
+                }
+
+                var a2AContext = _a2AContext ?? ConnectA2AContext();
+                if (a2AContext == null)
+                {
+                    throw new DevOpsException("Failed to connect to Safeguard A2A service. Monitoring cannot be started.");
+                }
+
+                Task.Run(() => PollReverseFlowInternal(a2AContext));
+                return true;
             }
 
-            Task.Run(() => PollReverseFlowInternal());
+            _logger.Information("Reverse flow monitoring is not available. Check 'Allow Setting Credentials' flag in the A2A registration. ");
+
+            return false;
         }
 
         public void Run()
@@ -101,11 +123,8 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void StartMonitoring()
+        private ISafeguardA2AContext ConnectA2AContext()
         {
-            if (_eventListener != null)
-                throw new DevOpsException("Listener is already running.");
-
             var sppAddress = _configDb.SafeguardAddress;
             var userCertificate = _configDb.UserCertificateBase64Data;
             var passPhrase = _configDb.UserCertificatePassphrase?.ToSecureString();
@@ -115,11 +134,26 @@ namespace OneIdentity.DevOps.Logic
             if (sppAddress == null || userCertificate == null || !apiVersion.HasValue || !ignoreSsl.HasValue)
             {
                 _logger.Error("No safeguardConnection was found.  Safeguard Secrets Broker for DevOps must be configured first");
-                return;
+                return null;
             }
 
-            if (ignoreSsl.Value)
+            // connect to Safeguard
+            return Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
+        }
+
+        private void StartMonitoring()
+        {
+            if (_eventListener != null)
+                throw new DevOpsException("Listener is already running.");
+
+            var ignoreSsl = _configDb.IgnoreSsl;
+            if (ignoreSsl.HasValue && ignoreSsl.Value)
                 throw new DevOpsException("Monitoring cannot be enabled until a secure connection has been established. Trusted certificates may be missing.");
+
+            // connect to Safeguard
+            _a2AContext = ConnectA2AContext();
+            if (_a2AContext == null) 
+                throw new DevOpsException("Failed to connect to Safeguard A2A service. Monitoring cannot be started.");
 
             // This call will fail if the monitor is being started as part of the service start up.
             //  The reason why is because at service startup, the user has not logged into Secrets Broker yet
@@ -131,8 +165,6 @@ namespace OneIdentity.DevOps.Logic
             // Make sure that the credentialManager cache is empty.
             _credentialManager.Clear();
 
-            // connect to Safeguard
-            _a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
             // figure out what API keys to monitor
             _retrievableAccounts = _configDb.GetAccountMappings().ToList();
             if (_retrievableAccounts.Count == 0)
@@ -279,7 +311,7 @@ namespace OneIdentity.DevOps.Logic
                             // Only store passwords and ssh keys in the credential manager for reverse flow comparison. API keys are not supported yet.
                             if (pluginInfo.AssignedCredentialType != CredentialType.ApiKey)
                             {
-                                _credentialManager.Insert(credentialCache[pluginInfo.AssignedCredentialType][0], account, pluginInfo.AssignedCredentialType);
+                                _credentialManager.Upsert(credentialCache[pluginInfo.AssignedCredentialType][0], account, pluginInfo.AssignedCredentialType);
                             }
                         }
                         else
@@ -306,50 +338,101 @@ namespace OneIdentity.DevOps.Logic
         }
 
         private CancellationTokenSource _cts = null;
-        // private Thread _reverseFlowMonitor = null;
 
         private void StartReverseFlowMonitor()
         {
-            if (_cts == null)
+            if (ReverseFlowMonitoringAvailable())
             {
-                _cts = new CancellationTokenSource();
+                if (_cts == null)
+                {
+                    _cts = new CancellationTokenSource();
 
-                Task.Run(() => ReverseFlowMonitorThread(_cts.Token), _cts.Token);
-            }
-            else
-            {
-                _logger.Information("Reverse monitor thread shutting down.");
+                    Task.Run(() => ReverseFlowMonitorThread(_cts.Token), _cts.Token);
+                }
+                else
+                {
+                    _logger.Information("Reverse monitor thread shutting down.");
+                }
             }
         }
 
         private void StopReverseFlowMonitor()
         {
-            _cts.Cancel();
-            _cts = null;
+            if (_cts != null)
+            {
+                _cts.Cancel();
+                _cts = null;
+            }
+        }
+
+        private bool ReverseFlowMonitoringAvailable()
+        {
+            using var sg = _safeguardLogic.Connect();
+
+            try
+            {
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"A2ARegistrations/{_configDb.A2aRegistrationId}");
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    var registration =  JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
+                    if (registration != null && registration.BidirectionalEnabled.HasValue && registration.BidirectionalEnabled.Value)
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                {
+                    _logger.Error(ex, $"Registration not found for id '{_configDb.A2aRegistrationId}'");
+                }
+                else
+                {
+                    var msg = $"Failed to get the registration for id '{_configDb.A2aRegistrationId}'";
+                    _logger.Error(ex, msg);
+                }
+            }
+            catch (Exception ex)
+            {
+                var msg = $"Failed to get the registration for id '{_configDb.A2aRegistrationId}'";
+                _logger.Error(ex, msg);
+            }
+
+            return false;
         }
 
         private async Task ReverseFlowMonitorThread(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+            try
             {
-                try
+                _reverseFlowEnabled = true;
+                while (!token.IsCancellationRequested)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(WellKnownData.ReverseFlowMonitorPollingInterval), token);
-                }
-                catch (OperationCanceledException e)
-                {
-                    _logger.Information("Reverse flow monitor thread shutting down.");
-                }
-                if (token.IsCancellationRequested || !GetMonitorState().Enabled)
-                    break;
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(WellKnownData.ReverseFlowMonitorPollingInterval), token);
+                    }
+                    catch (OperationCanceledException e)
+                    {
+                        _logger.Information("Reverse flow monitor thread shutting down.");
+                    }
 
-                PollReverseFlowInternal();
+                    if (token.IsCancellationRequested || !GetMonitorState().Enabled)
+                        break;
+
+                    PollReverseFlowInternal(_a2AContext);
+                }
+            }
+            finally
+            {
+                _reverseFlowEnabled = false;
             }
         }
 
         private static object _lockReverseFlow = new object();
 
-        private void PollReverseFlowInternal()
+        private void PollReverseFlowInternal(ISafeguardA2AContext a2AContext)
         {
             lock (_lockReverseFlow)
             {
@@ -372,13 +455,25 @@ namespace OneIdentity.DevOps.Logic
                             try
                             {
                                 _logger.Information(monitorEvent.Event);
-                                if (!_pluginManager.GetCredential(account, pluginInstance.AssignedCredentialType))
+                                var fetchedCredential = _pluginManager.GetCredential(account, pluginInstance.AssignedCredentialType);
+
+                                if (fetchedCredential == null)
                                 {
                                     monitorEvent.Event =
                                         $"Unable to get the {pluginInstance.AssignedCredentialType} for {account.AccountName} to {account.VaultName}.";
                                     monitorEvent.Result = WellKnownData.GetPasswordFailure;
                                     _logger.Error(monitorEvent.Event);
+                                    _lastEventsQueue.Enqueue(monitorEvent);
+                                    continue;
                                 }
+
+                                if (!_credentialManager.Matches(fetchedCredential, account, pluginInstance.AssignedCredentialType))
+                                {
+                                    // Push the credential back to SPP here.
+                                    a2AContext.SetPassword(account.ApiKey.ToSecureString(), fetchedCredential.ToSecureString());
+                                    _credentialManager.Upsert(fetchedCredential, account, pluginInstance.AssignedCredentialType);
+                                }
+
                             }
                             catch (Exception ex)
                             {

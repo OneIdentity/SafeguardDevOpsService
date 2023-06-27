@@ -13,7 +13,7 @@ namespace OneIdentity.DevOps.Logic
         bool TestPluginVaultConnection(ISafeguardConnection sgConnection, string plugin);
 
         bool SendCredential(AccountMapping account, string[] credential, CredentialType assignedCredentialType);
-        bool GetCredential(AccountMapping account, CredentialType assignedCredentialType);
+        string GetCredential(AccountMapping account, CredentialType assignedCredentialType);
 
         string[] GetAccountCredential(string name, string a2AApiKey, CredentialType assignedType);
 

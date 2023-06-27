@@ -102,7 +102,6 @@ namespace OneIdentity.DevOps.AzureKeyVault
                     return GetPassword(asset, account, altAccountName);
                 case CredentialType.SshKey:
                     return GetSshKey(asset, account, altAccountName);
-                    break;
                 case CredentialType.ApiKey:
                     Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
                     break;
