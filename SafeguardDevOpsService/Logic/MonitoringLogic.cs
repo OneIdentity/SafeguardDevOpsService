@@ -92,7 +92,13 @@ namespace OneIdentity.DevOps.Logic
                     _pluginManager.RefreshPluginCredentials();
                 }
 
-                Task.Run(() => PollReverseFlowInternal());
+                var a2AContext = _a2AContext ?? ConnectA2AContext();
+                if (a2AContext == null)
+                {
+                    throw new DevOpsException("Failed to connect to Safeguard A2A service. Monitoring cannot be started.");
+                }
+
+                Task.Run(() => PollReverseFlowInternal(a2AContext));
                 return true;
             }
 
@@ -117,11 +123,8 @@ namespace OneIdentity.DevOps.Logic
             }
         }
 
-        private void StartMonitoring()
+        private ISafeguardA2AContext ConnectA2AContext()
         {
-            if (_eventListener != null)
-                throw new DevOpsException("Listener is already running.");
-
             var sppAddress = _configDb.SafeguardAddress;
             var userCertificate = _configDb.UserCertificateBase64Data;
             var passPhrase = _configDb.UserCertificatePassphrase?.ToSecureString();
@@ -131,11 +134,26 @@ namespace OneIdentity.DevOps.Logic
             if (sppAddress == null || userCertificate == null || !apiVersion.HasValue || !ignoreSsl.HasValue)
             {
                 _logger.Error("No safeguardConnection was found.  Safeguard Secrets Broker for DevOps must be configured first");
-                return;
+                return null;
             }
 
-            if (ignoreSsl.Value)
+            // connect to Safeguard
+            return Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
+        }
+
+        private void StartMonitoring()
+        {
+            if (_eventListener != null)
+                throw new DevOpsException("Listener is already running.");
+
+            var ignoreSsl = _configDb.IgnoreSsl;
+            if (ignoreSsl.HasValue && ignoreSsl.Value)
                 throw new DevOpsException("Monitoring cannot be enabled until a secure connection has been established. Trusted certificates may be missing.");
+
+            // connect to Safeguard
+            _a2AContext = ConnectA2AContext();
+            if (_a2AContext == null) 
+                throw new DevOpsException("Failed to connect to Safeguard A2A service. Monitoring cannot be started.");
 
             // This call will fail if the monitor is being started as part of the service start up.
             //  The reason why is because at service startup, the user has not logged into Secrets Broker yet
@@ -147,8 +165,6 @@ namespace OneIdentity.DevOps.Logic
             // Make sure that the credentialManager cache is empty.
             _credentialManager.Clear();
 
-            // connect to Safeguard
-            _a2AContext = Safeguard.A2A.GetContext(sppAddress, Convert.FromBase64String(userCertificate), passPhrase, CertificateValidationCallback, apiVersion.Value);
             // figure out what API keys to monitor
             _retrievableAccounts = _configDb.GetAccountMappings().ToList();
             if (_retrievableAccounts.Count == 0)
@@ -295,7 +311,7 @@ namespace OneIdentity.DevOps.Logic
                             // Only store passwords and ssh keys in the credential manager for reverse flow comparison. API keys are not supported yet.
                             if (pluginInfo.AssignedCredentialType != CredentialType.ApiKey)
                             {
-                                _credentialManager.Insert(credentialCache[pluginInfo.AssignedCredentialType][0], account, pluginInfo.AssignedCredentialType);
+                                _credentialManager.Upsert(credentialCache[pluginInfo.AssignedCredentialType][0], account, pluginInfo.AssignedCredentialType);
                             }
                         }
                         else
@@ -405,7 +421,7 @@ namespace OneIdentity.DevOps.Logic
                     if (token.IsCancellationRequested || !GetMonitorState().Enabled)
                         break;
 
-                    PollReverseFlowInternal();
+                    PollReverseFlowInternal(_a2AContext);
                 }
             }
             finally
@@ -416,7 +432,7 @@ namespace OneIdentity.DevOps.Logic
 
         private static object _lockReverseFlow = new object();
 
-        private void PollReverseFlowInternal()
+        private void PollReverseFlowInternal(ISafeguardA2AContext a2AContext)
         {
             lock (_lockReverseFlow)
             {
@@ -439,13 +455,25 @@ namespace OneIdentity.DevOps.Logic
                             try
                             {
                                 _logger.Information(monitorEvent.Event);
-                                if (!_pluginManager.GetCredential(account, pluginInstance.AssignedCredentialType))
+                                var fetchedCredential = _pluginManager.GetCredential(account, pluginInstance.AssignedCredentialType);
+
+                                if (fetchedCredential == null)
                                 {
                                     monitorEvent.Event =
                                         $"Unable to get the {pluginInstance.AssignedCredentialType} for {account.AccountName} to {account.VaultName}.";
                                     monitorEvent.Result = WellKnownData.GetPasswordFailure;
                                     _logger.Error(monitorEvent.Event);
+                                    _lastEventsQueue.Enqueue(monitorEvent);
+                                    continue;
                                 }
+
+                                if (!_credentialManager.Matches(fetchedCredential, account, pluginInstance.AssignedCredentialType))
+                                {
+                                    // Push the credential back to SPP here.
+                                    a2AContext.SetPassword(account.ApiKey.ToSecureString(), fetchedCredential.ToSecureString());
+                                    _credentialManager.Upsert(fetchedCredential, account, pluginInstance.AssignedCredentialType);
+                                }
+
                             }
                             catch (Exception ex)
                             {

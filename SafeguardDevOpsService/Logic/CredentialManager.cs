@@ -24,10 +24,19 @@ namespace OneIdentity.DevOps.Logic
             _salt = DateTimeOffset.Now.Millisecond.ToString();
         }
 
-        public void Insert(string credential, AccountMapping account, CredentialType credentialType)
+        public void Upsert(string credential, AccountMapping account, CredentialType credentialType)
         {
             var uniqueKey = _uniqueKey(account.Key, credentialType);
-            if (!CachedCredentials.ContainsKey(uniqueKey)) {
+            if (CachedCredentials.ContainsKey(uniqueKey))
+            {
+                var hashValue = HashText(credential);
+                if (!CachedCredentials[uniqueKey].Credential.Equals(hashValue))
+                {
+                    CachedCredentials[uniqueKey].Credential = HashText(credential);
+                }
+            }
+            else 
+            {
                 var credentialEntry = new CachedCredential()
                 {
                     Account = CloneAccount(account),
@@ -35,24 +44,6 @@ namespace OneIdentity.DevOps.Logic
                     Credential = HashText(credential)
                 };
 
-                CachedCredentials.Add(uniqueKey, credentialEntry);
-            }
-        }
-
-        public void Upsert(string credential, AccountMapping account, CredentialType credentialType)
-        {
-            var credentialEntry = new CachedCredential()
-            {
-                Account = CloneAccount(account),
-                CredentialType = credentialType,
-                Credential = HashText(credential)
-            };
-
-            var uniqueKey = _uniqueKey(account.Key, credentialType);
-            if (CachedCredentials.ContainsKey(uniqueKey)) {
-                CachedCredentials[uniqueKey] = credentialEntry;
-            }
-            else {
                 CachedCredentials.Add(uniqueKey, credentialEntry);
             }
         }

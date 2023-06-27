@@ -3,9 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net.Security;
-using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using OneIdentity.DevOps.Common;
@@ -204,25 +202,18 @@ namespace OneIdentity.DevOps.Logic
             return false;
         }
 
-        public bool GetCredential(AccountMapping account, CredentialType assignedCredentialType)
+        public string GetCredential(AccountMapping account, CredentialType assignedCredentialType)
         {
             if (LoadedPlugins.ContainsKey(account.VaultName))
             {
                 var pluginInstance = LoadedPlugins[account.VaultName];
                 var altAccountName = string.IsNullOrEmpty(account.AltAccountName) ? null : account.AltAccountName;
-                var fetchedCredential = pluginInstance.GetCredential(assignedCredentialType, account.AssetName, account.AccountName, altAccountName);
-
-                if (fetchedCredential != null && !_credentialManager.Matches(fetchedCredential, account, assignedCredentialType))
-                {
-                    // Push the credential back to SPP here.
-                }
-
-                return fetchedCredential != null;
+                return pluginInstance.GetCredential(assignedCredentialType, account.AssetName, account.AccountName, altAccountName);
             }
 
             _logger.Error($"Get credential from the plugin failed.  No plugin {account.VaultName} found.");
 
-            return false;
+            return null;
         }
 
         private void DetectPlugins(string pluginDirPath)
