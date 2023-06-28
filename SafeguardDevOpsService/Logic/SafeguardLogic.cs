@@ -573,7 +573,7 @@ namespace OneIdentity.DevOps.Logic
                 if (_configDb.A2aUserId == null || _configDb.A2aUserId == 0)
                 {
                     var p = new Dictionary<string, string>
-                        {{"filter", $"UserName eq '{WellKnownData.DevOpsUserName(_configDb.SvcId)}'"}};
+                        {{"filter", $"Name eq '{WellKnownData.DevOpsUserName(_configDb.SvcId)}'"}};
 
                     try
                     {
@@ -718,6 +718,7 @@ namespace OneIdentity.DevOps.Logic
                             : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId),
                         CertificateUserId = _configDb.A2aUserId.Value,
                         VisibleToCertificateUsers = true,
+                        BidirectionalEnabled = registrationType == A2ARegistrationType.Account,
                         DevOpsInstanceId = _configDb.SvcId
                     };
 
