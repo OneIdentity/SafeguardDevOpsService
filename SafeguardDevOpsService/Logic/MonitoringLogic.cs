@@ -4,12 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
-using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
@@ -302,12 +300,6 @@ namespace OneIdentity.DevOps.Logic
             {
                 _logger.Information("Listener is already running.");
             }
-
-            // if (monitorState.ReverseFlowMonitorState.Enabled && !_isA2AMonitoringEnabled)
-            // {
-            //     StartReverseFlowMonitor();
-            //     _logger.Information("Reverse flow monitoring has been started.");
-            // }
         }
 
         private void StopMonitoring()
