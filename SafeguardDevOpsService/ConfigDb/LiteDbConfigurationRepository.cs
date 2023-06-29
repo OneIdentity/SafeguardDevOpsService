@@ -47,6 +47,8 @@ namespace OneIdentity.DevOps.ConfigDb
         private const string AssetAccountGroupIdKey = "AssetAccountGroupId";
         private const string SigningCertificateKey = "SigningCertificate";
         private const string LastKnownMonitorStateKey = "LastKnownMonitorState";
+        private const string LastKnownReverseFlowMonitorStateKey = "LastKnownReverseFlowMonitorState";
+        private const string ReverseFlowPollingIntervalKey = "ReverseFlowPollingInterval";
 
         private const string UserCertificateThumbprintKey = "UserCertThumbprint";
         private const string UserCertificateDataKey = "UserCertData";
@@ -447,7 +449,7 @@ namespace OneIdentity.DevOps.ConfigDb
             {
                 try
                 {
-                    return Int32.Parse(GetSimpleSetting(A2aUserIdKey));
+                    return int.Parse(GetSimpleSetting(A2aUserIdKey));
                 }
                 catch
                 {
@@ -463,7 +465,7 @@ namespace OneIdentity.DevOps.ConfigDb
             {
                 try
                 {
-                    return Int32.Parse(GetSimpleSetting(A2aRegistrationIdKey));
+                    return int.Parse(GetSimpleSetting(A2aRegistrationIdKey));
                 }
                 catch
                 {
@@ -479,7 +481,7 @@ namespace OneIdentity.DevOps.ConfigDb
             {
                 try
                 {
-                    return Int32.Parse(GetSimpleSetting(A2aVaultRegistrationIdKey));
+                    return int.Parse(GetSimpleSetting(A2aVaultRegistrationIdKey));
                 }
                 catch
                 {
@@ -495,7 +497,7 @@ namespace OneIdentity.DevOps.ConfigDb
             {
                 try
                 {
-                    return Int32.Parse(GetSimpleSetting(AssetIdKey));
+                    return int.Parse(GetSimpleSetting(AssetIdKey));
                 }
                 catch
                 {
@@ -511,7 +513,7 @@ namespace OneIdentity.DevOps.ConfigDb
             {
                 try
                 {
-                    return Int32.Parse(GetSimpleSetting(AssetPartitionIdKey));
+                    return int.Parse(GetSimpleSetting(AssetPartitionIdKey));
                 }
                 catch
                 {
@@ -527,7 +529,7 @@ namespace OneIdentity.DevOps.ConfigDb
             {
                 try
                 {
-                    return Int32.Parse(GetSimpleSetting(AssetAccountGroupIdKey));
+                    return int.Parse(GetSimpleSetting(AssetAccountGroupIdKey));
                 }
                 catch
                 {
@@ -541,6 +543,32 @@ namespace OneIdentity.DevOps.ConfigDb
         {
             get => GetSimpleSetting(LastKnownMonitorStateKey);
             set => SetSimpleSetting(LastKnownMonitorStateKey, value);
+        }
+
+        public string LastKnownReverseFlowMonitorState
+        {
+            get => GetSimpleSetting(LastKnownReverseFlowMonitorStateKey);
+            set => SetSimpleSetting(LastKnownReverseFlowMonitorStateKey, value);
+        }
+
+        public int? ReverseFlowPollingInterval
+        {
+            get
+            {
+                try
+                {
+                    return int.Parse(GetSimpleSetting(ReverseFlowPollingIntervalKey));
+                }
+                catch
+                {
+                    return WellKnownData.ReverseFlowMonitorPollingInterval;
+                }
+            }
+            set
+            {
+                value ??= WellKnownData.ReverseFlowMonitorPollingInterval;
+                SetSimpleSetting(ReverseFlowPollingIntervalKey, value.ToString());
+            }
         }
 
         public string SigningCertificate

@@ -26,33 +26,33 @@ namespace OneIdentity.DevOps.Controllers.V2
         }
 
         /// <summary>
-        /// Get the current state of the A2A monitor.
+        /// Get the current state of the A2A and Reverse Flow monitoring.
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
         /// has been registered with Safeguard Secrets Broker for DevOps.  
         ///
-        /// This endpoint gets the current state of the account monitor.
+        /// This endpoint gets the current state of the A2A and Reverse Flow monitoring.
         /// </remarks>
         /// <response code="200">Success</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet]
-        public ActionResult<MonitorState> GetMonitor([FromServices] IMonitoringLogic monitoringLogic)
+        public ActionResult<FullMonitorState> GetMonitorState([FromServices] IMonitoringLogic monitoringLogic)
         {
-            var monitoring = monitoringLogic.GetMonitorState();
+            var monitoring = monitoringLogic.GetFullMonitorState();
 
             return Ok(monitoring);
         }
 
         /// <summary>
-        /// Set the state of the A2A monitor.
+        /// Force a new state of A2A and Reverse Flow monitoring.
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
         /// has been registered with Safeguard Secrets Broker for DevOps.  
         ///
-        /// This endpoint starts or stops the account monitor.
+        /// This endpoint forces a new state of both the A2A and Reverse Flow monitoring.
         /// </remarks>
         /// <param name="monitorState">New state of the monitor.</param>
         /// <response code="200">Success</response>
@@ -60,11 +60,33 @@ namespace OneIdentity.DevOps.Controllers.V2
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpPost]
-        public ActionResult<MonitorState> GetMonitor([FromServices] IMonitoringLogic monitoringLogic, MonitorState monitorState)
+        public ActionResult<FullMonitorState> ForceMonitorState([FromServices] IMonitoringLogic monitoringLogic, MonitorState monitorState)
         {
             monitoringLogic.EnableMonitoring(monitorState.Enabled);
 
-            return Ok(monitorState);
+            return Ok(monitoringLogic.GetFullMonitorState());
+        }
+
+        /// <summary>
+        /// Set the state of the A2A or the Reverse Flow monitoring.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
+        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        ///
+        /// This endpoint sets a new state of the A2A or Reverse Flow monitoring.
+        /// </remarks>
+        /// <param name="fullMonitorState">New state of the monitor.</param>
+        /// <response code="200">Success</response>
+        /// <response code="400">Bad Request</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPut]
+        public ActionResult<FullMonitorState> SetMonitorState([FromServices] IMonitoringLogic monitoringLogic, FullMonitorState fullMonitorState)
+        {
+            monitoringLogic.EnableMonitoring(fullMonitorState);
+
+            return Ok(monitoringLogic.GetFullMonitorState());
         }
 
         /// <summary>
@@ -89,19 +111,59 @@ namespace OneIdentity.DevOps.Controllers.V2
         }
 
         /// <summary>
-        /// Start a reverse flow polling cycle.
+        /// Get the current state of the Reverse Flow monitor.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
+        /// Safeguard Secrets Broker for DevOps reverser flow monitors the associated third party vaults for any password change to any account that
         /// has been registered with Safeguard Secrets Broker for DevOps.  
         ///
-        /// This endpoint starts a reverse flow polling cycle outside of monitoring.
+        /// This endpoint gets the current state of the Reverse Flow monitor.
+        /// </remarks>
+        /// <response code="200">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpGet("ReverseFlow")]
+        public ActionResult<ReverseFlowMonitorState> GetReverseFlowMonitorState([FromServices] IMonitoringLogic monitoringLogic)
+        {
+            var monitoring = monitoringLogic.GetReverseFlowMonitorState();
+
+            return Ok(monitoring);
+        }
+
+        /// <summary>
+        /// Set the current state of the Reverse Flow monitor.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps reverser flow monitors the associated third party vaults for any password change to any account that
+        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        ///
+        /// This endpoint sets the current state of the Reverse Flow monitor.
+        /// </remarks>
+        /// <response code="200">Success</response>
+        [SafeguardSessionKeyAuthorization]
+        [UnhandledExceptionError]
+        [HttpPut("ReverseFlow")]
+        public ActionResult<ReverseFlowMonitorState> SetReverseFlowMonitorState([FromServices] IMonitoringLogic monitoringLogic, ReverseFlowMonitorState reverseFlowMonitorState)
+        {
+            var monitoring = monitoringLogic.SetReverseFlowMonitorState(reverseFlowMonitorState);
+
+            return Ok(monitoring);
+        }
+
+        /// <summary>
+        /// Force a single Reverse Flow polling cycle.
+        /// </summary>
+        /// <remarks>
+        /// Safeguard Secrets Broker for DevOps reverser flow monitors the associated third party vaults for any password change to any account that
+        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        ///
+        /// This endpoint forces a single Reverse Flow polling cycle outside of monitoring.
         /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="400">Bad Request</response>
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
-        [HttpPost("ReverseFlow")]
+        [HttpPost("ReverseFlow/PollNow")]
         public ActionResult PollReverseFlow([FromServices] IMonitoringLogic monitoringLogic)
         {
             if (!monitoringLogic.PollReverseFlow())

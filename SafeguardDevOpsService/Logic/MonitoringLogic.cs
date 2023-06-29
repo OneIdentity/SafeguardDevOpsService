@@ -4,12 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
-using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
@@ -51,23 +49,118 @@ namespace OneIdentity.DevOps.Logic
             return CertificateHelper.CertificateValidation(sender, certificate, chain, sslPolicyErrors, _logger, _configDb);
         }
 
+        private bool _isA2AMonitoringEnabled => _eventListener != null && _a2AContext != null;
+
         public void EnableMonitoring(bool enable)
         {
-            if (enable)
-                StartMonitoring();
-            else
-                StopMonitoring();
+            // Force the enable state for A2A and reverseflow monitoring.
+            var newState = new FullMonitorState()
+            {
+                Enabled = enable,
+                ReverseFlowMonitorState = null
+            };
 
-            _configDb.LastKnownMonitorState = GetMonitorState().Enabled ? WellKnownData.MonitorEnabled : WellKnownData.MonitorDisabled;
+            EnableMonitoring(newState);
+        }
+
+        public void EnableMonitoring(FullMonitorState monitorState)
+        {
+            // If no reverse flow monitor state was provided, assume it needs to follow
+            //  the A2A monitor state.
+            if (monitorState.ReverseFlowMonitorState == null)
+            {
+                monitorState.ReverseFlowMonitorState = new ReverseFlowMonitorState()
+                {
+                    Enabled = monitorState.Enabled,
+                    ReverseFlowPollingInterval = _configDb.ReverseFlowPollingInterval ?? WellKnownData.ReverseFlowMonitorPollingInterval
+                };
+            }
+
+            // If the A2A monitor should start and is stopped, start it.
+            if (monitorState.Enabled && !_isA2AMonitoringEnabled)
+            {
+                StartMonitoring();
+            }
+
+            // If the reverse flow monitor should start and is stopped, start it.
+            if (monitorState.ReverseFlowMonitorState.Enabled && !_reverseFlowEnabled)
+            {
+                StartReverseFlowMonitor();
+            }
+
+            // If the A2A monitor should stop and it is running, stop it.
+            if (!monitorState.Enabled && _isA2AMonitoringEnabled)
+            {
+                StopMonitoring();
+            }
+
+            // If the reverse flow monitor should stopt and is running, stop it.
+            if (!monitorState.ReverseFlowMonitorState.Enabled && _reverseFlowEnabled)
+            {
+                StopReverseFlowMonitor();
+            }
+
+            var state = GetFullMonitorState();
+            _configDb.LastKnownMonitorState = state.Enabled ? WellKnownData.MonitorEnabled : WellKnownData.MonitorDisabled;
+            _configDb.LastKnownReverseFlowMonitorState = state.ReverseFlowMonitorState.Enabled ? WellKnownData.MonitorEnabled : WellKnownData.MonitorDisabled;
         }
 
         public MonitorState GetMonitorState()
         {
             return new MonitorState()
             {
-                Enabled = _eventListener != null && _a2AContext != null,
-                ReverseFlowEnabled = _reverseFlowEnabled
+                Enabled = _isA2AMonitoringEnabled,
             };
+        }
+
+        public FullMonitorState GetFullMonitorState()
+        {
+            return new FullMonitorState()
+            {
+                Enabled = _isA2AMonitoringEnabled,
+                ReverseFlowMonitorState = GetReverseFlowMonitorState()
+            };
+        }
+
+        public ReverseFlowMonitorState GetReverseFlowMonitorState()
+        {
+            return new ReverseFlowMonitorState()
+            {
+                Enabled = _reverseFlowEnabled,
+                ReverseFlowPollingInterval = _configDb.ReverseFlowPollingInterval ?? WellKnownData.ReverseFlowMonitorPollingInterval
+            };
+        }
+
+        public ReverseFlowMonitorState SetReverseFlowMonitorState(ReverseFlowMonitorState reverseFlowMonitorState)
+        {
+            if (reverseFlowMonitorState == null)
+            {
+                var msg = "The reverse flow monitor cannot be null.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+
+            if (_configDb.ReverseFlowPollingInterval != reverseFlowMonitorState.ReverseFlowPollingInterval)
+            {
+                _configDb.ReverseFlowPollingInterval = reverseFlowMonitorState.ReverseFlowPollingInterval;
+            }
+
+            // If the reverse flow monitor should start and is not running, start it.
+            if (reverseFlowMonitorState.Enabled && !_reverseFlowEnabled)
+            {
+                StartReverseFlowMonitor();
+            }
+            // If the reverse flow monitor should stop and is running, stop it.
+            if (!reverseFlowMonitorState.Enabled && _reverseFlowEnabled)
+            {
+                StopReverseFlowMonitor();
+            }
+
+            _configDb.LastKnownReverseFlowMonitorState = reverseFlowMonitorState.Enabled
+                ? WellKnownData.MonitorEnabled
+                : WellKnownData.MonitorDisabled;
+
+            return GetReverseFlowMonitorState();
         }
 
         public IEnumerable<MonitorEvent> GetMonitorEvents(int size)
@@ -95,7 +188,9 @@ namespace OneIdentity.DevOps.Logic
                 var a2AContext = _a2AContext ?? ConnectA2AContext();
                 if (a2AContext == null)
                 {
-                    throw new DevOpsException("Failed to connect to Safeguard A2A service. Monitoring cannot be started.");
+                    var msg = "Failed to connect to Safeguard A2A service. Monitoring cannot be started.";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg);
                 }
 
                 Task.Run(() => PollReverseFlowInternal(a2AContext));
@@ -111,10 +206,23 @@ namespace OneIdentity.DevOps.Logic
         {
             try
             {
+                // If the A2A monitoring was enabled before the restart, then monitoring on startup.
                 if (_configDb.LastKnownMonitorState != null &&
                     _configDb.LastKnownMonitorState.Equals(WellKnownData.MonitorEnabled))
                 {
                     StartMonitoring();
+                }
+                else
+                {
+                    // Make sure that the last state of the reverse flow is set to disabled if no monitoring started.
+                    _configDb.LastKnownReverseFlowMonitorState = WellKnownData.MonitorDisabled;
+                }
+
+                // If reverse flow monitoring was enabled before the restart, then start monitoring on startup.
+                if (_configDb.LastKnownReverseFlowMonitorState != null &&
+                    _configDb.LastKnownReverseFlowMonitorState.Equals(WellKnownData.MonitorEnabled))
+                {
+                    StartReverseFlowMonitor();
                 }
             }
             catch (Exception ex)
@@ -143,53 +251,55 @@ namespace OneIdentity.DevOps.Logic
 
         private void StartMonitoring()
         {
-            if (_eventListener != null)
-                throw new DevOpsException("Listener is already running.");
-
-            var ignoreSsl = _configDb.IgnoreSsl;
-            if (ignoreSsl.HasValue && ignoreSsl.Value)
-                throw new DevOpsException("Monitoring cannot be enabled until a secure connection has been established. Trusted certificates may be missing.");
-
-            // connect to Safeguard
-            _a2AContext = ConnectA2AContext();
-            if (_a2AContext == null) 
-                throw new DevOpsException("Failed to connect to Safeguard A2A service. Monitoring cannot be started.");
-
-            // This call will fail if the monitor is being started as part of the service start up.
-            //  The reason why is because at service startup, the user has not logged into Secrets Broker yet
-            //  so Secrets Broker does not have the SPP credentials that are required to query the current vault account credentials.
-            //  However, the monitor can still be started using the existing vault credentials. If syncing doesn't appear to be working
-            //  the monitor can be stopped and restarted which will cause a refresh of the vault credentials.
-            _pluginManager.RefreshPluginCredentials();
-
-            // Make sure that the credentialManager cache is empty.
-            _credentialManager.Clear();
-
-            // figure out what API keys to monitor
-            _retrievableAccounts = _configDb.GetAccountMappings().ToList();
-            if (_retrievableAccounts.Count == 0)
+            if (!_isA2AMonitoringEnabled)
             {
-                var msg = "No accounts have been mapped to plugins.  Nothing to do.";
-                _logger.Error(msg);
-                throw new DevOpsException(msg);
-            }
+                var ignoreSsl = _configDb.IgnoreSsl;
+                if (ignoreSsl.HasValue && ignoreSsl.Value)
+                    throw new DevOpsException(
+                        "Monitoring cannot be enabled until a secure connection has been established. Trusted certificates may be missing.");
 
-            var apiKeys = new List<SecureString>();
-            foreach (var account in _retrievableAccounts)
+                // connect to Safeguard
+                _a2AContext = ConnectA2AContext();
+                if (_a2AContext == null)
+                    throw new DevOpsException(
+                        "Failed to connect to Safeguard A2A service. Monitoring cannot be started.");
+
+                // This call will fail if the monitor is being started as part of the service start up.
+                //  The reason why is because at service startup, the user has not logged into Secrets Broker yet
+                //  so Secrets Broker does not have the SPP credentials that are required to query the current vault account credentials.
+                //  However, the monitor can still be started using the existing vault credentials. If syncing doesn't appear to be working
+                //  the monitor can be stopped and restarted which will cause a refresh of the vault credentials.
+                _pluginManager.RefreshPluginCredentials();
+
+                // Make sure that the credentialManager cache is empty.
+                _credentialManager.Clear();
+
+                // figure out what API keys to monitor
+                _retrievableAccounts = _configDb.GetAccountMappings().ToList();
+                if (_retrievableAccounts.Count == 0)
+                {
+                    var msg = "No accounts have been mapped to plugins.  Nothing to do.";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg);
+                }
+
+                var apiKeys = new List<SecureString>();
+                foreach (var account in _retrievableAccounts)
+                {
+                    apiKeys.Add(account.ApiKey.ToSecureString());
+                }
+
+                _eventListener = _a2AContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);
+                _eventListener.Start();
+
+                InitialPasswordPull();
+
+                _logger.Information("Password change monitoring has been started.");
+            }
+            else
             {
-                apiKeys.Add(account.ApiKey.ToSecureString());
+                _logger.Information("Listener is already running.");
             }
-
-            _eventListener = _a2AContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);
-            _eventListener.Start();
-
-            InitialPasswordPull();
-
-            _logger.Information("Password change monitoring has been started.");
-
-            StartReverseFlowMonitor();
-            _logger.Information("Reverse flow monitoring has been started.");
-
         }
 
         private void StopMonitoring()
@@ -199,17 +309,21 @@ namespace OneIdentity.DevOps.Logic
                 try
                 {
                     _eventListener?.Stop();
-                } catch { }
+                    _logger.Information("Password change monitoring has been stopped.");
+                }
+                catch
+                {
+                }
 
-                StopReverseFlowMonitor();
-
-                _a2AContext?.Dispose();
-                _logger.Information("Password change monitoring has been stopped.");
+                if (!_reverseFlowEnabled)
+                {
+                    _a2AContext?.Dispose();
+                    _a2AContext = null;
+                }
             }
             finally
             {
                 _eventListener = null;
-                _a2AContext = null;
                 _retrievableAccounts = null;
                 _credentialManager.Clear();
             }
@@ -341,7 +455,7 @@ namespace OneIdentity.DevOps.Logic
 
         private void StartReverseFlowMonitor()
         {
-            if (ReverseFlowMonitoringAvailable())
+            if (!_reverseFlowEnabled && ReverseFlowMonitoringAvailable())
             {
                 if (_cts == null)
                 {
@@ -411,14 +525,15 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(WellKnownData.ReverseFlowMonitorPollingInterval), token);
+                        var delayTime = _configDb.ReverseFlowPollingInterval ?? WellKnownData.ReverseFlowMonitorPollingInterval;
+                        await Task.Delay(TimeSpan.FromSeconds(delayTime), token);
                     }
-                    catch (OperationCanceledException e)
+                    catch (OperationCanceledException)
                     {
                         _logger.Information("Reverse flow monitor thread shutting down.");
                     }
 
-                    if (token.IsCancellationRequested || !GetMonitorState().Enabled)
+                    if (token.IsCancellationRequested || !GetFullMonitorState().ReverseFlowMonitorState.Enabled)
                         break;
 
                     PollReverseFlowInternal(_a2AContext);
@@ -427,6 +542,12 @@ namespace OneIdentity.DevOps.Logic
             finally
             {
                 _reverseFlowEnabled = false;
+                _cts = null;
+                if (!_isA2AMonitoringEnabled)
+                {
+                    _a2AContext?.Dispose();
+                    _a2AContext = null;
+                }
             }
         }
 
