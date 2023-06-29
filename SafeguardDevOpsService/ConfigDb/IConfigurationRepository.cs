@@ -37,6 +37,8 @@ namespace OneIdentity.DevOps.ConfigDb
         int? AssetAccountGroupId { get; set; }
         string SigningCertificate { get; set; }
         string LastKnownMonitorState { get; set; }
+        string LastKnownReverseFlowMonitorState { get; set; }
+        int? ReverseFlowPollingInterval { get; set; }
 
         string UserCertificateThumbprint { get; set; }
         string UserCertificateBase64Data { get; set; }
