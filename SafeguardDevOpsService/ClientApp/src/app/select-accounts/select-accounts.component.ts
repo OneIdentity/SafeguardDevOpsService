@@ -219,9 +219,15 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
   selectAccounts(): void {
     this.selection.selected.forEach(sel => {
       if (this.pluginAccounts.indexOf(x => x.Id === sel.Id) === -1) {
-        this.pluginAccounts.push(sel);
+        this.pluginAccounts.push(this.mapAvailableToSelectedAccount(sel));
       }
     });
     this.editPluginService.closeAccounts(this.pluginAccounts);
   }
+
+  private mapAvailableToSelectedAccount(account: any): any {
+    account.AssetName = account.Asset.Name;
+    return account;
+  }
+
 }
