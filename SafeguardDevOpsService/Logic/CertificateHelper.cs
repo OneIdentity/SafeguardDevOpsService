@@ -217,11 +217,7 @@ namespace OneIdentity.DevOps.Logic
                     }
                     break;
                 case CertificateType.Trusted:
-                    if (!IsCa(sslCertificate) && !IsSelfSigned(sslCertificate))
-                    {
-                        logger.Error("Not a certificate authority.");
-                        return false;
-                    }
+                    // No addition attributes need to be checked to add a trusted certificate.
                     break;
                 default:
                     return false;
