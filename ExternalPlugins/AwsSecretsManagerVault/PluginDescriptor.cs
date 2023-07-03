@@ -279,7 +279,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             {
                 if (ex.Message.Contains("Secrets Manager can't find the specified secret"))
                 {
-                    Logger.Information(ex, $"The account {secretId} does not exist in the vault; attempting to the create account .");
+                    Logger.Information($"The account {secretId} does not exist in the vault; attempting to the create account .");
                     return CreateAwsAccount(secretId, secret);
                 }
 
