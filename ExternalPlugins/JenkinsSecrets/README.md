@@ -6,5 +6,7 @@ The Jenkins Secrets plugin allows Secrets Broker to pull passwords from Safeguar
 
 ***Plugin Details***
 
-* Address - Full URL to the Jenkins server.
-* User Name - User name of a Jenkins account that has permissions to add secrets to the Jenkins environment. An API token must be created for the Jenkins user and the token must be added to SPP as the password of the account that is selected in the plugin configuration.
+* **Supported Credential Types** - Password
+* **Supports Reverse Flow** - No
+* **Address** - Full URL to the Jenkins server.
+* **User Name** - User name of a Jenkins account that has permissions to add secrets to the Jenkins environment. An API token must be created for the Jenkins user and the token must be added to SPP as the password of the account that is selected in the plugin configuration.

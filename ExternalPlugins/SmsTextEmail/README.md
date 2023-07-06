@@ -10,6 +10,8 @@ The SMS Text /Email plugin allows Secrets Broker to pull passwords from Safeguar
 
 ***Plugin Details***
 
-* SMTP Server - IP address or host name of the SMTP server.
-* From Address - Email address of the sender.
-* To Address - Email address of the recipient. If the address domain identifies an SMS text relay, the email will be converted to a text and sent to a messaging device.
+* **Supported Credential Types** - Password, SSH key and API key
+* **Supports Reverse Flow** - No
+* **SMTP Server** - IP address or host name of the SMTP server.
+* **From Address** - Email address of the sender.
+* **To Address** - Email address of the recipient. If the address domain identifies an SMS text relay, the email will be converted to a text and sent to a messaging device.

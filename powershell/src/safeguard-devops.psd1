@@ -90,7 +90,7 @@ FunctionsToExport = @(
      'Get-SgDevOpsApplianceStatus', 'Initialize-SgDevOpsAppliance', 'Clear-SgDevOpsAppliance',
      'Get-SgDevOpsTlsValidation', 'Enable-SgDevOpsTlsValidation', 'Disable-SgDevOpsTlsValidation',
      'Connect-SgDevOps', 'Disconnect-SgDevOps',  'Restart-SgDevOps', # <-- session init / deinit
-     'Get-SgDevOpsLog',
+     'Get-SgDevOpsLog', 'Get-SgDevOpsBackup', 'Restore-SgDevOpsBackup',
      'Invoke-SgDevOpsMethod', # <-- this is the function used to implement most of the others
 
      # help.psm1

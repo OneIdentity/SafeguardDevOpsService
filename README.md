@@ -22,12 +22,12 @@ One Identity open source projects are supported through [One Identity GitHub iss
 
 The following are security challenges of DevOps technologies:
 
-- Source code security -- secrets used to pull code from a source code repository.
-- Build system security -- secrets used to access storage and other resources for sensitive components, code-signing operations, etc.
-- Package/image repository security -- secrets used to push build artifacts (packages and images) to repositories as well as pulling artifacts from those repositories.
-- Securely deploying to infrastructure -- virtual machine root passwords, cloud privileged accounts, privileged accounts in orchestration frameworks, etc.
-- Secure microservice communication -- inter-process or service to service communications--these can be passwords, API keys, PKI, etc.
-- Secure persistence -- secrets used for persistence technologies: database passwords, s3 buckets, etc.
+* Source code security -- secrets used to pull code from a source code repository.
+* Build system security -- secrets used to access storage and other resources for sensitive components, code-signing operations, etc.
+* Package/image repository security -- secrets used to push build artifacts (packages and images) to repositories as well as pulling artifacts from those repositories.
+* Securely deploying to infrastructure -- virtual machine root passwords, cloud privileged accounts, privileged accounts in orchestration frameworks, etc.
+* Secure microservice communication -- inter-process or service to service communications--these can be passwords, API keys, PKI, etc.
+* Secure persistence -- secrets used for persistence technologies: database passwords, s3 buckets, etc.
 
 All of the security problems listed above involve restricting access to resources.  Access control requires authentication.  It is impossible to make an access control decision unless the system granting access to the resource can identify the requester, or at least know whether the requester can be trusted.  This process of authentication / access control is accomplished through secrets.  Possession of a secret authenticates the requester as trusted.  A secret could be a password, a private key, an API key, etc.
 
@@ -41,12 +41,12 @@ In addition to these problems there is just a certain amount of fear that develo
 
 The Safeguard recommended practice is to keep the less secure DevOps environment completely separate from the PAM environment with ZERO ACCESS to the PAM environment.  Instead, we will develop a solution for Safeguard "to push the secret to DevOps":
 
-- Push means there is no access from DevOps to PAM:
-  - No need for a bootstrap secret with access to PAM.
-  - No need even for firewall access to PAM.
-- Push is more efficient
-  - The secret is only updated when it actually changes.
-  - There is no need to continuously poll for a secret.
+* Push means there is no access from DevOps to PAM:
+  * No need for a bootstrap secret with access to PAM.
+  * No need even for firewall access to PAM.
+* Push is more efficient
+  * The secret is only updated when it actually changes.
+  * There is no need to continuously poll for a secret.
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsService-1.png)
 
@@ -54,9 +54,9 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 **Safeguard API** -- Safeguard has the A2A (Application to Application) REST API and the Core REST API (labeled Config in the diagram) that is used to configure the A2A service as well as other Safeguard services.  There are also open source SDKs for accessing these APIs from a .NET Standard 2.0 library.
 
-- Discover -- A2A registrations are visible to certificate users via the core API.
-- Monitor -- The A2A API includes a SignalR web socket connection that will give real-time updates for when passwords change (no polling).
-- Retrieve -- Pull the secret password from the A2A API in a single HTTPS round trip.
+* Discover -- A2A registrations are visible to certificate users via the core API.
+* Monitor -- The A2A API includes a SignalR web socket connection that will give real-time updates for when passwords change (no polling).
+* Retrieve -- Pull the secret password from the A2A API in a single HTTPS round trip.
 
 **Safeguard Secrets Broker for DevOps** -- An open source component that can be deployed as a service or as a container in a customer environment and includes plugins that can be added to communicate with various DevOps technologies.  This service discovers A2A secrets that are configured to be pushed to different DevOps secrets solutions.
 
@@ -68,12 +68,15 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 
 ## Safeguard Secrets Broker for DevOps Technologies Plugins
 
-- HashiCorp Vault
-- Azure Key Vault
-- Kubernetes Secrets Storage
-- Jenkins Secrets
-- AWS Secrets Manager Vault
-- ...
+* HashiCorp Vault
+* Azure Key Vault
+* Kubernetes Secrets Storage
+* Jenkins Secrets
+* AWS Secrets Manager Vault
+* CircleCI Secrets
+* Safeguard to Safeguard Secrets
+* GitHub Vault
+* ...
 
 ## Safeguard for Privileged Passwords Setup
 
@@ -121,9 +124,9 @@ Enter `spp-token <paste token>` as the value and click the ```Authorize``` butto
 ```
 
 10. This endpoint will check the connectivity to the SPP appliance and fetch and store the token signing certificate.
-    - It is also a little unique in that the call must contain a valid authorization token just like all other calls, but it can be called before the user actually logs into the Safeguard Secrets Broker for DevOps.  The user authorization will still be validated but it is a one-time validation just to make sure that the user is authorized to setup the SPP network information.
+    * It is also a little unique in that the call must contain a valid authorization token just like all other calls, but it can be called before the user actually logs into the Safeguard Secrets Broker for DevOps.  The user authorization will still be validated but it is a one-time validation just to make sure that the user is authorized to setup the SPP network information.
 1. Navigate to and call: `GET /service/devops/Safeguard/Logon`
-    - At this point the swagger page is logged into the Safeguard Secrets Broker for DevOps and will remain logged in until the page is refreshed, closed or `POST /service/devops/Safeguard/Logoff` is called.
+    * At this point the swagger page is logged into the Safeguard Secrets Broker for DevOps and will remain logged in until the page is refreshed, closed or `POST /service/devops/Safeguard/Logoff` is called.
 
 ### From Docker Image
 
@@ -163,10 +166,10 @@ WARNING: In some docker environments, the container may not be able to determine
 
 Initialization of the Secrets Broker on Windows or as a Docker image can be controled by specifying certain environment variables. These environment variables can be passed nto the initializtion of the Secrets Broker in one of two ways depending on the operating system. For Windows, the environment variables are set through a file called 'appsettings.json'. To change the variables on windows, navigate to the installed location of the Secrets Broker and rename the '_appsettings.json' to 'appsettings.json'. Then edit the settings file and change the corresponding variable. To change the variables in a Docker environment, the variables need to be set on the command line and passed into the image. The following describes the available environment variables:
 
-- DOCKER_HOST_IP - This environment variable should always be included when starting the Safeguard Secrets Broker for Devops in a docker container. It should be set to the IP address of the docker host computer.
-- LogLevel - Information(Default for Windows), Debug(Default for Docker), Error, Warning, Fatal and Verbose
-- SSBEncPasswd - The encryption password for encrypting the Secrets Broker database on disk. This is only available for docker. The Windows database is always encrypted.
-- Port - Secrets Broker listen port. The docker environment should be left at the default of 4443. The windows port can be changed by updating the appsettings.json file.
+* DOCKER_HOST_IP - This environment variable should always be included when starting the Safeguard Secrets Broker for Devops in a docker container. It should be set to the IP address of the docker host computer.
+* LogLevel - Information(Default for Windows), Debug(Default for Docker), Error, Warning, Fatal and Verbose
+* SSBEncPasswd - The encryption password for encrypting the Secrets Broker database on disk. This is only available for docker. The Windows database is always encrypted.
+* Port - Secrets Broker listen port. The docker environment should be left at the default of 4443. The windows port can be changed by updating the appsettings.json file.
 
 ## Configuring Safeguard Secrets Broker for DevOps
 
@@ -198,23 +201,40 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
 
 The Safeguard Secrets Broker for DevOps provides ways to monitor the password events and trouble shooting.  This funcitonality can be found under the system menu.  To access the system menu, select the cog icon in the upper right-hand corner of the browser window.  The system menu contains several options such as restarting the Safeguard Secrets Broker for DevOps, deleting the current configuration which resets the system to the default state as well as downloading the system log and viewing the password event history.
 
-- To trouble shoot issues that may arise, select the Download Log option from the System Menu.  The system log will provide details about a system issue or error that may have occured.
-- To view the password events, select the View Monitor Event History option from the System Menu.  The Monitor Events will appear which contains a list of the password events that have taken place since the system was last started.  These events are only stored in memory which means that each time that the Safeguard Secrets Broker for DevOps is restarted, the list will be cleared.
+* To trouble shoot issues that may arise, select the Download Log option from the System Menu.  The system log will provide details about a system issue or error that may have occured.
+* To view the password events, select the View Monitor Event History option from the System Menu.  The Monitor Events will appear which contains a list of the password events that have taken place since the system was last started.  These events are only stored in memory which means that each time that the Safeguard Secrets Broker for DevOps is restarted, the list will be cleared.
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsServiceMonitorEventsList-1.PNG)
+
+### Multiple Plugin Instances
+
+(Document the multiple plugin instances here)
+
+* Each plugin can have multiple instances
+* Each instance is independent although they share code
+* Allows a plugin to push or pull credentials from multiple vaults of the same type
+
+### Reverse Flow
+
+(Document the Reverse Flow functionality here)
+
+* Allows a third party vault to be the credential source
+* SPP is the backing vault
+* Allows credentials to be synced between various other downstream vaults
+*
 
 ### Using the REST API
 
 1. There are two different certificates that Safeguard Secrets Broker for DevOps needs in order to function properly.
-    - The first certificate is the web service SSL certificate.  A default self-signed SSL certificate was create when Safeguard Secrets Broker for DevOps was launched for the first time.  This certificate can be replaced with your own server authentication SSL certificate if desired.  This is optional.
-    - The second certificate is a client authentication certificate which will be used to create the SPP certificate user and A2A registration.
-    - Both of these certificates with their corresponding private keys can be generated outside of Safeguard Secrets Broker for DevOps and uploaded in PFX format or Safeguard Secrets Broker for DevOps can generate a private key and CSR which can be signed and uploaded.
+    * The first certificate is the web service SSL certificate.  A default self-signed SSL certificate was create when Safeguard Secrets Broker for DevOps was launched for the first time.  This certificate can be replaced with your own server authentication SSL certificate if desired.  This is optional.
+    * The second certificate is a client authentication certificate which will be used to create the SPP certificate user and A2A registration.
+    * Both of these certificates with their corresponding private keys can be generated outside of Safeguard Secrets Broker for DevOps and uploaded in PFX format or Safeguard Secrets Broker for DevOps can generate a private key and CSR which can be signed and uploaded.
 1. Install a client certificate and private key - Since the web service SSL certificate is optional, only the steps for creating the client certificate will be described here.  A similar procedure can be used to generate and upload the web service SSL certificate.
-    - Navigate to and call: `GET /service/devops/Safeguard/CSR` with the certificate type `A2AClient`.  An optional certificate size and subject name can be provided.
-    - Sign the CSR to produce a public certificate.
-      - KeyUsage - DigitalSignature, KeyEncipherment.
-      - ExtendedKeyUsage - ClientAuth.
-    - Navigate to and call the `POST /service/devops/Safeguard/ClientCertificate` with the JSON body.
+    * Navigate to and call: `GET /service/devops/Safeguard/CSR` with the certificate type `A2AClient`.  An optional certificate size and subject name can be provided.
+    * Sign the CSR to produce a public certificate.
+      * KeyUsage - DigitalSignature, KeyEncipherment.
+      * ExtendedKeyUsage - ClientAuth.
+    * Navigate to and call the `POST /service/devops/Safeguard/ClientCertificate` with the JSON body.
 
     ```json
     {
@@ -223,25 +243,25 @@ The Safeguard Secrets Broker for DevOps provides ways to monitor the password ev
     }
     ```
 
-    - Navigate to and call: `POST /service/devops/Safeguard/Configuration` with an empty body  `{}`
-      - Optionally the client certificate can be uploaded as part of configuring Safeguard Secrets Broker for DevOps in this call, by passing the same body as above.
-      - This call will store the client certificate and private key in Safeguard Secrets Broker for DevOps database, create a new DevOpsService User in SPP with the appropriate permissions, create a two new A2A registrations with the appropriate IP restrictions and prepare both Safeguard Secrets Broker for DevOps and SPP to start pulling passwords.
+    * Navigate to and call: `POST /service/devops/Safeguard/Configuration` with an empty body  `{}`
+      * Optionally the client certificate can be uploaded as part of configuring Safeguard Secrets Broker for DevOps in this call, by passing the same body as above.
+      * This call will store the client certificate and private key in Safeguard Secrets Broker for DevOps database, create a new DevOpsService User in SPP with the appropriate permissions, create a two new A2A registrations with the appropriate IP restrictions and prepare both Safeguard Secrets Broker for DevOps and SPP to start pulling passwords.
 1. Configure Safeguard Secrets Broker for DevOps listen port and log level.
-    - An example appsettings.json file was copied to the ProgramFiles\SafeguardDevOpsService folder during installation.  The example settings file will be prepended with an '_'.  To configure the listen port or the log level, rename this file by removing the preceding '_' so that the file name is 'appsettings.json'.  Then open the settings file in a text editor. The editor must be run as the administrator user.
-      - The appsettings.json file has two configuration settings:
-        - "HttpPort": `"<port>"` - The value of this entry defines the listen port that Safeguard Secrets Broker for DevOps will listen to.
-        - "LogLevel": `"<level>"` - The log level defaults to "Information". However the level can be set to "Information", "Error", "Fatal", "Verbose", "Warning" or "Debug".
-      - After making any changes to the appsettings.json settings file, Safeguard Secrets Broker for DevOps must be restarted in order for the changes to take effect.
+    * An example appsettings.json file was copied to the ProgramFiles\SafeguardDevOpsService folder during installation.  The example settings file will be prepended with an '_'.  To configure the listen port or the log level, rename this file by removing the preceding '_' so that the file name is 'appsettings.json'.  Then open the settings file in a text editor. The editor must be run as the administrator user.
+      * The appsettings.json file has two configuration settings:
+        * "HttpPort": `"<port>"` - The value of this entry defines the listen port that Safeguard Secrets Broker for DevOps will listen to.
+        * "LogLevel": `"<level>"` - The log level defaults to "Information". However the level can be set to "Information", "Error", "Fatal", "Verbose", "Warning" or "Debug".
+      * After making any changes to the appsettings.json settings file, Safeguard Secrets Broker for DevOps must be restarted in order for the changes to take effect.
 
 ## Installing Vault Plugins
 
 1. Copy one or more plugin zip files to the Windows local file system.
 1. Navigate to and call: `POST /service/devops/Plugins/File` to upload the plugin zip file.
-    - Safeguard Secrets Broker for DevOps will automatically detect, load and register each plugin.
+    * Safeguard Secrets Broker for DevOps will automatically detect, load and register each plugin.
 1. Navigate to and call: `GET /service/devops/Plugins` to verify that the plugin(s) were deployed and registered in Safeguard Secrets Broker for DevOps.
 1. Since each plugin has its own unique configuration, each one must be configured individually.
-    - Navigate to and call: `PUT /service/devops/Plugins/{name}` with the appropriate body to configure the plugin.
-    - The appropriate body can be copy and pasted from the corresponding JSON that is returned from `GET /service/devops/Plugins/{name}`. The PUT API for configuring the plugin will only recognize the entries under the "Configuration" tag even though the body will accept the entire plugin JSON body. For example, the following can be used to configure the HashiCorp Vault plugin:
+    * Navigate to and call: `PUT /service/devops/Plugins/{name}` with the appropriate body to configure the plugin.
+    * The appropriate body can be copy and pasted from the corresponding JSON that is returned from `GET /service/devops/Plugins/{name}`. The PUT API for configuring the plugin will only recognize the entries under the "Configuration" tag even though the body will accept the entire plugin JSON body. For example, the following can be used to configure the HashiCorp Vault plugin:
 
     ```json
     {
@@ -256,23 +276,23 @@ The Safeguard Secrets Broker for DevOps provides ways to monitor the password ev
 ## Configuring and Mapping Accounts to the Vault Plugins
 
 1. Navigate to and call: `GET /service/devops/Safeguard/AvailableAccounts`
-    - This call will produce a list of all of the available accounts in SPP that can be requested.
-    - Copy and paste the desired contents of this call to the following API for adding retrievable accounts.
+    * This call will produce a list of all of the available accounts in SPP that can be requested.
+    * Copy and paste the desired contents of this call to the following API for adding retrievable accounts.
 1. Navigate to and call: `POST /service/Devops/Safeguard/A2ARegistration/RetrievableAccounts`
-    - The body of this call should be copied and pasted from the previous results.  The body can be edited to remove any account data that should not be include in the A2A retrievable accounts.
-    - Copy the results of this call into the following API for mapping accounts to plugins.
+    * The body of this call should be copied and pasted from the previous results.  The body can be edited to remove any account data that should not be include in the A2A retrievable accounts.
+    * Copy the results of this call into the following API for mapping accounts to plugins.
 1. Navigate to and call: `POST /service/devops/Plugins/{name}/Accounts`
-    - The body of this call should be copied and pasted from the previous results.  The body can be edited to remove any account data that should not be used to pull a password and send it to the vault plugin.
-    - Repeat the above call for each plugin which needs to be configured for pulling account passwords.
+    * The body of this call should be copied and pasted from the previous results.  The body can be edited to remove any account data that should not be used to pull a password and send it to the vault plugin.
+    * Repeat the above call for each plugin which needs to be configured for pulling account passwords.
 
 ## Configuring the Vault Credential Account for the Plugins
 
 1. Navigate to and call: `GET /service/devops/Safeguard/AvailableAccounts`
-    - This call will produce a list of all of the available accounts in SPP that can be requested.
-    - Copy and paste the Asset-Account that corresponds to the third party vault, to the following API for adding a vault account.
+    * This call will produce a list of all of the available accounts in SPP that can be requested.
+    * Copy and paste the Asset-Account that corresponds to the third party vault, to the following API for adding a vault account.
 1. Navigate to and call: `POST /service/devops/Plugins/{name}/VaultAccount`
-    - The body of this call should be copied and pasted from the previous results.  It should be just the account information that corresponds to the third party vault.
-    - Repeat the above call for each plugin that needs to be configured for pulling the vault credential.
+    * The body of this call should be copied and pasted from the previous results.  It should be just the account information that corresponds to the third party vault.
+    * Repeat the above call for each plugin that needs to be configured for pulling the vault credential.
 
 ## Start Safeguard Secrets Broker for DevOps Password Monitoring
 
@@ -280,7 +300,11 @@ The Safeguard Secrets Broker for DevOps provides ways to monitor the password ev
 
     ```json
     {
-      "Enabled": true
+      "ReverseFlowMonitorState": {
+        "Enabled": false,
+        "ReverseFlowPollingInterval": 60
+      },
+      "Enabled": false
     }
     ```
 
