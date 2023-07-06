@@ -551,7 +551,7 @@ namespace OneIdentity.DevOps.ConfigDb
             set => SetSimpleSetting(LastKnownReverseFlowMonitorStateKey, value);
         }
 
-        public int? ReverseFlowPollingInterval
+        public int ReverseFlowPollingInterval
         {
             get
             {
@@ -566,7 +566,8 @@ namespace OneIdentity.DevOps.ConfigDb
             }
             set
             {
-                value ??= WellKnownData.ReverseFlowMonitorPollingInterval;
+                if (value <= 0)
+                    value = WellKnownData.ReverseFlowMonitorPollingInterval;
                 SetSimpleSetting(ReverseFlowPollingIntervalKey, value.ToString());
             }
         }

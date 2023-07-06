@@ -72,11 +72,11 @@
         <div class="field-text">This account will be used by Secrets Broker to pull new passwords from Safeguard</div>
       </div>
       <div class="disable-flag">
-        <mat-checkbox *ngIf="!plugin.IsSystemOwned" [(ngModel)]="plugin.IsDisabled"
+        <mat-checkbox color="primary" *ngIf="!plugin.IsSystemOwned" [(ngModel)]="plugin.IsDisabled"
           matTooltip="Disable the plugin to prevent monitoring the associated accounts">Disabled</mat-checkbox>
       </div>
       <div class="reverse-flag">
-        <mat-checkbox *ngIf="!plugin.IsSystemOwned" [disabled]="!plugin.SupportsReverseFlow" [(ngModel)]="plugin.ReverseFlowEnabled"
+        <mat-checkbox color="primary" *ngIf="!plugin.IsSystemOwned" [disabled]="!plugin.SupportsReverseFlow" [(ngModel)]="plugin.ReverseFlowEnabled"
           [matTooltip]="plugin.SupportsReverseFlow ? 'Enable reverse flow for this plugin instance. Reverse flow pulls credentials from the vault' : 'This plugin does not support reverse flow'">Reverse Flow</mat-checkbox>
       </div>
       <div *ngIf="!plugin.IsSystemOwned" class="sub-title-2">Plugin Details</div>
