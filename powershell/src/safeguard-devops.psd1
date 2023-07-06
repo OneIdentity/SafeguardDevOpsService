@@ -116,12 +116,14 @@ FunctionsToExport = @(
      'Get-SgDevOpsPluginVaultAccount', 'Set-SgDevOpsPluginVaultAccount',
      'Get-SgDevOpsPluginSetting', 'Set-SgDevOpsPluginSetting',
      'Get-SgDevOpsMappedAssetAccount', 'Add-SgDevOpsMappedAssetAccount', 'Remove-SgDevOpsMappedAssetAccount',
+     'Get-SgDevOpsPluginInstances', 'Add-SgDevOpsPluginInstances', 'Remove-SgDevOpsPluginInstances',
 
      # addons.psm1
      'Get-SgDevOpsAddon', 'Install-SgDevOpsAddon', 'Remove-SgDevOpsAddon',
 
      # monitor.psm1
-     'Get-SgDevOpsMonitor', 'Enable-SgDevOpsMonitor', 'Disable-SgDevOpsMonitor'
+     'Get-SgDevOpsMonitor', 'Enable-SgDevOpsMonitor', 'Disable-SgDevOpsMonitor', 'Set-SgDevOpsMonitor',
+     'Get-SgDevOpsReverseFlowMonitor', 'Set-SgDevOpsReverseFlowMonitor', 'Invoke-SgDevOpsReverseFlowPollNow'
 
 )
 
