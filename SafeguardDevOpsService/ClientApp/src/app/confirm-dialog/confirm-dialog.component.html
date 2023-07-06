@@ -10,10 +10,10 @@
 <div class='dialog-content' mat-dialog-content>
    <div [innerHTML]="message"></div>
 </div>
-<mat-checkbox *ngIf="showSecretsBrokerOnly" [(ngModel)]="secretsBrokerOnly">Reset Safeguard Secrets Broker for DevOps Only
+<mat-checkbox color="primary" *ngIf="showSecretsBrokerOnly" [(ngModel)]="secretsBrokerOnly">Reset Safeguard Secrets Broker for DevOps Only
 </mat-checkbox>
 <br/>
-<mat-checkbox *ngIf="showRestart" [(ngModel)]="restart">Restart Safeguard Secrets Broker for DevOps Service
+<mat-checkbox color="primary" *ngIf="showRestart" [(ngModel)]="restart">Restart Safeguard Secrets Broker for DevOps Service
 </mat-checkbox>
 <mat-form-field *ngIf="showPassphrase && passwordHidden" appearance="outline">
   <mat-label><span>Passphrase</span></mat-label>

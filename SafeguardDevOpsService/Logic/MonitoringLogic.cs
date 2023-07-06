@@ -53,7 +53,7 @@ namespace OneIdentity.DevOps.Logic
 
         public void EnableMonitoring(bool enable)
         {
-            // Force the enable state for A2A and reverseflow monitoring.
+            // Force the enable state for A2A and reverse flow monitoring.
             var newState = new FullMonitorState()
             {
                 Enabled = enable,
@@ -65,6 +65,13 @@ namespace OneIdentity.DevOps.Logic
 
         public void EnableMonitoring(FullMonitorState monitorState)
         {
+            if (monitorState == null)
+            {
+                var msg = "The monitor state cannot be null.";
+                _logger.Error(msg);
+                throw new DevOpsException(msg);
+            }
+
             // If no reverse flow monitor state was provided, assume it needs to follow
             //  the A2A monitor state.
             if (monitorState.ReverseFlowMonitorState == null)
@@ -72,8 +79,13 @@ namespace OneIdentity.DevOps.Logic
                 monitorState.ReverseFlowMonitorState = new ReverseFlowMonitorState()
                 {
                     Enabled = monitorState.Enabled,
-                    ReverseFlowPollingInterval = _configDb.ReverseFlowPollingInterval ?? WellKnownData.ReverseFlowMonitorPollingInterval
+                    ReverseFlowPollingInterval = _configDb.ReverseFlowPollingInterval
                 };
+            }
+
+            if (monitorState.ReverseFlowMonitorState.ReverseFlowPollingInterval != _configDb.ReverseFlowPollingInterval)
+            {
+                _configDb.ReverseFlowPollingInterval = monitorState.ReverseFlowMonitorState.ReverseFlowPollingInterval;
             }
 
             // If the A2A monitor should start and is stopped, start it.
@@ -127,7 +139,7 @@ namespace OneIdentity.DevOps.Logic
             return new ReverseFlowMonitorState()
             {
                 Enabled = _reverseFlowEnabled,
-                ReverseFlowPollingInterval = _configDb.ReverseFlowPollingInterval ?? WellKnownData.ReverseFlowMonitorPollingInterval
+                ReverseFlowPollingInterval = _configDb.ReverseFlowPollingInterval
             };
         }
 
@@ -525,7 +537,7 @@ namespace OneIdentity.DevOps.Logic
                 {
                     try
                     {
-                        var delayTime = _configDb.ReverseFlowPollingInterval ?? WellKnownData.ReverseFlowMonitorPollingInterval;
+                        var delayTime = _configDb.ReverseFlowPollingInterval;
                         await Task.Delay(TimeSpan.FromSeconds(delayTime), token);
                     }
                     catch (OperationCanceledException)
