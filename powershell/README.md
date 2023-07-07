@@ -348,6 +348,7 @@ update this list.
 - Find-SgDevOpsAvailableAssetAccount
 - Get-SgDevOpsApplianceStatus
 - Get-SgDevOpsAvailableAssetAccount
+- Get-SgDevOpsBackup
 - Get-SgDevOpsClientCertificate
 - Get-SgDevOpsConfiguration
 - Get-SgDevOpsLog
@@ -370,6 +371,7 @@ update this list.
 - Remove-SgDevOpsMappedAssetAccount
 - Remove-SgDevOpsTrustedCertificate
 - Restart-SgDevOps
+- Restore-SgDevOpsBackup
 - Sync-SgDevOpsTrustedCertificate
 - Unregister-SgDevOpsAssetAccount
 
@@ -378,6 +380,10 @@ update this list.
 - Disable-SgDevOpsMonitor
 - Enable-SgDevOpsMonitor
 - Get-SgDevOpsMonitor
+- Get-SgDevOpsReverseFlowMonitor
+- Invoke-SgDevOpsReverseFlowPollNow
+- Set-SgDevOpsMonitor
+- Set-SgDevOpsReverseFlowMonitor
 
 ### Addons
 
@@ -387,10 +393,13 @@ update this list.
 
 ### Plugins
 
+- Add-SgDevOpsPluginInstances
 - Get-SgDevOpsPlugin
+- Get-SgDevOpsPluginInstances
 - Get-SgDevOpsPluginSetting
 - Get-SgDevOpsPluginVaultAccount
 - Install-SgDevOpsPlugin
 - Remove-SgDevOpsPlugin
+- Remove-SgDevOpsPluginInstances
 - Set-SgDevOpsPluginSetting
 - Set-SgDevOpsPluginVaultAccount
