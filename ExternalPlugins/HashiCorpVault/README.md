@@ -6,5 +6,7 @@ The Hashicorp Vault plugin allows Secrets Broker to pull passwords from Safeguar
 
 ***Plugin Details***
 
-* Address - Full URL to the Hashicorp vault.
-* Mount Point - Name of the mount point within the Hashicorp vault where the plugin will store the key/value pair secrets.
+* **Supported Credential Types** - Password, SSH key and API key
+* **Supports Reverse Flow** - Yes
+* **Address** - Full URL to the Hashicorp vault.
+* **Mount Point** - Name of the mount point within the Hashicorp vault where the plugin will store the key/value pair secrets.
