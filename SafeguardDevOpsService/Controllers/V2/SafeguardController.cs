@@ -251,7 +251,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// </summary>
         /// <remarks>
         /// The configuration of the Safeguard Secrets Broker for DevOps restored by uploading a backup file.
-        /// 
+        ///
         /// The backup file must be converted to a base64 string.&lt;br /&gt;
         /// Powershell example:&lt;br /&gt;
         ///   $fileContentBytes = get-content 'backup-file' -Encoding Byte&lt;br /&gt;
@@ -751,7 +751,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// </summary>
         /// <remarks>
         /// Some Safeguard Secrets Broker for DevOps operations require that the service is restarted.  Some of these operations include replacing or regenerating
-        /// Safeguard Secrets Broker for DevOps web SSL certificate and updating third party vault plugins.
+        /// Safeguard Secrets Broker for DevOps web SSL certificate and updating third-party vault plugins.
         /// </remarks>
         /// <response code="204">Success</response>
         [SafeguardSessionKeyAuthorization]

@@ -16,11 +16,11 @@ The Plugin Settings page contains three configuration panels.
 
 **Basic Info** - This panel displays basic information about the plugin which includes the plugin name, description and version. The panel is readonly.
 
-**Configuration** - This panel is used to configure the plugin with connection information. All plugins need to select an account/password that is used to access the third party secret store. The account and password must have been created in SPP prior to configuring the plugin. A checkbox is provided to set the enabled state of the plugin. If ```Disabled``` is checked, the plugin will not monitor by SPP for password changes.
+**Configuration** - This panel is used to configure the plugin with connection information. All plugins need to select an account/password that is used to access the third-party secret store. The account and password must have been created in SPP prior to configuring the plugin. A checkbox is provided to set the enabled state of the plugin. If ```Disabled``` is checked, the plugin will not monitor by SPP for password changes.
 
 * ***Plugin Details*** - Each plugin has a set of plugin specific configuration. Please see the README.md for each individual plugin for addition conifiguration information.
 
-* ***Test Configuration*** - Once the plugin has been completely configured, use the ```Test Configuration``` button to test whether the plugin is able to complete a connection to the third party secret store.
+* ***Test Configuration*** - Once the plugin has been completely configured, use the ```Test Configuration``` button to test whether the plugin is able to complete a connection to the third-party secret store.
 
 **Managed Accounts** - This panel is used to select all of the accounts from SPP whose passwords should be pushed to the respective secrets storage. Click on the ```Select Accounts``` button to display a list of available accounts from SPP. Each selected account will be displayed in the ```Managed Accounts``` list. Once an account has been selected, an alternate account name can be defined. By default, the plugin will construct an account name by concatenating the asset name with the account name (MyAsset-MyAccount). The constructed name is what will appear in the secrets storage as the account. If an alternate account name is specified, the plugin will push the password to the secrets storage as the alternate account name.
 
@@ -37,9 +37,9 @@ The Plugin Settings page contains three configuration panels.
 
 ## Developing external plugins for Safeguard Secrets Broker for DevOps
 
-The Safeguard Secrets Broker for DevOps is an open source component that can be deployed as a service or as a container in a customer environment and includes plugins that can be added to communicate with various DevOps technologies.  This service discovers A2A secrets that are configured to be pushed to different DevOps secrets solutions. Pushing the secrets to the various DevOps secrets solutions or third party vaults, is the function of the external plugins.
+The Safeguard Secrets Broker for DevOps is an open source component that can be deployed as a service or as a container in a customer environment and includes plugins that can be added to communicate with various DevOps technologies.  This service discovers A2A secrets that are configured to be pushed to different DevOps secrets solutions. Pushing the secrets to the various DevOps secrets solutions or third-party vaults, is the function of the external plugins.
 
-An external plugin is a simple intermediary between the Safeguard Secrets Broker and a third party vault or any technology that stores secrets. Building an external plugin requires the plugin developer to implement a predefined plugin template with the specific functionality for communicating with the third party vault. The Safeguard Secrets Broker for DevOps project provides working plugins as well as a simple example plugin that can be used as a reference for building a new plugin. A plugin cannot be developed independent of the Safeguard Secrets Broker itself. The plugin developer will be required to clone the entire Safeguard Secrets Broker project from Github, load the project in Microsoft Visual Studio and add the new plugin into the project. Once the plugin has been developed and tested, the plugin can be installed into a running Safeguard Secrets Broker service as well as submitted back to the Safeguard Secrets Broker Github project for inclusion into the source code repository.
+An external plugin is a simple intermediary between the Safeguard Secrets Broker and a third-party vault or any technology that stores secrets. Building an external plugin requires the plugin developer to implement a predefined plugin template with the specific functionality for communicating with the third-party vault. The Safeguard Secrets Broker for DevOps project provides working plugins as well as a simple example plugin that can be used as a reference for building a new plugin. A plugin cannot be developed independent of the Safeguard Secrets Broker itself. The plugin developer will be required to clone the entire Safeguard Secrets Broker project from Github, load the project in Microsoft Visual Studio and add the new plugin into the project. Once the plugin has been developed and tested, the plugin can be installed into a running Safeguard Secrets Broker service as well as submitted back to the Safeguard Secrets Broker Github project for inclusion into the source code repository.
 
 ## Getting Started
 
@@ -70,28 +70,28 @@ The Safeguard Secrets Broker solution contain multiple projects. These projects 
 * **Name** - An internal name of the plugin and used as a unique identifier within the database and API calls.
 * **DisplayName** -  A user friendly name of the plugin that is displayed in the user interface.
 * **Description** - Short text that describes the plugin.
-* **SupportedCredentialTypes - A array of credential types that the plugin supports.
+* **SupportedCredentialTypes** - A array of credential types that the plugin supports.
 * **SupportsReverseFlow** - A flag that determines of the plug support the Reverse Flow functionality.
 
 #### Read/Write Properties
 
 * **AssignedCredentialType** - The type of credential that the plugin instance handles. Each instance can only handle the credential types that are included in the ```SupportedCredentialTypes``` readonly property.
-* **ReverseFlowEnabled** - Determines whether the plugin instance has been enabled for Reverse Flow functionality. If ```true``` then the plugin instance will get credentials from the third party vault and hand them back to Secrets Broker to be pushed into Safeguard for Privileged Password. If ```false``` then the plugin instance will assume normal flow and push password to the third party vault.
+* **ReverseFlowEnabled** - Determines whether the plugin instance has been enabled for Reverse Flow functionality. If ```true``` then the plugin instance will get credentials from the third-party vault and hand them back to Secrets Broker to be pushed into Safeguard for Privileged Password. If ```false``` then the plugin instance will assume normal flow and push password to the third-party vault.
 * **Logger** - Assigned the logger variable by Secrets Broker. This property replaces the ```SetLogger()``` function.
 
 #### Methods
 
 * **GetPluginInitialConfiguration()** - Returns a Dictionary that defines the configuration elements that are required by the plugin. The configuration of every plugin is defined as key/value pairs.
 * **SetPluginConfiguration()** - This method is called whenever a new configuration is updated by calling PUT /service/devops/v1/Plugins/{name} API or when the plugin is initially loaded by the Safeguard Secrets Broker service.
-* **SetVaultCredential()** - This method is called before the TestVaultConnection() method is called or the Safeguard Secrets Broker A2A monitor is enabled. The implementation of this method should establish an authenticated connection with the third party vault and store the connection in memory to be used whenever credentials need to be pushed to the vault.
+* **SetVaultCredential()** - This method is called before the TestVaultConnection() method is called or the Safeguard Secrets Broker A2A monitor is enabled. The implementation of this method should establish an authenticated connection with the third-party vault and store the connection in memory to be used whenever credentials need to be pushed to the vault.
 * **GetCredential()** - This method is called immediately after the monitor has been enabled and on a polling schedule that defaults every 60 seconds. This method is not called if the plugin does not support the Reverse Flow functionality or the plugin instance does not have the Reverse Flow funcitonality enabled.
 * **SetCredential()** - This method is called immediately after the monitor has been enabled, when the Safeguard Secrets Broker has been notified that a monitored credential changed and when a new credential needs to be pushed to the corresponding vault.  The implementation of this method should use the established connection to the vault to push the new credential as the specified account name. (This function has been renamed from GetPassword(). Older modules must be upgraded to support the newer interface.)
-* **TestVaultConnection()** - This method is called whenever the API /service/devops/v1/Plugins/{name}/TestConnection is called. The implementation of the method should use the authenticated connection that was established when the SetVaultCredentials() method was called and test the connectivity to the third party vault.
+* **TestVaultConnection()** - This method is called whenever the API /service/devops/v1/Plugins/{name}/TestConnection is called. The implementation of the method should use the authenticated connection that was established when the SetVaultCredentials() method was called and test the connectivity to the third-party vault.
 * **Unload()** - This method is called whenever the Safeguard Secrets Broker service is restarted or shutdown. The implementation of this method should include anything that needs to be done to the plugin to cleanly shutdown.
 
 ### Plugin Dependencies
 
-In many, if not most, cases a third party vault may have a C# client library available to facilitate the interaction between the Safeguard Secrets Broker plugin and the actual vault. Make sure to take advantage of these client libraries when developing a new plugin.
+In many, if not most, cases a third-party vault may have a C# client library available to facilitate the interaction between the Safeguard Secrets Broker plugin and the actual vault. Make sure to take advantage of these client libraries when developing a new plugin.
 
 The Safeguard Secrets Broker is configured to build as a .Net Core 6.0 console application. This means that all external plugins should also be built as .Net Core 6.0 assemblies. The plugin .csproj project file should contain the following in the \<PropertyGroup> section.
 

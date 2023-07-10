@@ -2,11 +2,15 @@
 [![Docker Hub](https://img.shields.io/badge/docker-oneidentity%2Fsafeguard--devops-blue.svg)](https://hub.docker.com/r/oneidentity/safeguard-devops/)
 [![GitHub](https://img.shields.io/github/license/OneIdentity/SafeguardDevOpsService.svg)](https://github.com/OneIdentity/SafeguardDevOpsService/blob/master/LICENSE)
 
-## [Note]
+## [Changes]
 
 * There has been a major library upgrade to the Azure Key Vault plugin version 2.x which will break the configuration for previous versions of the plugin. To fix the Azure Key Vault plugin after upgrading, edit the plugin configuration and add the TenantId/DirectoryId of the key vault. Once the configuration has been updated, the Azure Key Vault plugin should continue to work as expected.
 
 * Due to an upgraded version of the SignalR technology in Safeguard for Privileged Passwords, a matching SignalR client version had to be upgraded in the Safeguard Secrets Broker for DevOps.  The upgraded SignalR technology that is used to monitor the password change events, is not backwards compatible with previous versions.  Therefore, version 1.5.0 and above of the Safeguard Secrets Broker for DevOps is only compatible with Safeguard for Privileged Passwords 6.8.0 and above.  The Safeguard Secrets Broker for DevOps 1.0.0 must be used with versions of Safeguard for Privileged Passwords 6.7.0 or below.
+
+* The plugin interface has been changed to support the Reverse Flow functionality. Due to this interface change, older plugins will no longer load. Once Secrets Broker has been upgraded, each of the plugins will also need to be upgraded as well. The Secrets Broker user interface will indicate which plugins need to be upgraded and allow the user to download and upgrade the plugin. Once all of the plugins have been upgraded, the Secrets Broker service will need to be restart.
+
+* All of the functionality in this version of Secrets Broker is backwards compatible with versions of Safeguard 7.0.0 and above with the exception of the Reverse Flow feature. The Reverse Flow feature depends on changes that are only available in Safeguard 7.4 and above. If the Secrets Broker service is connected to a version of Safeguard that is less than 7.4, Secrets Broker will continue to work but the Reverse Flow feature will be unavailable.
 
 # Safeguard Secrets Broker for DevOps
 
@@ -74,42 +78,42 @@ The Safeguard recommended practice is to keep the less secure DevOps environment
 * Jenkins Secrets
 * AWS Secrets Manager Vault
 * CircleCI Secrets
-* Safeguard to Safeguard Secrets
+* Safeguard for Privileged Passwords
 * GitHub Vault
 * ...
 
 ## Multiple Plugin Instances
 
-One of the limitions of Safeguard Secrets Broker for DevOps was that only one type of vault or vault plugin, could by configured and used to push credentials to that vault. In the latest releases of Secrets Broker, that limitation no longer exists. Secrets Broker has been enhanced to allow multilple instances of any plugin.
+One of the limitations of Safeguard Secrets Broker for DevOps was that only one type of vault or vault plugin, could be configured and used to push credentials to that vault. In the latest releases of Secrets Broker, that limitation no longer exists. Secrets Broker has been enhanced to allow multiple instances of any plugin.
 
-Some of the advantages of having multiple plugin instances is that now Secrets Broker can be configured to push credentials to more than one instance of a given type of vault or to push credentials to different repositories within the same type of vault. Multiple plugin instances was also necessary in order to push different types of credentials other than just passwords and to support reversing the flow of credentials back into Safeguard from a third party vault. Multiple instances can be created for any plugin and there is no limit to the number of instances of a plugin.
+Some of the advantages of having multiple plugin instances is that now Secrets Broker can be configured to push credentials to more than one instance of a given type of vault or to push credentials to different repositories within the same type of vault. Multiple plugin instances are also necessary in order to push different types of credentials other than passwords and to support reversing the flow of credentials back into Safeguard from a third-party vault. Multiple instances can be created for any plugin and there is no limit to the number of instances of a plugin.
 
 ## Passwords, SSH Keys and API Keys
 
-One of the newer features of Safeguard Secrets Broker for DevOps is support for SSH keys and API keys. Secrets Broker has always had the ability to pull password from Safeguard and push them to a variety of third party vaults. Now Secrets Broker can also push SSH keys and API keys to third party vaults that support those types of credentials.
+A newer feature of Safeguard Secrets Broker for DevOps is support for SSH keys and API keys. Secrets Broker has always had the ability to pull passwords from Safeguard and push them to a variety of third-party vaults. Now Secrets Broker can also push SSH keys and API keys to third-party vaults that support those types of credentials.
 
-Each Secrets Broker plugin indicates which types of credentials it is able to handle. As part of the plugin configuration, a supported credential type can be selected for each instance of a plugin. Once a credential type has been selected for the plugin instance, the plugin instance will pull the credential type for all of it's registered accounts and push the credentials to the third party vault. Each plugin instance can be configured to handle a single credential type.
+Each Secrets Broker plugin indicates which types of credentials it is able to handle. As part of the plugin configuration, a supported credential type can be selected for each instance of a plugin. Once a credential type has been selected for the plugin instance, the plugin instance will pull the credential type for all of its registered accounts and push the credentials to the third-party vault. Each plugin instance can be configured to handle a single credential type.
 
 ## Reverse Flow, Secrets Backup and Distribution
 
-Beginning with Safeguard Secrets Broker for DevOps 7.1.0, Secrets Broker has the ability to not only push credentials from Safeguard out to third party vaults, it also has the ability to pull credential change back into Safeguard. This feature is call Reverse Flow.
+Beginning with Safeguard Secrets Broker for DevOps 7.4.0, Secrets Broker has the ability to not only push credentials from Safeguard out to third-party vaults, it also has the ability to pull credential changes back into Safeguard. This feature is call Reverse Flow.
 
-Each plugin instance can be designated as Reverse Flow or Normal Flow. All other configuration parameters remain the same for the plugin instance. If a plugin instance has been designated as Reverse Flow, it will be responsible for retrieving the credentials from the third party vault for all of the accounts that have been registered for the plugin instance. Once a credential has been retrieved, it will be evaluated to determine if the credential has changed and if so, the new credential will be pushed back Safeguard and stored for the registered account. In addition, a password changed event will be sent back to Secrets Broker to allow any other plugin instances that is interested in the same credential, to pull the new credential and push it to it's vault.
+Each plugin instance can be designated as Reverse Flow or Normal Flow. All other configuration parameters remain the same for the plugin instance. If a plugin instance has been designated as Reverse Flow, it will be responsible for retrieving the credentials from the third-party vault for all of the accounts that have been registered for the plugin instance. Once a credential has been retrieved, it will be evaluated to determine if the credential has changed and if so, the new credential will be pushed back to Safeguard and stored for the registered account. In addition, a password changed event will be sent back to Secrets Broker to allow any other plugin instances that may be interested in the same credential, to pull the new credential and push it to their respective vault.
 
 With the ability designate a plugin instance as Reverse Flow, Secrets Broker introduces several advantages to credential management.
 
-* Any credential respository within a third party vault can be designated as the credential source.
-* Any third party credential can be mapped back to a Safeguard asset and account which allows it to be managed by Safeguard.
-* Safeguard will be the backing credential store for third party credentials which allows any credential be to be restored or managed by workflow.
-* Secrets Broker can be used to synchronize credentials between different third party vaults.
-* By using Secrets Broker to push and pull credentials, a hybred devops environment can be created and maintained which includes all of the security and credential management of Safeguard for Privileged Passwords.
+* Any credential repository within a third-party vault can be designated as the credential source.
+* Any third-party credential can be mapped back to a Safeguard asset and account which allows it to be managed by Safeguard.
+* Safeguard will be the backing credential store for third-party credentials which allows any credential be to be restored or managed by workflow.
+* Secrets Broker can be used to synchronize credentials between different third-party vaults.
+* By using Secrets Broker to push and pull credentials, a hybrid devops environment can be created and maintained which includes all of the security and credential management of Safeguard for Privileged Passwords.
 
 ## Safeguard for Privileged Passwords Setup
 
 1. Navigate to Settings->Appliance->Enable or Disable Services and enable the A2A service.
 1. Add an asset and account (including a service account).
 1. Set a password on the account.
-1. Create an AssetAccount for each third party vault that will be used by Safeguard Secrets Broker for DevOps.  The account should contain the vault credential that will be used to authenticate to the vault itself.  This account will be used as part of the configuration of the third party vault plugin.
+1. Create an AssetAccount for each third-party vault that will be used by Safeguard Secrets Broker for DevOps.  The account should contain the vault credential that will be used to authenticate to the vault itself.  This account will be used as part of the configuration of the third-party vault plugin.
 1. Optional: Create a new certificate with a private key (PFX format) that will be assigned to the certificate user.  The public certificate will be uploaded into SPP as a trusted certificate along with any other issuer certificates that may be part of the certificate chain.  The certificate and private key will be uploaded into Safeguard Secrets Broker for DevOps during configuration and be used to create a new certificate user and A2A registration.  This certificate can be created independent of Safeguard Secrets Broker for DevOps or from a CSR that is created by Safeguard Secrets Broker for DevOps.  (See Configuring Safeguard Secrets Broker for DevOps)
 
 ## Safeguard Secrets Broker for DevOps Setup
@@ -190,7 +194,7 @@ WARNING: In some docker environments, the container may not be able to determine
 
 ### Environment Variables
 
-Initialization of the Secrets Broker on Windows or as a Docker image can be controled by specifying certain environment variables. These environment variables can be passed nto the initializtion of the Secrets Broker in one of two ways depending on the operating system. For Windows, the environment variables are set through a file called 'appsettings.json'. To change the variables on windows, navigate to the installed location of the Secrets Broker and rename the '_appsettings.json' to 'appsettings.json'. Then edit the settings file and change the corresponding variable. To change the variables in a Docker environment, the variables need to be set on the command line and passed into the image. The following describes the available environment variables:
+Initialization of the Secrets Broker on Windows or as a Docker image can be controlled by specifying certain environment variables. These environment variables can be passed into the initialization of the Secrets Broker in one of two ways depending on the operating system. For Windows, the environment variables are set through a file called 'appsettings.json'. To change the variables on windows, navigate to the installed location of the Secrets Broker and rename the '_appsettings.json' to 'appsettings.json'. Then edit the settings file and change the corresponding variable. To change the variables in a Docker environment, the variables need to be set on the command line and passed into the image. The following describes the available environment variables:
 
 * DOCKER_HOST_IP - This environment variable should always be included when starting the Safeguard Secrets Broker for Devops in a docker container. It should be set to the IP address of the docker host computer.
 * LogLevel - Information(Default for Windows), Debug(Default for Docker), Error, Warning, Fatal and Verbose
@@ -201,7 +205,7 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
 
 ### Using the Web User Interface
 
-1. Once the Secrets Broker has been install and the service as been started as decribed above, in a browser navigate to the root URI of the service. `https://<service IP address or DNS>`
+1. Once the Secrets Broker has been install and the service as been started as described above, in a browser navigate to the root URI of the service. `https://<service IP address or DNS>`
 2. The Secrets Broker will request the IP address or Host Name of the Safeguard appliance that the Secrets Broker should use.
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsConnect-1.png)
@@ -213,30 +217,30 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
 ![SafeguardDevOpsService](Images/SafeguardDevOpsCsr-1.png)
 
 6. After uploading the client certificate, the Secrets Broker will complete the configuration of the service which involves adding two A2A registrations to the associates Safeguard appliance and adding a certificate user.
-1. The next step is to upload one or more plugins which will allow the Secrets Broker to push passwords to a third party vault. Follow the link to the Github repository for downloading available plugins. After downloading a plugin from the Github project, upload a plugin into the Secrets Broker.
-1. After a plugin has been uploaded, it will appear on the main page and allow the user to configure it. Each plugin has a unique configuration. Click on the 'Edit Configration' button to finishing configuring the plugin.
-1. Each plugin must also be associated with 1 or more accounts. These accounts represent the accounts for which the Secrets Broker will pull passwords from the Safeguard Appliance and push them to the corresponding third party vault.
+1. The next step is to upload one or more plugins which will allow the Secrets Broker to push passwords to a third-party vault. Follow the link to the Github repository for downloading available plugins. After downloading a plugin from the Github project, upload a plugin into the Secrets Broker.
+1. After a plugin has been uploaded, it will appear on the main page and allow the user to configure it. Each plugin has a unique configuration. Click on the 'Edit Configuration' button to finishing configuring the plugin.
+1. Each plugin must also be associated with 1 or more accounts. These accounts represent the accounts for which the Secrets Broker will pull passwords from the Safeguard Appliance and push them to the corresponding third-party vault.
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsPluginConfig-1.png)
 
-10. After all plugins have been installed, configured and include mapped accounts, the user can start the monitoring process by clicking on the 'Start Monitor' button.  The Secrets Broker will listen for a changed password event for any of the mapped accounts and automatically pull the passwords for those accounts and push the passwords to their respective third party vaults.
+10. After all plugins have been installed, configured and include mapped accounts, the user can start the monitoring process by clicking on the 'Start Monitor' button.  The Secrets Broker will listen for a changed password event for any of the mapped accounts and automatically pull the passwords for those accounts and push the passwords to their respective third-party vaults.
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsMonitoring-1.png)
 
 ### Monitoring Password Events and Trouble Shooting
 
-The Safeguard Secrets Broker for DevOps provides ways to monitor the password events and trouble shooting.  This funcitonality can be found under the system menu.  To access the system menu, select the cog icon in the upper right-hand corner of the browser window.  The system menu contains several options such as restarting the Safeguard Secrets Broker for DevOps, deleting the current configuration which resets the system to the default state as well as downloading the system log and viewing the password event history.
+The Safeguard Secrets Broker for DevOps provides ways to monitor the password events and trouble shooting.  This functionality can be found under the system menu.  To access the system menu, select the cog icon in the upper right-hand corner of the browser window.  The system menu contains several options such as restarting the Safeguard Secrets Broker for DevOps, deleting the current configuration which resets the system to the default state as well as downloading the system log and viewing the password event history.
 
-* To trouble shoot issues that may arise, select the Download Log option from the System Menu.  The system log will provide details about a system issue or error that may have occured.
+* To trouble shoot issues that may arise, select the Download Log option from the System Menu.  The system log will provide details about a system issue or error that may have occurred.
 * To view the password events, select the View Monitor Event History option from the System Menu.  The Monitor Events will appear which contains a list of the password events that have taken place since the system was last started.  These events are only stored in memory which means that each time that the Safeguard Secrets Broker for DevOps is restarted, the list will be cleared.
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsServiceMonitorEventsList-1.PNG)
 
 ### Configuring Multiple Plugin Instances
 
-Multiple instances of any plugin can be created after a plugin has been installed. Creating additional instances of a plugin provides the ability to push and pull credentials using various configurations of the same plugin. These configuration can include different types of credentials, normal flow or reverse flow for the same plugin.
+Multiple instances of any plugin can be created after a plugin has been installed. Creating additional instances of a plugin provides the ability to push and pull credentials using various configurations of the same plugin. These configurations can include different types of credentials, normal flow or reverse flow, or different registered accounts.
 
-At the time when a plugin is installed, an initial instance of the plugin is created. This initial instance can be configured in anyway that is needed. If additional configurations are required, a new instance of the same plugin can be created by clicking on the ```New Instance``` button at the top of the ```Plugin Settings``` page. After creating a new instance, a dialog will be shown to confirm that a new instance of the plugin should be created and asking if Secrets Broker should copy the configuration of the current instance. After confirming the new instance, Secrets Broker will allow the new instance to be configured. Each plugin instance is configured independently of any other instance. All plugin instances of the same type share the same plugin code but they each have their own unique name and configuration.
+At the time when a plugin is installed, an initial instance of the plugin is created. This initial instance can be configured in anyway that is needed. If additional configurations are required, a new instance of the same plugin can be created by clicking on the ```New Instance``` button at the top of the ```Plugin Settings``` page. After creating a new instance, a dialog will be shown to confirm that a new instance of the plugin should be created and asking if Secrets Broker should copy the configuration of the current instance. After confirming the new instance, Secrets Broker will allow the new instance to be configured. Each plugin instance is configured independent of any other instance. All plugin instances of the same type share the same plugin code but they each have their own unique name and configuration.
 
 ![SafeguardDevOpsService](Images/MultiInstancePlugin.PNG)
 
@@ -244,35 +248,35 @@ Just below the ```Plugin Settings``` banner, Secrets Broker shows the number of 
 
 ### Reverse Flow
 
-Configuring a Secrets Broker plugin instance as Reverse Flow is done by simply checking the ```Reverse Flow``` checkbox in the ```Configuration``` section of the ```Plugin Settings``` page. This causes Secrets Broker to call the plugin instance when a registered account credentials needs to be fetched rather than pushed.
+Configuring a Secrets Broker plugin instance as Reverse Flow is done by simply checking the ```Reverse Flow``` checkbox in the ```Configuration``` section of the ```Plugin Settings``` page. This causes Secrets Broker to call the plugin instance when any of the registered account credentials need to be fetched rather than pushed.
 
 ![SafeguardDevOpsService](Images/ReverseFlowCheckbox.PNG)
 
 #### - Reverse Flow Monitor
 
-Secrets Broker implements a Reverse Flow background thread that polls each Reverse Flow designated plugin instances on a default 60 second cycle. Once called, each Reverse Flow plugin instance queries the configured third party vault for the credentials that belong to the accounts that are registered for the plugin instance. Each credential that is retrieved is evaluated by Secrets Broker to determine if it changed before attempting to push the credential back to Safeguard. Unlike the credential push processing which relies on a SignalR change event, the polling process for Reverse Flow is not as responsive as the credential push process. The polling interval for the Reverse Flow background thread can be adjusted using the REST API
+Secrets Broker implements a Reverse Flow background thread that polls each Reverse Flow designated plugin instance on a default 60 second cycle. Once called, each Reverse Flow plugin instance queries the configured third-party vault for the credentials that belong to the accounts that are registered for the plugin instance. Each credential that is retrieved is evaluated by Secrets Broker to determine if it changed, before attempting to push the credential back to Safeguard. Unlike the credential push processing which relies on a SignalR change event, the polling process for Reverse Flow is not as responsive as the credential push process. The polling interval for the Reverse Flow background thread can be adjusted using the REST API
 
 ```PUT /service/devops/v2/Monitor/ReverseFlow```
 
-See the REST API swagger page for more details. This API provides an alternate way to start and stop the Reverse Flow background thread independently of the A2A monitoring and also to adjust the polling interval of the background thread.
+See the REST API swagger page for more details. This API provides an alternate way to start and stop the Reverse Flow background thread independent of the A2A monitoring and also to adjust the polling interval of the background thread.
 
-#### - Third Party Vault Account Mapping
+#### - Third-Party Vault Account Mapping
 
-One of the features of Secrets Broker is that every registered account of a plugin instance can have an alternate account name. When pushing credentials to a third party vault, the credential is saved as the alternate name that is assigned to it. When the plugin instance is designated as ```Reverse Flow```, the alternate account name is used to map the third party vault account name back to a managed account in Safeguard. By using the alternate account name to map third party vault accounts to Safeguard account, Secrets Broker makes it easy to manage credentials which may not already exist in Safeguard.
+One of the features of Secrets Broker is that every registered account of a plugin instance can have an alternate account name. When pushing credentials to a third-party vault, the credential is saved as the alternate name that is assigned to it. When the plugin instance is designated as ```Reverse Flow```, the alternate account name is used to map the third-party vault account back to a managed account in Safeguard. By using the alternate account name to map third-party vault accounts to Safeguard accounts, Secrets Broker makes it easy to manage credentials which may not already exist in Safeguard.
 
 #### - Synchronizing Credentials Among Different Vaults
 
-Secrets Broker has always had way to push the same credentials to multiple third party vaults as the same account with Safeguard being the source of the credential. The ```Reverse Flow``` feature now provides a way for a third party vault to be the source of a credential with Safeguard being the backup source. Designating a plugin instance as ```Reverse Flow``` makes the third party vault associated with the plugin ilnstance, the source of any registered account credential. Whenever the credential changes in the third party vault, the change is reflected in Safeguard and pushed to any other third party vault that should be synchronized with the source. This guarantees that all of the credential vaults that need a specific credential, have the same credential as every other vault. Even if one third party vault doesn't support credential rotation, for example, a credential can be rotated and the synchroized by a third party vault that does support rotation or by Safeguard itself. Secrets Broker allows the strengths of one vault to be shared by others.
+Secrets Broker has always had a way to push the same credentials to multiple third-party vaults with Safeguard being the source of the credential. The ```Reverse Flow``` feature now provides a way for a third-party vault to be the source of a credential with Safeguard being the backup source. Designating a plugin instance as ```Reverse Flow``` makes the third-party vault associated with the plugin instance, the source of the registered account credentials. Whenever the credential changes in the third-party vault, the change is reflected in Safeguard and pushed to any other third-party vault that should be synchronized with the source. This guarantees that all of the credential vaults that need a specific credential, have the same credential. Even if one third-party vault doesn't support credential rotation, for example, a credential can be rotated and the synchronized by a third-party vault that does support rotation or by Safeguard itself. Secrets Broker allows the strengths of one vault to be shared by others.
 
 ### Backup and Restore
 
-Secrets Broker now provides a way to backup and restore the database and plugin configuration. Two new menu entries have been added to the ```Settings``` menu which instruct Secrets Broker to create and download a backup bundle. The backup bundle has the option to be encryted with password if security is a concern. At the time when a backup is restored, if the backup requires a password, Secrets Broker prompt for the password, decrypt the backup and restore the database and configuration to the previous state.
+Secrets Broker now provides a way to backup and restore the database and plugin configuration. Two new menu entries have been added to the ```Settings``` menu which instruct Secrets Broker to create and download a backup bundle. The backup bundle has the option to be encrypted with a password if security is a concern. At the time when a backup is restored, if the backup requires a password, Secrets Broker will prompt for the password, decrypt the backup and restore the database and configuration to the previous state.
 
-### Safeguard-to-Safeguard plugin
+### Safeguard for Privileged Passwords plugin
 
-Along with several other plugins that have been recently added to Secrets Broker, the Safeguard-to-Safeguard plugin provides a unique opportunity to take advantage of everything Safeguard has to offer in a public facing way. Many companies have a need to make some credentials available to users or applications that exist outside their firewall. However, nobody wants to expose all of their corporate secrets to the world even if those secrets are stored inside of a secure vault like Safeguard. The solution to this problem is to place only the secrets outside of the firewall that are required and then rotate those secrets frequently.
+Along with several other plugins that have been recently added to Secrets Broker, the Safeguard for Privileged Passwords (SpptoSpp) plugin provides a unique opportunity to take advantage of everything Safeguard has to offer, in a public facing way. Many companies have a need to make some credentials available to users or applications that exist outside their firewall. However, nobody wants to expose all of their corporate secrets to the world even if those secrets are stored inside of a secure vault such as Safeguard. The solution to this problem is to place only the secrets outside of the firewall that are required and then rotate those secrets frequently.
 
-Secrets Broker along with the Safeguard-to-Safeguard plugin, allows an environment to be configured that includes a standalone instance of Safeguard placed in the DMZ, that only contains the required accounts and credentials. All of those accounts are still managed and rotated by the corporate Safeguard cluster but the Safeguard cluster and the standalone instance of Safeguard have no direct connection to each other. In this case, Secrets Broker provides a loose connection by only pulling the registered accounts, scrubbing out all proprietary information and pushing the account to the standalone Safeguard appliance. The corporate Safeguard Cluster is still managing everything about the registered accounts and rotating the credentials as required. The standalone Safeguard appliance still requires that all credentials are released through a strict policy that conforms to a workflow and audited.
+Secrets Broker along with the SpptoSpp plugin, allows an environment to be configured that includes a standalone instance of Safeguard placed in the DMZ, that only contains the specific accounts and credentials. All of those accounts are still managed and rotated by the corporate Safeguard cluster but the Safeguard cluster and the standalone instance of Safeguard have no direct connection to each other. In this case, Secrets Broker provides a loose connection by only pulling the registered accounts, scrubbing out all proprietary information and pushing the account to the standalone Safeguard appliance. The corporate Safeguard Cluster is still managing everything about the registered accounts and rotating the credentials as required. The standalone Safeguard appliance still requires that all credentials are released through a strict policy that conforms to a workflow and audit log.
 
 ![SafeguardDevOpsService](Images/spptosppusecase.png)
 
@@ -342,9 +346,9 @@ Secrets Broker along with the Safeguard-to-Safeguard plugin, allows an environme
 
 1. Navigate to and call: `GET /service/devops/Safeguard/AvailableAccounts`
     * This call will produce a list of all of the available accounts in SPP that can be requested.
-    * Copy and paste the Asset-Account that corresponds to the third party vault, to the following API for adding a vault account.
+    * Copy and paste the Asset-Account that corresponds to the third-party vault, to the following API for adding a vault account.
 1. Navigate to and call: `POST /service/devops/Plugins/{name}/VaultAccount`
-    * The body of this call should be copied and pasted from the previous results.  It should be just the account information that corresponds to the third party vault.
+    * The body of this call should be copied and pasted from the previous results.  It should be just the account information that corresponds to the third-party vault.
     * Repeat the above call for each plugin that needs to be configured for pulling the vault credential.
 
 ## Start Safeguard Secrets Broker for DevOps Password Monitoring
@@ -362,8 +366,8 @@ Secrets Broker along with the Safeguard-to-Safeguard plugin, allows an environme
     ```
 
 1. The same API can be used to stop password monitoring.
-1. At this point Safeguard Secrets Broker for DevOps will detect whenever a password changes in SPP, pull the password and push it to the appropriate plugin(s).  The custom code in the plugin(s) will push the password to the third party vault.
+1. At this point Safeguard Secrets Broker for DevOps will detect whenever a password changes in SPP, pull the password and push it to the appropriate plugin(s).  The custom code in the plugin(s) will push the password to the third-party vault.
 
 ## Developing Custom Plugins for Safeguard Secrets Broker for DevOps
 
-An external plugin is a simple intermediary between the Safeguard Secrets Broker and a third party vault or any technology that stores secrets. Building an external plugin requires the plugin developer to implement a predefined plugin template with the specific functionality for communicating with the third party vault. The Safeguard Secrets Broker for DevOps project provides working plugins as well as a simple example plugin that can be used as a reference for building a new plugin. To get started building a custom Safeguard Secrets Broker plugin, go to the ExternalPlugins page of the project at `https://github.com/OneIdentity/SafeguardDevOpsService/tree/master/ExternalPlugins`
+An external plugin is a simple intermediary between the Safeguard Secrets Broker and a third-party vault or any technology that stores secrets. Building an external plugin requires the plugin developer to implement a predefined plugin template with the specific functionality for communicating with the third-party vault. The Safeguard Secrets Broker for DevOps project provides working plugins as well as a simple example plugin that can be used as a reference for building a new plugin. To get started building a custom Safeguard Secrets Broker plugin, go to the ExternalPlugins page of the project at `https://github.com/OneIdentity/SafeguardDevOpsService/tree/master/ExternalPlugins`

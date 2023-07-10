@@ -13,7 +13,7 @@ using OneIdentity.DevOps.Logic;
 namespace OneIdentity.DevOps.Controllers.V2
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     [ApiController]
     [Route("service/devops/v2/[controller]")]
@@ -22,7 +22,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         private readonly Serilog.ILogger _logger;
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public PluginsController()
         {
@@ -191,7 +191,7 @@ namespace OneIdentity.DevOps.Controllers.V2
             pluginsLogic.DeleteAccountMappings(name);
             pluginsLogic.RemovePluginVaultAccount(name);
             pluginsLogic.DeletePluginByName(name);
-        
+
             if (restart)
                 pluginsLogic.RestartService();
             else if (RestartManager.Instance.ShouldRestart)
@@ -207,7 +207,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
         /// party vault. Each plugin must be installed and configured individually.
         ///
-        /// This endpoint tests the connection configuration between the plugin and the third party vault.
+        /// This endpoint tests the connection configuration between the plugin and the third-party vault.
         /// </remarks>
         /// <param name="name">Name of plugin configuration to test</param>
         /// <response code="200">Success</response>
@@ -244,7 +244,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("{name}/Accounts")]
-        public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromServices] IPluginsLogic pluginsLogic, 
+        public ActionResult<IEnumerable<AccountMapping>> GetAccountMapping([FromServices] IPluginsLogic pluginsLogic,
             [FromRoute] string name, [FromQuery] bool count = false, [FromQuery] bool includeAllInstances = false)
         {
             var accountMappings = pluginsLogic.GetAccountMappings(name, includeAllInstances);
@@ -327,7 +327,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpDelete("{name}/Accounts")]
-        public ActionResult RemoveAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, 
+        public ActionResult RemoveAccountMappings([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name,
             [FromBody] IEnumerable<AccountMapping> accounts, [FromQuery] bool removeAll = false)
         {
             if (removeAll)
@@ -350,7 +350,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// the mapped account and push the new credential to the plugin.
         ///
         /// This endpoint removes all of the mapped accounts from all of the registered plugin.
-        /// 
+        ///
         /// To help prevent unintended Safeguard appliance connection removal, the confirm query param is required and must be set to "yes".
         /// </remarks>
         /// <param name="confirm">This query parameter must be set to "yes" if the caller intends to remove all of the account mappings.</param>
@@ -374,9 +374,9 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
-        /// party vault. Each plugin usually has a credential that is used to authenticate to the third party vault. This credential
+        /// party vault. Each plugin usually has a credential that is used to authenticate to the third-party vault. This credential
         /// must be stored in the Safeguard for Privileged Passwords appliance and fetched at the time when Safeguard Secrets Broker for DevOps needs
-        /// to authenticate to the third party vault.
+        /// to authenticate to the third-party vault.
         ///
         /// This endpoint gets the Safeguard for Privileged Passwords asset/account that has been mapped to a plugin.
         /// </remarks>
@@ -400,9 +400,9 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
-        /// party vault. Each plugin usually has a credential that is used to authenticate to the third party vault. This credential
+        /// party vault. Each plugin usually has a credential that is used to authenticate to the third-party vault. This credential
         /// must be stored in the Safeguard for Privileged Passwords appliance and fetched at the time when Safeguard Secrets Broker for DevOps needs
-        /// to authenticate to the third party vault.
+        /// to authenticate to the third-party vault.
         ///
         /// This endpoint maps a Safeguard for Privileged Passwords asset/account to a plugin.
         ///
@@ -427,9 +427,9 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps uses individualized plugins that are capable of pushing credentials to a specific third
-        /// party vault. Each plugin usually has a credential that is used to authenticate to the third party vault. This credential
+        /// party vault. Each plugin usually has a credential that is used to authenticate to the third-party vault. This credential
         /// must be stored in the Safeguard for Privileged Passwords appliance and fetched at the time when Safeguard Secrets Broker for DevOps needs
-        /// to authenticate to the third party vault.
+        /// to authenticate to the third-party vault.
         ///
         /// This endpoint removes a Safeguard for Privileged Passwords asset/account for a plugin.
         ///
@@ -579,7 +579,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         [SafeguardSessionKeyAuthorization]
         [UnhandledExceptionError]
         [HttpGet("{name}/Instances")]
-        public ActionResult<IEnumerable<Plugin>> GetAllPluginInstancesByName([FromServices] IPluginsLogic pluginsLogic, 
+        public ActionResult<IEnumerable<Plugin>> GetAllPluginInstancesByName([FromServices] IPluginsLogic pluginsLogic,
             [FromRoute] string name, [FromQuery] bool includeDeleted = false)
         {
             var plugins = pluginsLogic.GetAllPluginInstancesByName(name, includeDeleted);
@@ -611,7 +611,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         public ActionResult DeleteAllPluginInstancesByName([FromServices] IPluginsLogic pluginsLogic, [FromRoute] string name, [FromQuery] bool restart = false)
         {
             pluginsLogic.DeleteAllPluginInstancesByName(name);
-        
+
             if (restart)
                 pluginsLogic.RestartService();
             else if (RestartManager.Instance.ShouldRestart)
