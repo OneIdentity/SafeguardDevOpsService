@@ -11,7 +11,7 @@ namespace OneIdentity.DevOps.Data
     public class PluginConfiguration
     {
         /// <summary>
-        /// Third party vault connection configuration.
+        /// Third-party vault connection configuration.
         /// </summary>
         public Dictionary<string,string> Configuration { get; set; }
 

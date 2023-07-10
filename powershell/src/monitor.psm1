@@ -5,7 +5,7 @@ Get the current state of all Secrets Broker monitoring.
 .DESCRIPTION
 The Secrets Broker monitors the associated Safeguard appliance for any
 password change to any account that has been registered with the
-Secrets Broker. It can also monitor third party vaults for credential
+Secrets Broker. It can also monitor third-party vaults for credential
 changes and push those changes back to the Safeguard appliance.
 
 This cmdlet gets the current state of the A2A monitor and the
@@ -34,7 +34,7 @@ Enable all Secrets Broker monitoring.
 .DESCRIPTION
 The Secrets Broker monitors the associated Safeguard appliance for any
 password change to any account that has been registered with the
-Secrets Broker. It can also monitor third party vaults for credential
+Secrets Broker. It can also monitor third-party vaults for credential
 changes and push those changes back to the Safeguard appliance.
 
 This cmdlet starts the A2A account monitor and the reverse flow polling.
@@ -64,7 +64,7 @@ Disable all Secrets Broker monitoring.
 .DESCRIPTION
 The Secrets Broker monitors the associated Safeguard appliance for any
 password change to any account that has been registered with the
-Secrets Broker. It can also monitor third party vaults for credential
+Secrets Broker. It can also monitor third-party vaults for credential
 changes and push those changes back to the Safeguard appliance.
 
 This cmdlet stops the A2A account monitor and the reverse flow monitor.
@@ -93,7 +93,7 @@ Set the current state of all Secrets Broker monitoring.
 .DESCRIPTION
 The Secrets Broker monitors the associated Safeguard appliance for any
 password change to any account that has been registered with the
-Secrets Broker. It can also monitor third party vaults for credential
+Secrets Broker. It can also monitor third-party vaults for credential
 changes and push those changes back to the Safeguard appliance.
 
 This cmdlet sets the current state of the A2A account monitor and the
@@ -148,7 +148,7 @@ Get the current state of the reverse flow monitor.
 .DESCRIPTION
 The Secrets Broker monitors the associated Safeguard appliance for any
 password change to any account that has been registered with the
-Secrets Broker. It can also monitor third party vaults for credential
+Secrets Broker. It can also monitor third-party vaults for credential
 changes and push those changes back to the Safeguard appliance.
 
 This cmdlet gets the current state of the reverse flow account monitor.
@@ -175,7 +175,7 @@ Set the current state of the reverse flow monitor.
 .DESCRIPTION
 The Secrets Broker monitors the associated Safeguard appliance for any
 password change to any account that has been registered with the
-Secrets Broker. It can also monitor third party vaults for credential
+Secrets Broker. It can also monitor third-party vaults for credential
 changes and push those changes back to the Safeguard appliance.
 
 This cmdlet sets the current state of the reverse flow account monitor.
@@ -220,7 +220,7 @@ Starts a single cycle polling interval on demand.
 .DESCRIPTION
 The Secrets Broker monitors the associated Safeguard appliance for any
 password change to any account that has been registered with the
-Secrets Broker. It can also monitor third party vaults for credential
+Secrets Broker. It can also monitor third-party vaults for credential
 changes and push those changes back to the Safeguard appliance.
 
 This cmdlet starts a single cycle polling interval on demand. Normal

@@ -4,7 +4,7 @@ Get a list of all registered plugins or a specific plugin by name.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credential information to a specific third party vault. Each plugin must be
+credential information to a specific third-party vault. Each plugin must be
 installed and configured individually.
 
 This cmdlet lists all of the plugins that have been installed if invoked
@@ -49,7 +49,7 @@ Upload and install a new plugin.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credential information to a specific third party vault. Each plugin must be
+credential information to a specific third-party vault. Each plugin must be
 installed and configured individually.
 
 The plugin must be a zip compressed file. The plugin is installed into
@@ -118,7 +118,7 @@ Delete the configuration for a specific plugin.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credential information to a specific third party vault. Each plugin must be
+credential information to a specific third-party vault. Each plugin must be
 installed and configured individually.
 
 This cmdlet removes the configuration for a specific plugin by name and
@@ -156,9 +156,9 @@ Get a list of accounts that are mapped to a vault plugin.
 
 .DESCRIPTION
 Secrets Broker uses individualized plugins that are capable of pushing
-credential information to a specific third party vault. Accounts must be
+credential information to a specific third-party vault. Accounts must be
 mapped to each plugin so that the corresponding credential can be pushed
-to the third party vault. By mapping an account to a plugin, the Secrets
+to the third-party vault. By mapping an account to a plugin, the Secrets
 Broker monitor will detect a password change for the mapped account and
 push the new credential to the plugin.
 
@@ -188,17 +188,17 @@ Map an account with the vault credential to a plugin.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credentials to a specific third party vault. Each plugin usually has a
-credential that is used to authenticate to the third party vault. This
+credentials to a specific third-party vault. Each plugin usually has a
+credential that is used to authenticate to the third-party vault. This
 credential must be stored in the Safeguard appliance and fetched at the
 time when Safeguard Secrets Broker for DevOps needs to authenticate to the
-third party vault.
+third-party vault.
 
 The Asset and Account parameters will be used to resolve an asset-account
-that should be used by the plugin to authenticate to the third party valult.
+that should be used by the plugin to authenticate to the third-party valult.
 This asset-account will be mapped to the plugin and the credential that is
 associated with the asset-account will be pulled from Safeguard at the time
-when the plugin needs to authenticate to the third party vault.
+when the plugin needs to authenticate to the third-party vault.
 
 (See get-SgDevOpsAvailableAssetAccount)
 
@@ -241,7 +241,7 @@ Get the settings for a specific plugin.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credentials to a specific third party vault. Each plugin must be installed
+credentials to a specific third-party vault. Each plugin must be installed
 and configured individually.
 
 .PARAMETER PluginName
@@ -286,7 +286,7 @@ Update a setting for a plugin.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credentials to a specific third party vault. Each plugin must be installed
+credentials to a specific third-party vault. Each plugin must be installed
 and configured individually.
 
 .PARAMETER PluginName
@@ -328,8 +328,8 @@ Get the list of accounts that are mapped to a vault plugin.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credentials to a specific third party vault. Accounts must be mapped to each
-plugin so that the corresponding credential can be pushed to the third party
+credentials to a specific third-party vault. Accounts must be mapped to each
+plugin so that the corresponding credential can be pushed to the third-party
 vault. By mapping an account to a plugin, the Secrets Broker monitor will
 detect a password change for the mapped account and push the new credential
 to the plugin.
@@ -360,8 +360,8 @@ Map an account or an array of accounts to a vault plugin.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credentials to a specific third party vault. Accounts must be mapped to each
-plugin so that the corresponding credential can be pushed to the third party
+credentials to a specific third-party vault. Accounts must be mapped to each
+plugin so that the corresponding credential can be pushed to the third-party
 vault. By mapping an account to a plugin, the Secrets Broker monitor will
 detect a password change for the mapped account and push the new credential
 to the plugin.
@@ -435,8 +435,8 @@ Remove an account or an array of accounts from a vault plugin.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credentials to a specific third party vault. Accounts must be mapped to each
-plugin so that the corresponding credential can be pushed to the third party
+credentials to a specific third-party vault. Accounts must be mapped to each
+plugin so that the corresponding credential can be pushed to the third-party
 vault. By mapping an account to a plugin, the Secrets Broker monitor will
 detect a password change for the mapped account and push the new credential
 to the plugin.
@@ -533,7 +533,7 @@ Get all of the instances of a plugin by name.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credentials to a specific third party vault. Secrets Broker is capable of
+credentials to a specific third-party vault. Secrets Broker is capable of
 creating and managing mutliple instances of each plugin. This cmdlet gets all of the
 instances of a plugin given the plugin name.
 
@@ -568,7 +568,7 @@ Add a new instance of a plugin by name.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credentials to a specific third party vault. Secrets Broker is capable of
+credentials to a specific third-party vault. Secrets Broker is capable of
 creating and managing mutliple instances of each plugin. This cmdlet creates
 a new instance of an existing plugin and optionally copies the configuration
 of the original plugin to the new plugin instance.
@@ -604,7 +604,7 @@ Remove all instances of a plugin by name.
 
 .DESCRIPTION
 The Secrets Broker uses individualized plugins that are capable of pushing
-credentials to a specific third party vault. Secrets Broker is capable of
+credentials to a specific third-party vault. Secrets Broker is capable of
 creating and managing mutliple instances of each plugin. This cmdlet deletes
 all instances of a plugin by name and removes the plugin from Secrets Broker.
 

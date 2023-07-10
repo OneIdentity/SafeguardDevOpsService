@@ -18,7 +18,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         private readonly Serilog.ILogger _logger;
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public MonitorController()
         {
@@ -30,7 +30,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
-        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        /// has been registered with Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint gets the current state of the A2A and Reverse Flow monitoring.
         /// </remarks>
@@ -50,7 +50,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
-        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        /// has been registered with Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint forces a new state of both the A2A and Reverse Flow monitoring.
         /// </remarks>
@@ -72,7 +72,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
-        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        /// has been registered with Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint sets a new state of the A2A or Reverse Flow monitoring.
         /// </remarks>
@@ -94,7 +94,7 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// </summary>
         /// <remarks>
         /// Safeguard Secrets Broker for DevOps monitors the associated Safeguard for Privileged Passwords appliance for any password change to any account that
-        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        /// has been registered with Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint gets the last x number of credential push events.
         /// </remarks>
@@ -114,8 +114,8 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// Get the current state of the Reverse Flow monitor.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps reverser flow monitors the associated third party vaults for any password change to any account that
-        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        /// Safeguard Secrets Broker for DevOps reverser flow monitors the associated third-party vaults for any password change to any account that
+        /// has been registered with Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint gets the current state of the Reverse Flow monitor.
         /// </remarks>
@@ -134,8 +134,8 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// Set the current state of the Reverse Flow monitor.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps reverser flow monitors the associated third party vaults for any password change to any account that
-        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        /// Safeguard Secrets Broker for DevOps reverser flow monitors the associated third-party vaults for any password change to any account that
+        /// has been registered with Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint sets the current state of the Reverse Flow monitor.
         /// </remarks>
@@ -154,8 +154,8 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// Force a single Reverse Flow polling cycle.
         /// </summary>
         /// <remarks>
-        /// Safeguard Secrets Broker for DevOps reverser flow monitors the associated third party vaults for any password change to any account that
-        /// has been registered with Safeguard Secrets Broker for DevOps.  
+        /// Safeguard Secrets Broker for DevOps reverser flow monitors the associated third-party vaults for any password change to any account that
+        /// has been registered with Safeguard Secrets Broker for DevOps.
         ///
         /// This endpoint forces a single Reverse Flow polling cycle outside of monitoring.
         /// </remarks>
