@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>OneIdentity.DevOps.AzureKeyVault</RootNamespace>
     <AssemblyName>AzureKeyVault</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -20,8 +20,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.8.2" />
-    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.4.0" />
+    <PackageReference Include="Azure.Identity" Version="1.9.0" />
+    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup>
