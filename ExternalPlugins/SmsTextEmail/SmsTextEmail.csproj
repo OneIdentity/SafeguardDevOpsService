@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <RootNamespace>OneIdentity.DevOps.SmsTextEmail</RootNamespace>
     <AssemblyName>SmsTextEmail</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -24,8 +24,7 @@
   </ItemGroup>
 
   <Target Name="PostBuildWindows" AfterTargets="PostBuildEvent">
-    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;&amp; '$(SolutionDir)zipplugin.ps1' '$(ProjectDir)' '$(OutDir)' '$(SolutionDir)ExternalPlugins\bin\$(Configuration)\' '$(buildId)'&quot;"
-          EchoOff="False" IgnoreExitCode="False" LogStandardErrorAsError="True" ContinueOnError="False" ConsoleToMsBuild="True" />
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;&amp; '$(SolutionDir)zipplugin.ps1' '$(ProjectDir)' '$(OutDir)' '$(SolutionDir)ExternalPlugins\bin\$(Configuration)\' '$(buildId)'&quot;" EchoOff="False" IgnoreExitCode="False" LogStandardErrorAsError="True" ContinueOnError="False" ConsoleToMsBuild="True" />
   </Target>
 
 </Project>
