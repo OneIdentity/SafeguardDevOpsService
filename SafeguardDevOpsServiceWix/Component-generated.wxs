@@ -2,126 +2,6 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
         <DirectoryRef Id="INSTALLLOCATION">
-            <Component Id="api_ms_win_core_console_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_console_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-console-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_datetime_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_datetime_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-datetime-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_debug_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_debug_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-debug-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_errorhandling_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_errorhandling_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-errorhandling-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_file_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_file_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-file-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_file_l1_2_0.dll" Guid="*">
-                <File Id="api_ms_win_core_file_l1_2_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-file-l1-2-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_file_l2_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_file_l2_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-file-l2-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_handle_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_handle_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-handle-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_heap_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_heap_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-heap-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_interlocked_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_interlocked_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-interlocked-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_libraryloader_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_libraryloader_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-libraryloader-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_localization_l1_2_0.dll" Guid="*">
-                <File Id="api_ms_win_core_localization_l1_2_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-localization-l1-2-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_memory_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_memory_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-memory-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_namedpipe_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_namedpipe_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-namedpipe-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_processenvironment_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_processenvironment_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-processenvironment-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_processthreads_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_processthreads_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-processthreads-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_processthreads_l1_1_1.dll" Guid="*">
-                <File Id="api_ms_win_core_processthreads_l1_1_1.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-processthreads-l1-1-1.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_profile_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_profile_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-profile-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_rtlsupport_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_rtlsupport_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-rtlsupport-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_string_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_string_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-string-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_synch_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_synch_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-synch-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_synch_l1_2_0.dll" Guid="*">
-                <File Id="api_ms_win_core_synch_l1_2_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-synch-l1-2-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_sysinfo_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_sysinfo_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-sysinfo-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_timezone_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_timezone_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-timezone-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_core_util_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_core_util_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-core-util-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_conio_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_conio_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-conio-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_convert_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_convert_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-convert-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_environment_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_environment_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-environment-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_filesystem_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_filesystem_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-filesystem-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_heap_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_heap_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-heap-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_locale_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_locale_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-locale-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_math_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_math_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-math-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_multibyte_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_multibyte_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-multibyte-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_private_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_private_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-private-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_process_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_process_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-process-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_runtime_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_runtime_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-runtime-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_stdio_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_stdio_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-stdio-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_string_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_string_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-string-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_time_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_time_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-time-l1-1-0.dll" />
-            </Component>
-            <Component Id="api_ms_win_crt_utility_l1_1_0.dll" Guid="*">
-                <File Id="api_ms_win_crt_utility_l1_1_0.dll" KeyPath="yes" Source="$(var.SourceDir)\api-ms-win-crt-utility-l1-1-0.dll" />
-            </Component>
             <Component Id="aspnetcorev2_inprocess.dll" Guid="*">
                 <File Id="aspnetcorev2_inprocess.dll" KeyPath="yes" Source="$(var.SourceDir)\aspnetcorev2_inprocess.dll" />
             </Component>
@@ -134,11 +14,11 @@
             <Component Id="AutofacSerilogIntegration.dll" Guid="*">
                 <File Id="AutofacSerilogIntegration.dll" KeyPath="yes" Source="$(var.SourceDir)\AutofacSerilogIntegration.dll" />
             </Component>
-            <Component Id="clrcompression.dll" Guid="*">
-                <File Id="clrcompression.dll" KeyPath="yes" Source="$(var.SourceDir)\clrcompression.dll" />
-            </Component>
             <Component Id="clretwrc.dll" Guid="*">
                 <File Id="clretwrc.dll" KeyPath="yes" Source="$(var.SourceDir)\clretwrc.dll" />
+            </Component>
+            <Component Id="clrgc.dll" Guid="*">
+                <File Id="clrgc.dll" KeyPath="yes" Source="$(var.SourceDir)\clrgc.dll" />
             </Component>
             <Component Id="clrjit.dll" Guid="*">
                 <File Id="clrjit.dll" KeyPath="yes" Source="$(var.SourceDir)\clrjit.dll" />
@@ -146,11 +26,11 @@
             <Component Id="coreclr.dll" Guid="*">
                 <File Id="coreclr.dll" KeyPath="yes" Source="$(var.SourceDir)\coreclr.dll" />
             </Component>
+            <Component Id="createdump.exe" Guid="*">
+                <File Id="createdump.exe" KeyPath="yes" Source="$(var.SourceDir)\createdump.exe" />
+            </Component>
             <Component Id="CredentialManagement.dll" Guid="*">
                 <File Id="CredentialManagement.dll" KeyPath="yes" Source="$(var.SourceDir)\CredentialManagement.dll" />
-            </Component>
-            <Component Id="dbgshim.dll" Guid="*">
-                <File Id="dbgshim.dll" KeyPath="yes" Source="$(var.SourceDir)\dbgshim.dll" />
             </Component>
             <Component Id="hostfxr.dll" Guid="*">
                 <File Id="hostfxr.dll" KeyPath="yes" Source="$(var.SourceDir)\hostfxr.dll" />
@@ -272,6 +152,12 @@
             <Component Id="Microsoft.AspNetCore.Http.Features.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Http.Features.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Http.Features.dll" />
             </Component>
+            <Component Id="Microsoft.AspNetCore.Http.Results.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.Http.Results.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Http.Results.dll" />
+            </Component>
+            <Component Id="Microsoft.AspNetCore.HttpLogging.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.HttpLogging.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.HttpLogging.dll" />
+            </Component>
             <Component Id="Microsoft.AspNetCore.HttpOverrides.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.HttpOverrides.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.HttpOverrides.dll" />
             </Component>
@@ -335,14 +221,20 @@
             <Component Id="Microsoft.AspNetCore.Mvc.ViewFeatures.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Mvc.ViewFeatures.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Mvc.ViewFeatures.dll" />
             </Component>
-            <Component Id="Microsoft.AspNetCore.NodeServices.dll" Guid="*">
-                <File Id="Microsoft.AspNetCore.NodeServices.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.NodeServices.dll" />
+            <Component Id="Microsoft.AspNetCore.OutputCaching.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.OutputCaching.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.OutputCaching.dll" />
+            </Component>
+            <Component Id="Microsoft.AspNetCore.RateLimiting.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.RateLimiting.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.RateLimiting.dll" />
             </Component>
             <Component Id="Microsoft.AspNetCore.Razor.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Razor.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Razor.dll" />
             </Component>
             <Component Id="Microsoft.AspNetCore.Razor.Runtime.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Razor.Runtime.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Razor.Runtime.dll" />
+            </Component>
+            <Component Id="Microsoft.AspNetCore.RequestDecompression.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.RequestDecompression.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.RequestDecompression.dll" />
             </Component>
             <Component Id="Microsoft.AspNetCore.ResponseCaching.Abstractions.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.ResponseCaching.Abstractions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.ResponseCaching.Abstractions.dll" />
@@ -377,6 +269,9 @@
             <Component Id="Microsoft.AspNetCore.Server.Kestrel.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Server.Kestrel.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Server.Kestrel.dll" />
             </Component>
+            <Component Id="Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.dll" Guid="*">
+                <File Id="Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.dll" />
+            </Component>
             <Component Id="Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.dll" />
             </Component>
@@ -401,9 +296,6 @@
             <Component Id="Microsoft.AspNetCore.SignalR.Protocols.Json.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.SignalR.Protocols.Json.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.SignalR.Protocols.Json.dll" />
             </Component>
-            <Component Id="Microsoft.AspNetCore.SpaServices.dll" Guid="*">
-                <File Id="Microsoft.AspNetCore.SpaServices.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.SpaServices.dll" />
-            </Component>
             <Component Id="Microsoft.AspNetCore.SpaServices.Extensions.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.SpaServices.Extensions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.SpaServices.Extensions.dll" />
             </Component>
@@ -416,14 +308,14 @@
             <Component Id="Microsoft.AspNetCore.WebUtilities.dll" Guid="*">
                 <File Id="Microsoft.AspNetCore.WebUtilities.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.AspNetCore.WebUtilities.dll" />
             </Component>
+            <Component Id="Microsoft.Bcl.AsyncInterfaces.dll" Guid="*">
+                <File Id="Microsoft.Bcl.AsyncInterfaces.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.Bcl.AsyncInterfaces.dll" />
+            </Component>
             <Component Id="Microsoft.CSharp.dll" Guid="*">
                 <File Id="Microsoft.CSharp.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.CSharp.dll" />
             </Component>
             <Component Id="Microsoft.DiaSymReader.Native.amd64.dll" Guid="*">
                 <File Id="Microsoft.DiaSymReader.Native.amd64.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.DiaSymReader.Native.amd64.dll" />
-            </Component>
-            <Component Id="Microsoft.DotNet.PlatformAbstractions.dll" Guid="*">
-                <File Id="Microsoft.DotNet.PlatformAbstractions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.DotNet.PlatformAbstractions.dll" />
             </Component>
             <Component Id="Microsoft.Extensions.Caching.Abstractions.dll" Guid="*">
                 <File Id="Microsoft.Extensions.Caching.Abstractions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.Extensions.Caching.Abstractions.dll" />
@@ -478,6 +370,9 @@
             </Component>
             <Component Id="Microsoft.Extensions.Diagnostics.HealthChecks.dll" Guid="*">
                 <File Id="Microsoft.Extensions.Diagnostics.HealthChecks.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.Extensions.Diagnostics.HealthChecks.dll" />
+            </Component>
+            <Component Id="Microsoft.Extensions.Features.dll" Guid="*">
+                <File Id="Microsoft.Extensions.Features.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.Extensions.Features.dll" />
             </Component>
             <Component Id="Microsoft.Extensions.FileProviders.Abstractions.dll" Guid="*">
                 <File Id="Microsoft.Extensions.FileProviders.Abstractions.dll" KeyPath="yes" Source="$(var.SourceDir)\Microsoft.Extensions.FileProviders.Abstractions.dll" />
@@ -584,8 +479,8 @@
             <Component Id="mscordaccore.dll" Guid="*">
                 <File Id="mscordaccore.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore.dll" />
             </Component>
-            <Component Id="mscordaccore_amd64_amd64_4.700.21.26205.dll" Guid="*">
-                <File Id="mscordaccore_amd64_amd64_4.700.21.26205.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_4.700.21.26205.dll" />
+            <Component Id="mscordaccore_amd64_amd64_7.0.523.17405.dll" Guid="*">
+                <File Id="mscordaccore_amd64_amd64_7.0.523.17405.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordaccore_amd64_amd64_7.0.523.17405.dll" />
             </Component>
             <Component Id="mscordbi.dll" Guid="*">
                 <File Id="mscordbi.dll" KeyPath="yes" Source="$(var.SourceDir)\mscordbi.dll" />
@@ -593,11 +488,11 @@
             <Component Id="mscorlib.dll" Guid="*">
                 <File Id="mscorlib.dll" KeyPath="yes" Source="$(var.SourceDir)\mscorlib.dll" />
             </Component>
-            <Component Id="mscorrc.debug.dll" Guid="*">
-                <File Id="mscorrc.debug.dll" KeyPath="yes" Source="$(var.SourceDir)\mscorrc.debug.dll" />
-            </Component>
             <Component Id="mscorrc.dll" Guid="*">
                 <File Id="mscorrc.dll" KeyPath="yes" Source="$(var.SourceDir)\mscorrc.dll" />
+            </Component>
+            <Component Id="msquic.dll" Guid="*">
+                <File Id="msquic.dll" KeyPath="yes" Source="$(var.SourceDir)\msquic.dll" />
             </Component>
             <Component Id="netstandard.dll" Guid="*">
                 <File Id="netstandard.dll" KeyPath="yes" Source="$(var.SourceDir)\netstandard.dll" />
@@ -650,6 +545,9 @@
             <Component Id="Serilog.dll" Guid="*">
                 <File Id="Serilog.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.dll" />
             </Component>
+            <Component Id="Serilog.Enrichers.Thread.dll" Guid="*">
+                <File Id="Serilog.Enrichers.Thread.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Enrichers.Thread.dll" />
+            </Component>
             <Component Id="Serilog.Extensions.Autofac.DependencyInjection.dll" Guid="*">
                 <File Id="Serilog.Extensions.Autofac.DependencyInjection.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Extensions.Autofac.DependencyInjection.dll" />
             </Component>
@@ -673,12 +571,6 @@
             </Component>
             <Component Id="Serilog.Sinks.File.dll" Guid="*">
                 <File Id="Serilog.Sinks.File.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Sinks.File.dll" />
-            </Component>
-            <Component Id="Serilog.Sinks.RollingFile.dll" Guid="*">
-                <File Id="Serilog.Sinks.RollingFile.dll" KeyPath="yes" Source="$(var.SourceDir)\Serilog.Sinks.RollingFile.dll" />
-            </Component>
-            <Component Id="SOS_README.md" Guid="*">
-                <File Id="SOS_README.md" KeyPath="yes" Source="$(var.SourceDir)\SOS_README.md" />
             </Component>
             <Component Id="Swashbuckle.AspNetCore.Annotations.dll" Guid="*">
                 <File Id="Swashbuckle.AspNetCore.Annotations.dll" KeyPath="yes" Source="$(var.SourceDir)\Swashbuckle.AspNetCore.Annotations.dll" />
@@ -764,6 +656,9 @@
             <Component Id="System.Diagnostics.EventLog.dll" Guid="*">
                 <File Id="System.Diagnostics.EventLog.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Diagnostics.EventLog.dll" />
             </Component>
+            <Component Id="System.Diagnostics.EventLog.Messages.dll" Guid="*">
+                <File Id="System.Diagnostics.EventLog.Messages.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Diagnostics.EventLog.Messages.dll" />
+            </Component>
             <Component Id="System.Diagnostics.FileVersionInfo.dll" Guid="*">
                 <File Id="System.Diagnostics.FileVersionInfo.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Diagnostics.FileVersionInfo.dll" />
             </Component>
@@ -800,6 +695,12 @@
             <Component Id="System.Dynamic.Runtime.dll" Guid="*">
                 <File Id="System.Dynamic.Runtime.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Dynamic.Runtime.dll" />
             </Component>
+            <Component Id="System.Formats.Asn1.dll" Guid="*">
+                <File Id="System.Formats.Asn1.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Formats.Asn1.dll" />
+            </Component>
+            <Component Id="System.Formats.Tar.dll" Guid="*">
+                <File Id="System.Formats.Tar.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Formats.Tar.dll" />
+            </Component>
             <Component Id="System.Globalization.Calendars.dll" Guid="*">
                 <File Id="System.Globalization.Calendars.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Globalization.Calendars.dll" />
             </Component>
@@ -817,6 +718,9 @@
             </Component>
             <Component Id="System.IO.Compression.FileSystem.dll" Guid="*">
                 <File Id="System.IO.Compression.FileSystem.dll" KeyPath="yes" Source="$(var.SourceDir)\System.IO.Compression.FileSystem.dll" />
+            </Component>
+            <Component Id="System.IO.Compression.Native.dll" Guid="*">
+                <File Id="System.IO.Compression.Native.dll" KeyPath="yes" Source="$(var.SourceDir)\System.IO.Compression.Native.dll" />
             </Component>
             <Component Id="System.IO.Compression.ZipFile.dll" Guid="*">
                 <File Id="System.IO.Compression.ZipFile.dll" KeyPath="yes" Source="$(var.SourceDir)\System.IO.Compression.ZipFile.dll" />
@@ -881,6 +785,9 @@
             <Component Id="System.Net.Http.Formatting.dll" Guid="*">
                 <File Id="System.Net.Http.Formatting.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Net.Http.Formatting.dll" />
             </Component>
+            <Component Id="System.Net.Http.Json.dll" Guid="*">
+                <File Id="System.Net.Http.Json.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Net.Http.Json.dll" />
+            </Component>
             <Component Id="System.Net.HttpListener.dll" Guid="*">
                 <File Id="System.Net.HttpListener.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Net.HttpListener.dll" />
             </Component>
@@ -898,6 +805,9 @@
             </Component>
             <Component Id="System.Net.Primitives.dll" Guid="*">
                 <File Id="System.Net.Primitives.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Net.Primitives.dll" />
+            </Component>
+            <Component Id="System.Net.Quic.dll" Guid="*">
+                <File Id="System.Net.Quic.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Net.Quic.dll" />
             </Component>
             <Component Id="System.Net.Requests.dll" Guid="*">
                 <File Id="System.Net.Requests.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Net.Requests.dll" />
@@ -1004,11 +914,11 @@
             <Component Id="System.Runtime.InteropServices.dll" Guid="*">
                 <File Id="System.Runtime.InteropServices.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Runtime.InteropServices.dll" />
             </Component>
+            <Component Id="System.Runtime.InteropServices.JavaScript.dll" Guid="*">
+                <File Id="System.Runtime.InteropServices.JavaScript.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Runtime.InteropServices.JavaScript.dll" />
+            </Component>
             <Component Id="System.Runtime.InteropServices.RuntimeInformation.dll" Guid="*">
                 <File Id="System.Runtime.InteropServices.RuntimeInformation.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Runtime.InteropServices.RuntimeInformation.dll" />
-            </Component>
-            <Component Id="System.Runtime.InteropServices.WindowsRuntime.dll" Guid="*">
-                <File Id="System.Runtime.InteropServices.WindowsRuntime.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Runtime.InteropServices.WindowsRuntime.dll" />
             </Component>
             <Component Id="System.Runtime.Intrinsics.dll" Guid="*">
                 <File Id="System.Runtime.Intrinsics.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Runtime.Intrinsics.dll" />
@@ -1034,12 +944,6 @@
             <Component Id="System.Runtime.Serialization.Xml.dll" Guid="*">
                 <File Id="System.Runtime.Serialization.Xml.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Runtime.Serialization.Xml.dll" />
             </Component>
-            <Component Id="System.Runtime.WindowsRuntime.dll" Guid="*">
-                <File Id="System.Runtime.WindowsRuntime.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Runtime.WindowsRuntime.dll" />
-            </Component>
-            <Component Id="System.Runtime.WindowsRuntime.UI.Xaml.dll" Guid="*">
-                <File Id="System.Runtime.WindowsRuntime.UI.Xaml.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Runtime.WindowsRuntime.UI.Xaml.dll" />
-            </Component>
             <Component Id="System.Security.AccessControl.dll" Guid="*">
                 <File Id="System.Security.AccessControl.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Security.AccessControl.dll" />
             </Component>
@@ -1054,6 +958,9 @@
             </Component>
             <Component Id="System.Security.Cryptography.Csp.dll" Guid="*">
                 <File Id="System.Security.Cryptography.Csp.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Security.Cryptography.Csp.dll" />
+            </Component>
+            <Component Id="System.Security.Cryptography.dll" Guid="*">
+                <File Id="System.Security.Cryptography.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Security.Cryptography.dll" />
             </Component>
             <Component Id="System.Security.Cryptography.Encoding.dll" Guid="*">
                 <File Id="System.Security.Cryptography.Encoding.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Security.Cryptography.Encoding.dll" />
@@ -1124,6 +1031,9 @@
             <Component Id="System.Threading.Overlapped.dll" Guid="*">
                 <File Id="System.Threading.Overlapped.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Threading.Overlapped.dll" />
             </Component>
+            <Component Id="System.Threading.RateLimiting.dll" Guid="*">
+                <File Id="System.Threading.RateLimiting.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Threading.RateLimiting.dll" />
+            </Component>
             <Component Id="System.Threading.Tasks.Dataflow.dll" Guid="*">
                 <File Id="System.Threading.Tasks.Dataflow.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Threading.Tasks.Dataflow.dll" />
             </Component>
@@ -1163,9 +1073,6 @@
             <Component Id="System.Windows.dll" Guid="*">
                 <File Id="System.Windows.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Windows.dll" />
             </Component>
-            <Component Id="System.Windows.Extensions.dll" Guid="*">
-                <File Id="System.Windows.Extensions.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Windows.Extensions.dll" />
-            </Component>
             <Component Id="System.Xml.dll" Guid="*">
                 <File Id="System.Xml.dll" KeyPath="yes" Source="$(var.SourceDir)\System.Xml.dll" />
             </Component>
@@ -1202,15 +1109,20 @@
             <Component Id="TopShelf.ServiceInstaller.dll" Guid="*">
                 <File Id="TopShelf.ServiceInstaller.dll" KeyPath="yes" Source="$(var.SourceDir)\TopShelf.ServiceInstaller.dll" />
             </Component>
-            <Component Id="ucrtbase.dll" Guid="*">
-                <File Id="ucrtbase.dll" KeyPath="yes" Source="$(var.SourceDir)\ucrtbase.dll" />
-            </Component>
             <Component Id="WindowsBase.dll" Guid="*">
                 <File Id="WindowsBase.dll" KeyPath="yes" Source="$(var.SourceDir)\WindowsBase.dll" />
             </Component>
             <Component Id="_appsettings.json" Guid="*">
                 <File Id="_appsettings.json" KeyPath="yes" Source="$(var.SourceDir)\_appsettings.json" />
             </Component>
+            <Directory Id="Certificates" Name="Certificates">
+                <Component Id="GenuineInstallerProd.pem" Guid="*">
+                    <File Id="GenuineInstallerProd.pem" KeyPath="yes" Source="$(var.SourceDir)\Certificates\GenuineInstallerProd.pem" />
+                </Component>
+                <Component Id="GenuineInstallerTest.pem" Guid="*">
+                    <File Id="GenuineInstallerTest.pem" KeyPath="yes" Source="$(var.SourceDir)\Certificates\GenuineInstallerTest.pem" />
+                </Component>
+            </Directory>
             <Directory Id="ClientApp" Name="ClientApp">
                 <Directory Id="dist" Name="dist">
                     <Component Id="_3rdpartylicenses.txt" Guid="*">
@@ -1225,20 +1137,20 @@
                     <Component Id="index.html" Guid="*">
                         <File Id="index.html" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\index.html" />
                     </Component>
-                    <Component Id="main.bec681124a9bebc58a37.js" Guid="*">
-                        <File Id="main.bec681124a9bebc58a37.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.bec681124a9bebc58a37.js" />
+                    <Component Id="main.f07361de3ec992cc.js" Guid="*">
+                        <File Id="main.f07361de3ec992cc.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\main.f07361de3ec992cc.js" />
                     </Component>
-                    <Component Id="polyfills.35a5ca1855eb057f016a.js" Guid="*">
-                        <File Id="polyfills.35a5ca1855eb057f016a.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\polyfills.35a5ca1855eb057f016a.js" />
+                    <Component Id="polyfills.461c17dc88b91573.js" Guid="*">
+                        <File Id="polyfills.461c17dc88b91573.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\polyfills.461c17dc88b91573.js" />
                     </Component>
-                    <Component Id="runtime.acf0dec4155e77772545.js" Guid="*">
-                        <File Id="runtime.acf0dec4155e77772545.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\runtime.acf0dec4155e77772545.js" />
+                    <Component Id="runtime.4c2d48bf7a738e5a.js" Guid="*">
+                        <File Id="runtime.4c2d48bf7a738e5a.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\runtime.4c2d48bf7a738e5a.js" />
                     </Component>
-                    <Component Id="scripts.568694a568f45ab03c95.js" Guid="*">
-                        <File Id="scripts.568694a568f45ab03c95.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\scripts.568694a568f45ab03c95.js" />
+                    <Component Id="scripts.802cfceb610cb629.js" Guid="*">
+                        <File Id="scripts.802cfceb610cb629.js" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\scripts.802cfceb610cb629.js" />
                     </Component>
-                    <Component Id="styles.8729de72097e4a8ae805.css" Guid="*">
-                        <File Id="styles.8729de72097e4a8ae805.css" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\styles.8729de72097e4a8ae805.css" />
+                    <Component Id="styles.05d2093c7ae72da4.css" Guid="*">
+                        <File Id="styles.05d2093c7ae72da4.css" KeyPath="yes" Source="$(var.SourceDir)\ClientApp\dist\styles.05d2093c7ae72da4.css" />
                     </Component>
                     <Directory Id="assets" Name="assets">
                         <Component Id="SafeguardLogo.png" Guid="*">
@@ -1251,56 +1163,16 @@
     </Fragment>
     <Fragment>
         <ComponentGroup Id="DevOps_CommonAssemblies">
-            <ComponentRef Id="api_ms_win_core_console_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_datetime_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_debug_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_errorhandling_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_file_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_file_l1_2_0.dll" />
-            <ComponentRef Id="api_ms_win_core_file_l2_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_handle_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_heap_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_interlocked_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_libraryloader_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_localization_l1_2_0.dll" />
-            <ComponentRef Id="api_ms_win_core_memory_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_namedpipe_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_processenvironment_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_processthreads_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_processthreads_l1_1_1.dll" />
-            <ComponentRef Id="api_ms_win_core_profile_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_rtlsupport_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_string_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_synch_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_synch_l1_2_0.dll" />
-            <ComponentRef Id="api_ms_win_core_sysinfo_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_timezone_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_core_util_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_conio_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_convert_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_environment_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_filesystem_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_heap_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_locale_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_math_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_multibyte_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_private_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_process_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_runtime_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_stdio_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_string_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_time_l1_1_0.dll" />
-            <ComponentRef Id="api_ms_win_crt_utility_l1_1_0.dll" />
             <ComponentRef Id="aspnetcorev2_inprocess.dll" />
             <ComponentRef Id="Autofac.dll" />
             <ComponentRef Id="Autofac.Extensions.DependencyInjection.dll" />
             <ComponentRef Id="AutofacSerilogIntegration.dll" />
-            <ComponentRef Id="clrcompression.dll" />
             <ComponentRef Id="clretwrc.dll" />
+            <ComponentRef Id="clrgc.dll" />
             <ComponentRef Id="clrjit.dll" />
             <ComponentRef Id="coreclr.dll" />
+            <ComponentRef Id="createdump.exe" />
             <ComponentRef Id="CredentialManagement.dll" />
-            <ComponentRef Id="dbgshim.dll" />
             <ComponentRef Id="hostfxr.dll" />
             <ComponentRef Id="hostpolicy.dll" />
             <ComponentRef Id="LiteDB.dll" />
@@ -1341,6 +1213,8 @@
             <ComponentRef Id="Microsoft.AspNetCore.Http.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Http.Extensions.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Http.Features.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.Http.Results.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.HttpLogging.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.HttpOverrides.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.HttpsPolicy.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Identity.dll" />
@@ -1362,9 +1236,11 @@
             <ComponentRef Id="Microsoft.AspNetCore.Mvc.RazorPages.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Mvc.TagHelpers.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Mvc.ViewFeatures.dll" />
-            <ComponentRef Id="Microsoft.AspNetCore.NodeServices.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.OutputCaching.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.RateLimiting.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Razor.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Razor.Runtime.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.RequestDecompression.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.ResponseCaching.Abstractions.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.ResponseCaching.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.ResponseCompression.dll" />
@@ -1376,6 +1252,7 @@
             <ComponentRef Id="Microsoft.AspNetCore.Server.IISIntegration.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Server.Kestrel.Core.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Server.Kestrel.dll" />
+            <ComponentRef Id="Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.Session.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.Client.Core.dll" />
@@ -1384,14 +1261,13 @@
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.Core.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.SignalR.Protocols.Json.dll" />
-            <ComponentRef Id="Microsoft.AspNetCore.SpaServices.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.SpaServices.Extensions.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.StaticFiles.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.WebSockets.dll" />
             <ComponentRef Id="Microsoft.AspNetCore.WebUtilities.dll" />
+            <ComponentRef Id="Microsoft.Bcl.AsyncInterfaces.dll" />
             <ComponentRef Id="Microsoft.CSharp.dll" />
             <ComponentRef Id="Microsoft.DiaSymReader.Native.amd64.dll" />
-            <ComponentRef Id="Microsoft.DotNet.PlatformAbstractions.dll" />
             <ComponentRef Id="Microsoft.Extensions.Caching.Abstractions.dll" />
             <ComponentRef Id="Microsoft.Extensions.Caching.Memory.dll" />
             <ComponentRef Id="Microsoft.Extensions.Configuration.Abstractions.dll" />
@@ -1410,6 +1286,7 @@
             <ComponentRef Id="Microsoft.Extensions.DependencyModel.dll" />
             <ComponentRef Id="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll" />
             <ComponentRef Id="Microsoft.Extensions.Diagnostics.HealthChecks.dll" />
+            <ComponentRef Id="Microsoft.Extensions.Features.dll" />
             <ComponentRef Id="Microsoft.Extensions.FileProviders.Abstractions.dll" />
             <ComponentRef Id="Microsoft.Extensions.FileProviders.Composite.dll" />
             <ComponentRef Id="Microsoft.Extensions.FileProviders.Embedded.dll" />
@@ -1445,11 +1322,11 @@
             <ComponentRef Id="Microsoft.Win32.Registry.dll" />
             <ComponentRef Id="Microsoft.Win32.SystemEvents.dll" />
             <ComponentRef Id="mscordaccore.dll" />
-            <ComponentRef Id="mscordaccore_amd64_amd64_4.700.21.26205.dll" />
+            <ComponentRef Id="mscordaccore_amd64_amd64_7.0.523.17405.dll" />
             <ComponentRef Id="mscordbi.dll" />
             <ComponentRef Id="mscorlib.dll" />
-            <ComponentRef Id="mscorrc.debug.dll" />
             <ComponentRef Id="mscorrc.dll" />
+            <ComponentRef Id="msquic.dll" />
             <ComponentRef Id="netstandard.dll" />
             <ComponentRef Id="Newtonsoft.Json.Bson.dll" />
             <ComponentRef Id="Newtonsoft.Json.dll" />
@@ -1467,6 +1344,7 @@
             <ComponentRef Id="SafeguardDevOpsService.xml" />
             <ComponentRef Id="Serilog.AspNetCore.dll" />
             <ComponentRef Id="Serilog.dll" />
+            <ComponentRef Id="Serilog.Enrichers.Thread.dll" />
             <ComponentRef Id="Serilog.Extensions.Autofac.DependencyInjection.dll" />
             <ComponentRef Id="Serilog.Extensions.Hosting.dll" />
             <ComponentRef Id="Serilog.Extensions.Logging.dll" />
@@ -1475,8 +1353,6 @@
             <ComponentRef Id="Serilog.Sinks.Console.dll" />
             <ComponentRef Id="Serilog.Sinks.Debug.dll" />
             <ComponentRef Id="Serilog.Sinks.File.dll" />
-            <ComponentRef Id="Serilog.Sinks.RollingFile.dll" />
-            <ComponentRef Id="SOS_README.md" />
             <ComponentRef Id="Swashbuckle.AspNetCore.Annotations.dll" />
             <ComponentRef Id="Swashbuckle.AspNetCore.Newtonsoft.dll" />
             <ComponentRef Id="Swashbuckle.AspNetCore.Swagger.dll" />
@@ -1505,6 +1381,7 @@
             <ComponentRef Id="System.Diagnostics.Debug.dll" />
             <ComponentRef Id="System.Diagnostics.DiagnosticSource.dll" />
             <ComponentRef Id="System.Diagnostics.EventLog.dll" />
+            <ComponentRef Id="System.Diagnostics.EventLog.Messages.dll" />
             <ComponentRef Id="System.Diagnostics.FileVersionInfo.dll" />
             <ComponentRef Id="System.Diagnostics.Process.dll" />
             <ComponentRef Id="System.Diagnostics.StackTrace.dll" />
@@ -1517,12 +1394,15 @@
             <ComponentRef Id="System.Drawing.dll" />
             <ComponentRef Id="System.Drawing.Primitives.dll" />
             <ComponentRef Id="System.Dynamic.Runtime.dll" />
+            <ComponentRef Id="System.Formats.Asn1.dll" />
+            <ComponentRef Id="System.Formats.Tar.dll" />
             <ComponentRef Id="System.Globalization.Calendars.dll" />
             <ComponentRef Id="System.Globalization.dll" />
             <ComponentRef Id="System.Globalization.Extensions.dll" />
             <ComponentRef Id="System.IO.Compression.Brotli.dll" />
             <ComponentRef Id="System.IO.Compression.dll" />
             <ComponentRef Id="System.IO.Compression.FileSystem.dll" />
+            <ComponentRef Id="System.IO.Compression.Native.dll" />
             <ComponentRef Id="System.IO.Compression.ZipFile.dll" />
             <ComponentRef Id="System.IO.dll" />
             <ComponentRef Id="System.IO.FileSystem.AccessControl.dll" />
@@ -1544,12 +1424,14 @@
             <ComponentRef Id="System.Net.dll" />
             <ComponentRef Id="System.Net.Http.dll" />
             <ComponentRef Id="System.Net.Http.Formatting.dll" />
+            <ComponentRef Id="System.Net.Http.Json.dll" />
             <ComponentRef Id="System.Net.HttpListener.dll" />
             <ComponentRef Id="System.Net.Mail.dll" />
             <ComponentRef Id="System.Net.NameResolution.dll" />
             <ComponentRef Id="System.Net.NetworkInformation.dll" />
             <ComponentRef Id="System.Net.Ping.dll" />
             <ComponentRef Id="System.Net.Primitives.dll" />
+            <ComponentRef Id="System.Net.Quic.dll" />
             <ComponentRef Id="System.Net.Requests.dll" />
             <ComponentRef Id="System.Net.Security.dll" />
             <ComponentRef Id="System.Net.ServicePoint.dll" />
@@ -1585,8 +1467,8 @@
             <ComponentRef Id="System.Runtime.Extensions.dll" />
             <ComponentRef Id="System.Runtime.Handles.dll" />
             <ComponentRef Id="System.Runtime.InteropServices.dll" />
+            <ComponentRef Id="System.Runtime.InteropServices.JavaScript.dll" />
             <ComponentRef Id="System.Runtime.InteropServices.RuntimeInformation.dll" />
-            <ComponentRef Id="System.Runtime.InteropServices.WindowsRuntime.dll" />
             <ComponentRef Id="System.Runtime.Intrinsics.dll" />
             <ComponentRef Id="System.Runtime.Loader.dll" />
             <ComponentRef Id="System.Runtime.Numerics.dll" />
@@ -1595,13 +1477,12 @@
             <ComponentRef Id="System.Runtime.Serialization.Json.dll" />
             <ComponentRef Id="System.Runtime.Serialization.Primitives.dll" />
             <ComponentRef Id="System.Runtime.Serialization.Xml.dll" />
-            <ComponentRef Id="System.Runtime.WindowsRuntime.dll" />
-            <ComponentRef Id="System.Runtime.WindowsRuntime.UI.Xaml.dll" />
             <ComponentRef Id="System.Security.AccessControl.dll" />
             <ComponentRef Id="System.Security.Claims.dll" />
             <ComponentRef Id="System.Security.Cryptography.Algorithms.dll" />
             <ComponentRef Id="System.Security.Cryptography.Cng.dll" />
             <ComponentRef Id="System.Security.Cryptography.Csp.dll" />
+            <ComponentRef Id="System.Security.Cryptography.dll" />
             <ComponentRef Id="System.Security.Cryptography.Encoding.dll" />
             <ComponentRef Id="System.Security.Cryptography.OpenSsl.dll" />
             <ComponentRef Id="System.Security.Cryptography.Pkcs.dll" />
@@ -1625,6 +1506,7 @@
             <ComponentRef Id="System.Threading.Channels.dll" />
             <ComponentRef Id="System.Threading.dll" />
             <ComponentRef Id="System.Threading.Overlapped.dll" />
+            <ComponentRef Id="System.Threading.RateLimiting.dll" />
             <ComponentRef Id="System.Threading.Tasks.Dataflow.dll" />
             <ComponentRef Id="System.Threading.Tasks.dll" />
             <ComponentRef Id="System.Threading.Tasks.Extensions.dll" />
@@ -1638,7 +1520,6 @@
             <ComponentRef Id="System.Web.dll" />
             <ComponentRef Id="System.Web.HttpUtility.dll" />
             <ComponentRef Id="System.Windows.dll" />
-            <ComponentRef Id="System.Windows.Extensions.dll" />
             <ComponentRef Id="System.Xml.dll" />
             <ComponentRef Id="System.Xml.Linq.dll" />
             <ComponentRef Id="System.Xml.ReaderWriter.dll" />
@@ -1651,18 +1532,19 @@
             <ComponentRef Id="Topshelf.dll" />
             <ComponentRef Id="Topshelf.Serilog.dll" />
             <ComponentRef Id="TopShelf.ServiceInstaller.dll" />
-            <ComponentRef Id="ucrtbase.dll" />
             <ComponentRef Id="WindowsBase.dll" />
             <ComponentRef Id="_appsettings.json" />
+            <ComponentRef Id="GenuineInstallerProd.pem" />
+            <ComponentRef Id="GenuineInstallerTest.pem" />
             <ComponentRef Id="_3rdpartylicenses.txt" />
             <ComponentRef Id="accessTokenCheck.js" />
             <ComponentRef Id="favicon.ico" />
             <ComponentRef Id="index.html" />
-            <ComponentRef Id="main.bec681124a9bebc58a37.js" />
-            <ComponentRef Id="polyfills.35a5ca1855eb057f016a.js" />
-            <ComponentRef Id="runtime.acf0dec4155e77772545.js" />
-            <ComponentRef Id="scripts.568694a568f45ab03c95.js" />
-            <ComponentRef Id="styles.8729de72097e4a8ae805.css" />
+            <ComponentRef Id="main.f07361de3ec992cc.js" />
+            <ComponentRef Id="polyfills.461c17dc88b91573.js" />
+            <ComponentRef Id="runtime.4c2d48bf7a738e5a.js" />
+            <ComponentRef Id="scripts.802cfceb610cb629.js" />
+            <ComponentRef Id="styles.05d2093c7ae72da4.css" />
             <ComponentRef Id="SafeguardLogo.png" />
         </ComponentGroup>
     </Fragment>

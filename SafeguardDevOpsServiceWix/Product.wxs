@@ -13,11 +13,11 @@
     <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
     <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
 
-    <SetProperty Id="_INSTALL"   After="FindRelatedProducts" Value="1"><![CDATA[Installed="" AND REMOVE="" AND UPGRADINGPRODUCTCODE=""]]></SetProperty>
+    <SetProperty Id="_INSTALL"   After="FindRelatedProducts" Value="1"><![CDATA[Installed="" AND REMOVE="" AND UPGRADINGPRODUCTCODE="" AND WIX_UPGRADE_DETECTED=""]]></SetProperty>
     <SetProperty Id="_UNINSTALL" After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REMOVE="ALL" AND UPGRADINGPRODUCTCODE=""]]></SetProperty>
     <SetProperty Id="_CHANGE"    After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="" AND REMOVE=""]]></SetProperty>
     <SetProperty Id="_REPAIR"    After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="ALL" AND UPGRADINGPRODUCTCODE=""]]></SetProperty>
-    <SetProperty Id="_UPGRADE"   After="FindRelatedProducts" Value="1"><![CDATA[Installed<>"" AND REINSTALL="" AND UPGRADINGPRODUCTCODE<>""]]></SetProperty>
+    <SetProperty Id="_UPGRADE"   After="FindRelatedProducts" Value="1"><![CDATA[WIX_UPGRADE_DETECTED<>""]]></SetProperty>
 
     <Condition Message="32 bit windows is not supported.">
       VersionNT64
@@ -72,10 +72,23 @@
                   Impersonate="no"
                   Return="ignore"
                   ExeCommand='/c rmdir "[CommonAppDataFolder]!(loc.ProductNameFolder)" /s /q' />
+    <!--
+      The following custom action is to fix an issue with the autofacserilogintegration.dll. The dll has a
+      different product version but a 1.0.0 file version which is the same as ever previous version. So WiX
+      thinks that the dll is not a newer version and fails to upgrade it. This code deletes the older version
+      so that WiX will upgrade to the newer one.
+    -->
+    <CustomAction Id="CLEANUP_AUTOFACSERIINTEGRATION_DLL"
+                  Property="ExecuteCommand"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"
+                  ExeCommand='/c del "[ProgramFiles64Folder]!(loc.ProductNameFolder)\AutofacSerilogIntegration.dll"' />
 
     <InstallExecuteSequence>
-      <Custom Action="EXECUTE_STOP" After="StopServices">NOT _INSTALL</Custom>
+      <Custom Action="EXECUTE_STOP" After="InstallInitialize">NOT _INSTALL</Custom>
       <Custom Action="EXECUTE_UNINSTALL" After="EXECUTE_STOP">NOT _INSTALL</Custom>
+      <Custom Action="CLEANUP_AUTOFACSERIINTEGRATION_DLL" After="EXECUTE_UNINSTALL">_UPGRADE OR _CHANGE</Custom>
       <Custom Action="CLEANUP_DATA_ON_UNINSTALL" Before="InstallFinalize">_UNINSTALL</Custom>
       <Custom Action="CLEANUP_EXT_DATA_ON_UNINSTALL" After="CLEANUP_DATA_ON_UNINSTALL">_UNINSTALL</Custom>
       <Custom Action="EXECUTE_INSTALL" Before="InstallFinalize">NOT _UNINSTALL</Custom>
