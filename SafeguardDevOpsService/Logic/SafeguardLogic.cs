@@ -2025,7 +2025,8 @@ namespace OneIdentity.DevOps.Logic
                 NeedsSSLEnabled = safeguardConnection.IgnoreSsl ?? true,
                 NeedsTrustedCertificates = !_configDb.GetAllTrustedCertificates().Any() || !CheckSslConnection(),
                 NeedsWebCertificate = webSslCertificate?.SubjectName.Name != null && webSslCertificate.SubjectName.Name.Equals(WellKnownData.DevOpsServiceDefaultWebSslCertificateSubject),
-                PassedTrustChainValidation = userCertificate != null ? CertificateHelper.ValidateTrustChain(userCertificate, _configDb, _logger) : false
+                PassedTrustChainValidation = userCertificate != null ? CertificateHelper.ValidateTrustChain(userCertificate, _configDb, _logger) : false,
+                ReverseFlowAvailable = _monitoringLogic().ReverseFlowMonitoringAvailable()
             };
 
             return safeguardLogon;

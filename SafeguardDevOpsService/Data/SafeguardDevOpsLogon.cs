@@ -45,5 +45,10 @@ namespace OneIdentity.DevOps.Data
         /// Passed Trust Chain Validation
         /// </summary>
         public bool PassedTrustChainValidation { get; set; }
+
+        /// <summary>
+        /// Is reverse flow available
+        /// </summary>
+        public bool ReverseFlowAvailable { get; set; }
     }
 }

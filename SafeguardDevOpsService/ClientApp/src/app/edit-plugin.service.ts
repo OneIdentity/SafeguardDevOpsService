@@ -22,6 +22,7 @@ export class EditPluginService {
 
   public instanceIndex: number = 0;
   public pluginInstances = [];
+  public reverseFlowAvailable: boolean = false;
 
   public get plugin() {
     return this.pluginInstances[this.instanceIndex];
