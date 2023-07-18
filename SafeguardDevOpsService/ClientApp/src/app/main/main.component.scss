@@ -48,6 +48,13 @@ mat-drawer-container {
   padding-bottom: 15px;
 }
 
+.footer-left {
+  color: $muted-red;
+  position: fixed;
+  bottom: 15px;
+  left: 15px;
+}
+
 .footer-absolute {
   position: fixed;
   bottom: 0;
@@ -115,11 +122,11 @@ mat-drawer-container {
     font-size: .85em;
     color: $black-9;
   }
-  
+
   .vertical-line {
     border-right: 1px solid $black-c;
   }
-  
+
   .green-icon {
     color: $aspen-green;
     vertical-align: top;
@@ -152,7 +159,7 @@ mat-drawer-container {
       margin-top: -15px;
     }
   }
-  
+
   .loading-container{
     width: 100%;
     padding-left: 30px;
@@ -167,7 +174,7 @@ mat-drawer-container {
 }
 
 .plugin-container.unconfigured {
-  border: 2px dashed $black-9; 
+  border: 2px dashed $black-9;
   color: $black-6;
   display: flex;
   margin-bottom: 20px;

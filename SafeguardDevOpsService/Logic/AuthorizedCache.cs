@@ -26,7 +26,7 @@ namespace OneIdentity.DevOps.Logic
         {
             lock (InstanceLock)
             {
-                var currentConnection = Find(managementConnection);
+                var currentConnection = Find(managementConnection) ?? Find(managementConnection.SessionKey);
                 if (currentConnection != null)
                     Cache.Remove(currentConnection.SessionKey);
                 Cache.Add(managementConnection.SessionKey, managementConnection);
@@ -50,11 +50,18 @@ namespace OneIdentity.DevOps.Logic
 
         public ServiceConfiguration Find(ServiceConfiguration managementConnection)
         {
-            return Cache.Values.FirstOrDefault(x =>
-                x.Appliance.ApplianceAddress.Equals(managementConnection.Appliance.ApplianceAddress) 
-                && x.User != null  
-                && x.User.PrimaryAuthenticationProvider.Name.Equals(managementConnection.User?.PrimaryAuthenticationProvider?.Name) 
-                && x.User.Name.Equals(managementConnection.User?.Name));
+            try
+            {
+                return Cache.Values.FirstOrDefault(x =>
+                    x.Appliance.ApplianceAddress.Equals(managementConnection.Appliance.ApplianceAddress)
+                    && x.User?.PrimaryAuthenticationProvider?.Name != null
+                    && x.User.PrimaryAuthenticationProvider.Name.Equals(managementConnection.User
+                        ?.PrimaryAuthenticationProvider?.Name)
+                    && x.User?.Name != null
+                    && x.User.Name.Equals(managementConnection.User?.Name));
+            } catch { }
+
+            return null;
         }
 
         public void Remove(string sessionKey)

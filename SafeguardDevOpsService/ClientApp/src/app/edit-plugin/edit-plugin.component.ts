@@ -49,6 +49,9 @@ export class EditPluginComponent implements OnInit {
   public get instanceCount() {
     return this.editPluginService.pluginInstances.length;
   }
+  public get reverseFlowAvailable() {
+    return this.editPluginService.reverseFlowAvailable;
+  }
 
   ngOnInit(): void {
     this.editPluginService.pluginInstances.forEach(p => {

@@ -156,7 +156,8 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 Body = altAccountName != null ? $"{altAccountName}\n{password[0]}" : $"{asset} - {account}\n{password[0]}"
             };
 
-            return StoreCredential(message);
+            StoreCredential(message);
+            return password[0];
         }
 
         private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
@@ -173,7 +174,8 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 Body = altAccountName != null ? $"{altAccountName}\n{sshKey[0]}" : $"{asset} - {account}\n{sshKey[0]}"
             };
 
-            return StoreCredential(message);
+            StoreCredential(message);
+            return sshKey[0];
         }
 
         private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)

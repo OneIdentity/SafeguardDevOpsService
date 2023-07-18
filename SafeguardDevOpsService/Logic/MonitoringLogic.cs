@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
+using System.Runtime.CompilerServices;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -130,6 +131,7 @@ namespace OneIdentity.DevOps.Logic
             return new FullMonitorState()
             {
                 Enabled = _isA2AMonitoringEnabled,
+                StatusMessage = GetMonitorStatusMessage(),
                 ReverseFlowMonitorState = GetReverseFlowMonitorState()
             };
         }
@@ -173,6 +175,43 @@ namespace OneIdentity.DevOps.Logic
                 : WellKnownData.MonitorDisabled;
 
             return GetReverseFlowMonitorState();
+        }
+
+        public bool ReverseFlowMonitoringAvailable()
+        {
+            using var sg = _safeguardLogic.Connect();
+
+            try
+            {
+                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"A2ARegistrations/{_configDb.A2aRegistrationId}");
+                if (result.StatusCode == HttpStatusCode.OK)
+                {
+                    var registration =  JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
+                    if (registration != null && registration.BidirectionalEnabled.HasValue && registration.BidirectionalEnabled.Value)
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch (SafeguardDotNetException ex)
+            {
+                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
+                {
+                    _logger.Error(ex, $"Registration not found for id '{_configDb.A2aRegistrationId}'");
+                }
+                else
+                {
+                    var msg = $"Failed to get the registration for id '{_configDb.A2aRegistrationId}'";
+                    _logger.Error(ex, msg);
+                }
+            }
+            catch (Exception ex)
+            {
+                var msg = $"Failed to get the registration for id '{_configDb.A2aRegistrationId}'";
+                _logger.Error(ex, msg);
+            }
+
+            return false;
         }
 
         public IEnumerable<MonitorEvent> GetMonitorEvents(int size)
@@ -302,6 +341,7 @@ namespace OneIdentity.DevOps.Logic
                 }
 
                 _eventListener = _a2AContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);
+                _eventListener.SetEventListenerStateCallback(SignalRState);
                 _eventListener.Start();
 
                 InitialPasswordPull();
@@ -339,6 +379,37 @@ namespace OneIdentity.DevOps.Logic
                 _retrievableAccounts = null;
                 _credentialManager.Clear();
             }
+        }
+
+        private SafeguardEventListenerState _lastState;
+        private DateTime _lastStateChangeTime = DateTime.MinValue;
+
+        private void SignalRState(SafeguardEventListenerState newState)
+        {
+            if ((_lastState != newState && newState == SafeguardEventListenerState.Disconnected) 
+                || (newState == SafeguardEventListenerState.Connected && _lastStateChangeTime < (DateTime.UtcNow).AddSeconds(-15)))
+            {
+                var monitorEvent = new MonitorEvent()
+                {
+                    Event = $"The A2A credential change listener has changed connection state: {newState}",
+                    Result = newState == SafeguardEventListenerState.Connected ? WellKnownData.SentPasswordSuccess : WellKnownData.SentPasswordFailure,
+                    Date = DateTime.UtcNow
+                };
+
+                _lastEventsQueue.Enqueue(monitorEvent);
+                _lastState = newState;
+                _lastStateChangeTime = monitorEvent.Date;
+            }
+        }
+
+        private string GetMonitorStatusMessage()
+        {
+            if (_lastState == SafeguardEventListenerState.Disconnected && _isA2AMonitoringEnabled)
+            {
+                return WellKnownData.MonitorDisconnectedMsg;
+            }
+
+            return null;
         }
 
         private void PasswordChangeHandler(string eventName, string eventBody)
@@ -489,43 +560,6 @@ namespace OneIdentity.DevOps.Logic
                 _cts.Cancel();
                 _cts = null;
             }
-        }
-
-        private bool ReverseFlowMonitoringAvailable()
-        {
-            using var sg = _safeguardLogic.Connect();
-
-            try
-            {
-                var result = sg.InvokeMethodFull(Service.Core, Method.Get, $"A2ARegistrations/{_configDb.A2aRegistrationId}");
-                if (result.StatusCode == HttpStatusCode.OK)
-                {
-                    var registration =  JsonHelper.DeserializeObject<A2ARegistration>(result.Body);
-                    if (registration != null && registration.BidirectionalEnabled.HasValue && registration.BidirectionalEnabled.Value)
-                    {
-                        return true;
-                    }
-                }
-            }
-            catch (SafeguardDotNetException ex)
-            {
-                if (ex.HttpStatusCode == HttpStatusCode.NotFound)
-                {
-                    _logger.Error(ex, $"Registration not found for id '{_configDb.A2aRegistrationId}'");
-                }
-                else
-                {
-                    var msg = $"Failed to get the registration for id '{_configDb.A2aRegistrationId}'";
-                    _logger.Error(ex, msg);
-                }
-            }
-            catch (Exception ex)
-            {
-                var msg = $"Failed to get the registration for id '{_configDb.A2aRegistrationId}'";
-                _logger.Error(ex, msg);
-            }
-
-            return false;
         }
 
         private async Task ReverseFlowMonitorThread(CancellationToken token)

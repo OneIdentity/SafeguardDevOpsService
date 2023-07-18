@@ -15,5 +15,6 @@ namespace OneIdentity.DevOps.Logic
         void Run();
         ReverseFlowMonitorState GetReverseFlowMonitorState();
         ReverseFlowMonitorState SetReverseFlowMonitorState(ReverseFlowMonitorState reverseFlowMonitorState);
+        bool ReverseFlowMonitoringAvailable();
     }
 }

@@ -4,6 +4,7 @@ import { EditPluginService } from '../edit-plugin.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
+import { tap } from 'rxjs/operators';
 
 @UntilDestroy()
 @Component({
@@ -25,6 +26,12 @@ export class ViewMonitorEventsComponent implements OnInit, AfterViewInit {
   isLoading: boolean;
   dataSource = new MatTableDataSource([]);
   totalCount = 0;
+  monitorStatus: string = "";
+  a2aMonitorStatus: string = "";
+  reverseFlowMonitorStatus: string = "";
+  monitoringStatusMessage: string = "";
+  monitoring: string = "";
+  monitorStatusMessage: string = "";
 
   ngOnInit(): void {
     this.displayedColumns = ['Event', 'Date'];
@@ -50,10 +57,34 @@ export class ViewMonitorEventsComponent implements OnInit, AfterViewInit {
         this.dataSource.data = this.events;
       }
     );
+    this.serviceClient.getMonitor().pipe(
+      untilDestroyed(this),
+    ).subscribe(
+      (status: any) => {
+        this.monitorStatus = status.Enabled;
+        this.monitorStatusMessage = status.StatusMessage;
+        this.reverseFlowMonitorStatus = status.ReverseFlowMonitorState.Enabled;
+        this.monitoringStatusMessage = status.MonitoringStatusMessage;
+      }
+    );
   }
 
   close(): void {
     this.editPluginService.closeViewMonitorEvents();
+  }
+
+  GetMonitorStatus(): string {
+    if (this.monitorStatus) {
+      return "Running";
+    }
+    return "Stopped";
+  }
+
+  GetReverseFlowMonitorStatus(): string {
+    if (this.reverseFlowMonitorStatus) {
+      return "Running";
+    }
+    return "Stopped";
   }
 
 }

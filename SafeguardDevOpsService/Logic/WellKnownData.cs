@@ -72,6 +72,7 @@ namespace OneIdentity.DevOps.Logic
         public const string DbFileName = "Configuration.db";
 
         public const string BackupFileName = "SecretsBrokerBackupStageFile.zip";
+        public const string MonitorDisconnectedMsg = "The monitor is not in a healthy state. Please check the monitor event history.";
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(

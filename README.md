@@ -10,7 +10,7 @@
 
 * The plugin interface has been changed to support the Reverse Flow functionality. Due to this interface change, older plugins will no longer load. Once Secrets Broker has been upgraded, each of the plugins will also need to be upgraded as well. The Secrets Broker user interface will indicate which plugins need to be upgraded and allow the user to download and upgrade the plugin. Once all of the plugins have been upgraded, the Secrets Broker service will need to be restart.
 
-* All of the functionality in this version of Secrets Broker is backwards compatible with versions of Safeguard 7.0.0 and above with the exception of the Reverse Flow feature. The Reverse Flow feature depends on changes that are only available in Safeguard 7.4 and above. If the Secrets Broker service is connected to a version of Safeguard that is less than 7.4, Secrets Broker will continue to work but the Reverse Flow feature will be unavailable.
+* All of the functionality in this version of Secrets Broker is backwards compatible with versions of Safeguard 7.0.0 and above with the exception of the Reverse Flow feature. The Reverse Flow feature depends on changes that are only available in Safeguard 7.4 and above. If the Secrets Broker service is connected to a version of Safeguard that is less than 7.4, Secrets Broker will continue to work but the Reverse Flow feature will be unavailable. A small indicator will appear in the bottom left-hand corner of the main window if Secrets Broker is unable to provide the Reverse Flow feature.
 
 # Safeguard Secrets Broker for DevOps
 
@@ -130,7 +130,7 @@ With the ability designate a plugin instance as Reverse Flow, Secrets Broker int
 
 1. Copy the installer MSI package to the local file system of a Windows 10 or Windows Server 2016 or better, computer.
 1. Open a PowerShell command window as an administrator and invoke the above MSI installer package.
-1. Follow all prompts - This will deploy the package and automatically start it as a Windows service.
+1. Follow all prompts - This will deploy the package and automatically start it as a Windows service. If prompted to stop services during the installation, click the ```Ignore``` button to allow the installation to continue.
 1. At start up, Safeguard Secrets Broker for DevOps will create a new folder under the ```/ProgramData``` directory as ```/SafeguardDevOpsService```.  This folder will contain the log file, database and the external plugins folder.  The external plugins folder will be initially empty (See Deploying Vault Plugins).
 1. Make sure that the firewall on the Windows computer has an inbound rule for allowing https port 443.
 1. Acquire a valid login token to SPP.  Use the Powershell cmdlet (See <https://github.com/OneIdentity/safeguard-ps>):
@@ -227,14 +227,20 @@ Initialization of the Secrets Broker on Windows or as a Docker image can be cont
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsMonitoring-1.png)
 
-### Monitoring Password Events and Trouble Shooting
+### Monitoring Credential Events and Trouble Shooting
 
-The Safeguard Secrets Broker for DevOps provides ways to monitor the password events and trouble shooting.  This functionality can be found under the system menu.  To access the system menu, select the cog icon in the upper right-hand corner of the browser window.  The system menu contains several options such as restarting the Safeguard Secrets Broker for DevOps, deleting the current configuration which resets the system to the default state as well as downloading the system log and viewing the password event history.
+The Safeguard Secrets Broker for DevOps provides ways for monitoring credential events and trouble shooting.  This functionality can be found under the system menu.  To access the system menu, select the cog icon in the upper right-hand corner of the browser window.  The system menu contains several options such as restarting the Safeguard Secrets Broker for DevOps, deleting the current configuration which resets the system to the default state as well as downloading the system log and viewing the monitor event history.
 
 * To trouble shoot issues that may arise, select the Download Log option from the System Menu.  The system log will provide details about a system issue or error that may have occurred.
-* To view the password events, select the View Monitor Event History option from the System Menu.  The Monitor Events will appear which contains a list of the password events that have taken place since the system was last started.  These events are only stored in memory which means that each time that the Safeguard Secrets Broker for DevOps is restarted, the list will be cleared.
+* To view the credential events, select the View Monitor Event History option from the System Menu.  The Monitor Events will appear which contains a list of the credential events that have taken place since the monitoring was last started.  These events are only stored in memory which means that each time that the Safeguard Secrets Broker for DevOps is restarted, the list will be cleared.
 
 ![SafeguardDevOpsService](Images/SafeguardDevOpsServiceMonitorEventsList-1.PNG)
+
+### Common Monitoring Issues
+
+* The A2A credential change listener has disconnected. If this happens, the Monitor Events History will show that the listener has changed state to ```Disconnected```. There are a few reason why this may happen.
+  * The Safeguard appliance has not be configured with a valid SSL/TLS certificate. Secrets Broker cannot establish a connection to the A2A event service if the Safeguard appliance is still configured with the default SSL/TLS certificate or an invalid certificate. Make sure that the SSL/TLS certificate has a valid subject name and a valid Alternate DNS Name or Alternate IP Address. Please see the Safeguard admin guide for further information. In addition, the matching public certificate must be installed as a trusted root certificate in the Windows Certificate Store of the computer that is hosting the Secrets Broker service. See [Installing the trusted root certificate](https://learn.microsoft.com/en-us/skype-sdk/sdn/articles/installing-the-trusted-root-certificate) for more information.
+  * The IP address of the Secrets Broker host has changed and the A2A registration restrictions are preventing Secrets Broker from accessing the credentials. Secrets Broker automatically places IP restriction on each credential retrieval entry. This is to help prevent other services from access the same credentials. If the IP address of the Secrets Broker service has changes, the restriction may be preventing Secrets Broker from accessing the credentials as well. Modify or add the Secrets Broker IP address to the restrictions list for the credential retrieval entry under the A2A registrations that match the Secrets Broker instance.
 
 ### Configuring Multiple Plugin Instances
 
@@ -249,6 +255,8 @@ Just below the ```Plugin Settings``` banner, Secrets Broker shows the number of 
 ### Reverse Flow
 
 Configuring a Secrets Broker plugin instance as Reverse Flow is done by simply checking the ```Reverse Flow``` checkbox in the ```Configuration``` section of the ```Plugin Settings``` page. This causes Secrets Broker to call the plugin instance when any of the registered account credentials need to be fetched rather than pushed.
+
+The Reverse Flow feature is only available if Secrets Broker is connected to a Safeguard appliance version 7.4.0 or above. Reverse Flow may also be unavailable if the ```Allow Setting Credentials``` flag on the ```SafeguardDevOpsServer-<Id>``` A2A registration in the Safeguard appliance has been disabled. If Secrets Broker detects that the connected Safeguard appliance does not provide the necessary support for Reverse Flow, a small indicator will appear in the bottom left corner of the main page. In addition, all Reverse Flow functionality will be disabled including the Reverse Flow monitor and the Reverse Flow checkbox on the plugin configuration.
 
 ![SafeguardDevOpsService](Images/ReverseFlowCheckbox.PNG)
 
