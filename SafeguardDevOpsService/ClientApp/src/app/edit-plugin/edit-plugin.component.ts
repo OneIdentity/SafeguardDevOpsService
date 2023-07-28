@@ -50,7 +50,7 @@ export class EditPluginComponent implements OnInit {
     return this.editPluginService.pluginInstances.length;
   }
   public get reverseFlowAvailable() {
-    return this.editPluginService.reverseFlowAvailable;
+    return (this.editPluginService.plugin.SupportsReverseFlow && this.editPluginService.reverseFlowAvailable);
   }
 
   ngOnInit(): void {
