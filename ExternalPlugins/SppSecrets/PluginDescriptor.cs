@@ -230,7 +230,9 @@ namespace OneIdentity.DevOps.SppSecrets
 
                 if (_accountGroup != null)
                 {
-                    if (!_accountGroup.Accounts.Any(x => x.Name.Equals(account.Name, StringComparison.OrdinalIgnoreCase)))
+                    if (!_accountGroup.Accounts.Any(x => 
+                            x.Name.Equals(account.Name, StringComparison.OrdinalIgnoreCase) && 
+                            x.Asset.Name.Equals(account.Asset.Name, StringComparison.OrdinalIgnoreCase)))
                     {
                         AddAccountToGroup(account);
                     }
