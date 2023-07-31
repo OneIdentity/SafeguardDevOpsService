@@ -2250,7 +2250,11 @@ namespace OneIdentity.DevOps.Logic
                     var dbPasswdEntry = tempZipArchive.CreateEntry(WellKnownData.DBPasswordFileName);
                     using (var writer = new StreamWriter(dbPasswdEntry.Open()))
                     {
-                        writer.Write(Encrypt(_configDb.DbPasswd, bkPassphrase));
+                        if (!string.IsNullOrEmpty(_configDb.DbPasswd))
+                        {
+                            writer.Write(Encrypt(_configDb.DbPasswd, bkPassphrase));
+                        }
+
                         fileCount++;
                     }
 
@@ -2331,10 +2335,13 @@ namespace OneIdentity.DevOps.Logic
                     try
                     {
                         var dbEncryptedKey = reader.ReadToEnd();
-                        var dbPassPhrase = Decrypt(dbEncryptedKey, passphrase);
-                        if (dbPassPhrase != null)
+                        if (!string.IsNullOrEmpty(dbEncryptedKey))
                         {
-                            _configDb.SavePassword(dbPassPhrase);
+                            var dbPassPhrase = Decrypt(dbEncryptedKey, passphrase);
+                            if (dbPassPhrase != null)
+                            {
+                                _configDb.SavePassword(dbPassPhrase);
+                            }
                         }
                     }
                     catch
@@ -2373,9 +2380,12 @@ namespace OneIdentity.DevOps.Logic
                 _addonManager().ShutdownAddon(addon);
             }
 
-            // Sleep just for a second to give the caller time to respond before we exit.
-            Thread.Sleep(1000);
-            Task.Run(() => Environment.Exit(54));
+            Task.Run(() =>
+            {
+                // Sleep just for a second to give the caller time to respond before we exit.
+                Thread.Sleep(1000);
+                Environment.Exit(54);
+            });
         }
 
         public IEnumerable<CertificateInfo> GetTrustedCertificates()

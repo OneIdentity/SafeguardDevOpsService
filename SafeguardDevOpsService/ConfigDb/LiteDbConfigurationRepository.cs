@@ -108,6 +108,18 @@ namespace OneIdentity.DevOps.ConfigDb
 
         public string SavePassword(string password)
         {
+            if (_isLinux)
+            {
+                var curPassword = GetPassword();
+                if (string.IsNullOrEmpty(curPassword) || !curPassword.Equals(password))
+                {
+                    Environment.SetEnvironmentVariable(WellKnownData.CredentialEnvVar, password);
+                    return password;
+                }
+
+                return curPassword;
+            }
+
             try
             {
                 using (var cred = new Credential())
