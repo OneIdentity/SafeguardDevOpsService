@@ -104,7 +104,7 @@ function Initialize-SgDevOps
         [Parameter(Mandatory=$false)]
         [int]$ApplianceApiVersion = 3,
         [Parameter(Mandatory=$false)]
-        [int]$ServiceApiVersion = 1
+        [int]$ServiceApiVersion = 2
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }

@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
 
 export class DevOpsServiceClient {
 
-  BASE = '/service/devops/v1/';
+  BASE = '/service/devops/v2/';
   applianceAddress: string;
 
   constructor(
@@ -273,8 +273,8 @@ export class DevOpsServiceClient {
       .pipe(catchError(this.error<any>('putPluginVaultAccount')));
   }
 
-  putPluginConfiguration(name: string, config: any, assignedCredentialType: string): Observable<any> {
-    const payload = { Configuration: config, AssignedCredentialType: assignedCredentialType };
+  putPluginConfiguration(name: string, config: any, assignedCredentialType: string, reverseFlowEnabled: boolean): Observable<any> {
+    const payload = { Configuration: config, AssignedCredentialType: assignedCredentialType, ReverseFlowEnabled: reverseFlowEnabled };
     return this.http.put(this.BASE + 'Plugins/' + encodeURIComponent(name), payload, this.authHeader())
     .pipe(catchError(this.error<any>('putPluginConfiguration')));
   }

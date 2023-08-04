@@ -6,6 +6,20 @@
   height: 100%;
 }
 
+.monitor-status-header {
+  display: flex;
+  align-items: baseline;
+}
+
+.info-label {
+  font-size: .85em;
+  color: $black-9;
+}
+
+.sub-title {
+  color: $black-9;
+}
+
 table {
   width: 100%;
 }

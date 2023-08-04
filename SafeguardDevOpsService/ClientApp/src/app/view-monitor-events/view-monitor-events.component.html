@@ -6,6 +6,23 @@
   </mat-toolbar>
 
   <div class="main-container">
+
+    <mat-card>
+      <div class="monitor-status-header">
+        <h2>Monitor Status</h2>
+      </div>
+      <div class="info-label">Status</div>
+      <div>{{GetMonitorStatus()}}</div>
+      <p></p>
+      <div class="info-label">Reverse Flow Monitor</div>
+      <div>{{GetReverseFlowMonitorStatus()}}</div>
+      <p></p>
+      <div class="info-label">Monitor Issues</div>
+      <div>{{monitorStatusMessage}}</div>
+    </mat-card>
+
+    <p></p>
+
     <div class="table-container" [ngClass]="{'hidden': isLoading}">
       <table mat-table [dataSource]="dataSource">
 

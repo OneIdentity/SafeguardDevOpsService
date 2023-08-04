@@ -49,6 +49,9 @@ export class EditPluginComponent implements OnInit {
   public get instanceCount() {
     return this.editPluginService.pluginInstances.length;
   }
+  public get reverseFlowAvailable() {
+    return (this.editPluginService.plugin.SupportsReverseFlow && this.editPluginService.reverseFlowAvailable);
+  }
 
   ngOnInit(): void {
     this.editPluginService.pluginInstances.forEach(p => {
@@ -293,7 +296,7 @@ export class EditPluginComponent implements OnInit {
     );
 
     if (!plugin.IsSystemOwned) {
-      const obs2 = this.serviceClient.putPluginConfiguration(plugin.Name, plugin.Configuration, plugin.AssignedCredentialType);
+      const obs2 = this.serviceClient.putPluginConfiguration(plugin.Name, plugin.Configuration, plugin.AssignedCredentialType, plugin.ReverseFlowEnabled);
 
       const obs3 = plugin.VaultAccount ?
         this.serviceClient.putPluginVaultAccount(plugin.Name, plugin.VaultAccount) :
@@ -310,7 +313,7 @@ export class EditPluginComponent implements OnInit {
   saveConfiguration(): Observable<any> {
     this.mapConfiguration(this.plugin);
 
-    const obs1 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration, this.plugin.AssignedCredentialType);
+    const obs1 = this.serviceClient.putPluginConfiguration(this.plugin.Name, this.plugin.Configuration, this.plugin.AssignedCredentialType, this.plugin.ReverseFlowEnabled);
     const obs2 = this.plugin.VaultAccount ?
       this.serviceClient.putPluginVaultAccount(this.plugin.Name, this.plugin.VaultAccount) :
       this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
@@ -321,6 +324,7 @@ export class EditPluginComponent implements OnInit {
         if (plugin) {
           this.plugin.Configuration = plugin.Configuration;
           this.plugin.AssignedCredentialType = plugin.AssignedCredentialType;
+          this.plugin.ReverseFlowEnabled = plugin.ReverseFlowEnabled;
         }
 
         const vaultAccount = data[1];
@@ -329,8 +333,10 @@ export class EditPluginComponent implements OnInit {
             Id: vaultAccount.AccountId,
             Name: vaultAccount.AccountName,
             DomainName: vaultAccount.DomainName,
-            SystemName: vaultAccount.SystemName,
-            SystemNetworkAddress: vaultAccount.NetworkAddress
+            Asset: {
+              Name: vaultAccount.AssetName,
+              NetworkAddress: vaultAccount.NetworkAddress
+            }
           };
           this.plugin.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(this.plugin.VaultAccount);
         }

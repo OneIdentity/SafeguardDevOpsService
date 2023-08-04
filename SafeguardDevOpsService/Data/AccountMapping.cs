@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 using LiteDB;
+using Newtonsoft.Json;
 
 namespace OneIdentity.DevOps.Data
 {
@@ -35,6 +36,7 @@ namespace OneIdentity.DevOps.Data
         /// System Id or Asset Id
         /// </summary>
         [DataMember]
+        [JsonProperty("AssetId")]
         public int SystemId { get; set; }
         /// <summary>
         /// Asset name

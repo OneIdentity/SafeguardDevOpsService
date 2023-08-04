@@ -16,15 +16,18 @@ namespace OneIdentity.DevOps.GithubSecrets
         private Regex _rgx;
         private Repository _repository;
         private SecretsPublicKey _publicKey; 
-        private ILogger _logger;
 
         private const string RepositoryName = "Repository Name";
 
         public string Name => "GithubSecrets";
         public string DisplayName => "Github Secrets";
         public string Description => "This is the Github Secrets plugin for updating passwords";
+        public bool SupportsReverseFlow => false;
+
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password};
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public bool ReverseFlowEnabled { get; set; } = false; //Github only stores secrets that can be used in an action. The secret cannot be fetched.
+        public ILogger Logger { get; set; }
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -39,18 +42,18 @@ namespace OneIdentity.DevOps.GithubSecrets
             if (configuration != null && configuration.ContainsKey(RepositoryName))
             {
                 _configuration = configuration;
-                _logger.Information($"Plugin {Name} has been successfully configured.");
+                Logger.Information($"Plugin {Name} has been successfully configured.");
                 _rgx = new Regex("[^a-zA-Z0-9-]");
             }
             else
             {
-                _logger.Error("Some parameters are missing from the configuration.");
+                Logger.Error("Some parameters are missing from the configuration.");
             }
         }
 
         public void SetVaultCredential(string credential)
         {
-            if (_configuration != null)
+            if (_configuration != null && _configuration.ContainsKey(RepositoryName) && !string.IsNullOrEmpty(_configuration[RepositoryName]))
             {
                 _secretsClient = new GitHubClient(new ProductHeaderValue(_configuration[RepositoryName]));
                 var tokenAuth = new Credentials(credential);
@@ -65,7 +68,7 @@ namespace OneIdentity.DevOps.GithubSecrets
                     if (repo != null)
                     {
                         _repository = repo;
-                        _logger.Information(
+                        Logger.Information(
                             $"Plugin {Name} has been successfully authenticated to the Github environment.");
 
                         var pKeyResult = Task.Run(async () =>
@@ -78,15 +81,15 @@ namespace OneIdentity.DevOps.GithubSecrets
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error(ex,
+                    Logger.Error(ex,
                         $"Failed to get the repository information for {_configuration[RepositoryName]}: {ex.Message}.");
                 }
 
-                _logger.Information($"Plugin {Name} failed to authenticated to the Github environment. Repository {_configuration[RepositoryName]} not found.");
+                Logger.Information($"Plugin {Name} failed to authenticated to the Github environment. Repository {_configuration[RepositoryName]} not found.");
             }
             else
             {
-                _logger.Error("The plugin is missing the configuration.");
+                Logger.Error("The plugin is missing the configuration.");
             }
         }
 
@@ -97,19 +100,60 @@ namespace OneIdentity.DevOps.GithubSecrets
 
             if (_repository != null)
             {
-                _logger.Information($"Test connection for {DisplayName}: Result = {_repository.Name}");
+                Logger.Information($"Test connection for {DisplayName}: Result = {_repository.Name}");
                 return true;
             }
-            _logger.Error($"Failed the connection test for {DisplayName}.");
+            Logger.Error($"Failed the connection test for {DisplayName}.");
             return false;
         }
 
-        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
+        public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
+            ValidationHelper.CanReverseFlow(this);
+            return null;
+        }
+
+        public string SetCredential(CredentialType credentialType, string asset, string account, string[] credential, string altAccountName)
+        {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return SetPassword(asset, account, credential, altAccountName);
+                case CredentialType.SshKey:
+                    ValidationHelper.CanHandleSshKey(this);
+                    break;
+                case CredentialType.ApiKey:
+                    ValidationHelper.CanHandleApiKey(this);
+                    break;
+                default:
+                    Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+        
+        public void Unload()
+        {
+        }
+
+        private string SetPassword(string asset, string account, string[] password, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
             if (_secretsClient == null || _configuration == null || _publicKey == null)
             {
-                _logger.Error("No connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error($"No connection. Make sure that the {DisplayName} plugin has been configured.");
+                return null;
+            }
+
+            if (password is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             try
@@ -118,7 +162,7 @@ namespace OneIdentity.DevOps.GithubSecrets
 
                 // The password has to be encrypted prior to storing it in the Github repository.
                 // The public key id that is associated with the encryption must also be included.
-                var sealedPublicKeyBox = Sodium.SealedPublicKeyBox.Create(System.Text.Encoding.UTF8.GetBytes(password), Convert.FromBase64String(_publicKey.Key));
+                var sealedPublicKeyBox = Sodium.SealedPublicKeyBox.Create(System.Text.Encoding.UTF8.GetBytes(password[0]), Convert.FromBase64String(_publicKey.Key));
                 var upsertSecrets = new UpsertRepositorySecret()
                 {
                     EncryptedValue = Convert.ToBase64String(sealedPublicKeyBox),
@@ -126,36 +170,15 @@ namespace OneIdentity.DevOps.GithubSecrets
                 };
 
                 var secret = Task.Run(async () => await _secretsClient.Repository.Actions.Secrets.CreateOrUpdate(_repository.Owner.Login, _repository.Name, name, upsertSecrets)).Result;
-                _logger.Information($"Password for {name} has been successfully stored in the {_repository.Name} action secrets.");
+                Logger.Information($"Password for {name} has been successfully stored in the {_repository.Name} action secrets.");
 
-                return true;
+                return password[0];
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
-                return false;
+                Logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
+                return null;
             }
-        }
-
-        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
-        {
-            _logger.Error("This plugin instance does not handle the SshKey credential type.");
-            return false;
-        }
-
-        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
-        {
-            _logger.Error("This plugin instance does not handle the ApiKey credential type.");
-            return false;
-        }
-
-        public void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public void Unload()
-        {
         }
     }
 }

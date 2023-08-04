@@ -30,28 +30,8 @@
         /// </summary>
         public bool Disabled { get; set; }
         /// <summary>
-        /// Asset Id
+        /// Asset 
         /// </summary>
-        public int SystemId { get; set; }
-        /// <summary>
-        /// Asset name
-        /// </summary>
-        public string SystemName { get; set; }
-        /// <summary>
-        /// Asset network address
-        /// </summary>
-        public string SystemNetworkAddress { get; set; }
-        /// <summary>
-        /// Allow password request
-        /// </summary>
-        public bool AllowPasswordRequest { get; set; }
-        /// <summary>
-        /// Allow session request
-        /// </summary>
-        public bool AllowSessionRequest { get; set; }
-        /// <summary>
-        /// Allow Ssh key request
-        /// </summary>
-        public bool AllowSshKeyRequest { get; set; }
+        public Asset Asset { get; set; }
     }
 }

@@ -7,6 +7,7 @@ using OneIdentity.DevOps.Logic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using OneIdentity.DevOps.ConfigDb;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Extensions;
@@ -17,7 +18,8 @@ namespace OneIdentity.DevOps
 {
     internal class SafeguardDevOpsService
     {
-        private readonly IWebHost _host;
+        // private readonly IWebHost _host;
+        private readonly IHost _host;
         private readonly IPluginManager _pluginManager;
         private readonly IAddonManager _addonManager;
         private readonly IMonitoringLogic _monitoringLogic;
@@ -91,25 +93,26 @@ namespace OneIdentity.DevOps
                 }
             }
 
-
-            _host = new WebHostBuilder()
+            _host = Host.CreateDefaultBuilder()
                 .UseSerilog()
-                .UseKestrel(options =>
-                {
-                    if (int.TryParse(httpsPort, out var port) == false)
+                .UseServiceProviderFactory(new AutofacServiceProviderFactory())
+                .ConfigureWebHostDefaults(webHostBuilder => webHostBuilder
+                    .UseKestrel(options =>
                     {
-                        Log.Logger.Warning($"Failed to parse HttpsPort from appsettings.json '{httpsPort}'");
-                        port = int.Parse(WellKnownData.DefaultServicePort);
-                    }
-                    Log.Logger.Information($"Binding web server to port: {port}.");
-                    options.ListenAnyIP(port, listenOptions =>
+                        if (int.TryParse(httpsPort, out var port) == false)
+                        {
+                            Log.Logger.Warning($"Failed to parse HttpsPort from appsettings.json '{httpsPort}'");
+                            port = int.Parse(WellKnownData.DefaultServicePort);
+                        }
+                        Log.Logger.Information($"Binding web server to port: {port}.");
+                        options.ListenAnyIP(port, listenOptions =>
                         {
                             listenOptions.UseHttps(webSslCert);
                         });
-                })
-                .ConfigureServices(services => services.AddAutofac())
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseStartup<Startup>()
+                    })
+                    .UseStartup<Startup>()
+                    .UseContentRoot(Directory.GetCurrentDirectory())
+                )
                 .Build();
 
             _monitoringLogic = (IMonitoringLogic) _host.Services.GetService(typeof(IMonitoringLogic));

@@ -11,7 +11,7 @@ namespace OneIdentity.DevOps.Logic
 {
     internal static class WellKnownData
     {
-        public const int DefaultApiVersion = 3;
+        public const int DefaultApiVersion = 4;
 
         public const string AppSettings = "appsettings";
         public const string ServiceIdentifier = "svcid";
@@ -46,6 +46,9 @@ namespace OneIdentity.DevOps.Logic
         public const string SentPasswordSuccess = "Success";
         public const string SentPasswordFailure = "Failure";
 
+        public const string GetPasswordSuccess = SentPasswordSuccess;
+        public const string GetPasswordFailure = SentPasswordFailure;
+
         public const string PluginsDeleteFile = "DeletePlugins.all";
         public const string AddonDeleteFile = "DeleteAddon.all";
         public const string AddonDeleteStaging = "DeleteAddon.staging";
@@ -69,6 +72,7 @@ namespace OneIdentity.DevOps.Logic
         public const string DbFileName = "Configuration.db";
 
         public const string BackupFileName = "SecretsBrokerBackupStageFile.zip";
+        public const string MonitorDisconnectedMsg = "The monitor is not in a healthy state. Please check the monitor event history.";
 
         public static readonly string ProgramDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), DevOpsServiceName);
         public static readonly string ServiceDirPath = Path.GetDirectoryName(
@@ -91,6 +95,7 @@ namespace OneIdentity.DevOps.Logic
             "Safeguard Secrets Broker for DevOps needs to be restarted to complete installing this action.";
 
         public static readonly int RandomStringLength = 10;
+        public static readonly int ReverseFlowMonitorPollingInterval = 60;
 
 
         public static string GetSppToken(HttpContext context)

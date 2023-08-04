@@ -15,7 +15,6 @@ namespace OneIdentity.DevOps.JenkinsSecrets
         private HttpClient _secretsClient;
         private Dictionary<string,string> _configuration;
         private Regex _rgx;
-        private ILogger _logger;
 
         private const string Address = "https://127.0.0.1:8443";
         private const string User = "User Name";
@@ -26,8 +25,12 @@ namespace OneIdentity.DevOps.JenkinsSecrets
         public string Name => "JenkinsSecrets";
         public string DisplayName => "Jenkins Secrets";
         public string Description => "This is the Jenkins Secrets plugin for updating passwords";
+        public bool SupportsReverseFlow => false; //Jenkins secrets can only be fetched by a build job.
+
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password};
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public bool ReverseFlowEnabled { get; set; } = false;
+        public ILogger Logger { get; set; }
 
         HttpClientHandler _handler = new HttpClientHandler
         {
@@ -52,12 +55,12 @@ namespace OneIdentity.DevOps.JenkinsSecrets
             if (configuration != null && configuration.ContainsKey(AddressName)&& configuration.ContainsKey(UserName))
             {
                 _configuration = configuration;
-                _logger.Information($"Plugin {Name} has been successfully configured.");
+                Logger.Information($"Plugin {Name} has been successfully configured.");
                 _rgx = new Regex("[^a-zA-Z0-9-]");
             }
             else
             {
-                _logger.Error("Some parameters are missing from the configuration.");
+                Logger.Error("Some parameters are missing from the configuration.");
             }
         }
 
@@ -85,16 +88,16 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                     var crumb = result.Split(':');
                     client.DefaultRequestHeaders.Add(crumb[0], crumb[1]);
 
-                    _logger.Information($"Plugin {Name} successfully authenticated.");
+                    Logger.Information($"Plugin {Name} successfully authenticated.");
                 }
                 catch (Exception ex)
                 {
-                    _logger.Information(ex, $"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
+                    Logger.Information(ex, $"Invalid configuration for {Name}. Please use the api to set a valid configuration. {ex.Message}");
                 }
             }
             else
             {
-                _logger.Error("The plugin configuration or credential is missing.");
+                Logger.Error("The plugin configuration or credential is missing.");
             }
         }
 
@@ -107,22 +110,68 @@ namespace OneIdentity.DevOps.JenkinsSecrets
             {
                 var task = Task.Run(async () => await _secretsClient.GetAsync($"api/"));
                 var result = task.Result;
-                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
+                Logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
+                Logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
                 return false;
             }
         }
 
-        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
+        public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
         {
+            ValidationHelper.CanReverseFlow(this);
+            return null;
+        }
+
+        public string SetCredential(CredentialType credentialType, string asset, string account, string[] credential, string altAccountName)
+        {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return SetPassword(asset, account, credential, altAccountName);
+                case CredentialType.SshKey:
+                    ValidationHelper.CanHandleSshKey(this);
+                    break;
+                case CredentialType.ApiKey:
+                    ValidationHelper.CanHandleApiKey(this);
+                    break;
+                default:
+                    Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public void Unload()
+        {
+            Logger = null;
+            _secretsClient?.Dispose();
+            _secretsClient = null;
+            _configuration.Clear();
+            _configuration = null;
+        }
+
+        private string SetPassword(string asset, string account, string[] password, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
             if (_secretsClient == null)
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error($"No vault connection. Make sure that the {DisplayName} plugin has been configured.");
+                return null;
+            }
+
+            if (password is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             try
@@ -133,7 +182,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                 var response = _secretsClient.GetAsync($"credentials/store/system/domain/_/credential/{id}/").Result;
                 if (response.IsSuccessStatusCode)
                 {
-                    var payload = $"{{\"stapler-class\": \"com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl\", \"scope\": \"GLOBAL\", \"username\": \"{name}\", \"password\": \"{password}\", \"id\": \"{id}\", \"description\": \"{name}\"}}";
+                    var payload = $"{{\"stapler-class\": \"com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl\", \"scope\": \"GLOBAL\", \"username\": \"{name}\", \"password\": \"{password[0]}\", \"id\": \"{id}\", \"description\": \"{name}\"}}";
                     var content = new FormUrlEncodedContent(new[]
                     {
                         new KeyValuePair<string,string>("json",payload)
@@ -144,7 +193,7 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                 }
                 else
                 {
-                    var payload = $"{{\"\": \"0\", \"credentials\": {{\"scope\": \"GLOBAL\",\"id\": \"{id}\",\"username\": \"{name}\",\"password\": \"{password}\", \"description\": \"{name}\",\"$class\": \"com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl\"}}}}";
+                    var payload = $"{{\"\": \"0\", \"credentials\": {{\"scope\": \"GLOBAL\",\"id\": \"{id}\",\"username\": \"{name}\",\"password\": \"{password[0]}\", \"description\": \"{name}\",\"$class\": \"com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl\"}}}}";
                     var content = new FormUrlEncodedContent(new[]
                     {
                         new KeyValuePair<string,string>("json",payload)
@@ -157,40 +206,14 @@ namespace OneIdentity.DevOps.JenkinsSecrets
                 response = _secretsClient.GetAsync($"credentials/store/system/domain/_/credential/{id}/").Result;
                 response.EnsureSuccessStatusCode();
 
-                _logger.Information($"Password for {asset}-{altAccountName ?? account} has been successfully stored in the vault.");
-                return true;
+                Logger.Information($"Password for {asset}-{altAccountName ?? account} has been successfully stored in the vault.");
+                return password[0];
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
-                return false;
+                Logger.Error(ex, $"Failed to set the secret for {asset}-{altAccountName ?? account}: {ex.Message}.");
+                return null;
             }
-        }
-
-        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
-        {
-            _logger.Error("This plugin instance does not handle the SshKey credential type.");
-            return false;
-        }
-
-        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
-        {
-            _logger.Error("This plugin instance does not handle the ApiKey credential type.");
-            return false;
-        }
-
-        public void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public void Unload()
-        {
-            _logger = null;
-            _secretsClient?.Dispose();
-            _secretsClient = null;
-            _configuration.Clear();
-            _configuration = null;
         }
     }
 }

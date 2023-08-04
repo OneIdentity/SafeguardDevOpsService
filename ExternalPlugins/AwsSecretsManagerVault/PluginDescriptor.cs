@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Amazon.Runtime.Internal;
 using System.Security.Principal;
 using System.Xml.Linq;
+using System.Net.Sockets;
 
 
 namespace OneIdentity.DevOps.AwsSecretsManagerVault
@@ -17,17 +18,21 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
     {
         private AmazonSecretsManagerClient _awsClient;
         private Dictionary<string, string> _configuration;
-        private ILogger _logger;
         private Regex _rgx;
 
         private const string AccessKeyId = "accessKeyId";
         private const string AwsRegion = "awsRegion";
-        
+        private string FormatAccountName(string altAccountName, string asset, string account) => _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+
         public string Name => "AwsSecretsManagerVault";
         public string DisplayName => "AWS Secrets Manager Vault";
         public string Description => "This is the AWS Secrets Manager Vault plugin for updating passwords";
+        public bool SupportsReverseFlow => true;
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
+
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public bool ReverseFlowEnabled { get; set; } = false;
+        public ILogger Logger { get; set; }
 
         private bool ConfigurationIsValid => _configuration != null &&
             _configuration.ContainsKey(AccessKeyId) &&
@@ -42,55 +47,195 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             };
         }
 
-        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
+        public void SetPluginConfiguration(Dictionary<string, string> configuration)
         {
-            if (AssignedCredentialType != CredentialType.Password)
+            if (configuration != null && 
+                configuration.ContainsKey(AccessKeyId) &&
+                configuration.ContainsKey(AwsRegion))
             {
-                _logger.Error("This plugin instance does not handle the Password credential type.");
-                return false;
+                _configuration = configuration;
+                _rgx = new Regex("[^a-zA-Z0-9-]");
+                Logger.Information($"Plugin {Name} has been successfully configured.");
             }
-
-            if (_awsClient == null || !ConfigurationIsValid)
+            else
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error("Some parameters are missing from the configuration.");
             }
-
-            return StoreCredential(_rgx.Replace(altAccountName ?? $"{asset}-{account}", "-"), password);
         }
 
-        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        public void SetVaultCredential(string credential)
         {
-            if (AssignedCredentialType != CredentialType.SshKey)
+            if (_configuration != null)
             {
-                _logger.Error("This plugin instance does not handle the SshKey credential type.");
-                return false;
-            }
+                try
+                {
+                    Logger.Information($"Configuring plugin {Name} for the AWS vault");
 
-            if (_awsClient == null || !ConfigurationIsValid)
+                    var region = Amazon.RegionEndpoint.GetBySystemName(_configuration[AwsRegion]);
+
+                    if (region.DisplayName == "Unknown")
+                        throw new Exception("Specified region is unknown.");
+
+                    var accessKeyId = _configuration[AccessKeyId];
+
+                    //this client doesn't create a connection until it is used. 
+                    _awsClient = new AmazonSecretsManagerClient(accessKeyId, credential, region);
+
+                    Logger.Information($"Plugin {Name} has been successfully configured for the AWS vault.");
+                }
+                catch(Exception ex)
+                {
+                    Logger.Error(ex, $"Plugin configuration failed: {ex.Message}");
+                }
+            }
+            else
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error("The plugin is missing the configuration.");
             }
-
-            return StoreCredential(_rgx.Replace(altAccountName ?? $"{asset}-{account}", "-")+"-sshkey", sshKey);
         }
 
-        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        public bool TestVaultConnection()
         {
-            if (AssignedCredentialType != CredentialType.ApiKey)
-            {
-                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
+            if (_awsClient == null)
                 return false;
+
+            try
+            {
+                var listRequest = new ListSecretsRequest()
+                {
+                    MaxResults = 1
+                };
+                var task = Task.Run(async () => await _awsClient.ListSecretsAsync(listRequest));
+                var result = task.Result;
+                Logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
+                return false;
+            }
+        }
+
+        public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
+        {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return GetPassword(asset, account, altAccountName);
+                case CredentialType.SshKey:
+                    return GetSshKey(asset, account, altAccountName);
+                case CredentialType.ApiKey:
+                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
+                    break;
+                default:
+                    Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public string SetCredential(CredentialType credentialType, string asset, string account, string[] credential, string altAccountName)
+        {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return SetPassword(asset, account, credential, altAccountName);
+                case CredentialType.SshKey:
+                    return SetSshKey(asset, account, credential, altAccountName);
+                case CredentialType.ApiKey:
+                    return SetApiKey(asset, account, credential, altAccountName);
+                default:
+                    Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public void Unload()
+        {
+        }
+
+        private string GetPassword(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
+            return FetchCredential(FormatAccountName(altAccountName, asset, account));
+        }
+
+        private string GetSshKey(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
+            {
+                return null;
+            }
+
+            return FetchCredential(FormatAccountName(altAccountName, asset, account)+"-sshkey");
+        }
+
+        private string SetPassword(string asset, string account, string[] password, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
             }
 
             if (_awsClient == null || !ConfigurationIsValid)
             {
-                _logger.Error("No vault connection. Make sure that the plugin has been configured.");
-                return false;
+                Logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return null;
             }
 
-            var name = _rgx.Replace(altAccountName ?? $"{asset}-{account}", "-");
+            if (password is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
+            }
+
+            return StoreCredential(FormatAccountName(altAccountName, asset, account), password[0]) ? password[0] : null;
+        }
+
+        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandleSshKey(this))
+            {
+                return null;
+            }
+
+            if (_awsClient == null || !ConfigurationIsValid)
+            {
+                Logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return null;
+            }
+
+            if (sshKey is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
+            }
+
+            return StoreCredential(FormatAccountName(altAccountName, asset, account)+"-sshkey", sshKey[0]) ? sshKey[0] : null;
+        }
+
+        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandleApiKey(this))
+            {
+                return null;
+            }
+
+            if (_awsClient == null || !ConfigurationIsValid)
+            {
+                Logger.Error("No vault connection. Make sure that the plugin has been configured.");
+                return null;
+            }
+
+            var name = FormatAccountName(altAccountName, asset, account);
             var retval = true;
 
             foreach (var apiKeyJson in apiKeys)
@@ -102,12 +247,12 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
                 }
                 else
                 {
-                    _logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {this.DisplayName} vault.");
+                    Logger.Error($"The ApiKey {name} {apiKey.ClientId} failed to save to the {DisplayName} vault.");
                     retval = false;
                 }
             }
 
-            return retval;
+            return retval ? "" : null;
         }
 
         private bool StoreCredential(string secretId, string secret)
@@ -124,22 +269,21 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
 
                 if (res.Result.HttpStatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    _logger.Information($"The secret for {secretId} has been successfully stored in the vault.");
+                    Logger.Information($"The secret for {secretId} has been successfully stored in the vault.");
                     return true;
                 }
 
                 throw new Exception($"HTTP error: {res.Result.HttpStatusCode}");
             }
-
             catch (Exception ex)
             {
                 if (ex.Message.Contains("Secrets Manager can't find the specified secret"))
                 {
-                    _logger.Information(ex, $"The account {secretId} does not exist in the vault; attempting to the create account .");
+                    Logger.Information($"The account {secretId} does not exist in the vault; attempting to the create account .");
                     return CreateAwsAccount(secretId, secret);
                 }
 
-                _logger.Error(ex, $"Failed to set the secret for {secretId}: {ex.Message}.");
+                Logger.Error(ex, $"Failed to set the secret for {secretId}: {ex.Message}.");
                 return false;
             }
         }
@@ -158,7 +302,7 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
 
                 if (res.Result.HttpStatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    _logger.Information($"The secret for {name} has been successfully stored in the vault.");
+                    Logger.Information($"The secret for {name} has been successfully stored in the vault.");
                     return true;
                 }
 
@@ -166,88 +310,36 @@ namespace OneIdentity.DevOps.AwsSecretsManagerVault
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed to set the secret for {name}: {ex.Message}.");
+                Logger.Error(ex, $"Failed to set the secret for {name}: {ex.Message}.");
                 return false;
             }
         }
 
-        public void SetPluginConfiguration(Dictionary<string, string> configuration)
+        private string FetchCredential(string secretId)
         {
-            if (configuration != null && 
-                configuration.ContainsKey(AccessKeyId) &&
-                configuration.ContainsKey(AwsRegion))
-            {
-                _configuration = configuration;
-                _rgx = new Regex("[^a-zA-Z0-9-]");
-                _logger.Information($"Plugin {Name} has been successfully configured.");
-            }
-            else
-            {
-                _logger.Error("Some parameters are missing from the configuration.");
-            }
-        }
-
-        public void SetVaultCredential(string credential)
-        {
-            if (_configuration != null)
-            {
-                try
-                {
-                    _logger.Information($"Configuring plugin {Name} for the AWS vault");
-
-                    var region = Amazon.RegionEndpoint.GetBySystemName(_configuration[AwsRegion]);
-
-                    if (region.DisplayName == "Unknown")
-                        throw new Exception("Specified region is unknown.");
-
-                    var accessKeyId = _configuration[AccessKeyId];
-
-                    //this client doesn't create a connection until it is used. 
-                    _awsClient = new AmazonSecretsManagerClient(accessKeyId, credential, region);
-
-                    _logger.Information($"Plugin {Name} has been successfully configured for the AWS vault.");
-                }
-                catch(Exception ex)
-                {
-                    _logger.Error(ex, $"Plugin configuration failed: {ex.Message}");
-                }
-            }
-            else
-            {
-                _logger.Error("The plugin is missing the configuration.");
-            }
-        }
-
-        public void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public bool TestVaultConnection()
-        {
-            if (_awsClient == null)
-                return false;
-
             try
             {
-                var listRequest = new ListSecretsRequest()
+                var request = new GetSecretValueRequest()
                 {
-                    MaxResults = 1
+                    SecretId = secretId
                 };
-                var task = Task.Run(async () => await _awsClient.ListSecretsAsync(listRequest));
-                var result = task.Result;
-                _logger.Information($"Test vault connection for {DisplayName}: Result = {result}");
-                return true;
+
+                var res = Task.Run(async () => await _awsClient.GetSecretValueAsync(request));
+
+                if (res.Result.HttpStatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    Logger.Information($"The secret for {secretId} has been fetched from the {DisplayName} vault.");
+                    return res.Result.SecretString;
+                }
+
+                Logger.Error($"Failed to fetch the secret for {secretId} in the vault {DisplayName}.");
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Failed the connection test for {DisplayName}: {ex.Message}.");
-                return false;
+                Logger.Error(ex, $"Failed to fetch the secret for {secretId} in the vault {DisplayName}: {ex.Message}.");
             }
-        }
 
-        public void Unload()
-        {
+            return null;
         }
     }
 }

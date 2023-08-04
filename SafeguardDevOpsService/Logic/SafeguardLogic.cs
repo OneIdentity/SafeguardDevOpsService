@@ -263,7 +263,7 @@ namespace OneIdentity.DevOps.Logic
                     // ApplianceSupportsDevOps = ApplianceSupportsDevOps ?? GetSafeguardDevOpsSupport(sg, address ?? _configDb.SafeguardAddress),
                     ApplianceSupportsDevOps = false,  
                     DevOpsInstanceId = _configDb.SvcId,
-                    UserName = servConfig?.User?.UserName,
+                    UserName = servConfig?.User?.Name,
                     UserDisplayName = servConfig?.User?.DisplayName,
                     AdminRoles = servConfig?.User?.AdminRoles,
                     Version = WellKnownData.DevOpsServiceVersion()
@@ -501,8 +501,8 @@ namespace OneIdentity.DevOps.Logic
             {
                 a2aUser = new A2AUser()
                 {
-                    UserName = WellKnownData.DevOpsUserName(_configDb.SvcId),
-                    PrimaryAuthenticationIdentity = thumbprint
+                    Name = WellKnownData.DevOpsUserName(_configDb.SvcId),
+                    PrimaryAuthenticationProvider = new AuthenticationProvider() {Id = -2, Identity = thumbprint}
                 };
 
                 var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
@@ -531,12 +531,12 @@ namespace OneIdentity.DevOps.Logic
             }
             else
             {
-                if (!a2aUser.PrimaryAuthenticationIdentity.Equals(thumbprint,
+                if (!a2aUser.PrimaryAuthenticationProvider.Identity.Equals(thumbprint,
                     StringComparison.InvariantCultureIgnoreCase))
                 {
                     try
                     {
-                        a2aUser.PrimaryAuthenticationIdentity = thumbprint;
+                        a2aUser.PrimaryAuthenticationProvider.Identity = thumbprint;
                         var a2aUserStr = JsonHelper.SerializeObject(a2aUser);
                         var result = DevOpsInvokeMethodFull(_configDb.SvcId, sg, Service.Core, Method.Put, $"Users/{a2aUser.Id}", a2aUserStr);
                         if (result.StatusCode == HttpStatusCode.OK)
@@ -573,7 +573,7 @@ namespace OneIdentity.DevOps.Logic
                 if (_configDb.A2aUserId == null || _configDb.A2aUserId == 0)
                 {
                     var p = new Dictionary<string, string>
-                        {{"filter", $"UserName eq '{WellKnownData.DevOpsUserName(_configDb.SvcId)}'"}};
+                        {{"filter", $"Name eq '{WellKnownData.DevOpsUserName(_configDb.SvcId)}'"}};
 
                     try
                     {
@@ -718,6 +718,7 @@ namespace OneIdentity.DevOps.Logic
                             : WellKnownData.DevOpsVaultRegistrationName(_configDb.SvcId),
                         CertificateUserId = _configDb.A2aUserId.Value,
                         VisibleToCertificateUsers = true,
+                        BidirectionalEnabled = registrationType == A2ARegistrationType.Account,
                         DevOpsInstanceId = _configDb.SvcId
                     };
 
@@ -1112,7 +1113,7 @@ namespace OneIdentity.DevOps.Logic
                         Name = WellKnownData.DevOpsAssetPartitionName(_configDb.SvcId),
                         ManagedBy = new[] {new Identity
                         {
-                            Name = user.UserName,
+                            Name = user.Name,
                             Id = user.Id
                         }}
                     };
@@ -2024,7 +2025,8 @@ namespace OneIdentity.DevOps.Logic
                 NeedsSSLEnabled = safeguardConnection.IgnoreSsl ?? true,
                 NeedsTrustedCertificates = !_configDb.GetAllTrustedCertificates().Any() || !CheckSslConnection(),
                 NeedsWebCertificate = webSslCertificate?.SubjectName.Name != null && webSslCertificate.SubjectName.Name.Equals(WellKnownData.DevOpsServiceDefaultWebSslCertificateSubject),
-                PassedTrustChainValidation = userCertificate != null ? CertificateHelper.ValidateTrustChain(userCertificate, _configDb, _logger) : false
+                PassedTrustChainValidation = userCertificate != null ? CertificateHelper.ValidateTrustChain(userCertificate, _configDb, _logger) : false,
+                ReverseFlowAvailable = _monitoringLogic().ReverseFlowMonitoringAvailable()
             };
 
             return safeguardLogon;
@@ -2248,7 +2250,11 @@ namespace OneIdentity.DevOps.Logic
                     var dbPasswdEntry = tempZipArchive.CreateEntry(WellKnownData.DBPasswordFileName);
                     using (var writer = new StreamWriter(dbPasswdEntry.Open()))
                     {
-                        writer.Write(Encrypt(_configDb.DbPasswd, bkPassphrase));
+                        if (!string.IsNullOrEmpty(_configDb.DbPasswd))
+                        {
+                            writer.Write(Encrypt(_configDb.DbPasswd, bkPassphrase));
+                        }
+
                         fileCount++;
                     }
 
@@ -2329,10 +2335,13 @@ namespace OneIdentity.DevOps.Logic
                     try
                     {
                         var dbEncryptedKey = reader.ReadToEnd();
-                        var dbPassPhrase = Decrypt(dbEncryptedKey, passphrase);
-                        if (dbPassPhrase != null)
+                        if (!string.IsNullOrEmpty(dbEncryptedKey))
                         {
-                            _configDb.SavePassword(dbPassPhrase);
+                            var dbPassPhrase = Decrypt(dbEncryptedKey, passphrase);
+                            if (dbPassPhrase != null)
+                            {
+                                _configDb.SavePassword(dbPassPhrase);
+                            }
                         }
                     }
                     catch
@@ -2371,9 +2380,12 @@ namespace OneIdentity.DevOps.Logic
                 _addonManager().ShutdownAddon(addon);
             }
 
-            // Sleep just for a second to give the caller time to respond before we exit.
-            Thread.Sleep(1000);
-            Task.Run(() => Environment.Exit(54));
+            Task.Run(() =>
+            {
+                // Sleep just for a second to give the caller time to respond before we exit.
+                Thread.Sleep(1000);
+                Environment.Exit(54);
+            });
         }
 
         public IEnumerable<CertificateInfo> GetTrustedCertificates()
@@ -3042,7 +3054,7 @@ namespace OneIdentity.DevOps.Logic
             }
             catch (Exception ex)
             {
-                throw LogAndException($"Failed to add the account {account.Name} to safeguard for '{account.AssetName}': {ex.Message}", ex);
+                throw LogAndException($"Failed to add the account {account.Name} to safeguard for '{account.Asset.Name}': {ex.Message}", ex);
             }
 
             return null;
@@ -3484,7 +3496,7 @@ namespace OneIdentity.DevOps.Logic
                                     Id = 0,
                                     Name = credential.Key,
                                     Description = addon.Manifest.DisplayName + " account",
-                                    AssetId = DevOpsSecretsBrokerCache.Asset.Id,
+                                    Asset = new Asset() {Id = DevOpsSecretsBrokerCache.Asset.Id},
                                     Password = credential.Value
                                 });
                             }
@@ -3522,8 +3534,8 @@ namespace OneIdentity.DevOps.Logic
                             {
                                 addon.VaultAccountId = vaultAccount.Id;
                                 addon.VaultAccountName = vaultAccount.Name;
-                                addon.VaultAssetId = vaultAccount.AssetId;
-                                addon.VaultAssetName = vaultAccount.AssetName;
+                                addon.VaultAssetId = vaultAccount.Asset.Id;
+                                addon.VaultAssetName = vaultAccount.Asset.Name;
                                 _configDb.SaveAddon(addon);
                             }
                         }

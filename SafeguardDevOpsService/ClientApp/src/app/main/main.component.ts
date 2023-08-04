@@ -80,6 +80,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   isAssetAdmin: boolean = false;
   certificateUploaded: boolean = false;
   passedTrustChainValidation: boolean = false;
+  ReverseFlowAvailable: boolean = false;
   passphrase: string;
   pluginInstances = [];
 
@@ -353,6 +354,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         this.needsTrustedCertificates = logon.NeedsTrustedCertificates;
         this.needsSSLEnabled = logon.NeedsSSLEnabled;
         this.passedTrustChainValidation = logon.PassedTrustChainValidation;
+        this.ReverseFlowAvailable = logon.ReverseFlowAvailable;
       }),
       switchMap(() => this.checkA2ARegistration()),
       tap((nullRegistration: any) => {
@@ -587,6 +589,7 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.error = null;
     let pluginInstances = cloneDeep(this.plugins.filter(p => p.RootPluginName == plugin.RootPluginName));
     this.editPluginService.openProperties(pluginInstances);
+    this.editPluginService.reverseFlowAvailable = this.ReverseFlowAvailable;
     this.openWhat = 'plugin';
     this.openDrawer = 'properties';
     this.drawer.open();
@@ -757,7 +760,23 @@ export class MainComponent implements OnInit, AfterViewInit {
       error => {
         this.error = error;
       });
-  }
+
+    setTimeout(() => {
+      if (enabled === true) {
+        this.serviceClient.getMonitor().pipe(
+          untilDestroyed(this)
+        ).subscribe(
+          (status: any) => {
+            if (status.StatusMessage != null) {
+              this.snackBar.open(status.StatusMessage, 'Dismiss', { duration: 10000 });
+            }
+          },
+          error => {
+            this.snackBar.open('Failed to get the monitor status: ' + this.error, 'Dismiss', { duration: 10000});
+          });
+      }
+    }, 3000);
+}
 
   logout(): void {
     this.error = null;

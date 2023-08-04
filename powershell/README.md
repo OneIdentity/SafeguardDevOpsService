@@ -86,7 +86,7 @@ Then, you can install a pre-release version of Safeguard-DevOps by running:
 Once you have loaded the module, you can begin to configure the Safeguard Secrets Broker
 using the `Initialize-SgDevOps` cmdlet. This cmdlet will guide you through initial configuration
 up to the point of configuring the Safeguard A2A registration and registering accounts
-whose credentials should be mapped to various third party vault plugins. However, at one
+whose credentials should be mapped to various third-party vault plugins. However, at one
 point during the initial configuration, it will prompt for a client certificate. If your
 company has a client certificate including a private key that can be uploaded to the
 Secrets Broker, the cmdlet will allow you to complete the configuration in one step. Otherwise
@@ -176,7 +176,7 @@ Asset: <Asset Name>
 Account: <Account Name>
 ```
 
-Install a third party plugin for pushing the credentials to the corresponding vault.
+Install a third-party plugin for pushing the credentials to the corresponding vault.
 The plugin zip files should have been downloaded.
 
 ```PowerShell
@@ -209,7 +209,7 @@ Asset: <Asset or System Name>
 Account: <Account Name>
 ```
 
-Assign a third party vault credential to the plugin. This credential must have been added
+Assign a third-party vault credential to the plugin. This credential must have been added
 to Safeguard as an 'Other Managed' account. The information for this account can be pulled
 from Get-SgDevOpsAvailableAssetAccount.
 
@@ -348,6 +348,7 @@ update this list.
 - Find-SgDevOpsAvailableAssetAccount
 - Get-SgDevOpsApplianceStatus
 - Get-SgDevOpsAvailableAssetAccount
+- Get-SgDevOpsBackup
 - Get-SgDevOpsClientCertificate
 - Get-SgDevOpsConfiguration
 - Get-SgDevOpsLog
@@ -370,6 +371,7 @@ update this list.
 - Remove-SgDevOpsMappedAssetAccount
 - Remove-SgDevOpsTrustedCertificate
 - Restart-SgDevOps
+- Restore-SgDevOpsBackup
 - Sync-SgDevOpsTrustedCertificate
 - Unregister-SgDevOpsAssetAccount
 
@@ -378,6 +380,10 @@ update this list.
 - Disable-SgDevOpsMonitor
 - Enable-SgDevOpsMonitor
 - Get-SgDevOpsMonitor
+- Get-SgDevOpsReverseFlowMonitor
+- Invoke-SgDevOpsReverseFlowPollNow
+- Set-SgDevOpsMonitor
+- Set-SgDevOpsReverseFlowMonitor
 
 ### Addons
 
@@ -387,10 +393,13 @@ update this list.
 
 ### Plugins
 
+- Add-SgDevOpsPluginInstances
 - Get-SgDevOpsPlugin
+- Get-SgDevOpsPluginInstances
 - Get-SgDevOpsPluginSetting
 - Get-SgDevOpsPluginVaultAccount
 - Install-SgDevOpsPlugin
 - Remove-SgDevOpsPlugin
+- Remove-SgDevOpsPluginInstances
 - Set-SgDevOpsPluginSetting
 - Set-SgDevOpsPluginVaultAccount

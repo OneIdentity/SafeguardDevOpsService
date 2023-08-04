@@ -90,7 +90,7 @@ FunctionsToExport = @(
      'Get-SgDevOpsApplianceStatus', 'Initialize-SgDevOpsAppliance', 'Clear-SgDevOpsAppliance',
      'Get-SgDevOpsTlsValidation', 'Enable-SgDevOpsTlsValidation', 'Disable-SgDevOpsTlsValidation',
      'Connect-SgDevOps', 'Disconnect-SgDevOps',  'Restart-SgDevOps', # <-- session init / deinit
-     'Get-SgDevOpsLog',
+     'Get-SgDevOpsLog', 'Get-SgDevOpsBackup', 'Restore-SgDevOpsBackup',
      'Invoke-SgDevOpsMethod', # <-- this is the function used to implement most of the others
 
      # help.psm1
@@ -116,12 +116,14 @@ FunctionsToExport = @(
      'Get-SgDevOpsPluginVaultAccount', 'Set-SgDevOpsPluginVaultAccount',
      'Get-SgDevOpsPluginSetting', 'Set-SgDevOpsPluginSetting',
      'Get-SgDevOpsMappedAssetAccount', 'Add-SgDevOpsMappedAssetAccount', 'Remove-SgDevOpsMappedAssetAccount',
+     'Get-SgDevOpsPluginInstances', 'Add-SgDevOpsPluginInstances', 'Remove-SgDevOpsPluginInstances',
 
      # addons.psm1
      'Get-SgDevOpsAddon', 'Install-SgDevOpsAddon', 'Remove-SgDevOpsAddon',
 
      # monitor.psm1
-     'Get-SgDevOpsMonitor', 'Enable-SgDevOpsMonitor', 'Disable-SgDevOpsMonitor'
+     'Get-SgDevOpsMonitor', 'Enable-SgDevOpsMonitor', 'Disable-SgDevOpsMonitor', 'Set-SgDevOpsMonitor',
+     'Get-SgDevOpsReverseFlowMonitor', 'Set-SgDevOpsReverseFlowMonitor', 'Invoke-SgDevOpsReverseFlowPollNow'
 
 )
 

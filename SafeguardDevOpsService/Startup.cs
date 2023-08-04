@@ -22,7 +22,7 @@ namespace OneIdentity.DevOps
 
         private static readonly string ServiceName = "Safeguard Secrets Broker for DevOps";
         private static readonly string ApiName = $"{ServiceName} API";
-        private static readonly string ApiVersion = "v1";
+        private static readonly string ApiVersion = "v2";
         private static readonly string VersionApiName = $"{ApiName} {ApiVersion}";
         private static readonly string ApiDescription = "Web API for controlling the distribution of secrets from Safeguard for Privileged Passwords " +
                                                         "to third-party vaults and orchestration frameworks.  This gives your developers frictionless integration " +
@@ -117,11 +117,12 @@ namespace OneIdentity.DevOps
             builder.RegisterLogger();
             builder.Register(c => new LiteDbConfigurationRepository()).As<IConfigurationRepository>().SingleInstance();
             builder.Register(c => new SafeguardLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<Func<IPluginsLogic>>(), c.Resolve<Func<IMonitoringLogic>>(), c.Resolve<Func<IAddonLogic>>(), c.Resolve<Func<IAddonManager>>())).As<ISafeguardLogic>().SingleInstance();
-            builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>(), c.Resolve<ISafeguardLogic>())).As<IPluginManager>().SingleInstance();
+            builder.Register(c => new PluginManager(c.Resolve<IConfigurationRepository>(), c.Resolve<ISafeguardLogic>(), c.Resolve<ICredentialManager>())).As<IPluginManager>().SingleInstance();
             builder.Register(c => new AddonManager(c.Resolve<IConfigurationRepository>(), c.Resolve<Func<IAddonLogic>>())).As<IAddonManager>().SingleInstance();
             builder.Register(c => new PluginsLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>(), c.Resolve<ISafeguardLogic>())).As<IPluginsLogic>().SingleInstance();
-            builder.Register(c => new MonitoringLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>())).As<IMonitoringLogic>().SingleInstance();
+            builder.Register(c => new MonitoringLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<IPluginManager>(), c.Resolve<ICredentialManager>(), c.Resolve<ISafeguardLogic>())).As<IMonitoringLogic>().SingleInstance();
             builder.Register(c => new AddonLogic(c.Resolve<IConfigurationRepository>(), c.Resolve<Func<IAddonManager>>(), c.Resolve<ISafeguardLogic>(), c.Resolve<IPluginsLogic>())).As<IAddonLogic>().SingleInstance();
+            builder.Register(c => new CredentialManager()).As<ICredentialManager>().SingleInstance();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)

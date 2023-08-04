@@ -300,7 +300,7 @@ function Get-ApplianceToken
         [Parameter(Mandatory=$false)]
         [switch]$Insecure,
         [Parameter(Mandatory=$false)]
-        [int]$ApplianceApiVersion = 3
+        [int]$ApplianceApiVersion = 4
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
@@ -538,7 +538,7 @@ function Get-SgDevOpsApplianceStatus
         [Parameter(Mandatory=$false)]
         [switch]$Insecure,
         [Parameter(Mandatory=$false)]
-        [int]$ServiceApiVersion = 1
+        [int]$ServiceApiVersion = 2
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
@@ -706,7 +706,7 @@ function Connect-SgDevOps
         [Parameter(Mandatory=$false)]
         [switch]$Insecure,
         [Parameter(Mandatory=$false)]
-        [int]$ServiceApiVersion = 1
+        [int]$ServiceApiVersion = 2
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }
@@ -1002,9 +1002,9 @@ function Initialize-SgDevOpsAppliance
         [Parameter(Mandatory=$false)]
         [switch]$Force,
         [Parameter(Mandatory=$false)]
-        [int]$ApplianceApiVersion = 3,
+        [int]$ApplianceApiVersion = 4,
         [Parameter(Mandatory=$false)]
-        [int]$ServiceApiVersion = 1
+        [int]$ServiceApiVersion = 2
     )
 
     if (-not $PSBoundParameters.ContainsKey("ErrorAction")) { $ErrorActionPreference = "Stop" }

@@ -37,15 +37,15 @@ namespace OneIdentity.DevOps.Data.Spp
         /// <summary>
         /// Asset Id
         /// </summary>
-        public int SystemId { get; set; }
+        public int AssetId { get; set; }
         /// <summary>
         /// Asset name
         /// </summary>
-        public string SystemName { get; set; }
+        public string AssetName { get; set; }
         /// <summary>
         /// Asset description
         /// </summary>
-        public string SystemDescription { get; set; }
+        public string AssetDescription { get; set; }
         /// <summary>
         /// Asset network address
         /// </summary>

@@ -242,6 +242,13 @@ namespace OneIdentity.DevOps.Logic
                 {
                     plugin.AssignedCredentialType = CredentialType.Password;
                 }
+                if (!plugin.SupportsReverseFlow && pluginConfiguration.ReverseFlowEnabled)
+                {
+                    _logger.Error($"The plugin {plugin.Name} does not support reverse flow. Setting ReverseFlowEnabled to false");
+                    pluginConfiguration.ReverseFlowEnabled = false;
+                }
+
+                plugin.ReverseFlowEnabled = pluginConfiguration.ReverseFlowEnabled;
 
                 plugin = _configDb.SavePluginConfiguration(plugin);
                 plugin.IsLoaded = _pluginManager.IsLoadedPlugin(plugin.Name);
@@ -302,6 +309,50 @@ namespace OneIdentity.DevOps.Logic
                 _configDb.SavePluginConfiguration(plugin);
 
                 return new PluginState() { Disabled = plugin.IsDisabled };
+            }
+        }
+
+        public PluginReverseFlowState GetPluginReverseFlowState(string name)
+        {
+            lock (_pluginLock)
+            {
+                var plugin = _configDb.GetPluginByName(name);
+
+                if (plugin == null)
+                {
+                    var msg = $"Plugin {name} not found";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg, HttpStatusCode.NotFound);
+                }
+
+                return new PluginReverseFlowState() { Enabled = plugin.ReverseFlowEnabled };
+            }
+        }
+
+        public PluginReverseFlowState UpdatePluginReverseFlowState(string name, bool state)
+        {
+            lock (_pluginLock)
+            {
+                var plugin = _configDb.GetPluginByName(name);
+
+                if (plugin == null)
+                {
+                    var msg = $"Plugin {name} not found";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg, HttpStatusCode.NotFound);
+                }
+
+                if (!plugin.SupportsReverseFlow && state)
+                {
+                    var msg = $"Plugin {name} does not support reverse flow";
+                    _logger.Error(msg);
+                    throw new DevOpsException(msg, HttpStatusCode.BadRequest);
+                }
+
+                plugin.ReverseFlowEnabled = state;
+                _configDb.SavePluginConfiguration(plugin);
+
+                return new PluginReverseFlowState() { Enabled = plugin.ReverseFlowEnabled };
             }
         }
 
@@ -422,8 +473,8 @@ namespace OneIdentity.DevOps.Logic
                                 AltAccountName = account.AltAccountName,
                                 AccountId = retrievableAccount.AccountId,
                                 ApiKey = retrievableAccount.ApiKey,
-                                AssetName = retrievableAccount.SystemName,
-                                SystemId = retrievableAccount.SystemId,
+                                AssetName = retrievableAccount.AssetName,
+                                SystemId = retrievableAccount.AssetId,
                                 DomainName = retrievableAccount.DomainName,
                                 NetworkAddress = retrievableAccount.NetworkAddress,
                                 VaultName = name
@@ -512,16 +563,16 @@ namespace OneIdentity.DevOps.Logic
                 {
                     AccountName = WellKnownData.DevOpsCredentialName(plugin.Name, _configDb.SvcId),
                     AccountDescription = "Internal account",
-                    SystemName = WellKnownData.DevOpsAssetName(_configDb.SvcId),
-                    SystemDescription = WellKnownData.DevOpsAssetName(_configDb.SvcId)
+                    AssetName = WellKnownData.DevOpsAssetName(_configDb.SvcId),
+                    AssetDescription = WellKnownData.DevOpsAssetName(_configDb.SvcId)
                 };
 
                 var addon = _configDb.GetAllAddons().FirstOrDefault(a => a.Manifest.PluginName.Equals(plugin.Name));
                 if (addon != null)
                 {
                     account.AccountName = addon.VaultAccountName;
-                    account.SystemName = addon.Name;
-                    account.SystemDescription = addon.Name;
+                    account.AssetName = addon.Name;
+                    account.AssetDescription = addon.Name;
                 }
 
                 return account;

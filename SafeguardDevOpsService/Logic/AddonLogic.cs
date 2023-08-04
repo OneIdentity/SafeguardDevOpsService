@@ -341,7 +341,7 @@ namespace OneIdentity.DevOps.Logic
                         var newAccount = new AssetAccount()
                         {
                             Name = vaultCredential.Key,
-                            AssetId = assetId.Value
+                            Asset = new Asset() {Id = assetId.Value}
                         };
                         var p = addon.VaultCredentials[newAccount.Name];
 

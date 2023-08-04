@@ -10,7 +10,6 @@ namespace OneIdentity.DevOps.SmsTextEmail
     public class PluginDescriptor : ILoadablePlugin
     {
         private Dictionary<string,string> _configuration;
-        private ILogger _logger;
 
         private const string SmtpServer = "smtp.server.test";
         private const string FromAddress = "someone@somewhere.test";
@@ -25,8 +24,12 @@ namespace OneIdentity.DevOps.SmsTextEmail
         public string Name => "SmsTextEmail";
         public string DisplayName => "Sms Text & Email";
         public string Description => "This is the SMS email to text plugin. DO NOT USE IN PRODUCTION";
+        public bool SupportsReverseFlow => false;
         public CredentialType[] SupportedCredentialTypes => new[] {CredentialType.Password, CredentialType.SshKey, CredentialType.ApiKey};
+
         public CredentialType AssignedCredentialType { get; set; } = CredentialType.Password;
+        public bool ReverseFlowEnabled { get; set; } = false;
+        public ILogger Logger { get; set; }
 
         public Dictionary<string,string> GetPluginInitialConfiguration()
         {
@@ -48,63 +51,138 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 _toAddresses = configuration[ToAddressesName].Split(';');
 
                 if (_toAddresses.Length == 0)
-                    _logger.Information("No recipient addresses were found.");
+                    Logger.Information("No recipient addresses were found.");
 
-                _logger.Information($"Plugin {Name} has been successfully configured.");
+                Logger.Information($"Plugin {Name} has been successfully configured.");
             }
             else
             {
-                _logger.Error("Some parameters are missing from the configuration.");
+                Logger.Error("Some parameters are missing from the configuration.");
             }
         }
 
         public void SetVaultCredential(string credential)
         {
-            _logger.Information($"Plugin {Name} successfully authenticated.");
+            Logger.Information($"Plugin {Name} successfully authenticated.");
         }
 
-        public bool SetPassword(string asset, string account, string password, string altAccountName = null)
+        public bool TestVaultConnection()
         {
-            if (AssignedCredentialType != CredentialType.Password)
+            Logger.Information($"Successfully passed the connection test for Password for {DisplayName}.");
+            return true;
+        }
+
+        public string GetCredential(CredentialType credentialType, string asset, string account, string altAccountName)
+        {
+            switch (credentialType)
             {
-                _logger.Error("This plugin instance does not handle the Password credential type.");
-                return false;
+                case CredentialType.Password:
+                    return GetPassword(asset, account, altAccountName);
+                case CredentialType.SshKey:
+                    return GetSshKey(asset, account, altAccountName);
+                case CredentialType.ApiKey:
+                    Logger.Error($"The {DisplayName} plugin instance does not fetch the ApiKey credential type.");
+                    break;
+                default:
+                    Logger.Error($"Invalid credential type requested from the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public string SetCredential(CredentialType credentialType, string asset, string account, string[] credential, string altAccountName)
+        {
+            switch (credentialType)
+            {
+                case CredentialType.Password:
+                    return SetPassword(asset, account, credential, altAccountName);
+                case CredentialType.SshKey:
+                    return SetSshKey(asset, account, credential, altAccountName);
+                case CredentialType.ApiKey:
+                    return SetApiKey(asset, account, credential, altAccountName);
+                default:
+                    Logger.Error($"Invalid credential type sent to the {DisplayName} plugin instance.");
+                    break;
+            }
+
+            return null;
+        }
+
+        public void Unload()
+        {
+            Logger = null;
+            _configuration.Clear();
+            _configuration = null;
+        }
+
+        private string GetPassword(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
+            return null;
+        }
+
+        private string GetSshKey(string asset, string account, string altAccountName)
+        {
+            if (!ValidationHelper.CanReverseFlow(this) || !ValidationHelper.CanHandleSshKey(this))
+            {
+                return null;
+            }
+
+            return null;
+        }
+
+        private string SetPassword(string asset, string account, string[] password, string altAccountName)
+        {
+            if (!ValidationHelper.CanHandlePassword(this))
+            {
+                return null;
+            }
+
+            if (password is not { Length: 1 })
+            {
+                Logger.Error($"Invalid or null credential sent to {DisplayName} plugin.");
+                return null;
             }
 
             var message = new MailMessage()
             {
                 From = new MailAddress(_configuration[FromAddressName]),
                 Subject = "Message from Safeguard Secrets Broker for DevOps",
-                Body = altAccountName != null ? $"{altAccountName}\n{password}" : $"{asset} - {account}\n{password}"
+                Body = altAccountName != null ? $"{altAccountName}\n{password[0]}" : $"{asset} - {account}\n{password[0]}"
             };
 
-            return StoreCredential(message);
+            StoreCredential(message);
+            return password[0];
         }
 
-        public bool SetSshKey(string asset, string account, string sshKey, string altAccountName = null)
+        private string SetSshKey(string asset, string account, string[] sshKey, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.SshKey)
+            if (!ValidationHelper.CanHandleSshKey(this))
             {
-                _logger.Error("This plugin instance does not handle the SshKey credential type.");
-                return false;
+                return null;
             }
 
             var message = new MailMessage()
             {
                 From = new MailAddress(_configuration[FromAddressName]),
                 Subject = "Message from Safeguard Secrets Broker for DevOps",
-                Body = altAccountName != null ? $"{altAccountName}\n{sshKey}" : $"{asset} - {account}\n{sshKey}"
+                Body = altAccountName != null ? $"{altAccountName}\n{sshKey[0]}" : $"{asset} - {account}\n{sshKey[0]}"
             };
 
-            return StoreCredential(message);
+            StoreCredential(message);
+            return sshKey[0];
         }
 
-        public bool SetApiKey(string asset, string account, string[] apiKeys, string altAccountName = null)
+        private string SetApiKey(string asset, string account, string[] apiKeys, string altAccountName)
         {
-            if (AssignedCredentialType != CredentialType.ApiKey)
+            if (!ValidationHelper.CanHandleApiKey(this))
             {
-                _logger.Error("This plugin instance does not handle the ApiKey credential type.");
-                return false;
+                return null;
             }
 
             var body = string.Empty;
@@ -119,7 +197,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
                 }
                 else
                 {
-                    _logger.Error($"The ApiKey {asset} - {account} - {apiKey.Name} {apiKey.ClientId} failed to save to the {this.DisplayName} vault.");
+                    Logger.Error($"The ApiKey {asset} - {account} - {apiKey.Name} {apiKey.ClientId} failed to save to the {DisplayName} vault.");
                 }
             }
 
@@ -133,25 +211,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
             return StoreCredential(message);
         }
 
-        public void SetLogger(ILogger logger)
-        {
-            _logger = logger;
-        }
-
-        public bool TestVaultConnection()
-        {
-            _logger.Information($"Successfully passed the connection test for Password for {DisplayName}.");
-            return true;
-        }
-
-        public void Unload()
-        {
-            _logger = null;
-            _configuration.Clear();
-            _configuration = null;
-        }
-
-        private bool StoreCredential(MailMessage message)
+        private string StoreCredential(MailMessage message)
         {
             foreach (var address in _toAddresses)
             {
@@ -161,7 +221,7 @@ namespace OneIdentity.DevOps.SmsTextEmail
             var client = new SmtpClient(_configuration[SmtpServerAddressName]);
             client.Send(message);
 
-            return true;
+            return null;
         }
     }
 }

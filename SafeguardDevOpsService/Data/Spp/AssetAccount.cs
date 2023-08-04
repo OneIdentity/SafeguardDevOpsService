@@ -36,25 +36,9 @@ namespace OneIdentity.DevOps.Data.Spp
         /// </summary>
         public bool Disabled { get; set; }
         /// <summary>
-        /// Asset Id
+        /// Asset
         /// </summary>
-        public int AssetId { get; set; }
-        /// <summary>
-        /// Asset name
-        /// </summary>
-        public string AssetName { get; set; }
-        /// <summary>
-        /// Asset network address
-        /// </summary>
-        public string AssetNetworkAddress { get; set; }
-        /// <summary>
-        /// Asset partition Id
-        /// </summary>
-        public int AssetPartitionId { get; set; }
-        /// <summary>
-        /// Asset partition name
-        /// </summary>
-        public string AssetPartitionName { get; set; }
+        public Asset Asset { get; set; }
         /// <summary>
         /// Date this entity was created.
         /// </summary>

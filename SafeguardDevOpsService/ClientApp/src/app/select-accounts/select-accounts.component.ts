@@ -132,7 +132,7 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
     let sortby = '';
 
     if (this.assetSearchVal?.length > 0) {
-      filterStr = `(SystemName contains '${this.assetSearchVal}' or SystemNetworkAddress contains '${this.assetSearchVal}')`;
+      filterStr = `(Asset.Name contains '${this.assetSearchVal}' or Asset.NetworkAddress contains '${this.assetSearchVal}')`;
     }
     if (this.accountSearchVal?.length > 0) {
       if (filterStr.length > 0) {
@@ -145,7 +145,7 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
       const dir = this.sort.direction === 'desc' ? '-' : '';
 
       if (this.sort.active === 'asset') {
-        sortby = `${dir}SystemName,${dir}SystemNetworkAddress`;
+        sortby = `${dir}Asset.Name,${dir}Asset.NetworkAddress`;
       } else if (this.sort.active === 'account') {
         sortby = `${dir}Name,${dir}DomainName`;
       }
@@ -219,9 +219,15 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
   selectAccounts(): void {
     this.selection.selected.forEach(sel => {
       if (this.pluginAccounts.indexOf(x => x.Id === sel.Id) === -1) {
-        this.pluginAccounts.push(sel);
+        this.pluginAccounts.push(this.mapAvailableToSelectedAccount(sel));
       }
     });
     this.editPluginService.closeAccounts(this.pluginAccounts);
   }
+
+  private mapAvailableToSelectedAccount(account: any): any {
+    account.AssetName = account.Asset.Name;
+    return account;
+  }
+
 }

@@ -15,13 +15,13 @@ using OneIdentity.SafeguardDotNet;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 #pragma warning disable 1573
 
-namespace OneIdentity.DevOps.Controllers.V1
+namespace OneIdentity.DevOps.Controllers.V2
 {
     /// <summary>
     /// Manage the configuration of Safeguard Secrets Broker for DevOps and its association with Safeguard for Privileged Passwords.
     /// </summary>
     [ApiController]
-    [Route("service/devops/v1/[controller]")]
+    [Route("service/devops/v2/[controller]")]
     public class SafeguardController : ControllerBase
     {
         private readonly Serilog.ILogger _logger;
@@ -251,7 +251,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </summary>
         /// <remarks>
         /// The configuration of the Safeguard Secrets Broker for DevOps restored by uploading a backup file.
-        /// 
+        ///
         /// The backup file must be converted to a base64 string.&lt;br /&gt;
         /// Powershell example:&lt;br /&gt;
         ///   $fileContentBytes = get-content 'backup-file' -Encoding Byte&lt;br /&gt;
@@ -339,7 +339,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A service in Safeguard for Privileged Passwords.
         /// The most secure way to create this certificate is using a certificate signing request (CSR).
         ///
-        /// (see GET /service/devops/v1/Safeguard/CSR)
+        /// (see GET /service/devops/v2/Safeguard/CSR)
         /// </remarks>
         /// <response code="200">Success.</response>
         /// <response code="404">Not found.</response>
@@ -364,9 +364,9 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// This endpoint can receive either a PFX formatted certificate that includes the private key and a passphrase for decrypting
         /// that certificate, or it can receive a base64 (or PEM) encoded certificate that was issued based on a generated CSR.
         ///
-        /// A client certificate must be uploaded before calling the POST /service/devops/v1/Safeguard/Configure endpoint.
+        /// A client certificate must be uploaded before calling the POST /service/devops/v2/Safeguard/Configure endpoint.
         ///
-        /// (see GET /service/devops/v1/Safeguard/CSR)
+        /// (see GET /service/devops/v2/Safeguard/CSR)
         /// </remarks>
         /// <param name="certInfo">The certificate info should contain the base64 (or PEM) encoded certificate and pass phrase if the certificate includes a private key.</param>
         /// <response code="200">Success.</response>
@@ -412,7 +412,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// it generates a self-signed web server certificate.  To ensure secure access this web certificate should
         /// be replaced.  The most secure way to create this certificate is using a certificate signing request (CSR).
         ///
-        /// (see GET /service/devops/v1/Safeguard/CSR)
+        /// (see GET /service/devops/v2/Safeguard/CSR)
         /// </remarks>
         /// <response code="200">Success</response>
         /// <response code="404">Not found</response>
@@ -441,7 +441,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         ///
         /// Safeguard Secrets Broker for DevOps will be restarted so the new certificate can be applied.
         ///
-        /// (see GET /service/devops/v1/Safeguard/CSR)
+        /// (see GET /service/devops/v2/Safeguard/CSR)
         /// </remarks>
         /// <param name="certInfo">The certificate info should contain the base64 (or PEM) encoded certificate and pass phrase if the certificate includes a private key.</param>
         /// <param name="restart">Restart Safeguard Secrets Broker for DevOps after certificate installation.</param>
@@ -503,8 +503,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// secure certificate authority (CA) resulting in a signed certificate.  This certificate can be uploaded as a
         /// web server certificate or a client certificate for Safeguard Secrets Broker for DevOps to use for secure communications.
         ///
-        /// (see POST /service​/devops​/v1​/Safeguard​/ClientCertificate)
-        /// (see POST /service/devops/v1/Safeguard/WebServerCertificate)
+        /// (see POST /service​/devops​/v2​/Safeguard​/ClientCertificate)
+        /// (see POST /service/devops/v2/Safeguard/WebServerCertificate)
         /// </remarks>
         /// <param name="size">Size of the certificate</param>
         /// <param name="subjectName">Subject name of the certificate</param>
@@ -536,8 +536,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// retrievable accounts to the A2A registration associated with Safeguard Secrets Broker for DevOps.  Adding and removing
         /// asset account registrations should be done using Safeguard Secrets Broker for DevOps.
         ///
-        /// (see GET /service​/devops​/v1​/Safeguard​/A2ARegistration​/RetrievableAccounts)
-        /// (see POST /service​/devops​/v1​/Safeguard​/A2ARegistration​/RetrievableAccounts)
+        /// (see GET /service​/devops​/v2​/Safeguard​/A2ARegistration​/RetrievableAccounts)
+        /// (see POST /service​/devops​/v2​/Safeguard​/A2ARegistration​/RetrievableAccounts)
         /// </remarks>
         /// <param name="filter">Filter results. Available operators: eq, ne, gt, ge, lt, le, and, or, not, contains, ieq, icontains, in [ {item1}, {item2}, etc], (). Use \ to escape quotes in strings.</param>
         /// <param name="page">Which page (starting with 0) of data to return</param>
@@ -564,8 +564,8 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// <remarks>
         /// This endpoint returns a list of A2A registrations that can be registered with Safeguard Secrets Broker for DevOps.
         ///
-        /// (see GET /service​/devops​/v1​/Safeguard​/A2ARegistration​)
-        /// (see PUT /service​/devops​/v1​/Safeguard​/A2ARegistration​/{id})
+        /// (see GET /service​/devops​/v2​/Safeguard​/A2ARegistration​)
+        /// (see PUT /service​/devops​/v2/Safeguard​/A2ARegistration​/{id})
         /// </remarks>
         /// <param name="filter">Filter results. Available operators: eq, ne, gt, ge, lt, le, and, or, not, contains, ieq, icontains, in [ {item1}, {item2}, etc], (). Use \ to escape quotes in strings.</param>
         /// <param name="page">Which page (starting with 0) of data to return</param>
@@ -751,7 +751,7 @@ namespace OneIdentity.DevOps.Controllers.V1
         /// </summary>
         /// <remarks>
         /// Some Safeguard Secrets Broker for DevOps operations require that the service is restarted.  Some of these operations include replacing or regenerating
-        /// Safeguard Secrets Broker for DevOps web SSL certificate and updating third party vault plugins.
+        /// Safeguard Secrets Broker for DevOps web SSL certificate and updating third-party vault plugins.
         /// </remarks>
         /// <response code="204">Success</response>
         [SafeguardSessionKeyAuthorization]

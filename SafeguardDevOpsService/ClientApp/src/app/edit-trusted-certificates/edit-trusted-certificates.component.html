@@ -25,7 +25,7 @@
     </div>
     <button mat-flat-button (click)="import()" color="primary" cdkFocusInitial>Import from Safeguard</button>
     <div class="spacer"></div>
-    <mat-checkbox [(ngModel)]="useSsl" (disabled)="trustedCertificates.length == 0" (change)="updateUseSsl()"
+    <mat-checkbox color="primary" [(ngModel)]="useSsl" (disabled)="trustedCertificates.length == 0" (change)="updateUseSsl()"
       matTooltip="Use trusted certificates to validate an SSL connection to Safeguard">Verify TLS Certifcate
     </mat-checkbox>
   </div>
