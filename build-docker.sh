@@ -45,5 +45,5 @@ if [ ! -z "$(docker images -q $ImageName)" ]; then
     docker rmi --force "$ImageName"
 fi
 echo "Building a new image: $ImageName ..."
-docker build --no-cache -t "$ImageName" -f "docker/$DockerFile" $ScriptDir
+docker build --no-cache -t "$ImageName" -f "docker/$DockerFile" $ScriptDir 2>&1
 set +e
