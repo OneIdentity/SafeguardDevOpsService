@@ -245,7 +245,18 @@ namespace OneIdentity.DevOps.AzureKeyVault
         {
             try
             {
-                Task.Run(async () => await _secretsClient.SetSecretAsync(name, payload));
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await _secretsClient.SetSecretAsync(name, payload);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"Failed to store secrets for {name}: {ex.Message}");
+                    }
+
+                });
 
                 Logger.Information($"The secret for {name} has been successfully stored in the vault.");
                 return true;
