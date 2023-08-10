@@ -314,7 +314,7 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.ApplianceAddress = config.Appliance.ApplianceAddress;
     this.DevOpsInstanceId = config.Appliance.DevOpsInstanceId;
     this.DevOpsVersion = config.Appliance.Version;
-    this.UserName = config.A2AUser?.UserName;
+    this.UserName = config.A2AUser?.Name;
     this.UserDisplayName = config.A2AUser?.DisplayName;
     this.IdentityProviderName = config.A2AUser?.IdentityProviderName;
     this.A2ARegistrationName = config.A2ARegistration?.AppName;
