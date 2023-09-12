@@ -1,4 +1,4 @@
-# Global Variables:
+﻿# Global Variables:
 #
 # semanticVersion.<generated build number> gets set in a variable called VersionString.
 #   VersionString is used to replace placeholders in assemblies and packages.
@@ -10,8 +10,8 @@
 #
 variables:
   - name: semanticVersion
-    value: "7.0.1"
+    value: "7.4.0"
   - name: isPrerelease
     value: ${{ true }}
   - name: isReleaseBranch
-    value: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-'), eq(variables['Build.SourceBranch'], 'refs/heads/multipleplugininstance') ) ]
+    value: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
