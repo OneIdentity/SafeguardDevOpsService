@@ -320,7 +320,7 @@ namespace OneIdentity.DevOps.Logic
                 //  so Secrets Broker does not have the SPP credentials that are required to query the current vault account credentials.
                 //  However, the monitor can still be started using the existing vault credentials. If syncing doesn't appear to be working
                 //  the monitor can be stopped and restarted which will cause a refresh of the vault credentials.
-                _pluginManager.RefreshPluginCredentials();
+                var refreshOk = _pluginManager.RefreshPluginCredentials();
 
                 // Make sure that the credentialManager cache is empty.
                 _credentialManager.Clear();
@@ -335,9 +335,19 @@ namespace OneIdentity.DevOps.Logic
                 }
 
                 var apiKeys = new List<SecureString>();
+                var plugins = new Dictionary<string,Plugin>();
                 foreach (var account in _retrievableAccounts)
                 {
                     apiKeys.Add(account.ApiKey.ToSecureString());
+                    if (!plugins.ContainsKey(account.VaultName))
+                    {
+                        plugins.Add(account.VaultName, _configDb.GetPluginByName(account.VaultName));
+                    }
+                }
+
+                if (!refreshOk && plugins.Any())
+                {
+                    _pluginManager.RefreshPluginCredentials(plugins.Values.ToList());
                 }
 
                 _eventListener = _a2AContext.GetPersistentA2AEventListener(apiKeys, PasswordChangeHandler);

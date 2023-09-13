@@ -704,7 +704,7 @@ namespace OneIdentity.DevOps.Logic
             return plugin;
         }
 
-        public void RefreshPluginCredentials()
+        public bool RefreshPluginCredentials()
         {
             try
             {
@@ -716,13 +716,26 @@ namespace OneIdentity.DevOps.Logic
                 {
                     RefreshPluginCredential(sgConnection, plugin);
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.Warning(ex, $"Failed to refresh the plugin vault credentials. If account credentials are not being synced correctly, try stopping and restarting the monitor. Reason: {ex.Message}.");
             }
+
+            return false;
         }
-        
+
+        public void RefreshPluginCredentials(List<Plugin> plugins)
+        {
+            foreach (var plugin in plugins)
+            {
+                if (!string.IsNullOrEmpty(plugin.VaultAccountApiKey))
+                    SendPluginVaultCredentials(plugin.Name, plugin.VaultAccountApiKey);
+            }
+        }
+
         private void RefreshPluginCredential(ISafeguardConnection sgConnection, Plugin plugin)
         {
             if (plugin.VaultAccountId.HasValue)
@@ -734,6 +747,12 @@ namespace OneIdentity.DevOps.Logic
                     if (a2aAccount != null)
                     {
                         SendPluginVaultCredentials(plugin.Name, a2aAccount.ApiKey);
+                        if (string.IsNullOrEmpty(plugin.VaultAccountApiKey) ||
+                            !plugin.VaultAccountApiKey.Equals(a2aAccount.ApiKey))
+                        {
+                            plugin.VaultAccountApiKey = a2aAccount.ApiKey;
+                            _configDb.SavePluginConfiguration(plugin);
+                        }
                         return;
                     }
 
