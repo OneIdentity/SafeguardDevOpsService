@@ -62,7 +62,7 @@ namespace OneIdentity.DevOps.SppSecrets
             if (_configuration != null)
             {
                 _sppConnection = Safeguard.Connect(_configuration[SppAppliance], "local", _configuration[SppUser], credential.ToSecureString(), ignoreSsl: true);
-                Logger.Information($"Plugin {Name} has been successfully authenticated to the Azure vault.");
+                Logger.Information($"Plugin {Name} has been successfully authenticated to the Safeguard vault.");
 
                 if (!CheckOrAddExternalA2aRegistration())
                 {

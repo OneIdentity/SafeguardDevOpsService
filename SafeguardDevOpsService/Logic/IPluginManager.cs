@@ -1,4 +1,5 @@
-﻿using OneIdentity.DevOps.Common;
+﻿using System.Collections.Generic;
+using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.SafeguardDotNet;
 
@@ -21,6 +22,7 @@ namespace OneIdentity.DevOps.Logic
 
         Plugin DuplicatePlugin(string name, bool copyConfig);
 
-        void RefreshPluginCredentials();
+        bool RefreshPluginCredentials();
+        void RefreshPluginCredentials(List<Plugin> plugins);
     }
 }

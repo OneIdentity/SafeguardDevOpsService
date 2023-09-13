@@ -51,6 +51,11 @@ namespace OneIdentity.DevOps.Data
         public int? VaultAccountId { get; set; }
 
         /// <summary>
+        /// A2A registration vault account api key
+        /// </summary>
+        public string VaultAccountApiKey { get; set; }
+
+        /// <summary>
         /// Is the plugin loaded
         /// </summary>
         public bool IsLoaded { get; set; }
