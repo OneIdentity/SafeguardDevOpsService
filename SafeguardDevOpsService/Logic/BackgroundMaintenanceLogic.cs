@@ -80,10 +80,7 @@ namespace OneIdentity.DevOps.Logic
 
                         if (sgConnection != null)
                         {
-                            _safeguardLogic.CheckAndSyncSecretsBrokerInstance(sgConnection);
-                            _safeguardLogic.CheckAndPushAddOnCredentials(sgConnection);
                             _safeguardLogic.CheckAndConfigureAddonPlugins(sgConnection);
-                            _safeguardLogic.CheckAndSyncVaultCredentials(sgConnection);
                         }
                     }
                     catch (Exception ex)
