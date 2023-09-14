@@ -16,7 +16,6 @@ namespace OneIdentity.DevOps.Logic
         DevOpsSecretsBroker DevOpsSecretsBrokerCache { get; }
 
         ISafeguardConnection Connect();
-        ISafeguardConnection CertConnect();
         SafeguardDevOpsConnection GetAnonymousSafeguardConnection();
         SafeguardDevOpsConnection GetSafeguardConnection();
         SafeguardDevOpsLogon GetSafeguardLogon();
@@ -45,9 +44,7 @@ namespace OneIdentity.DevOps.Logic
 
         public Asset GetAsset(ISafeguardConnection sgConnection);
 
-        object GetAvailableA2ARegistrations(ISafeguardConnection sgConnection, string filter, int? page, bool? count, int? limit, string @orderby, string q);
         A2ARegistration GetA2ARegistration(ISafeguardConnection sgConnection, A2ARegistrationType registrationType);
-        A2ARegistration SetA2ARegistration(ISafeguardConnection sgConnection, int id);
         A2ARetrievableAccount GetA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType);
         void DeleteA2ARetrievableAccount(ISafeguardConnection sgConnection, int id, A2ARegistrationType registrationType);
         IEnumerable<A2ARetrievableAccount> GetA2ARetrievableAccounts(ISafeguardConnection sgConnection, A2ARegistrationType registrationType);
@@ -56,11 +53,7 @@ namespace OneIdentity.DevOps.Logic
         void RemoveA2ARetrievableAccounts(ISafeguardConnection sgConnection, IEnumerable<A2ARetrievableAccount> accounts, A2ARegistrationType registrationType);
 
         void RetrieveDevOpsSecretsBrokerInstance(ISafeguardConnection sgConnection);
-        void AddSecretsBrokerInstance(ISafeguardConnection sgConnection);
-        void CheckAndSyncSecretsBrokerInstance(ISafeguardConnection sgConnection);
-        void CheckAndPushAddOnCredentials(ISafeguardConnection sgConnection);
         void CheckAndConfigureAddonPlugins(ISafeguardConnection sgConnection);
-        void CheckAndSyncVaultCredentials(ISafeguardConnection sgConnection);
 
         DevOpsSecretsBroker GetDevOpsConfiguration(ISafeguardConnection sgConnection);
         DevOpsSecretsBroker ConfigureDevOpsService();
@@ -78,6 +71,5 @@ namespace OneIdentity.DevOps.Logic
         void DeleteTrustedCertificate(string thumbPrint);
         IEnumerable<CertificateInfo> ImportTrustedCertificates(ISafeguardConnection sgConnection);
         void DeleteAllTrustedCertificates();
-        void PingSpp(ISafeguardConnection sgConnection);
     }
 }
