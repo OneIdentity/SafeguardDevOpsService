@@ -6,11 +6,17 @@
 
 * There has been a major library upgrade to the Azure Key Vault plugin version 2.x which will break the configuration for previous versions of the plugin. To fix the Azure Key Vault plugin after upgrading, edit the plugin configuration and add the TenantId/DirectoryId of the key vault. Once the configuration has been updated, the Azure Key Vault plugin should continue to work as expected.
 
-* Due to an upgraded version of the SignalR technology in Safeguard for Privileged Passwords, a matching SignalR client version had to be upgraded in the Safeguard Secrets Broker for DevOps.  The upgraded SignalR technology that is used to monitor the password change events, is not backwards compatible with previous versions.  Therefore, version 1.5.0 and above of the Safeguard Secrets Broker for DevOps is only compatible with Safeguard for Privileged Passwords 6.8.0 and above.  The Safeguard Secrets Broker for DevOps 1.0.0 must be used with versions of Safeguard for Privileged Passwords 6.7.0 or below.
-
 * The plugin interface has been changed to support the Reverse Flow functionality. Due to this interface change, older plugins will no longer load. Once Secrets Broker has been upgraded, each of the plugins will also need to be upgraded as well. The Secrets Broker user interface will indicate which plugins need to be upgraded and allow the user to download and upgrade the plugin. Once all of the plugins have been upgraded, the Secrets Broker service will need to be restart.
 
 * All of the functionality in this version of Secrets Broker is backwards compatible with versions of Safeguard 7.0.0 and above with the exception of the Reverse Flow feature. The Reverse Flow feature depends on changes that are only available in Safeguard 7.4 and above. If the Secrets Broker service is connected to a version of Safeguard that is less than 7.4, Secrets Broker will continue to work but the Reverse Flow feature will be unavailable. A small indicator will appear in the bottom left-hand corner of the main window if Secrets Broker is unable to provide the Reverse Flow feature.
+
+* Due to an upgraded version of the SignalR technology in Safeguard for Privileged Passwords, a matching SignalR client version had to be upgraded in the Safeguard Secrets Broker for DevOps.  The upgraded SignalR technology that is used to monitor the password change events, is not backwards compatible with previous versions.  Therefore, version 1.5.0 and above of the Safeguard Secrets Broker for DevOps is only compatible with Safeguard for Privileged Passwords 6.8.0 and above.  The Safeguard Secrets Broker for DevOps 1.0.0 must be used with versions of Safeguard for Privileged Passwords 6.7.0 or below.
+
+## Vault Add-on Compatibility
+
+Beginning with version 7.4, Secrets Broker is no longer compatible with the Vault Add-on.  Secrets Broker 7.0.0.1761 is the last version of Secrets Broker that is compatible with the Vault add-on and is only available directly from the One Identity download site. Secrets Broker 7.0.0 with the Vault Add-on installed, cannot be upgraded to Secret Broker 7.4.0. To upgrade Secrets Broker 7.0.0 with the Vault Add-on installed, the Vault Add-on must first be uninstall before upgrading. Once Secrets Broker has been upgraded to version 7.4.0, the Vault Add-on cannot be reinstalled.
+
+Other than the Vault Add-on, Secrets Broker 7.4 supports all of the third party vault plugins that have been previously released as well as several new plugins that are now available. As noted above, after upgrading Secrets Broker to version 7.4.0, all of the third party vault plugins must also be upgraded.
 
 # Safeguard Secrets Broker for DevOps
 
