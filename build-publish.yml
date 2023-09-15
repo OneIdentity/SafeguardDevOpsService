@@ -33,8 +33,9 @@ jobs:
           changeLogCompareToRelease: 'lastFullRelease'
           changeLogType: 'commitBased'
           assets: |
+            $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\en-us\*.msi
             $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)\*.zip
-        displayName: 'Creating and publishing a plugin only release to Github'
+        displayName: 'Creating and publishing a release to Github'
         condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
       - powershell: Publish-Module -Path $(Build.SourcesDirectory)\safeguard-devops -NuGetApiKey "$(PowerShellGalleryApiKey)" -Verbose -SkipAutomaticTags
