@@ -2427,8 +2427,8 @@ namespace OneIdentity.DevOps.Logic
                             var certificateBytes = CertificateHelper.ConvertPemToData(cert.Base64CertificateData);
                             var certificate2 = new X509Certificate2(certificateBytes);
 
-                            // Only import self-signed CA certificates.
-                            if (certificate2.Subject.Equals(certificate2.IssuerName.Name) && CertificateHelper.IsCa(certificate2))
+                            // Import self-signed certificates.
+                            if (certificate2.Subject.Equals(certificate2.IssuerName.Name))
                             {
                                 _logger.Debug($"Importing ssl certificate {cert.Subject} {cert.Thumbprint}.");
                                 var certificateInfo = AddTrustedCertificate(cert.Base64CertificateData);

@@ -28,22 +28,6 @@ namespace OneIdentity.DevOps.Logic
             return b64String;
         }
 
-        private static bool WalkTrustChain(X509Certificate2 certificate, TrustedCertificate[] trustedCertificates)
-        {
-            if (IsSelfSigned(certificate))
-            {
-                return IsCa(certificate);
-            }
-
-            var issuedBy = trustedCertificates.FirstOrDefault(x => x.Subject.Equals(certificate.Issuer));
-            if (issuedBy != null)
-            {
-                return WalkTrustChain(issuedBy.GetCertificate(), trustedCertificates);
-            }
-
-            return false;
-        }
-
         public static bool CertificateValidation(object sender, X509Certificate certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors, Serilog.ILogger logger, IConfigurationRepository configDb, 
             IEnumerable<TrustedCertificate> customTrustedCertificateList = null)
@@ -51,6 +35,11 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 var cert2 = new X509Certificate2(certificate);
+
+                if (HasExpired(cert2, logger))
+                {
+                    return false;
+                }
 
                 // If the certificate has the server authentication eku then make sure that the sans match.
                 if (HasEku(cert2, "1.3.6.1.5.5.7.3.1"))
@@ -68,8 +57,8 @@ namespace OneIdentity.DevOps.Logic
 
                 var trustedCertificates = (customTrustedCertificateList ?? configDb.GetAllTrustedCertificates()).ToArray();
 
-                // if the certificate is self-signed and a CA then it must match a trusted certificate in the list.
-                if (IsSelfSigned(cert2) && IsCa(cert2))
+                // if the certificate is self-signed, then the certificate must be in the trusted certificate list.
+                if (IsSelfSigned(cert2))
                 {
                     var result = trustedCertificates.Any(x => x.Thumbprint.Equals(cert2.Thumbprint));
                     if (!result)
@@ -78,42 +67,40 @@ namespace OneIdentity.DevOps.Logic
                     return result;
                 }
 
-                // If there is no chain provided then just walk the certificate structure to validate the chain.
-                if (chain == null)
+                // If there is chain provided then walk the chain to see if any of those certificate are in the trusted list.
+                if (chain != null)
                 {
-                    return WalkTrustChain(cert2, trustedCertificates);
-                }
+                    logger.Debug($"Chain certificates count = {chain.ChainElements.Count}");
+                    var i = 0;
 
-                logger.Debug($"Trusted certificates count = {chain.ChainElements.Count}");
-                var i = 0;
-
-                // Make sure that all of the certificates in the chain, excluding the SSL certificate itself, are trusted.
-                foreach (var trusted in chain.ChainElements)
-                {
-                    logger.Debug($"[{i}] - subject = {trusted.Certificate.SubjectName.Name}");
-                    logger.Debug($"[{i}] - issuer = {trusted.Certificate.IssuerName.Name}");
-                    logger.Debug($"[{i}] - thumbprint = {trusted.Certificate.Thumbprint}");
-
-                    // Skip checking the first certificate since it is not part of the trust chain.
-                    if ((i > 0) &&
-                        !trustedCertificates.Any(x => x.Thumbprint.Equals(trusted.Certificate.Thumbprint)))
+                    // Make sure that a certificate in the chain exists in the trusted certificate list, excluding the SSL certificate itself.
+                    foreach (var chainCert in chain.ChainElements)
                     {
-                        logger.Error("Failed SPP SSL certificate validation. Maybe missing a trusted certificate.");
-                        return false;
+                        logger.Debug($"[{i}] - subject = {chainCert.Certificate.SubjectName.Name}");
+                        logger.Debug($"[{i}] - issuer = {chainCert.Certificate.IssuerName.Name}");
+                        logger.Debug($"[{i}] - thumbprint = {chainCert.Certificate.Thumbprint}");
+
+                        // Skip checking the first certificate since it is not part of the trust chain.
+                        if ((i > 0) &&
+                            !trustedCertificates.Any(x => x.Thumbprint.Equals(chainCert.Certificate.Thumbprint)))
+                        {
+                            logger.Error("Failed SPP SSL certificate validation. Maybe missing a trusted certificate.");
+                            return false;
+                        }
+
+                        i++;
                     }
 
-                    i++;
+                    return true;
                 }
 
-                // Make sure that the last certificate in the chain is a self-signed CA.  We will deal with a certificate signing authority later.
-                if (i > 0)
+                // If this is a client certificate and there isn't a chain, then check of the issuer is in the trusted certificate list.
+                if (HasEku(cert2, "1.3.6.1.5.5.7.3.2"))
                 {
-                    var lastCertificate = chain.ChainElements[i - 1];
-                    var result = IsSelfSigned(lastCertificate.Certificate) && IsCa(lastCertificate.Certificate);
-                    if (!result)
-                        logger.Debug("A valid certificate chain was not provided by the remote application.");
-
-                    return result;
+                    if (trustedCertificates.Any(x => x.GetCertificate().SubjectName.RawData.SequenceEqual(cert2.IssuerName.RawData)))
+                    {
+                        return true;
+                    }
                 }
             }
             catch (Exception ex)
@@ -167,12 +154,8 @@ namespace OneIdentity.DevOps.Logic
                 return false;
             }
 
-            var curDate = DateTime.UtcNow;
-            if (curDate < sslCertificate.NotBefore || curDate > sslCertificate.NotAfter)
+            if (HasExpired(sslCertificate, logger))
             {
-                var format = "MM/dd/yyyy HH:mm:ss z";
-                logger.Error("Certificate is expired.");
-                logger.Error($"\tCurrent Time: {curDate.ToString(format)} Not Before: {sslCertificate.NotBefore.ToString(format)} Not After: {sslCertificate.NotAfter.ToString(format)}");
                 return false;
             }
 
@@ -236,21 +219,6 @@ namespace OneIdentity.DevOps.Logic
             return cert.SubjectName.RawData.SequenceEqual(cert.IssuerName.RawData);
         }
 
-        public static bool IsCa(X509Certificate2 cert)
-        {
-            var basic = cert.Extensions.OfType<X509BasicConstraintsExtension>().ToList();
-            if (basic.Any() && basic[0].CertificateAuthority)
-            {
-                var ku = cert.Extensions.OfType<X509KeyUsageExtension>().ToList();
-                if (!ku.Any())
-                {
-                    return true; // if KUs aren't present, then don't require CRL sign and key sign cert
-                }
-                return HasUsage(cert, X509KeyUsageFlags.CrlSign | X509KeyUsageFlags.KeyCertSign);
-            }
-            return false;
-        }
-
         private static bool HasUsage(X509Certificate2 cert, X509KeyUsageFlags flag)
         {
             if (cert.Version < 3) { return true; }
@@ -289,6 +257,21 @@ namespace OneIdentity.DevOps.Logic
 
             // Otherwise, the extension exists, so we must validate that it contains the we OID we need.
             return eku.EnhancedKeyUsages[oid] != null;
+        }
+
+        private static bool HasExpired(X509Certificate2 cert, Serilog.ILogger logger)
+        {
+            var curDate = DateTime.UtcNow;
+            if (curDate < cert.NotBefore || curDate > cert.NotAfter)
+            {
+                var format = "MM/dd/yyyy HH:mm:ss z";
+                logger.Error("Certificate is expired.");
+                logger.Error(
+                    $"\tCurrent Time: {curDate.ToString(format)} Not Before: {cert.NotBefore.ToString(format)} Not After: {cert.NotAfter.ToString(format)}");
+                return true;
+            }
+
+            return false;
         }
 
         private static List<string> GetSubjectAlternativeName(X509Certificate2 cert, Serilog.ILogger logger)
