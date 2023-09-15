@@ -80,18 +80,18 @@ namespace OneIdentity.DevOps.Logic
                         logger.Debug($"[{i}] - issuer = {chainCert.Certificate.IssuerName.Name}");
                         logger.Debug($"[{i}] - thumbprint = {chainCert.Certificate.Thumbprint}");
 
-                        // If any of the certificates in the chain are in the trusted certificate list, the certificate is validated.
-                        if (trustedCertificates.Any(x => x.Thumbprint.Equals(chainCert.Certificate.Thumbprint)))
+                        // Skip checking the first certificate since it is not part of the trust chain.
+                        if ((i > 0) &&
+                            !trustedCertificates.Any(x => x.Thumbprint.Equals(chainCert.Certificate.Thumbprint)))
                         {
-                            logger.Debug(
-                                $"SPP SSL certificate validated {cert2.SubjectName.Name} - {chainCert.Certificate.Thumbprint}.");
-                            return true;
+                            logger.Error("Failed SPP SSL certificate validation. Maybe missing a trusted certificate.");
+                            return false;
                         }
 
                         i++;
                     }
 
-                    return false;
+                    return true;
                 }
 
                 // If this is a client certificate and there isn't a chain, then check of the issuer is in the trusted certificate list.
