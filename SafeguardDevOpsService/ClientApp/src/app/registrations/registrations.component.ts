@@ -42,14 +42,16 @@ export class RegistrationsComponent implements OnInit, AfterViewInit {
     this.isLoading = true;
     this.serviceClient.getAvailableA2ARegistrations().pipe(
       untilDestroyed(this)
-    ).subscribe((data: any[]) => {
-      this.isLoading = false;
-      this.registrations = [...data];
-      this.totalCount = data.length;
-      this.dataSource.data = this.registrations;
+    ).subscribe({
+      next: (data: any[]) => {
+        this.isLoading = false;
+        this.registrations = [...data];
+        this.totalCount = data.length;
+        this.dataSource.data = this.registrations;
 
-      if (this.totalCount == 0) {
-        this.createNew.emit(0);
+        if (this.totalCount == 0) {
+          this.createNew.emit(0);
+        }
       }
     });
   }
@@ -64,10 +66,12 @@ export class RegistrationsComponent implements OnInit, AfterViewInit {
       debounceTime(500),
       distinctUntilChanged(),
       switchMap(() => this.doSearch()),
-    ).subscribe((data) => {
-      this.registrations = data;
-      this.dataSource.data = this.registrations;
-      this.isLoading = false;
+    ).subscribe({
+      next: (data) => {
+        this.registrations = data;
+        this.dataSource.data = this.registrations;
+        this.isLoading = false;
+      }
     });
   }
 

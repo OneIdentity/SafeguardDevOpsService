@@ -69,7 +69,7 @@ export class DevOpsServiceClient {
 
     return this.http.get(url)
       .pipe(
-        tap((data: any) => this.applianceAddress = data.ApplianceAddress),
+        tap({ next: (data: any) => this.applianceAddress = data.ApplianceAddress }),
         catchError(this.error<any>('getSafeguard')));
   }
 

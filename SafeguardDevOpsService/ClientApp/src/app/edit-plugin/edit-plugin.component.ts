@@ -121,7 +121,8 @@ export class EditPluginComponent implements OnInit {
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK' || dlgResult?.result === 'No'),
-    ).subscribe((dlgResult) => {
+    ).subscribe({
+      next: (dlgResult) => {
       this.editPluginService.createInstance(this.plugin.Name, dlgResult?.result === 'OK')
         .subscribe(p => {
           p.configs = [];
@@ -136,8 +137,8 @@ export class EditPluginComponent implements OnInit {
           this.reload = true;
         });
     },
-      error => this.error = SCH.parseError(error)
-    );
+      error: error => this.error = SCH.parseError(error)
+  });
   }
 
   deleteInstance(): void {
@@ -151,7 +152,7 @@ export class EditPluginComponent implements OnInit {
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK'),
-      tap(() => this.isDeleting = true),
+      tap({ next: () => this.isDeleting = true }),
       switchMap(() => this.serviceClient.deletePluginConfiguration(this.plugin.Name)),
       finalize(() => this.isDeleting = false)
     ).subscribe(() => {
@@ -182,10 +183,10 @@ export class EditPluginComponent implements OnInit {
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK'),
-      tap((dlgResult) => {
+      tap({ next: (dlgResult) => {
         this.isRestarting = dlgResult?.restart;
         this.isDeleting = true;
-      }),
+      } }),
       switchMap((dlgResult) => this.editPluginService.deletePluginConfiguration(this.plugin.Name, this.isMultiInstance, dlgResult?.restart))
     ).subscribe(() => {
       this.editPluginService.deletePlugin();
@@ -319,7 +320,7 @@ export class EditPluginComponent implements OnInit {
       this.serviceClient.deletePluginVaultAccount(this.plugin.Name);
 
     return forkJoin([obs1, obs2]).pipe(
-      tap((data) => {
+      tap({ next: (data) => {
         const plugin = data[0];
         if (plugin) {
           this.plugin.Configuration = plugin.Configuration;
@@ -340,7 +341,7 @@ export class EditPluginComponent implements OnInit {
           };
           this.plugin.VaultAccountDisplayName = this.editPluginService.getVaultAccountDisplay(this.plugin.VaultAccount);
         }
-      })
+      } })
     );
   }
 }

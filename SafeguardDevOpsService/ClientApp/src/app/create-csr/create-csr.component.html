@@ -7,7 +7,7 @@
    </div>
 </div>
 
-<app-progress-spinner diameter="20" color="warn" message="Creating CSR" [visible]="creatingCSR"></app-progress-spinner>
+<app-progress-spinner diameter="16" color="warn" message="Creating CSR" [visible]="creatingCSR"></app-progress-spinner>
 
 <app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
 
@@ -79,18 +79,18 @@
             (keydown)="addSubjectAlt('name',$event)" (blur)="addSubjectAlt('name')" />
       </mat-form-field>
       <div class='subject-alt-chip-list' *ngIf='csr.DnsNames?.length'>
-         <mat-chip-list>
+         <mat-chip-listbox>
             <ng-container *ngFor='let altname of csr.DnsNames'>
-               <mat-chip (removed)='removeSubjectAlt("name",altname)'>
+               <mat-chip-option (removed)='removeSubjectAlt("name",altname)'>
                   {{altname}}
                   <mat-icon matChipRemove>cancel</mat-icon>
-               </mat-chip>
+               </mat-chip-option>
             </ng-container>
-            <mat-chip *ngIf='csr.DnsNames?.length > 1' (removed)='removeSubjectAlt("name","",true)'>
+            <mat-chip-option *ngIf='csr.DnsNames?.length > 1' (removed)='removeSubjectAlt("name","",true)'>
                Clear List
                <mat-icon matChipRemove>cancel</mat-icon>
-            </mat-chip>
-         </mat-chip-list>
+            </mat-chip-option>
+         </mat-chip-listbox>
       </div>
 
       <mat-form-field appearance="outline" class="text-with-chips">
@@ -99,18 +99,18 @@
             (keydown)="addSubjectAlt('ip',$event)" (blur)="addSubjectAlt('ip')" />
       </mat-form-field>
       <div class='subject-alt-chip-list' *ngIf='csr.IpAddresses?.length'>
-         <mat-chip-list>
+         <mat-chip-listbox>
             <ng-container *ngFor='let altname of csr.IpAddresses'>
-               <mat-chip (removed)='removeSubjectAlt("ip",altname)'>
+               <mat-chip-option (removed)='removeSubjectAlt("ip",altname)'>
                   {{altname}}
                   <mat-icon matChipRemove>cancel</mat-icon>
-               </mat-chip>
+               </mat-chip-option>
             </ng-container>
-            <mat-chip *ngIf='csr.IpAddresses?.length > 1' (removed)='removeSubjectAlt("ip","",true)'>
+            <mat-chip-option *ngIf='csr.IpAddresses?.length > 1' (removed)='removeSubjectAlt("ip","",true)'>
                Clear List
                <mat-icon matChipRemove>cancel</mat-icon>
-            </mat-chip>
-         </mat-chip-list>
+            </mat-chip-option>
+         </mat-chip-listbox>
       </div>
 
       <mat-form-field appearance="outline">
@@ -126,7 +126,7 @@
 
 <div *ngIf='!showDistinguishedNameBuilder'>
    <div mat-dialog-actions align="left" class='buttons'>
-      <button mat-button class="link-button" disableRipple (click)="goBack()" color="primary">&lt; &nbsp; Back</button>
+      <button mat-button class="link-button" (click)="goBack()" color="primary">&lt; &nbsp; Back</button>
    </div>
 
    <div mat-dialog-actions align="end" class='buttons'>

@@ -78,8 +78,8 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
     this.editPluginService.getAvailableAccounts()
       .pipe(untilDestroyed(this),
         filter(() => !this.editPluginService.plugin.LoadingAvailableAccounts)
-      ).subscribe(
-        (data: any[]) => {
+      ).subscribe({
+        next: (data: any[]) => {
           this.isLoading = false;
           this.accounts = [];
           this.accounts = [...data];
@@ -87,7 +87,7 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
           this.hideCurrentAccounts();
           this.dataSource.data = this.accounts;
         }
-      );
+      });
   }
 
   private hideCurrentAccounts(): void {
@@ -114,13 +114,14 @@ export class SelectAccountsComponent implements OnInit, AfterViewInit {
       debounceTime(500),
       distinctUntilChanged(),
       switchMap(() => this.doSearch()),
-    ).subscribe(
-      (data) => {
+    ).subscribe({
+      next: (data) => {
         this.accounts = data;
         this.hideCurrentAccounts();
         this.dataSource.data = this.accounts;
         this.isLoading = false;
-      });
+      }
+    });
   }
 
   doSearch(): Observable<any[]> {

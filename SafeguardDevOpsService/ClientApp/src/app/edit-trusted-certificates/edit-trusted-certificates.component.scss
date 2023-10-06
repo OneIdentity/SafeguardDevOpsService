@@ -2,8 +2,8 @@
 
 .actions {
   display: flex;
-  align-items: baseline;
-  margin-bottom: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
 
   .upload-button {
     margin-right: 10px;
@@ -38,6 +38,10 @@
   min-height: 300px;
 }
 
+:host ::ng-deep .mdc-list-item__end {
+  display: none;
+}
+
 mat-list-option {
   border-top: 1px solid $black-c;
 }
@@ -48,6 +52,7 @@ mat-list-option:last-of-type {
 
 .root-container {
   position: relative;
+  overflow: hidden;
 }
 
 mat-spinner {
@@ -73,6 +78,7 @@ mat-spinner {
   }
 
   .cert-details-body {
+    margin: 20px;
     background-color: $iris-pastel;
 
     .cert-details-title {

@@ -2,7 +2,7 @@
   <div class="app-header">
     <span>Safeguard Secrets Broker For DevOps</span>
     <span class="spacer"></span>
-    <button mat-button [matMenuTriggerFor]="userMenu" disableRipple>
+    <button mat-button [matMenuTriggerFor]="userMenu">
       <span class="user-name">{{LoggedInUserDisplayName}}</span>
     </button>
     <mat-menu #userMenu="matMenu">
@@ -48,172 +48,181 @@
   <app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
 
   <div class="main-container">
-    <mat-card class="info-container" *ngIf="!showAvailableRegistrations">
-      <div class="info-column">
-        <div class="general-info-container">
-          <img src="/assets/SafeguardLogo.png" width="80" height="80" />
-          <div class="general-info">
-            <div class="info-label">Appliance</div>
-            <div>{{ApplianceAddress}}</div>
+    <mat-card class="card-container" *ngIf="!showAvailableRegistrations">
+      <mat-card-content class="info-container">
+        <div class="info-column">
+          <div class="general-info-container">
+            <img src="/assets/SafeguardLogo.png" width="80" height="80" />
+            <div class="general-info">
+              <div class="info-label">Appliance</div>
+              <div>{{ApplianceAddress}}</div>
+              <p></p>
+              <div *ngIf="DevOpsInstanceId">
+                <div class="info-label">DevOps ID</div>
+                <div>{{DevOpsInstanceId}}</div>
+              </div>
+            </div>
+          </div>
+          <p></p>
+          <div *ngIf="needsSSLEnabled && !needsTrustedCertificates">
+            <b>Monitoring is unavailable.</b>
             <p></p>
-            <div *ngIf="DevOpsInstanceId">
-              <div class="info-label">DevOps ID</div>
-              <div>{{DevOpsInstanceId}}</div>
-            </div>
-          </div>
-        </div>
-        <p></p>
-        <div *ngIf="needsSSLEnabled && !needsTrustedCertificates">
-          <b>Monitoring is unavailable.</b>
-          <p></p>
-          <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"
-            color='primary' disableRipple>
-            <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>&nbsp;Verify TLS Certificate
-          </button>
-        </div>
-        <div *ngIf="!isMonitoringAvailable && !needsSSLEnabled && !isLoading">
-          <b>Monitoring is unavailable.</b>
-        </div>
-        <button mat-flat-button class="monitoring-button start-monitoring"
-          *ngIf="!isMonitoring && isMonitoringAvailable && !needsSSLEnabled" (click)="updateMonitoring(true)"
-          [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Start
-          Monitoring</button>
-        <button mat-flat-button class="monitoring-button stop-monitoring" *ngIf="isMonitoring && isMonitoringAvailable"
-          (click)="updateMonitoring(false)"
-          [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Stop
-          Monitoring</button>
-      </div>
-
-      <div class="vertical-line"></div>
-      <div class="loading-container" *ngIf="isLoading">
-        <app-progress-spinner color="accent" diameter="30" message='Loading configuration'></app-progress-spinner>
-      </div>
-      <div class="info-column" *ngIf="Thumbprint && !isLoading">
-        <div><b>Linked Safeguard Objects</b></div>
-        <p></p>
-        <div class="info-label">User Account</div>
-        <div>{{UserDisplayName}}</div>
-        <div class="info-label">({{UserName}})</div>
-        <p></p>
-        <div class="info-label">Application to Application Registrations</div>
-        <div>{{A2ARegistrationName}}</div>
-        <div>{{A2AVaultRegistrationName}}</div>
-      </div>
-      <div class="info-column certificate-container" *ngIf="!isLoading">
-        <div *ngIf="!Thumbprint || (needsClientCertificate && !showAvailableRegistrations)"
-          class='no-client-certificate'>
-          <p class='bold'>Before we begin you must upload a Client Certificate</p>
-          <p>Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A
-            service in Safeguard for Privileged Passwords. The most secure way to create this certificate
-            is using a certificate signing request (CSR).</p>
-          <p></p>
-          <p>This can be either a PFX formatted certificate that includes the private key and a passphrase
-            for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that
-            was issued based on a generated CSR.</p>
-
-          <div class='buttons'>
-            <div class='left'>
-              <button mat-button class='link-button' (click)="createCSR('Client')" color="primary">Create a Certificate
-                Signing Request (CSR)</button>
-            </div>
-            <div class='right'>
-              <app-progress-spinner color="accent" diameter="30" message='Uploading Certificate'
-                [visible]="isUploading.Certificate">
-              </app-progress-spinner>
-              <button mat-flat-button class='link-button' cdkFocusInitial (click)="addCertificate($event, 'Client')"
-                color="primary" *ngIf="!isUploading.Certificate && isAssetAdmin">Upload Certificate</button>
-            </div>
-          </div>
-        </div>
-
-        <ng-container *ngIf='Thumbprint && !needsClientCertificate && !showAvailableRegistrations'>
-          <div>
-            <div class="info-label">Client Certificate</div>
-            <app-progress-spinner color="accent" diameter="30" message="Uploading"
-              [visible]="certificateUploading['Client']"></app-progress-spinner>
-
             <div>
-              <button mat-button class="link-button cert-link" color="primary"
-                (click)="viewCertificate($event, 'Client')"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
-                disableRipple>
+              <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>
+              <button mat-button class="link-button" color="primary" (click)="viewTrustedCertificates($event)"
+                color='primary'>
+                &nbsp;Verify TLS Certificate
+              </button>
+            </div>
+          </div>
+          <div *ngIf="!isMonitoringAvailable && !needsSSLEnabled && !isLoading">
+            <b>Monitoring is unavailable.</b>
+          </div>
+          <button mat-flat-button class="monitoring-button start-monitoring"
+            *ngIf="!isMonitoring && isMonitoringAvailable && !needsSSLEnabled" (click)="updateMonitoring(true)"
+            [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Start
+            Monitoring</button>
+          <button mat-flat-button class="monitoring-button stop-monitoring"
+            *ngIf="isMonitoring && isMonitoringAvailable" (click)="updateMonitoring(false)"
+            [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Stop
+            Monitoring</button>
+        </div>
+
+        <div class="vertical-line"></div>
+        <div class="loading-container" *ngIf="isLoading">
+          <app-progress-spinner color="accent" diameter="32" message='Loading configuration'></app-progress-spinner>
+        </div>
+        <div class="info-column" *ngIf="Thumbprint && !isLoading">
+          <div><b>Linked Safeguard Objects</b></div>
+          <p></p>
+          <div class="info-label">User Account</div>
+          <div>{{UserDisplayName}}</div>
+          <div class="info-label">({{UserName}})</div>
+          <p></p>
+          <div class="info-label">Application to Application Registrations</div>
+          <div>{{A2ARegistrationName}}</div>
+          <div>{{A2AVaultRegistrationName}}</div>
+        </div>
+        <div class="info-column certificate-container" *ngIf="!isLoading">
+          <div *ngIf="!Thumbprint || (needsClientCertificate && !showAvailableRegistrations)"
+            class='no-client-certificate'>
+            <p class='bold'>Before we begin you must upload a Client Certificate</p>
+            <p>Safeguard Secrets Broker for DevOps uses client certificate authentication to access the A2A
+              service in Safeguard for Privileged Passwords. The most secure way to create this certificate
+              is using a certificate signing request (CSR).</p>
+            <p></p>
+            <p>This can be either a PFX formatted certificate that includes the private key and a passphrase
+              for decrypting that certificate, or it can receive a base64 (or PEM) encoded certificate that
+              was issued based on a generated CSR.</p>
+
+            <div class='buttons'>
+              <div class='left'>
+                <button mat-button class='link-button' (click)="createCSR('Client')" color="primary">Create a
+                  Certificate
+                  Signing Request (CSR)</button>
+              </div>
+              <div class='right'>
+                <app-progress-spinner color="accent" diameter="32" message='Uploading Certificate'
+                  [visible]="isUploading.Certificate">
+                </app-progress-spinner>
+                <button mat-flat-button class='link-button' cdkFocusInitial (click)="addCertificate($event, 'Client')"
+                  color="primary" *ngIf="!isUploading.Certificate && isAssetAdmin">Upload
+                  Certificate</button>
+              </div>
+            </div>
+          </div>
+
+          <ng-container *ngIf='Thumbprint && !needsClientCertificate && !showAvailableRegistrations'>
+            <div>
+              <div class="info-label">Client Certificate</div>
+              <app-progress-spinner color="accent" diameter="32" message="Uploading"
+                [visible]="certificateUploading['Client']"></app-progress-spinner>
+
+              <div>
                 <mat-icon class="green-icon" inline=true *ngIf="passedTrustChainValidation">check_circle</mat-icon>
                 <mat-icon class="yellow-icon" inline=true *ngIf="!passedTrustChainValidation">error_outline</mat-icon>
-                &nbsp;View Details
-              </button>
+                <button mat-button class="link-button" color="primary" (click)="viewCertificate($event, 'Client')"
+                  [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>
+                  &nbsp;View Details
+                </button>
+              </div>
             </div>
-          </div>
-          <div>
-            <div class="info-label">Web Server Certificate</div>
-            <app-progress-spinner color="accent" diameter="30" message="Uploading"
-              [visible]="certificateUploading['WebServer']"></app-progress-spinner>
-
-            <div *ngIf="!webServerCertAdded || needsWebCertificate">
-              <button mat-button class="link-button cert-link" (click)="addCertificate($event, 'Web Server')"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
-                color='primary' disableRipple>
-                <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>&nbsp;View Details
-              </button>
-            </div>
-            <div *ngIf="webServerCertAdded && !needsWebCertificate">
-              <button mat-button class="link-button cert-link" (click)="viewCertificate($event,'Web Server')"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
-                color='primary' disableRipple>
-                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
-              </button>
-            </div>
-          </div>
-          <div>
-            <div class="info-label">Trusted Certificates</div>
-            <div *ngIf="!trustedCertificates?.length || needsTrustedCertificates">
-              <button mat-button class="link-button cert-link" (click)='viewTrustedCertificates($event)'
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
-                color='primary' disableRipple>Add/Import Certificates</button>
-            </div>
-            <div *ngIf="trustedCertificates?.length">
-              <button mat-button class="link-button cert-link" color="primary" (click)="viewTrustedCertificates($event)"
-                [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
-                color='primary' disableRipple>
-                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>&nbsp;View Details
-              </button>
-            </div>
-          </div>
-        </ng-container>
-      </div>
-      <div class="vertical-line"
-        *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations && !isLoading && addons.length > 0">
-      </div>
-      <div class="info-column"
-        *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations && !isLoading && addons.length > 0">
-        <div class="info-label" *ngIf="isLicensed">Add-ons</div>
-        <div class="info-label" *ngIf="!isLicensed">Add-ons (Not Licensed)</div>
-        <app-progress-spinner color="accent" diameter="30" message='Uploading Add-on' [visible]="isUploading.Addon">
-        </app-progress-spinner>
-        <app-progress-spinner color="accent" diameter="30" message={{restartingProgress}} [visible]="isRestarting">
-        </app-progress-spinner>
-        <div *ngIf="!isUploading.Addon && !isRestarting">
-          <ng-container *ngFor="let addon of addons">
             <div>
-              <button *ngIf="!addon.IsUploadCustom" mat-button class="link-button cert-link" (click)='editAddon(addon)'
-                [disabled]='isUploading.Plugin' color='primary' disableRipple>
-                <mat-icon class="green-icon" inline=true *ngIf="addon.Status?.IsReady"
-                  matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">check_circle</mat-icon>
-                <mat-icon class="yellow-icon" inline=true *ngIf="!addon.Status?.IsReady"
-                  matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">error_outline</mat-icon>
-                &nbsp;{{addon.Manifest.DisplayName}}&nbsp;
-                <mat-icon class="blue-icon" inline=true *ngIf="addon.IsProduction" matTooltip="Production">verified_user
-                </mat-icon>
-                <mat-icon class="blue-icon" inline=true *ngIf="!addon.IsProduction" matTooltip="Test">remove_moderator
-                </mat-icon>
-              </button>
-              <button *ngIf="addon.IsUploadCustom" mat-button class="link-button cert-link" (click)='uploadAddon()'
-                [disabled]='isUploading.Plugin || !isLicensed' color='primary' disableRipple>
-                <mat-icon class="upload-icon" inline=true>cloud_upload</mat-icon>&nbsp;{{addon.Manifest.DisplayName}}
-              </button>
+              <div class="info-label">Web Server Certificate</div>
+              <app-progress-spinner color="accent" diameter="32" message="Uploading"
+                [visible]="certificateUploading['WebServer']"></app-progress-spinner>
+
+              <div *ngIf="!webServerCertAdded || needsWebCertificate">
+                <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>
+                <button mat-button class="link-button" (click)="addCertificate($event, 'Web Server')"
+                  [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
+                  color='primary'>
+                  &nbsp;View Details
+                </button>
+              </div>
+              <div *ngIf="webServerCertAdded && !needsWebCertificate">
+                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>
+                <button mat-button class="link-button" (click)="viewCertificate($event,'Web Server')"
+                  [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
+                  color='primary'>
+                  &nbsp;View Details
+                </button>
+              </div>
+            </div>
+            <div>
+              <div class="info-label">Trusted Certificates</div>
+              <div *ngIf="!trustedCertificates?.length || needsTrustedCertificates">
+                <button mat-button class="link-button" (click)='viewTrustedCertificates($event)'
+                  [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
+                  color='primary'>Add/Import Certificates</button>
+              </div>
+              <div *ngIf="trustedCertificates?.length">
+                <mat-icon class="green-icon" inline=true>check_circle</mat-icon>
+                <button mat-button class="link-button" color="primary" (click)="viewTrustedCertificates($event)"
+                  [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'
+                  color='primary'>
+                  &nbsp;View Details
+                </button>
+              </div>
             </div>
           </ng-container>
         </div>
-      </div>
+        <div class="vertical-line"
+          *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations && !isLoading && addons.length > 0">
+        </div>
+        <div class="info-column"
+          *ngIf="Thumbprint && !needsClientCertificate && !showAvailableRegistrations && !isLoading && addons.length > 0">
+          <div class="info-label" *ngIf="isLicensed">Add-ons</div>
+          <div class="info-label" *ngIf="!isLicensed">Add-ons (Not Licensed)</div>
+          <app-progress-spinner color="accent" diameter="32" message='Uploading Add-on' [visible]="isUploading.Addon">
+          </app-progress-spinner>
+          <app-progress-spinner color="accent" diameter="32" message={{restartingProgress}} [visible]="isRestarting">
+          </app-progress-spinner>
+          <div *ngIf="!isUploading.Addon && !isRestarting">
+            <ng-container *ngFor="let addon of addons">
+              <div>
+                <ng-container *ngIf="!addon.IsUploadCustom">
+                  <mat-icon class="green-icon" inline=true *ngIf="addon.Status?.IsReady" matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">check_circle</mat-icon>
+                  <mat-icon class="yellow-icon" inline=true *ngIf="!addon.Status?.IsReady" matTooltip="{{addon.Status?.HealthStatus.join(', ')}}">error_outline</mat-icon>
+                  <button mat-button class="link-button" (click)='editAddon(addon)' [disabled]='isUploading.Plugin' color='primary'>
+                    &nbsp;{{addon.Manifest.DisplayName}}&nbsp;
+                  </button>
+                  <mat-icon class="blue-icon" inline=true *ngIf="addon.IsProduction" matTooltip="Production">verified_user</mat-icon>
+                  <mat-icon class="blue-icon" inline=true *ngIf="!addon.IsProduction" matTooltip="Test">remove_moderator</mat-icon>
+                </ng-container>
+
+                <ng-container *ngIf="addon.IsUploadCustom">
+                  <mat-icon *ngIf="!isUploading.Plugin && isLicensed" class="upload-icon" inline=true color='primary'>cloud_upload</mat-icon>
+                  <mat-icon *ngIf="isUploading.Plugin || !isLicensed" class="upload-icon" inline=true [ngClass]="{'disable':true}">cloud_upload</mat-icon>
+                  <button mat-button class="link-button" (click)='uploadAddon()' [disabled]='isUploading.Plugin || !isLicensed' color='primary'>
+                    &nbsp;{{addon.Manifest.DisplayName}}
+                  </button>
+                </ng-container>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </mat-card-content>
     </mat-card>
 
     <mat-card class="registrations-container" *ngIf="showAvailableRegistrations">
@@ -275,7 +284,7 @@
               <div class="header">{{plugin.DisplayName}}</div>
               <div class="plugin-button-container">
                 <div class='button-container'>
-                  <app-progress-spinner color="accent" diameter="30" message='Uploading Plugin'
+                  <app-progress-spinner color="accent" diameter="32" message='Uploading Plugin'
                     [visible]="isUploading.Plugin">
                   </app-progress-spinner>
                   <button mat-stroked-button class="plugin-button" (click)="uploadPlugin()" *ngIf="!isUploading.Plugin"
@@ -302,7 +311,7 @@
           <ng-container *ngFor="let plugin of plugins">
             <ng-container *ngIf="!plugin.IsConfigurationSetup && plugin.IsUploadCustom">
               <div class='button-container'>
-                <app-progress-spinner color="accent" diameter="30" message='Uploading Plugin'
+                <app-progress-spinner color="accent" diameter="32" message='Uploading Plugin'
                   [visible]="isUploading.Plugin">
                 </app-progress-spinner>
                 <button mat-stroked-button class="plugin-button" (click)="uploadPlugin()" *ngIf="!isUploading.Plugin"

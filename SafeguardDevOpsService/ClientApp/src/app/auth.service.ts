@@ -30,11 +30,11 @@ export class AuthService {
         return of();
       }
       return this.getLoginResponse(applianceAddress, accessToken)
-        .pipe(tap((data) => {
+        .pipe(tap({ next: (data) => {
           if (data?.Status === 'Success') {
             this.window.sessionStorage.setItem('UserToken', data.UserToken);
           }
-        }));
+        } }));
     } else {
       this.window.sessionStorage.removeItem('AccessToken');
       return of({ Status: 'Success', UserToken: userToken });

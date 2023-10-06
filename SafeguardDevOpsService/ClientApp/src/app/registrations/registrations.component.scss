@@ -10,6 +10,11 @@ table {
   width: 100%;
 }
 
+/* Override the default extra padding */
+.mdc-data-table__cell, .mdc-data-table__header-cell {
+  padding: 0;
+}
+
 .main-container {
   padding-top: 20px;
   flex: 1;
@@ -76,11 +81,11 @@ table {
   flex-direction: column;
   width: 100%;
 
-  tr.mat-header-row {
+  tr.mat-mdc-header-row {
     height: 20px !important;
   }
 
-  .mat-table {
+  .mat-mdc-table {
     flex: 1;
   }
 

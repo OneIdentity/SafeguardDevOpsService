@@ -8,7 +8,7 @@
         <span>Trusted Certificates</span>
         <button mat-icon-button tabindex='-1' (click)="showExplanatoryText = true"
           *ngIf="trustedCertificates.length > 0">
-          <mat-icon class="info-icon" inline=true>info</mat-icon>
+          <mat-icon class="info-icon">info</mat-icon>
         </button>
       </div>
       <div class='close-button'><button mat-icon-button mat-dialog-close tabindex='-1' class="link-button">
@@ -63,7 +63,7 @@
         <div class="info-value">{{localizedValidFrom}}</div>
         <div class="info-label">Thumbprint</div>
         <div class="info-value">{{selectedCert.Thumbprint}}</div>
-        <button mat-button class="link-button" color="primary" (click)="removeCertificate()" disableRipple>Remove
+        <button mat-button class="link-button" color="primary" (click)="removeCertificate()" >Remove
           Certificate</button>
       </div>
     </div>

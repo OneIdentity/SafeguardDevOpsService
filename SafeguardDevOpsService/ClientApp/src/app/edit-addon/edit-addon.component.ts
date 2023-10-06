@@ -41,31 +41,35 @@ export class EditAddonComponent implements OnInit {
     this.error = null;
     this.isConfiguring = true;
     this.serviceClient.postAddonConfiguration(this.addon.Name)
-      .subscribe(() => {
-        setTimeout(() => {
-          this.window.location.reload();
-        }, 2000);
-      },
-        error => {
+      .subscribe({
+        next: () => {
+          setTimeout(() => {
+            this.window.location.reload();
+          }, 2000);
+        },
+        error: error => {
           if (this.retryReconfigure) {
             setTimeout(() => {
               this.serviceClient.postAddonConfiguration(this.addon.Name)
-                .subscribe(() => {
-                  setTimeout(() => {
-                    this.window.location.reload();
-                  }, 2000);
-                },
-                  error2 => {
+                .subscribe({
+                  next: () => {
+                    setTimeout(() => {
+                      this.window.location.reload();
+                    }, 2000);
+                  },
+                  error: error2 => {
                     this.retryReconfigure = false;
                     this.isConfiguring = false;
                     this.error = error2.error.Message;
-                  });
+                  }
+                });
             }, 4000);
           } else {
             this.isConfiguring = false;
             this.error = error.error.Message;
           }
-        });
+        }
+      });
   }
 
   delete(): void {
@@ -83,27 +87,31 @@ export class EditAddonComponent implements OnInit {
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK'),
-      tap((dlgResult) => {
-        this.isRestarting = dlgResult?.restart;
-        this.isDeleting = true;
+      tap({
+        next: (dlgResult) => {
+          this.isRestarting = dlgResult?.restart;
+          this.isDeleting = true;
+        }
       }),
       switchMap((dlgResult) => this.serviceClient.deleteAddonConfiguration(this.addon.Name, dlgResult?.restart))
-    ).subscribe(() => {
-      if (!this.isRestarting) {
-        this.dialog.open(ConfirmDialogComponent, {
-          data: {
-            title: 'Next Steps',
-            message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the add-on and plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
-            showCancel: false,
-            confirmText: 'OK'
-          }
-        });
-      }
-    },
-      error => {
+    ).subscribe({
+      next: () => {
+        if (!this.isRestarting) {
+          this.dialog.open(ConfirmDialogComponent, {
+            data: {
+              title: 'Next Steps',
+              message: 'The Safeguard Secrets Broker for DevOps service must be restarted to complete the add-on and plugin removal from the \\ProgramData\\SafeguardDevOpsService\\ExternalPlugins folder. Select the "Restart Secrets Broker" option from the settings menu.',
+              showCancel: false,
+              confirmText: 'OK'
+            }
+          });
+        }
+      },
+      error: error => {
         setTimeout(() => {
           this.window.location.reload();
         }, 3000);
-      });
+      }
+    });
   }
 }

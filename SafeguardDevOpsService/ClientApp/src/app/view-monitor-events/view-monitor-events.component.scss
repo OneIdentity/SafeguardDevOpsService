@@ -24,6 +24,11 @@ table {
   width: 100%;
 }
 
+/* Override the default extra padding */
+.mdc-data-table__cell, .mdc-data-table__header-cell {
+  padding: 0;
+}
+
 .detail-row {
   font-size: .85em;
   color: $black-9;
@@ -94,7 +99,7 @@ table {
   display: flex;
   flex-direction: column;
 
-  .mat-table {
+  .mat-mdc-table {
     flex: 1;
   }
 }

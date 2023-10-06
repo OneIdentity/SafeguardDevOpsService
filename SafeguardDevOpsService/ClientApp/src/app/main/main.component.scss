@@ -13,6 +13,10 @@
   flex-direction: row;
   align-items: center;
   font-size: 1.4em;
+
+  button {
+    color: inherit;
+  }
 }
 
 .spacer {
@@ -71,9 +75,12 @@ mat-drawer-container {
   }
 }
 
+.card-container {
+  margin: 50px;
+}
+
 .info-container {
   display: flex;
-  margin: 50px;
 
   .info-column {
     margin: 0 20px;
@@ -94,6 +101,14 @@ mat-drawer-container {
         }
       }
     }
+  }
+
+  .mat-icon {
+    vertical-align: middle;
+  }
+
+  .mat-icon.disable {
+    filter:opacity(0.5);
   }
 
   .general-info-container {
@@ -129,24 +144,24 @@ mat-drawer-container {
 
   .green-icon {
     color: $aspen-green;
-    vertical-align: top;
+    vertical-align: middle;
     font-size: 24px;
   }
 
   .yellow-icon {
     color: $corbin-orange;
     font-size: 24px;
-    vertical-align: top;
+    vertical-align: middle;
   }
 
   .blue-icon {
     color: $iris-blue;
-    vertical-align: top;
+    vertical-align: middle;
     font-size: 24px;
   }
 
   .upload-icon {
-    vertical-align: top;
+    vertical-align: middle;
     font-size: 24px;
   }
 
@@ -154,10 +169,6 @@ mat-drawer-container {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-
-    .cert-link {
-      margin-top: -15px;
-    }
   }
 
   .loading-container{
