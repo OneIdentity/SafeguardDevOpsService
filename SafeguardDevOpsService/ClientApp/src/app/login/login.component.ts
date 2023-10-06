@@ -23,11 +23,13 @@ export class LoginComponent implements OnInit {
       this.window.location.reload();
     }
 
-    this.devOpsServiceClient.getSafeguard().subscribe(
-      (data) => {
-        if (data?.ApplianceAddress) {
-          this.applianceAddress = data.ApplianceAddress;
-          this.connect();
+    this.devOpsServiceClient.getSafeguard()
+      .subscribe({
+        next: (data) => {
+          if (data?.ApplianceAddress) {
+            this.applianceAddress = data.ApplianceAddress;
+            this.connect();
+          }
         }
       });
   }
@@ -41,7 +43,7 @@ export class LoginComponent implements OnInit {
 
   handleKeyUp(e): void {
     if (e.keyCode === 13) { // Enter key
-       this.connect();
+      this.connect();
     }
   }
 }

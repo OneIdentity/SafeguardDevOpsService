@@ -10,7 +10,7 @@ import { of } from 'rxjs';
   styleUrls: ['./view-certificate.component.scss']
 })
 export class ViewCertificateComponent implements OnInit, AfterViewInit {
-  @ViewChild('subject', {static:false}) firstField: ElementRef;
+  @ViewChild('subject', { static: false }) firstField: ElementRef;
 
   certificateType: string = '';
   certificateLoaded: boolean = false;
@@ -51,8 +51,8 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
     }
 
     if (sub) {
-      sub.subscribe(
-        cert => {
+      sub.subscribe({
+        next: cert => {
           this.retrievedCert = cert;
           this.LocalizedValidFrom = moment(cert.NotBefore).format('LLL (Z)') + ' - ' + moment(cert.NotAfter).format('LLL (Z)');
           this.certificateLoaded = true;
@@ -62,10 +62,10 @@ export class ViewCertificateComponent implements OnInit, AfterViewInit {
             cert.Subject == 'CN=DefaultDevOpsServiceServerSSL' &&
             cert.IssuedBy == cert.Subject;
         },
-        error => {
+        error: error => {
           this.error = error;
         }
-      );
+      });
     }
   }
 

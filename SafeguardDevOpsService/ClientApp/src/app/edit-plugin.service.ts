@@ -59,12 +59,12 @@ export class EditPluginService {
             return of([]);
           }
         }),
-        tap((accounts) => {
+        tap({ next: (accounts) => {
           this.plugin.LoadingAvailableAccounts = false;
 
           this.availableAccounts.push(...accounts);
           this.availableAccounts$.next(accounts);
-        }),
+        } }),
         finalize(() => this.plugin.LoadingAvailableAccounts = false)
       ).subscribe();
     } else {
@@ -173,7 +173,7 @@ export class EditPluginService {
       this.serviceClient.getPluginAccounts(plugin.Name),
       this.serviceClient.getPluginVaultAccount(plugin.Name)
     ]).pipe(
-      tap(([managedAccounts, vaultAccount]) => {
+      tap({ next: ([managedAccounts, vaultAccount]) => {
         this.mapRetrievableToAvailableAccount(managedAccounts);
         plugin.Accounts = managedAccounts;
 
@@ -189,7 +189,7 @@ export class EditPluginService {
           };
           plugin.VaultAccountDisplayName = this.getVaultAccountDisplay(plugin.VaultAccount);
         }
-      }),
+      } }),
       finalize(() => plugin.LoadingPluginAccounts = false)
     ).subscribe();
   }

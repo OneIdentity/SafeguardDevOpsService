@@ -127,7 +127,7 @@ export class MainComponent implements OnInit, AfterViewInit {
       .pipe(
         untilDestroyed(this),
         switchMap(() => this.serviceClient.getConfiguration()),
-        tap((config) => this.initializeConfig(config)),
+        tap({ next: (config) => this.initializeConfig(config) }),
         switchMap(() => forkJoin([
           this.initializeMonitoring(),
           this.initializeTrustedCertificates(),
@@ -136,14 +136,17 @@ export class MainComponent implements OnInit, AfterViewInit {
           this.initializeAddons()
         ])),
         finalize(() => this.isLoading = false)
-      ).subscribe(() => { },
-        error => this.error = error
-      );
+      ).subscribe({
+        next: () => { },
+        error: error => this.error = error
+      });
   }
 
   ngAfterViewInit(): void {
-    this.viewMonitorEventsRefs.changes.subscribe((comps: QueryList<ViewMonitorEventsComponent>) => {
-      this.viewMonitorEventsRef = comps.first;
+    this.viewMonitorEventsRefs.changes.subscribe({
+      next: (comps: QueryList<ViewMonitorEventsComponent>) => {
+        this.viewMonitorEventsRef = comps.first;
+      }
     });
   }
 
@@ -153,11 +156,13 @@ export class MainComponent implements OnInit, AfterViewInit {
       return of({});
     }
     return this.serviceClient.getWebServerCertificate().pipe(
-      tap((cert) => {
-        if (cert && cert.Subject !== 'CN=DevOpsServiceServerSSL') {
-          this.webServerCertAdded = true;
+      tap({
+        next: (cert) => {
+          if (cert && cert.Subject !== 'CN=DevOpsServiceServerSSL') {
+            this.webServerCertAdded = true;
+          }
+          this.webServerCert = cert;
         }
-        this.webServerCert = cert;
       }));
   }
 
@@ -177,25 +182,27 @@ export class MainComponent implements OnInit, AfterViewInit {
 
     this.pluginInstances = [];
     return this.serviceClient.getPlugins().pipe(
-      tap((plugins: any[]) => {
-        plugins.forEach(plugin => {
-          plugin.IsConfigurationSetup = true;
-          this.plugins.push(plugin);
+      tap({
+        next: (plugins: any[]) => {
+          plugins.forEach(plugin => {
+            plugin.IsConfigurationSetup = true;
+            this.plugins.push(plugin);
 
-          if (!this.pluginInstances[plugin.RootPluginName]) {
-            this.pluginInstances[plugin.RootPluginName] = { Count: 0, AllMappedAccountsCount: 0, Disabled: 0 };
-          } else {
-            plugin.Rendered = true;
-          }
-          this.pluginInstances[plugin.RootPluginName].Count++;
-          this.pluginInstances[plugin.RootPluginName].AllMappedAccountsCount += plugin.MappedAccountsCount;
+            if (!this.pluginInstances[plugin.RootPluginName]) {
+              this.pluginInstances[plugin.RootPluginName] = { Count: 0, AllMappedAccountsCount: 0, Disabled: 0 };
+            } else {
+              plugin.Rendered = true;
+            }
+            this.pluginInstances[plugin.RootPluginName].Count++;
+            this.pluginInstances[plugin.RootPluginName].AllMappedAccountsCount += plugin.MappedAccountsCount;
 
-          if (plugin.IsDisabled) {
-            this.pluginInstances[plugin.RootPluginName].Disabled++;
-          }
-        });
+            if (plugin.IsDisabled) {
+              this.pluginInstances[plugin.RootPluginName].Disabled++;
+            }
+          });
 
-        this.updateMonitoringAvailable();
+          this.updateMonitoringAvailable();
+        }
       }));
   }
 
@@ -215,13 +222,15 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.addons.push(custom);
 
     return this.serviceClient.getAddons().pipe(
-      tap((addons: any[]) => {
-        addons.forEach(addon => {
-          addon.IsConfigurationSetup = true;
-          addon.IsAssetAdmin = this.isAssetAdmin;
-          this.serviceClient.getAddonStatus(addon.Name).subscribe(result => addon.Status = result);
-          this.addons.push(addon);
-        });
+      tap({
+        next: (addons: any[]) => {
+          addons.forEach(addon => {
+            addon.IsConfigurationSetup = true;
+            addon.IsAssetAdmin = this.isAssetAdmin;
+            this.serviceClient.getAddonStatus(addon.Name).subscribe({ next: result => addon.Status = result });
+            this.addons.push(addon);
+          });
+        }
       }));
   }
 
@@ -231,8 +240,10 @@ export class MainComponent implements OnInit, AfterViewInit {
       return of({});
     }
     return this.serviceClient.getMonitor().pipe(
-      tap((status) => {
-        this.isMonitoring = status.Enabled;
+      tap({
+        next: (status) => {
+          this.isMonitoring = status.Enabled;
+        }
       }));
   }
 
@@ -242,8 +253,10 @@ export class MainComponent implements OnInit, AfterViewInit {
       return of({});
     }
     return this.serviceClient.getTrustedCertificates().pipe(
-      tap((trustedCerts) => {
-        this.trustedCertificates = trustedCerts;
+      tap({
+        next: (trustedCerts) => {
+          this.trustedCertificates = trustedCerts;
+        }
       }));
   }
 
@@ -326,16 +339,18 @@ export class MainComponent implements OnInit, AfterViewInit {
     let saveApplianceAddress = false;
 
     return this.serviceClient.getSafeguard().pipe(
-      tap((safeguardData) => {
-        this.ApplianceAddress = safeguardData?.ApplianceAddress;
-        this.DevOpsVersion = safeguardData?.Version;
+      tap({
+        next: (safeguardData) => {
+          this.ApplianceAddress = safeguardData?.ApplianceAddress;
+          this.DevOpsVersion = safeguardData?.Version;
 
-        if (!this.ApplianceAddress) {
-          this.ApplianceAddress = this.window.sessionStorage.getItem('ApplianceAddress');
-          saveApplianceAddress = true;
+          if (!this.ApplianceAddress) {
+            this.ApplianceAddress = this.window.sessionStorage.getItem('ApplianceAddress');
+            saveApplianceAddress = true;
+          }
+
+          this.window.sessionStorage.removeItem('ApplianceAddress');
         }
-
-        this.window.sessionStorage.removeItem('ApplianceAddress');
       }),
       filter(() => this.ApplianceAddress && this.ApplianceAddress !== 'null'),
       switchMap(() => this.authService.getUserToken(this.ApplianceAddress)),
@@ -347,18 +362,22 @@ export class MainComponent implements OnInit, AfterViewInit {
         }
       }),
       switchMap(() => this.serviceClient.logon()),
-      tap((logon: any) => {
-        this.hasAvailableRegistrations = logon.HasAvailableA2ARegistrations;
-        this.needsClientCertificate = logon.NeedsClientCertificate;
-        this.needsWebCertificate = logon.NeedsWebCertificate;
-        this.needsTrustedCertificates = logon.NeedsTrustedCertificates;
-        this.needsSSLEnabled = logon.NeedsSSLEnabled;
-        this.passedTrustChainValidation = logon.PassedTrustChainValidation;
-        this.ReverseFlowAvailable = logon.ReverseFlowAvailable;
+      tap({
+        next: (logon: any) => {
+          this.hasAvailableRegistrations = logon.HasAvailableA2ARegistrations;
+          this.needsClientCertificate = logon.NeedsClientCertificate;
+          this.needsWebCertificate = logon.NeedsWebCertificate;
+          this.needsTrustedCertificates = logon.NeedsTrustedCertificates;
+          this.needsSSLEnabled = logon.NeedsSSLEnabled;
+          this.passedTrustChainValidation = logon.PassedTrustChainValidation;
+          this.ReverseFlowAvailable = logon.ReverseFlowAvailable;
+        }
       }),
       switchMap(() => this.checkA2ARegistration()),
-      tap((nullRegistration: any) => {
-        this.showAvailableRegistrations = typeof nullRegistration === 'boolean' && nullRegistration && this.hasAvailableRegistrations;
+      tap({
+        next: (nullRegistration: any) => {
+          this.showAvailableRegistrations = typeof nullRegistration === 'boolean' && nullRegistration && this.hasAvailableRegistrations;
+        }
       }),
       finalize(() => {
         if (!this.ApplianceAddress || this.ApplianceAddress === 'null') {
@@ -373,24 +392,26 @@ export class MainComponent implements OnInit, AfterViewInit {
       this.isUploading.Registration = true;
 
       this.serviceClient.logon()
-        .subscribe(() => {
-          this.serviceClient.putA2ARegistration(registrationId)
-            .subscribe(() => {
-              this.isUploading.Registration = false;
-              this.showAvailableRegistrations = false;
-              this.window.location.reload();
-            },
-              error => {
-                this.isUploading.Registration = false;
-                this.error = error;
-              }
-            );
-        },
-          error => {
+        .subscribe({
+          next: () => {
+            this.serviceClient.putA2ARegistration(registrationId)
+              .subscribe({
+                next: () => {
+                  this.isUploading.Registration = false;
+                  this.showAvailableRegistrations = false;
+                  this.window.location.reload();
+                },
+                error: error => {
+                  this.isUploading.Registration = false;
+                  this.error = error;
+                }
+              });
+          },
+          error: error => {
             this.isUploading.Registration = false;
             this.error = error;
           }
-        );
+        });
     } else {
       this.showAvailableRegistrations = false;
     }
@@ -427,13 +448,13 @@ export class MainComponent implements OnInit, AfterViewInit {
       data: { certificateType }
     });
 
-    dialogRef.afterClosed().subscribe(
-      result => {
+    dialogRef.afterClosed().subscribe({
+      next: result => {
         if (result?.result === CreateCsrResult.AddCertificate) {
           this.addCertificate(null, certificateType);
         }
       }
-    );
+    });
   }
 
   addCertificate(e: Event, certificateType: string): void {
@@ -498,8 +519,8 @@ export class MainComponent implements OnInit, AfterViewInit {
             this.serviceClient.postWebServerCertificate(fileContents, passphrase);
         }
       )
-    ).subscribe(
-      config => {
+    ).subscribe({
+      next: config => {
         this.isUploading.Certificate = false;
         if (certificateType === 'Client') {
           this.initializeConfig(config);
@@ -517,7 +538,7 @@ export class MainComponent implements OnInit, AfterViewInit {
           this.window.location.reload();
         }
       },
-      error => {
+      error: error => {
         this.isUploading.Certificate = false;
         if (error.error?.Message?.includes('specified network password is not correct')) {
           // bad password, have another try?
@@ -526,9 +547,10 @@ export class MainComponent implements OnInit, AfterViewInit {
         } else if (error.error?.Message) {
           this.error = 'Unexpected error uploading ' + certificateType + ' certificate: ' + error.error.Message;
         }
-      }).add(() => {
-        this.certificateUploading['Client'] = this.certificateUploading['WebServer'] = false;
-      });
+      }
+    }).add(() => {
+      this.certificateUploading['Client'] = this.certificateUploading['WebServer'] = false;
+    });
   }
 
   viewMonitorEvents(): void {
@@ -539,9 +561,11 @@ export class MainComponent implements OnInit, AfterViewInit {
     if (this.viewMonitorEventsRef) {
       this.viewMonitorEventsRef.refresh();
     }
-    this.editPluginService.notifyEvent$.subscribe((data) => {
-      if (data.mode === EditPluginMode.ViewMonitorEvents) {
-        this.drawer.close();
+    this.editPluginService.notifyEvent$.subscribe({
+      next: (data) => {
+        if (data.mode === EditPluginMode.ViewMonitorEvents) {
+          this.drawer.close();
+        }
       }
     });
   }
@@ -557,26 +581,28 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.openDrawer = 'properties';
     this.drawer.open();
 
-    this.editAddonService.notifyEvent$.subscribe((data) => {
-      switch (data.mode) {
-        case EditAddonMode.Properties:
-          this.drawer.close();
-          this.openDrawer = 'properties';
-          this.drawer.open();
-          break;
+    this.editAddonService.notifyEvent$.subscribe({
+      next: (data) => {
+        switch (data.mode) {
+          case EditAddonMode.Properties:
+            this.drawer.close();
+            this.openDrawer = 'properties';
+            this.drawer.open();
+            break;
 
-        case EditAddonMode.None:
-          this.drawer.close();
-          this.openDrawer = '';
-          const indx = this.addons.findIndex(x => x.Name === addon.Name);
-          if (indx > -1) {
-            if (data.addon) {
-              this.addons[indx] = data.addon;
-            } else {
-              this.addons.splice(indx, 1);
+          case EditAddonMode.None:
+            this.drawer.close();
+            this.openDrawer = '';
+            const indx = this.addons.findIndex(x => x.Name === addon.Name);
+            if (indx > -1) {
+              if (data.addon) {
+                this.addons[indx] = data.addon;
+              } else {
+                this.addons.splice(indx, 1);
+              }
             }
-          }
-          break;
+            break;
+        }
       }
     });
   }
@@ -594,57 +620,61 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.openDrawer = 'properties';
     this.drawer.open();
 
-    this.editPluginService.notifyEvent$.subscribe((data) => {
-      switch (data.mode) {
-        case EditPluginMode.Accounts:
-          this.drawer.close();
-          this.openDrawer = 'accounts';
-          this.drawer.open();
-          break;
+    this.editPluginService.notifyEvent$.subscribe({
+      next: (data) => {
+        switch (data.mode) {
+          case EditPluginMode.Accounts:
+            this.drawer.close();
+            this.openDrawer = 'accounts';
+            this.drawer.open();
+            break;
 
-        case EditPluginMode.VaultAccount:
-          this.drawer.close();
-          this.openDrawer = 'vaultaccount';
-          this.drawer.open();
-          break;
+          case EditPluginMode.VaultAccount:
+            this.drawer.close();
+            this.openDrawer = 'vaultaccount';
+            this.drawer.open();
+            break;
 
-        case EditPluginMode.Properties:
-          this.drawer.close();
-          this.openDrawer = 'properties';
-          this.drawer.open();
-          break;
+          case EditPluginMode.Properties:
+            this.drawer.close();
+            this.openDrawer = 'properties';
+            this.drawer.open();
+            break;
 
-        case EditPluginMode.None:
-          this.drawer.close();
-          this.openDrawer = '';
+          case EditPluginMode.None:
+            this.drawer.close();
+            this.openDrawer = '';
 
-          if (data.restartMonitoring === true) {
-            this.updateMonitoringAvailable();
+            if (data.restartMonitoring === true) {
+              this.updateMonitoringAvailable();
 
-            if (this.isMonitoring) {
-              const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-                data: {
-                  title: 'Plugin Configuration Changed',
-                  message: 'Restart the monitor to apply the new plugin configuration.',
-                  showCancel: false,
-                  confirmText: 'OK'
-                }
-              });
+              if (this.isMonitoring) {
+                const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+                  data: {
+                    title: 'Plugin Configuration Changed',
+                    message: 'Restart the monitor to apply the new plugin configuration.',
+                    showCancel: false,
+                    confirmText: 'OK'
+                  }
+                });
 
-              dialogRef.afterClosed().pipe(
-                filter((dlgResult) => dlgResult?.result === 'OK'),
-              ).subscribe(() => {
-                if (data.reload === true) {
-                  this.window.location.reload();
-                }
-              });
+                dialogRef.afterClosed().pipe(
+                  filter((dlgResult) => dlgResult?.result === 'OK'),
+                ).subscribe({
+                  next: () => {
+                    if (data.reload === true) {
+                      this.window.location.reload();
+                    }
+                  }
+                });
+              } else if (data.reload === true) {
+                this.window.location.reload();
+              }
             } else if (data.reload === true) {
               this.window.location.reload();
             }
-          } else if (data.reload === true) {
-            this.window.location.reload();
-          }
-          break;
+            break;
+        }
       }
     });
   }
@@ -663,21 +693,23 @@ export class MainComponent implements OnInit, AfterViewInit {
       this.isUploading.Plugin = true;
 
       this.serviceClient.postPluginFile(file)
-        .subscribe((x: any) => {
-          if (typeof x === 'string') {
-            this.isUploading.Plugin = false;
-            this.snackBar.open(x, 'OK', { duration: 10000 });
-          } else {
-            setTimeout(() => {
+        .subscribe({
+          next: (x: any) => {
+            if (typeof x === 'string') {
               this.isUploading.Plugin = false;
-              this.initializePlugins().subscribe();
-            }, 3000);
-          }
-        },
-          error => {
+              this.snackBar.open(x, 'OK', { duration: 10000 });
+            } else {
+              setTimeout(() => {
+                this.isUploading.Plugin = false;
+                this.initializePlugins().subscribe();
+              }, 3000);
+            }
+          },
+          error: error => {
             this.isUploading.Plugin = false;
             this.error = this.parseError(error);
-          });
+          }
+        });
     });
 
     fileInput.trigger('click');
@@ -697,22 +729,24 @@ export class MainComponent implements OnInit, AfterViewInit {
       this.isUploading.Addon = true;
 
       this.serviceClient.postAddonFile(file)
-        .subscribe((x: any) => {
-          if (typeof x === 'string') {
-            this.isUploading.Addon = false;
-            this.snackBar.open(x, 'OK', { duration: 10000 });
-          } else {
-            this.isUploading.Addon = false;
-            this.isRestarting = true;
-            setTimeout(() => {
-              this.postAddonRefresh(0);
-            }, 3000);
-          }
-        },
-          error => {
+        .subscribe({
+          next: (x: any) => {
+            if (typeof x === 'string') {
+              this.isUploading.Addon = false;
+              this.snackBar.open(x, 'OK', { duration: 10000 });
+            } else {
+              this.isUploading.Addon = false;
+              this.isRestarting = true;
+              setTimeout(() => {
+                this.postAddonRefresh(0);
+              }, 3000);
+            }
+          },
+          error: error => {
             this.isUploading.Addon = false;
             this.error = this.parseError(error);
-          });
+          }
+        });
     });
 
     fileInput.trigger('click');
@@ -721,8 +755,9 @@ export class MainComponent implements OnInit, AfterViewInit {
   // The service restarts in 2-3 seconds but it's 10+ seconds before Logon is not 504
   private postAddonRefresh(postAddonRefreshTries: number) {
     this.serviceClient.logon()
-      .subscribe(() => this.window.location.reload(),
-        error => {
+      .subscribe({
+        next: () => this.window.location.reload(),
+        error: error => {
           if (error.status == 504) {
             this.restartingProgress += '.';
             postAddonRefreshTries += 1;
@@ -738,7 +773,7 @@ export class MainComponent implements OnInit, AfterViewInit {
             this.error = error;
           }
         }
-      );
+      });
   }
 
   updateMonitoringAvailable(): void {
@@ -750,60 +785,68 @@ export class MainComponent implements OnInit, AfterViewInit {
     this.error = null;
     this.serviceClient.postMonitor(enabled).pipe(
       untilDestroyed(this)
-    ).subscribe(() => {
-      this.isMonitoring = enabled;
-      this.updateMonitoringAvailable();
-      setTimeout(() => {
-        this.setArrows();
-      }, 100);
-    },
-      error => {
+    ).subscribe({
+      next: () => {
+        this.isMonitoring = enabled;
+        this.updateMonitoringAvailable();
+        setTimeout(() => {
+          this.setArrows();
+        }, 100);
+      },
+      error: error => {
         this.error = error;
-      });
+      }
+    });
 
     setTimeout(() => {
       if (enabled === true) {
         this.serviceClient.getMonitor().pipe(
           untilDestroyed(this)
-        ).subscribe(
-          (status: any) => {
+        ).subscribe({
+          next: (status: any) => {
             if (status.StatusMessage != null) {
               this.snackBar.open(status.StatusMessage, 'Dismiss', { duration: 10000 });
             }
           },
-          error => {
-            this.snackBar.open('Failed to get the monitor status: ' + this.error, 'Dismiss', { duration: 10000});
-          });
+          error: error => {
+            this.snackBar.open('Failed to get the monitor status: ' + this.error, 'Dismiss', { duration: 10000 });
+          }
+        });
       }
     }, 3000);
-}
+  }
 
   logout(): void {
     this.error = null;
     this.serviceClient.logout().pipe(
       untilDestroyed(this)
-    ).subscribe(() => {
-      this.window.sessionStorage.removeItem('UserToken');
-      this.router.navigate(['/login']);
-    },
-      error => this.error = error
-    );
+    ).subscribe({
+      next: () => {
+        this.window.sessionStorage.removeItem('UserToken');
+        this.router.navigate(['/login']);
+      },
+      error: error => this.error = error
+    });
   }
 
   downloadLog(): void {
     this.error = null;
     this.serviceClient.getLogFile().pipe(
-      tap(() => {
-        this.snackBar.open('Downloading log file...');
+      tap({
+        next: () => {
+          this.snackBar.open('Downloading log file...');
+        }
       })
-    ).subscribe((data) => {
-      this.downloadFile(data, this.logFileName);
-      this.snackBar.open('Download complete.', 'Dismiss', { duration: this.snackBarDuration });
-    },
-      error => {
+    ).subscribe({
+      next: (data) => {
+        this.downloadFile(data, this.logFileName);
+        this.snackBar.open('Download complete.', 'Dismiss', { duration: this.snackBarDuration });
+      },
+      error: error => {
         this.snackBar.open('Download failed.', 'Dismiss', { duration: this.snackBarDuration });
         this.error = error;
-      });
+      }
+    });
   }
 
   private downloadFile(data: HttpResponse<Blob>, fileName: string) {
@@ -833,21 +876,25 @@ export class MainComponent implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK'),
-      tap((dlgResult) => {
-        this.passphrase = dlgResult?.passphrase;
-        this.snackBar.open('Generating backup file...');
-        // Show overlay to disable clicking on anything
-        this.drawer.open();
+      tap({
+        next: (dlgResult) => {
+          this.passphrase = dlgResult?.passphrase;
+          this.snackBar.open('Generating backup file...');
+          // Show overlay to disable clicking on anything
+          this.drawer.open();
+        }
       }),
       switchMap((dlgResult) => this.serviceClient.getBackup(dlgResult?.passphrase))
-    ).subscribe((data) => {
-      this.downloadFile(data, this.backupFileName);
-      this.drawer.close();
-      this.snackBar.dismiss();
-    },
-      error => {
+    ).subscribe({
+      next: (data) => {
+        this.downloadFile(data, this.backupFileName);
+        this.drawer.close();
+        this.snackBar.dismiss();
+      },
+      error: error => {
         this.error = error;
-      });
+      }
+    });
   }
 
   restoreConfiguration(): void {
@@ -863,20 +910,24 @@ export class MainComponent implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK'),
-      tap((dlgResult) => {
-        this.uploadAndRestore(dlgResult?.passphrase);
-        this.snackBar.open('Restoring configuration...');
-        // Show overlay to disable clicking on anything
-        this.drawer.open();
+      tap({
+        next: (dlgResult) => {
+          this.uploadAndRestore(dlgResult?.passphrase);
+          this.snackBar.open('Restoring configuration...');
+          // Show overlay to disable clicking on anything
+          this.drawer.open();
+        }
       }),
-    ).subscribe(() => {
-      this.drawer.close();
-      this.snackBar.dismiss();
-      //this.window.sessionStorage.setItem('ApplianceAddress', '');
-    },
-      error => {
+    ).subscribe({
+      next: () => {
+        this.drawer.close();
+        this.snackBar.dismiss();
+        //this.window.sessionStorage.setItem('ApplianceAddress', '');
+      },
+      error: error => {
         this.error = error;
-      });
+      }
+    });
   }
 
   private uploadAndRestore(passphrase: string) {
@@ -892,20 +943,22 @@ export class MainComponent implements OnInit, AfterViewInit {
       this.isUploading.Backup = true;
 
       this.serviceClient.postRestore(file, passphrase)
-        .subscribe((x: any) => {
-          if (typeof x === 'string') {
-            this.snackBar.open(x, 'OK', { duration: 10000 });
-          } else {
-            setTimeout(() => {
-              this.isUploading.Backup = false;
-              this.window.location.reload();
-            }, 3000);
-          }
-        },
-          error => {
+        .subscribe({
+          next: (x: any) => {
+            if (typeof x === 'string') {
+              this.snackBar.open(x, 'OK', { duration: 10000 });
+            } else {
+              setTimeout(() => {
+                this.isUploading.Backup = false;
+                this.window.location.reload();
+              }, 3000);
+            }
+          },
+          error: error => {
             this.isUploading.Backup = false;
             this.error = this.parseError(error);
-          });
+          }
+        });
     });
 
     fileInput.trigger('click');
@@ -922,20 +975,24 @@ export class MainComponent implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult: any) => dlgResult.result === 'OK'),
-      tap(() => {
-        this.snackBar.open('Restarting Safeguard Secrets Broker for DevOps service...');
-        // Show overlay to disable clicking on anything
-        this.drawer.open();
+      tap({
+        next: () => {
+          this.snackBar.open('Restarting Safeguard Secrets Broker for DevOps service...');
+          // Show overlay to disable clicking on anything
+          this.drawer.open();
+        }
       }),
       switchMap(() => this.serviceClient.restart()),
       switchMap(() => this.serviceClient.logon()),
       switchMap(() => this.initializeMonitoring()),
-      tap(() => {
-        this.setArrows();
-        this.snackBar.open('Safeguard Secrets Broker for DevOps service restarted.', null, { duration: this.snackBarDuration });
-        // Hide overlay
-        this.drawer.close();
-        this.window.location.reload();
+      tap({
+        next: () => {
+          this.setArrows();
+          this.snackBar.open('Safeguard Secrets Broker for DevOps service restarted.', null, { duration: this.snackBarDuration });
+          // Hide overlay
+          this.drawer.close();
+          this.window.location.reload();
+        }
       })
     ).subscribe();
   }
@@ -955,25 +1012,29 @@ export class MainComponent implements OnInit, AfterViewInit {
 
     dialogRef.afterClosed().pipe(
       filter((dlgResult) => dlgResult?.result === 'OK'),
-      tap((dlgResult) => {
-        this.isRestarting = dlgResult?.restart;
-        this.snackBar.open('Deleting configuration...');
-        // Show overlay to disable clicking on anything
-        this.drawer.open();
+      tap({
+        next: (dlgResult) => {
+          this.isRestarting = dlgResult?.restart;
+          this.snackBar.open('Deleting configuration...');
+          // Show overlay to disable clicking on anything
+          this.drawer.open();
+        }
       }),
       switchMap((dlgResult) => this.serviceClient.deleteConfiguration(dlgResult?.secretsBrokerOnly, dlgResult?.restart))
-    ).subscribe(() => {
-      this.drawer.close();
-      this.snackBar.dismiss();
-      this.window.sessionStorage.setItem('ApplianceAddress', '');
-      if (this.isRestarting) {
-        this.window.location.reload();
-      }
-    },
-      error => {
+    ).subscribe({
+      next: () => {
+        this.drawer.close();
+        this.snackBar.dismiss();
+        this.window.sessionStorage.setItem('ApplianceAddress', '');
+        if (this.isRestarting) {
+          this.window.location.reload();
+        }
+      },
+      error: error => {
         this.isRestarting = false;
         this.error = error;
-      });
+      }
+    });
   }
 
   viewCertificate(e: Event, certType: string = 'Client', reload: boolean = false, isUpload: boolean = false): void {
@@ -986,8 +1047,8 @@ export class MainComponent implements OnInit, AfterViewInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(
-      (result) => {
+    dialogRef.afterClosed().subscribe({
+      next: (result) => {
         if (result?.result === ViewCertificateResult.RemovedCertificate) {
           this.window.location.reload();
         } else if (result?.result === ViewCertificateResult.AddCertificate) {
@@ -996,7 +1057,7 @@ export class MainComponent implements OnInit, AfterViewInit {
           this.window.location.reload();
         }
       }
-    );
+    });
   }
 
   viewTrustedCertificates(e: Event): void {
@@ -1008,8 +1069,10 @@ export class MainComponent implements OnInit, AfterViewInit {
       data: { trustedCertificates: this.trustedCertificates }
     });
 
-    dialogRef.afterClosed().subscribe(() => {
-      this.window.location.reload();
+    dialogRef.afterClosed().subscribe({
+      next: () => {
+        this.window.location.reload();
+      }
     });
   }
 

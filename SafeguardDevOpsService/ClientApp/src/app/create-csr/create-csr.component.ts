@@ -298,8 +298,8 @@ export class CreateCsrComponent implements OnInit {
     this.creatingCSR = true;
     this.serviceClient
       .getCSR(csrType, this.subjectName, this.csr.DnsNames.join(','), this.csr.IpAddresses.join(','), this.keySize)
-      .subscribe(
-        (csr) => {
+      .subscribe({
+        next: (csr) => {
           this.csr.Text = csr;
           const saveModal = this.dialog.open(SaveCsrComponent,
             {
@@ -317,10 +317,10 @@ export class CreateCsrComponent implements OnInit {
               }
             });
         },
-        (error) => {
+        error: (error) => {
           this.error = error;
         }
-      )
+      })
       .add(() => { this.creatingCSR = false; });
   }
 

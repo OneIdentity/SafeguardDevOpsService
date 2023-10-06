@@ -60,11 +60,13 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
   updateUseSsl(): void {
     this.error = null;
     this.serviceClient.putSafeguardUseSsl(this.useSsl)
-      .subscribe(() => { },
-        error => {
+      .subscribe({
+        next: () => { },
+        error: error => {
           this.useSsl = false;
           this.error = error;
-        });
+        }
+      });
   }
 
   onChangeFile(files: FileList): void {
@@ -97,9 +99,11 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
 
       let isNew = false;
       this.getPassphrase(fileData).pipe(
-        tap(() => {
-          this.isLoading = true;
-          this.trustedCertificates.splice(0);
+        tap({
+          next: () => {
+            this.isLoading = true;
+            this.trustedCertificates.splice(0);
+          }
         }),
         switchMap((data) => this.saveCertificate(data)),
         switchMap((data) => {
@@ -113,11 +117,13 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
           const input = this.fileSelectInputDialog.nativeElement as HTMLInputElement;
           input.value = null;
         })
-      ).subscribe(() => {
-        if (isNew) {
-          this.snackbar.open(`Added certificate ${fileData.fileName}`, 'Dismiss', { duration: 5000 });
-        } else {
-          this.snackbar.open(`Certificate ${fileData.fileName} already exists.`, 'Dismiss', { duration: 5000 });
+      ).subscribe({
+        next: () => {
+          if (isNew) {
+            this.snackbar.open(`Added certificate ${fileData.fileName}`, 'Dismiss', { duration: 5000 });
+          } else {
+            this.snackbar.open(`Certificate ${fileData.fileName} already exists.`, 'Dismiss', { duration: 5000 });
+          }
         }
       });
     };
@@ -164,9 +170,11 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
 
   private refreshCertificates(): Observable<any[]> {
     return this.serviceClient.getTrustedCertificates().pipe(
-      tap((certs) => {
-        this.trustedCertificates.splice(0);
-        this.trustedCertificates.push(...certs);
+      tap({
+        next: (certs) => {
+          this.trustedCertificates.splice(0);
+          this.trustedCertificates.push(...certs);
+        }
       }));
   }
 
@@ -181,12 +189,14 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
         existingTrustedCertsCount = trustedCerts.filter(cert => !cert.IsNew).length;
         return this.refreshCertificates();
       })
-    ).subscribe(() => {
-      this.isLoading = false;
-      if (newTrustedCertsCount > 0 && existingTrustedCertsCount == 0) {
-        this.snackbar.open(`Imported ${newTrustedCertsCount} certificates.`, 'Dismiss', { duration: 5000 });
-      } else {
-        this.snackbar.open(`Imported ${newTrustedCertsCount} new certificates and ${existingTrustedCertsCount} existing certificates.`, 'Dismiss', { duration: 5000 });
+    ).subscribe({
+      next: () => {
+        this.isLoading = false;
+        if (newTrustedCertsCount > 0 && existingTrustedCertsCount == 0) {
+          this.snackbar.open(`Imported ${newTrustedCertsCount} certificates.`, 'Dismiss', { duration: 5000 });
+        } else {
+          this.snackbar.open(`Imported ${newTrustedCertsCount} new certificates and ${existingTrustedCertsCount} existing certificates.`, 'Dismiss', { duration: 5000 });
+        }
       }
     });
   }
@@ -198,17 +208,19 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
     this.isLoading = true;
     this.serviceClient.deleteTrustedCertificate(thumbprint).pipe(
       switchMap(() => this.refreshCertificates())
-    ).subscribe(() => {
-      if (this.trustedCertificates.length == 0) {
-        this.useSsl = false;
-        this.updateUseSsl();
-      }
-      this.isLoading = false;
+    ).subscribe({
+      next: () => {
+        if (this.trustedCertificates.length == 0) {
+          this.useSsl = false;
+          this.updateUseSsl();
+        }
+        this.isLoading = false;
       },
-      error => {
+      error: error => {
         this.isLoading = false;
         this.error = error;
-      });
+      }
+    });
   }
 
   closeCertDetails(): void {

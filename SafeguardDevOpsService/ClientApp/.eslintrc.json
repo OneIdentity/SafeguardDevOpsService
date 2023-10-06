@@ -20,6 +20,7 @@
         "plugin:@angular-eslint/ng-cli-compat--formatting-add-on",
         "plugin:@angular-eslint/template/process-inline-templates"
       ],
+      "plugins": ["rxjs"],
       "rules": {
         "@angular-eslint/component-selector": [
           "error",
@@ -97,7 +98,11 @@
         "prefer-const": "off",
         "prefer-arrow/prefer-arrow-functions": "off",
         "quote-props": "off",
-        "unused-imports/no-unused-imports": "warn"
+        "unused-imports/no-unused-imports": "warn",
+        "rxjs/prefer-observer": [
+          "error",
+          { "allowNext": false }
+        ]
       }
     },
     {

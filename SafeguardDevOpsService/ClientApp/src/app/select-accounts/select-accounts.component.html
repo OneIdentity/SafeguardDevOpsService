@@ -20,8 +20,8 @@
         <mat-label>Search Account</mat-label>
         <input matInput type="text" #accountSearch [(ngModel)]="accountSearchVal">
       </mat-form-field>
-      <button mat-button (click)="loadAccounts()" disableRipple>
-        <mat-icon  matTooltip="Refresh">refresh</mat-icon>
+      <button mat-button (click)="loadAccounts()" matTooltip="Refresh">
+        <mat-icon>refresh</mat-icon>
       </button>
     </div>
 
@@ -65,7 +65,7 @@
         [pageIndex]="page"></mat-paginator>
 
       <div class="spinner-container">
-        <mat-spinner *ngIf="isLoading" diameter="30" color="primary"></mat-spinner>
+        <mat-spinner *ngIf="isLoading" diameter="32" color="primary"></mat-spinner>
       </div>
     </div>
   </div>

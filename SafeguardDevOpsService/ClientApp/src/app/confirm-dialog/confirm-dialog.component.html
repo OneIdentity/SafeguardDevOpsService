@@ -1,30 +1,39 @@
 <div mat-dialog-title>
    <div class='dialog-title-elements'>
       <div class='title-text'>{{title}}</div>
-      <div class='close-button'><button *ngIf='!showCancel' mat-icon-button class='link-button' mat-dialog-close
-            tabindex='-1'>
+      <div class='close-button'>
+         <button *ngIf='!showCancel' mat-icon-button class='link-button' mat-dialog-close tabindex='-1'>
             <mat-icon>close</mat-icon>
-         </button></div>
+         </button>
+      </div>
    </div>
 </div>
+
 <div class='dialog-content' mat-dialog-content>
    <div [innerHTML]="message"></div>
 </div>
-<mat-checkbox color="primary" *ngIf="showSecretsBrokerOnly" [(ngModel)]="secretsBrokerOnly">Reset Safeguard Secrets Broker for DevOps Only
-</mat-checkbox>
-<br/>
-<mat-checkbox color="primary" *ngIf="showRestart" [(ngModel)]="restart">Restart Safeguard Secrets Broker for DevOps Service
-</mat-checkbox>
-<mat-form-field *ngIf="showPassphrase && passwordHidden" appearance="outline">
-  <mat-label><span>Passphrase</span></mat-label>
-  <input matInput type="password" autocomplete='off' name="Passphrase" [(ngModel)]="passphrase" />
-  <mat-icon matSuffix (click)="passwordHidden = false" [matTooltip]="show">visibility</mat-icon>
-</mat-form-field>
-<mat-form-field *ngIf="showPassphrase && !passwordHidden" appearance="outline">
-  <mat-label><span>Passphrase</span></mat-label>
-  <input matInput autocomplete='off' name="Passphrase" [(ngModel)]="passphrase" />
-  <mat-icon matSuffix (click)="passwordHidden = true" [matTooltip]="hide">visibility_off</mat-icon>
-</mat-form-field>
+
+<div class="padding">
+   <mat-checkbox color="primary" *ngIf="showSecretsBrokerOnly" [(ngModel)]="secretsBrokerOnly">
+      Reset Safeguard Secrets Broker for DevOps Only
+   </mat-checkbox>
+   <br />
+   <mat-checkbox color="primary" *ngIf="showRestart" [(ngModel)]="restart">
+      Restart Safeguard Secrets Broker for DevOps Service
+   </mat-checkbox>
+
+   <mat-form-field *ngIf="showPassphrase && passwordHidden" appearance="outline">
+      <mat-label><span>Passphrase</span></mat-label>
+      <input matInput type="password" autocomplete='off' name="Passphrase" [(ngModel)]="passphrase" />
+      <mat-icon matSuffix (click)="passwordHidden = false" [matTooltip]="show">visibility</mat-icon>
+   </mat-form-field>
+
+   <mat-form-field *ngIf="showPassphrase && !passwordHidden" appearance="outline">
+      <mat-label><span>Passphrase</span></mat-label>
+      <input matInput autocomplete='off' name="Passphrase" [(ngModel)]="passphrase" />
+      <mat-icon matSuffix (click)="passwordHidden = true" [matTooltip]="hide">visibility_off</mat-icon>
+   </mat-form-field>
+</div>
 
 <div mat-dialog-actions align='end'>
    <button mat-button (click)="close()" cdkFocusInitial *ngIf="showCancel">Cancel</button>

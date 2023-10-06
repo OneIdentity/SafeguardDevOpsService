@@ -17,19 +17,19 @@
       <ng-container *ngIf="isMultiInstance">
         <div class="spacer"></div>
         <button mat-button (click)="goBack()"
-          [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts || instanceIndex == 0" disableRipple>
+          [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts || instanceIndex == 0" >
           <mat-icon>arrow_back_ios</mat-icon>
         </button>
         <button mat-button (click)="goNext()"
           [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts || instanceIndex == instanceCount - 1"
-          disableRipple>
+          >
           <mat-icon>arrow_forward_ios</mat-icon>
         </button>
         <div class="spacer"></div>
         <div class="center">Instance {{instanceIndex + 1}} of {{instanceCount}}</div>
         <div class="selection-row">
           <button mat-button color="primary" *ngIf="!isDeleting && !plugin.IsSystemOwned" (click)="deleteInstance()"
-            [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts" disableRipple>
+            [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts" >
             Delete Instance
           </button>
         </div>
@@ -37,141 +37,151 @@
     </div>
 
     <mat-card>
-      <div class="basic-info-header">
-        <h2>Basic Info</h2>
-        <div class="spacer"></div>
-        <div class="sub-title">Version {{plugin?.Version}}</div>
-      </div>
-      <div class="info-label">Name</div>
-      <div>{{plugin?.DisplayName}}</div>
-      <div class="info-label">({{plugin?.Name}})</div>
-      <p></p>
-      <div>
-        <div class="info-label">Description</div>
-        <div>{{plugin?.Description}}</div>
-      </div>
+      <mat-card-content>
+        <div class="basic-info-header">
+          <h2>Basic Info</h2>
+          <div class="spacer"></div>
+          <div class="sub-title">Version {{plugin?.Version}}</div>
+        </div>
+        <div class="info-label">Name</div>
+        <div>{{plugin?.DisplayName}}</div>
+        <div class="info-label">({{plugin?.Name}})</div>
+        <p></p>
+        <div>
+          <div class="info-label">Description</div>
+          <div>{{plugin?.Description}}</div>
+        </div>
+      </mat-card-content>
     </mat-card>
 
     <mat-card *ngIf="!plugin.LoadingPluginAccounts">
-      <h2>Configuration</h2>
-      <div class="field-container">
-        <div class="vault-account">
-          <div class="inline-div">
-            <div class="info-label">Vault's Account in Safeguard</div>
-            <div>{{plugin?.VaultAccountDisplayName}}</div>
-            <button mat-button class="link-button" disableRipple color="primary" (click)="selectVaultAccount()"
-              [disabled]="plugin?.LoadingAvailableAccounts || isSaving" *ngIf="!plugin?.VaultAccountDisplayName">Select
-              Account</button>
-          </div>
-          <button mat-icon-button *ngIf="!plugin.IsSystemOwned && plugin?.VaultAccountDisplayName"
-            matTooltip="Remove Vault Account" (click)="removeVaultAccount()" class="remove-vault-button"
-            [disabled]="isSaving">
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-        <div class="field-text">This account will be used by Secrets Broker to pull new passwords from Safeguard</div>
-      </div>
-      <div class="disable-flag">
-        <mat-checkbox color="primary" *ngIf="!plugin.IsSystemOwned" [(ngModel)]="plugin.IsDisabled"
-          matTooltip="Disable the plugin to prevent monitoring the associated accounts">Disabled</mat-checkbox>
-      </div>
-      <div class="reverse-flag">
-        <mat-checkbox color="primary" *ngIf="!plugin.IsSystemOwned" [disabled]="!reverseFlowAvailable" [(ngModel)]="plugin.ReverseFlowEnabled"
-          [matTooltip]="plugin.SupportsReverseFlow ? 'Enable reverse flow for this plugin instance. Reverse flow pulls credentials from the vault' : 'This plugin does not support reverse flow'">Reverse Flow</mat-checkbox>
-      </div>
-      <div *ngIf="!plugin.IsSystemOwned" class="sub-title-2">Plugin Details</div>
-      <div *ngIf="!plugin.IsSystemOwned">
+      <mat-card-content>
+        <h2>Configuration</h2>
         <div class="field-container">
-          <mat-form-field appearance="outline">
-            <mat-label>Credential Type - Assign the credential type the plugin instance should handle</mat-label>
-            <mat-select name="AssignedCredentialType" [(ngModel)]="plugin.AssignedCredentialType" [disabled]="isSaving">
-              <mat-option *ngFor="let credentialType of plugin.SupportedCredentialTypes" [value]="credentialType">
-                {{credentialType}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+          <div class="vault-account">
+            <div class="inline-div">
+              <div class="info-label">Vault's Account in Safeguard</div>
+              <div>{{plugin?.VaultAccountDisplayName}}</div>
+              <button mat-button class="link-button" color="primary" (click)="selectVaultAccount()"
+                [disabled]="plugin?.LoadingAvailableAccounts || isSaving"
+                *ngIf="!plugin?.VaultAccountDisplayName">Select
+                Account</button>
+            </div>
+            <button mat-icon-button *ngIf="!plugin.IsSystemOwned && plugin?.VaultAccountDisplayName"
+              matTooltip="Remove Vault Account" (click)="removeVaultAccount()" class="remove-vault-button"
+              [disabled]="isSaving">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <div class="field-text">This account will be used by Secrets Broker to pull new passwords from Safeguard</div>
         </div>
-        <ng-container *ngFor="let config of plugin.configs">
+        <div class="disable-flag">
+          <mat-checkbox color="primary" *ngIf="!plugin.IsSystemOwned" [(ngModel)]="plugin.IsDisabled"
+            matTooltip="Disable the plugin to prevent monitoring the associated accounts">Disabled</mat-checkbox>
+        </div>
+        <div class="reverse-flag">
+          <mat-checkbox color="primary" *ngIf="!plugin.IsSystemOwned" [disabled]="!reverseFlowAvailable"
+            [(ngModel)]="plugin.ReverseFlowEnabled"
+            [matTooltip]="plugin.SupportsReverseFlow ? 'Enable reverse flow for this plugin instance. Reverse flow pulls credentials from the vault' : 'This plugin does not support reverse flow'">Reverse
+            Flow</mat-checkbox>
+        </div>
+        <div *ngIf="!plugin.IsSystemOwned" class="sub-title-2">Plugin Details</div>
+        <div *ngIf="!plugin.IsSystemOwned">
           <div class="field-container">
             <mat-form-field appearance="outline">
-              <mat-label>{{config.key}}</mat-label>
-              <input matInput type="text" [(ngModel)]="config.value" name="configvalue" [disabled]="isSaving">
+              <mat-label>Credential Type - Assign the credential type the plugin instance should handle</mat-label>
+              <mat-select name="AssignedCredentialType" [(ngModel)]="plugin.AssignedCredentialType"
+                [disabled]="isSaving">
+                <mat-option *ngFor="let credentialType of plugin.SupportedCredentialTypes" [value]="credentialType">
+                  {{credentialType}}
+                </mat-option>
+              </mat-select>
             </mat-form-field>
           </div>
-        </ng-container>
-      </div>
-      <app-progress-spinner color="accent" diameter="20" message='Testing Configuration' [visible]="isTesting">
-      </app-progress-spinner>
-      <button mat-button (click)="testConnection()" [disabled]="isSaving || plugin.LoadingPluginAccounts"
-        *ngIf="!isTesting" color="primary" class="link-button" disableRipple>Test Configuration</button>
+          <ng-container *ngFor="let config of plugin.configs">
+            <div class="field-container">
+              <mat-form-field appearance="outline">
+                <mat-label>{{config.key}}</mat-label>
+                <input matInput type="text" [(ngModel)]="config.value" name="configvalue" [disabled]="isSaving">
+              </mat-form-field>
+            </div>
+          </ng-container>
+        </div>
+        <app-progress-spinner color="accent" diameter="16" message='Testing Configuration' [visible]="isTesting">
+        </app-progress-spinner>
+        <button mat-button (click)="testConnection()" [disabled]="isSaving || plugin.LoadingPluginAccounts"
+          *ngIf="!isTesting" color="primary" class="link-button" >Test Configuration</button>
+      </mat-card-content>
     </mat-card>
 
     <mat-card *ngIf="!plugin.LoadingPluginAccounts">
-      <h2 class="link-button">Managed Accounts</h2>
-      <div class="sub-title" *ngIf="!plugin.IsDisabled">They will have their passwords pushed to the vault.</div>
-      <div class="sub-title" *ngIf="plugin.IsDisabled">Passwords are not pushed to the vault while disabled.</div>
-      <div>
-        <table mat-table [dataSource]="plugin.Accounts">
-          <ng-container matColumnDef="asset">
-            <th mat-header-cell *matHeaderCellDef>Asset</th>
-            <td mat-cell *matCellDef="let element">
-              <span>{{element.AssetName}}</span>
-              <div class="detail-row">{{element.AssetNetworkAddress}}</div>
-            </td>
-          </ng-container>
+      <mat-card-content>
+        <h2 class="link-button">Managed Accounts</h2>
+        <div class="sub-title" *ngIf="!plugin.IsDisabled">They will have their passwords pushed to the vault.</div>
+        <div class="sub-title" *ngIf="plugin.IsDisabled">Passwords are not pushed to the vault while disabled.</div>
+        <div>
+          <table mat-table [dataSource]="plugin.Accounts">
+            <ng-container matColumnDef="asset">
+              <th mat-header-cell *matHeaderCellDef>Asset</th>
+              <td mat-cell *matCellDef="let element">
+                <span>{{element.AssetName}}</span>
+                <div class="detail-row">{{element.AssetNetworkAddress}}</div>
+              </td>
+            </ng-container>
 
-          <ng-container matColumnDef="account">
-            <th mat-header-cell *matHeaderCellDef>Account</th>
-            <td mat-cell *matCellDef="let element">
-              <span>{{element.Name}}</span>
-              <div class="detail-row">{{element.DomainName}}</div>
-            </td>
-          </ng-container>
+            <ng-container matColumnDef="account">
+              <th mat-header-cell *matHeaderCellDef>Account</th>
+              <td mat-cell *matCellDef="let element">
+                <span>{{element.Name}}</span>
+                <div class="detail-row">{{element.DomainName}}</div>
+              </td>
+            </ng-container>
 
-          <ng-container matColumnDef="altaccount">
-            <th mat-header-cell *matHeaderCellDef>Alternate</th>
-            <td mat-cell *matCellDef="let element">
-              <mat-form-field appearance="outline" class="eui-input--small eui-input--no-margin maxWidth">
-                <input matInput class="altname" type="text" autocomplete='off' [(ngModel)]="element.AltAccountName">
-              </mat-form-field>
-            </td>
-          </ng-container>
+            <ng-container matColumnDef="altaccount">
+              <th mat-header-cell *matHeaderCellDef>Alternate</th>
+              <td mat-cell *matCellDef="let element">
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <input matInput class="altname" type="text" autocomplete='off' [(ngModel)]="element.AltAccountName">
+                </mat-form-field>
+              </td>
+            </ng-container>
 
-          <ng-container matColumnDef="delete">
-            <th mat-header-cell *matHeaderCellDef>Remove</th>
-            <td mat-cell *matCellDef="let row">
-              <button mat-icon-button (click)="removeAccount($event, row)" color="primary" [disabled]="isSaving">
-                <mat-icon>remove</mat-icon>
-              </button>
-            </td>
-          </ng-container>
+            <ng-container matColumnDef="delete">
+              <th mat-header-cell *matHeaderCellDef>Remove</th>
+              <td mat-cell *matCellDef="let row">
+                <button mat-icon-button (click)="removeAccount($event, row)" color="primary" [disabled]="isSaving">
+                  <mat-icon>remove</mat-icon>
+                </button>
+              </td>
+            </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns;"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-        </table>
-      </div>
-      <button mat-button color="primary" (click)="selectAccounts()"
-        [disabled]="isSaving || plugin?.LoadingAvailableAccounts" class="link-button">
-        <mat-icon>add</mat-icon>Select Accounts
-      </button>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns;"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+        <button mat-button color="primary" (click)="selectAccounts()"
+          [disabled]="isSaving || plugin?.LoadingAvailableAccounts" class="link-button">
+          <mat-icon>add</mat-icon>Select Accounts
+        </button>
+      </mat-card-content>
     </mat-card>
 
     <div *ngIf="error" class="error">
       <mat-icon>error</mat-icon>{{error}}
     </div>
     <div class="busy" *ngIf="plugin.LoadingPluginAccounts">
-      <mat-spinner color="primary" diameter="30"></mat-spinner>
+      <mat-spinner color="primary" diameter="32"></mat-spinner>
     </div>
   </div>
 
   <mat-toolbar class="selection-footer">
-    <app-progress-spinner color="accent" diameter="20" message='Deleting Plugin' [visible]="isDeleting">
+    <app-progress-spinner color="accent" diameter="16" message='Deleting Plugin' [visible]="isDeleting">
     </app-progress-spinner>
     <button mat-button *ngIf="!isDeleting && !plugin.IsSystemOwned" (click)="delete()"
-      [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts" class="link-button" disableRipple>Delete
+      [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts" class="link-button" >Delete
       Plugin</button>
     <div class="spacer"></div>
-    <app-progress-spinner color="accent" diameter="20" [visible]="isSaving"></app-progress-spinner>
+    <app-progress-spinner color="accent" diameter="16" [visible]="isSaving"></app-progress-spinner>
     <button mat-flat-button color="primary" (click)="saveAll()" *ngIf="!isDeleting"
       [disabled]="isSaving || isTesting || plugin.LoadingPluginAccounts">
       <span *ngIf="!isSaving && !isMultiInstance">Save</span>
