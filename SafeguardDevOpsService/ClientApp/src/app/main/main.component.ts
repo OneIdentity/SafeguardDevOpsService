@@ -443,7 +443,11 @@ export class MainComponent implements OnInit, AfterViewInit {
       );
   }
 
-  createCSR(certificateType: string): void {
+  createCSR(event: any, certificateType: string): void {
+    if (event && event.currentTarget) {
+      event.currentTarget.blur();
+    }
+
     const dialogRef = this.dialog.open(CreateCsrComponent, {
       data: { certificateType }
     });
@@ -480,7 +484,7 @@ export class MainComponent implements OnInit, AfterViewInit {
         if (dlgResult?.result === UploadCertificateResult.ViewCertificate) {
           this.viewCertificate(null, certificateType);
         } else if (dlgResult?.result === UploadCertificateResult.CreateCSR) {
-          this.createCSR(certificateType);
+          this.createCSR(e, certificateType);
         }
         return of(); // Nothing more to do
       }),

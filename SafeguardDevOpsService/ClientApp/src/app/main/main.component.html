@@ -117,9 +117,8 @@
 
             <div class='buttons'>
               <div class='left'>
-                <button mat-button class='link-button' (click)="createCSR('Client')" color="primary">Create a
-                  Certificate
-                  Signing Request (CSR)</button>
+                <button mat-button class='link-button' (click)="createCSR($event,'Client')" color="primary">
+                  Create a Certificate Signing Request (CSR)</button>
               </div>
               <div class='right'>
                 <app-progress-spinner color="accent" diameter="32" message='Uploading Certificate'
