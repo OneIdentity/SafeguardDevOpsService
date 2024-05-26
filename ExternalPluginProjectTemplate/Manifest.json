@@ -1,0 +1,7 @@
+{
+	"Type": "Plugin",
+	"Name": "$safeprojectname$",
+	"DisplayName": "$safeprojectname$",
+	"Assembly": "$safeprojectname$.dll",
+	"Version": "1.0.0.0"
+}
