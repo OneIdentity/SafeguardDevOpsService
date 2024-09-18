@@ -8,7 +8,7 @@ using System.Resources;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("One Identity LLC")]
 [assembly: AssemblyProduct("SafeguardDevOpsService")]
-[assembly: AssemblyCopyright("Copyright 2023 One Identity LLC")]
+[assembly: AssemblyCopyright("Copyright 2024 One Identity LLC")]
 [assembly: AssemblyTrademark("One Identity LLC (TM)")]
 [assembly: AssemblyCulture("")]
 
