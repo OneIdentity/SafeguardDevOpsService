@@ -1,0 +1,24 @@
+<VSTemplate Version="3.0.0" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" Type="Project">
+  <TemplateData>
+    <Name>Safeguard Secrets Broker Plugin</Name>
+    <Description>A basic project skelton for creating a credential plugin for use with the One Identity Safeguard Secrets Broker service.</Description>
+    <ProjectType>CSharp</ProjectType>
+    <ProjectSubType>
+    </ProjectSubType>
+    <SortOrder>1000</SortOrder>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>Safeguard Secrets Broker Plugin</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+    <LocationField>Enabled</LocationField>
+    <EnableLocationBrowseButton>true</EnableLocationBrowseButton>
+    <CreateInPlace>true</CreateInPlace>
+    <Icon>__TemplateIcon.ico</Icon>
+  </TemplateData>
+  <TemplateContent>
+    <Project TargetFileName="SecretsBrokerPlugin.csproj" File="SecretsBrokerPlugin.csproj" ReplaceParameters="true">
+      <ProjectItem ReplaceParameters="true" TargetFileName="Manifest.json">Manifest.json</ProjectItem>
+      <ProjectItem ReplaceParameters="true" TargetFileName="PluginDescriptor.cs">PluginDescriptor.cs</ProjectItem>
+      <ProjectItem ReplaceParameters="false" TargetFileName="OneIdentity.SafeguardSecretsBroker.PluginCommon.dll">OneIdentity.SafeguardSecretsBroker.PluginCommon.dll</ProjectItem>
+    </Project>
+  </TemplateContent>
+</VSTemplate>

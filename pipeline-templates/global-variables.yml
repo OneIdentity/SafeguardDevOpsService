@@ -8,6 +8,8 @@
 #
 # isReleaseBranch controls whether packages will be generated and published.
 #
+# NODE_OPTIONS: Prevent npm install from running out of memory with the following error:
+# azure pipeline Reached heap limit Allocation failed - JavaScript heap out of memory The command "npm install" exited with code 134    
 variables:
   - name: semanticVersion
     value: "8.0.0"
@@ -15,3 +17,5 @@ variables:
     value: ${{ true }}
   - name: isReleaseBranch
     value: $[ or( eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-') ) ]
+  - name: NODE_OPTIONS
+    value: --max-old-space-size=4096
