@@ -1,0 +1,7 @@
+{
+    "Type": "Plugin",
+    "Name": "GoogleCloudServiceAccountKeyRotation",
+    "DisplayName": "Google Cloud Service Account Key Rotation",
+    "Assembly": "GoogleCloudServiceAccountKeyRotation.dll",
+    "Version": "1.0.0.9999"
+}
