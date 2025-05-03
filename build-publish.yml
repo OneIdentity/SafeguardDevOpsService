@@ -85,7 +85,7 @@ jobs:
         inputs:
           targetType: 'inline'
           script: |
-            docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
+            docker login -u danpetersonoi --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
 
             docker tag oneidentity/safeguard-devops:$(VersionString)-alpine3.12 oneidentity/safeguard-devops:$(VersionString)-alpine
             docker tag oneidentity/safeguard-devops:$(VersionString)-alpine3.12 oneidentity/safeguard-devops:latest
@@ -119,7 +119,7 @@ jobs:
         inputs:
           targetType: 'inline'
           script: |
-            docker login -u petrsnd --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
+            docker login -u danpetersonoi --password-stdin <<<$(DockerHubAccessToken) 2>/dev/null
 
             docker tag oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04 oneidentity/safeguard-devops:$(VersionString)-ubuntu
             docker push oneidentity/safeguard-devops:$(VersionString)-ubuntu20.04
