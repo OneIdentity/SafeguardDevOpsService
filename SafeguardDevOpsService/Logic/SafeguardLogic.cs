@@ -1581,7 +1581,7 @@ namespace OneIdentity.DevOps.Logic
             {
                 var key = tempKey ?? _configDb.SigningCertificate;
                 var bytes = Convert.FromBase64String(key);
-                var cert = new X509Certificate2(bytes);
+                var cert = X509CertificateLoader.LoadCertificate(bytes);
 
                 var parts = token.Split('.');
 
@@ -1640,9 +1640,7 @@ namespace OneIdentity.DevOps.Logic
             X509Certificate2 cert;
             try
             {
-                cert = certificate.Passphrase == null
-                    ? new X509Certificate2(certificateBytes)
-                    : new X509Certificate2(certificateBytes, certificate.Passphrase);
+                cert = X509CertificateLoader.LoadPkcs12(certificateBytes, certificate.Passphrase);
                 _logger.Debug(
                     $"Parsed certificate for installation: subject={cert.SubjectName.Name}, thumbprint={cert.Thumbprint}");
             }
@@ -2306,7 +2304,7 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 var certificateBytes = CertificateHelper.ConvertPemToData(base64CertificateData);
-                var cert = passPhrase != null ? new X509Certificate2(certificateBytes, passPhrase) : new X509Certificate2(certificateBytes);
+                var cert = X509CertificateLoader.LoadPkcs12(certificateBytes, passPhrase);
                 _logger.Debug(
                     $"Parsed new trusted certificate: subject={cert.SubjectName}, thumbprint={cert.Thumbprint}.");
 
@@ -2425,7 +2423,7 @@ namespace OneIdentity.DevOps.Logic
                         try
                         {
                             var certificateBytes = CertificateHelper.ConvertPemToData(cert.Base64CertificateData);
-                            var certificate2 = new X509Certificate2(certificateBytes);
+                            var certificate2 = X509CertificateLoader.LoadCertificate(certificateBytes);
 
                             // Import self-signed certificates.
                             if (certificate2.Subject.Equals(certificate2.IssuerName.Name))

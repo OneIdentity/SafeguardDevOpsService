@@ -23,7 +23,7 @@ namespace OneIdentity.DevOps
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.File(logDirPath, shared: true,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u1}] {Message:lj}{NewLine}{Exception}")
                 .Enrich.FromLogContext()
                 .Enrich.WithThreadId()
                 .MinimumLevel.ControlledBy(LogLevelSwitcher.Instance.LogLevelSwitch)

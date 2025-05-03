@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using Newtonsoft.Json;
 using OneIdentity.DevOps.Exceptions;
 
 namespace OneIdentity.DevOps.Logic
@@ -17,10 +16,7 @@ namespace OneIdentity.DevOps.Logic
         public CertificateData(string certB64, string password)
         {
             Password = password;
-            cert = new X509Certificate2(
-                Convert.FromBase64String(certB64),
-                Password,
-                X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.Exportable);
+            cert = X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(certB64), password, X509KeyStorageFlags.EphemeralKeySet | X509KeyStorageFlags.Exportable);
         }
 
         public string Base64Certificate => Convert.ToBase64String(cert.Export(X509ContentType.Cert));

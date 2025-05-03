@@ -82,7 +82,7 @@ namespace OneIdentity.DevOps.SppSecrets
 
             try
             {
-                var meResult = _sppConnection.InvokeMethodFull(Service.Core, Method.Get, "/Me");
+                var meResult = _sppConnection.InvokeMethodFull(Service.Core, Method.Get, "Me");
                 var me = JsonHelper.DeserializeObject<User>(meResult.Body);
                 Logger.Information($"Test vault connection for {me.DisplayName}");
                 if (me.Disabled || me.Locked)

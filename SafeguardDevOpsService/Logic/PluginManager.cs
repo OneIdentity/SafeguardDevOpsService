@@ -293,7 +293,7 @@ namespace OneIdentity.DevOps.Logic
                         RefreshPluginCredential(sgConnection, plugin);
                         if (pluginInstance.TestVaultConnection())
                         {
-                            _logger.Error($"Test connection for plugin {pluginName} successful.");
+                            _logger.Information($"Test connection for plugin {pluginName} successful.");
                             return true;
                         }
                     }

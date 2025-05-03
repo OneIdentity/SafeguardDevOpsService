@@ -50,8 +50,8 @@ namespace OneIdentity.DevOps.Logic
                 var signature = addonBytes.Take(512).ToArray();
                 var data = addonBytes.Skip(512).ToArray();
 
-                var prodGenuineInstaller = new X509Certificate2(File.ReadAllBytes(WellKnownData.GenuineInstallerProdCertPath));
-                var testGenuineInstaller = new X509Certificate2(File.ReadAllBytes(WellKnownData.GenuineInstallerTestCertPath));
+                var prodGenuineInstaller = X509CertificateLoader.LoadCertificateFromFile(WellKnownData.GenuineInstallerProdCertPath);
+                var testGenuineInstaller = X509CertificateLoader.LoadCertificateFromFile(WellKnownData.GenuineInstallerTestCertPath);
                 var validToken = prodGenuineInstaller.GetRSAPublicKey()
                     .VerifyData(data, signature, HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1);
                 if (!validToken)
