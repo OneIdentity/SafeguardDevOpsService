@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:7.0-jammy
+FROM mcr.microsoft.com/dotnet/aspnet:9.0.4-noble
 MAINTAINER support@oneidentity.com
 ENV DOCKER_RUNNING=true
 

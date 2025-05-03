@@ -653,9 +653,7 @@ namespace OneIdentity.DevOps.ConfigDb
                     try
                     {
                         var bytes = Convert.FromBase64String(UserCertificateBase64Data);
-                        var cert = string.IsNullOrEmpty(UserCertificatePassphrase)
-                            ? new X509Certificate2(bytes)
-                            : new X509Certificate2(bytes, UserCertificatePassphrase);
+                        var cert = X509CertificateLoader.LoadPkcs12(bytes, UserCertificatePassphrase);
                         return cert;
                     }
                     catch (Exception)
@@ -701,9 +699,7 @@ namespace OneIdentity.DevOps.ConfigDb
                     try
                     {
                         var bytes = Convert.FromBase64String(WebSslCertificateBase64Data);
-                        var cert = string.IsNullOrEmpty(WebSslCertificatePassphrase)
-                            ? new X509Certificate2(bytes)
-                            : new X509Certificate2(bytes, WebSslCertificatePassphrase);
+                        var cert = X509CertificateLoader.LoadPkcs12(bytes, WebSslCertificatePassphrase);
                         return cert;
                     }
                     catch (Exception)

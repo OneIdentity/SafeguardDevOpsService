@@ -61,9 +61,16 @@ jobs:
   - job:
     displayName: "Linux Docker Alpine Build"
     variables:
-      imageType: alpine3.12
+      imageType: alpine
     pool:
-      vmImage: 'ubuntu-latest'
+      # This is a bit surprising. According to:
+      # https://learn.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops&tabs=yaml
+      #   The ubuntu-latest label is in the process of transitioning from ubuntu-22.04 to ubuntu-24.04.
+      #   Until the transition is complete, your pipelines using ubuntu-latest might still use ubuntu-22.04.
+      # It appears our build is using 24.04, however, if you follow the "Included Software" link on that
+      # page for that version, 24.04 doesn't include .NET 9! However, 22.04 does.
+      # Note, this is as of May, 2025. Surely things will change, which means this will have to change again.
+      vmImage: 'ubuntu-22.04'
     steps:
       - template: pipeline-templates/linux-build-steps.yml
       - task: AzureKeyVault@1
@@ -94,9 +101,10 @@ jobs:
   - job:
     displayName: "Linux Docker Ubuntu Build"
     variables:
-        imageType: ubuntu20.04
+        imageType: ubuntu
     pool:
-      vmImage: 'ubuntu-latest'
+      # See comment above, in the Alpine build section.
+      vmImage: 'ubuntu-22.04'
     steps:
       - template: pipeline-templates/linux-build-steps.yml
       - task: AzureKeyVault@1

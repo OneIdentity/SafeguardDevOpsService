@@ -50,7 +50,7 @@ namespace OneIdentity.DevOps.Data
         public X509Certificate2 GetCertificate()
         {
             var certificateBytes = CertificateHelper.ConvertPemToData(Base64CertificateData);
-            return new X509Certificate2(certificateBytes);
+            return X509CertificateLoader.LoadCertificate(certificateBytes);
         }
 
     }

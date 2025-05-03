@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using OneIdentity.DevOps.Common;
-using RestSharp;
 using Serilog;
 
 namespace OneIdentity.DevOps.CircleCISecrets
@@ -116,7 +114,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
                 {
                     try
                     {
-                        var response = _secretsClient.InvokeMethodFull(Method.Get, $"/context?owner-id={_configuration[OrganizationIdName]}");
+                        var response = _secretsClient.InvokeMethodFull(HttpMethod.Get, $"/context?owner-id={_configuration[OrganizationIdName]}");
                         var contexts = JsonHelper.DeserializeObject<ContextItems>(response.Body);
                         if (contexts?.items != null)
                         {
@@ -134,7 +132,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
                 {
                     try
                     {
-                        var response = _secretsClient.InvokeMethodFull(Method.Get, $"/project/{_vcsType}/{_vcsOrganization}/{_vcsProject}");
+                        var response = _secretsClient.InvokeMethodFull(HttpMethod.Get, $"/project/{_vcsType}/{_vcsOrganization}/{_vcsProject}");
                         var project = JsonHelper.DeserializeObject<ProjectItem>(response.Body);
                         _vcsSlug = project?.slug;
                     }
@@ -290,7 +288,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
             {
                 try
                 {
-                    var response = _secretsClient.InvokeMethodFull(Method.Put, $"/context/{_contextItem.id}/environment-variable/{name}", contextPayload);
+                    var response = _secretsClient.InvokeMethodFull(HttpMethod.Put, $"/context/{_contextItem.id}/environment-variable/{name}", contextPayload);
 
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
@@ -313,7 +311,7 @@ namespace OneIdentity.DevOps.CircleCISecrets
             {
                 try
                 {
-                    var response = _secretsClient.InvokeMethodFull(Method.Post, $"/project/{_vcsSlug}/envvar", projectPayload);
+                    var response = _secretsClient.InvokeMethodFull(HttpMethod.Post, $"/project/{_vcsSlug}/envvar", projectPayload);
 
                     if (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.Created)
                     {

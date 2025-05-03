@@ -16,6 +16,12 @@
         /// <summary>
         /// Secrets Broker
         /// </summary>
-        SecretsBroker = 3
+        SecretsBroker = 3,
+
+        /// <summary>The paid for version of Personal Password Vault.</summary>
+        EnterpriseAccount = 4,
+
+        /// <summary>Starling Connect for Assets.</summary>
+        DisconnectedAssets = 5,
     }
 }

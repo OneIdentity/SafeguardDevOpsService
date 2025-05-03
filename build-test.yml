@@ -20,16 +20,16 @@ jobs:
   - job:
     displayName: "Linux Docker Alpine Build"
     variables:
-      imageType: alpine3.12
+      imageType: alpine
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: 'ubuntu-22.04'
     steps:
       - template: pipeline-templates/linux-build-steps.yml
   - job:
     displayName: "Linux Docker Ubuntu Build"
     variables:
-        imageType: ubuntu20.04
+        imageType: ubuntu
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: 'ubuntu-22.04'
     steps:
       - template: pipeline-templates/linux-build-steps.yml

@@ -1,4 +1,6 @@
 {
-  "HttpsPort": "443",
-  "LogLevel": "Information"
+    // Rename to appsetttings.json (remove the leading underscore), then restart the service.
+    // You can change the LogLevel to Debug for more logging.
+    "HttpsPort": "443",
+    "LogLevel": "Information"
 }

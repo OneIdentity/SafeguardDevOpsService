@@ -2,13 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Reflection.Metadata.Ecma335;
-using System.Security.Principal;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using OneIdentity.DevOps.Common;
-using RestSharp;
 using Serilog;
 
 namespace OneIdentity.DevOps.HashiCorpVault
@@ -88,7 +85,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
 
             try
             {
-                var response = _vaultClient.InvokeMethodFull(Method.Get, $"v1/{_configuration[MountPointName]}/config");
+                var response = _vaultClient.InvokeMethodFull(HttpMethod.Get, $"v1/{_configuration[MountPointName]}/config");
                 Logger.Information($"Test vault connection for {DisplayName}: Result = {response.Body}");
                 return true;
             }
@@ -265,7 +262,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
         {
             try
             {
-                var response = _vaultClient.InvokeMethodFull(Method.Post, $"v1/{_configuration[MountPointName]}/data/{name}", payload);
+                var response = _vaultClient.InvokeMethodFull(HttpMethod.Post, $"v1/{_configuration[MountPointName]}/data/{name}", payload);
 
                 if (response is { StatusCode: HttpStatusCode.OK })
                 {
@@ -288,7 +285,7 @@ namespace OneIdentity.DevOps.HashiCorpVault
             try
             {
                 string secret = null;
-                var response = _vaultClient.InvokeMethodFull(Method.Get, $"v1/{_configuration[MountPointName]}/data/{name}");
+                var response = _vaultClient.InvokeMethodFull(HttpMethod.Get, $"v1/{_configuration[MountPointName]}/data/{name}");
                 if (response is { StatusCode: HttpStatusCode.OK })
                 {
                     dynamic data = JsonConvert.DeserializeObject(response.Body);

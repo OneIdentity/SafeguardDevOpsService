@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -115,7 +116,7 @@ namespace OneIdentity.DevOps.Logic
         public static X509Certificate2 CreateDefaultSslCertificate()
         {
             var certSize = 2048;
-            var certSubjectName = WellKnownData.DevOpsServiceDefaultWebSslCertificateSubject;
+            var certSubjectName = "CN=localhost"; // WellKnownData.DevOpsServiceDefaultWebSslCertificateSubject;
 
             using (RSA rsa = RSA.Create(certSize))
             {
@@ -129,6 +130,8 @@ namespace OneIdentity.DevOps.Logic
                     new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment,
                         true));
 
+                // Server authentication.
+                // https://oidref.com/1.3.6.1.5.5.7.3.1
                 certificateRequest.CertificateExtensions.Add(
                     new X509EnhancedKeyUsageExtension(
                         new OidCollection
@@ -139,6 +142,14 @@ namespace OneIdentity.DevOps.Logic
 
                 certificateRequest.CertificateExtensions.Add(
                     new X509SubjectKeyIdentifierExtension(certificateRequest.PublicKey, false));
+
+                var sanBuilder = new SubjectAlternativeNameBuilder();
+                sanBuilder.AddDnsName("localhost");
+                sanBuilder.AddIpAddress(IPAddress.Loopback);
+                var sanBuilt = sanBuilder.Build();
+
+                certificateRequest.CertificateExtensions.Add(
+                    new X509SubjectAlternativeNameExtension(sanBuilt.RawData));
 
                 return certificateRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddYears(10));
             }

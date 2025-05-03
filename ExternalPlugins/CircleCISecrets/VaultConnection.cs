@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
-using RestSharp;
+using System.Threading.Tasks;
 using Serilog;
 
 namespace OneIdentity.DevOps.CircleCISecrets
@@ -12,24 +14,26 @@ namespace OneIdentity.DevOps.CircleCISecrets
     {
         private bool _disposed;
 
-        private readonly RestClient _vaultClient;
+        private readonly HttpClient _vaultClient;
         private readonly string _credential;
         private readonly ILogger _logger;
+        private readonly Uri _connectionUrl;
 
 
         public VaultConnection(string connectionUrl, string credential, ILogger logger)
         {
             _credential = credential;
             _logger = logger;
+            _connectionUrl = new Uri(connectionUrl, UriKind.Absolute);
 
-            var options = new RestClientOptions(connectionUrl)
-            {
-                RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true
-            };
-            _vaultClient = new RestClient(options);
+            var handler = new HttpClientHandler();
+
+            handler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true;
+            
+            _vaultClient = new HttpClient(handler);
         }
 
-        public FullResponse InvokeMethodFull(Method method, string relativeUrl, string body = null, IDictionary<string, string> parameters = null,
+        public FullResponse InvokeMethodFull(HttpMethod method, string relativeUrl, string body = null, IDictionary<string, string> parameters = null,
             IDictionary<string, string> additionalHeaders = null, TimeSpan? timeout = null)
         {
             if (_disposed)
@@ -38,75 +42,101 @@ namespace OneIdentity.DevOps.CircleCISecrets
             if (string.IsNullOrEmpty(relativeUrl))
                 throw new ArgumentException("Parameter may not be null or empty", nameof(relativeUrl));
 
-            var request = new RestRequest(relativeUrl, method);
+            relativeUrl = AddQueryParameters(relativeUrl, parameters);
+
+            var retry = false;
+            Retry:
+
+            var req = new HttpRequestMessage
+            {
+                Method = method,
+                RequestUri = new Uri(_connectionUrl, relativeUrl),
+            };
 
             if (_credential != null)
-                request.AddHeader("Circle-Token", _credential);
+                req.Headers.Add("Circle-Token", _credential);
 
             if (additionalHeaders != null && !additionalHeaders.ContainsKey("Accept"))
-                request.AddHeader("Accept", "application/json"); 
+                req.Headers.Add("Accept", "application/json");
+
             if (additionalHeaders != null)
             {
                 foreach (var header in additionalHeaders)
-                    request.AddHeader(header.Key, header.Value);
-            }
-            if ((method == Method.Post || method == Method.Put) && body != null)
-                request.AddParameter("application/json", body, ParameterType.RequestBody);
-            if (parameters != null)
-            {
-                foreach (var param in parameters)
-                    request.AddParameter(param.Key, param.Value, ParameterType.QueryString);
-            }
-            if (timeout.HasValue)
-            {
-                request.Timeout = (timeout.Value.TotalMilliseconds > int.MaxValue)
-                    ? int.MaxValue : (int)timeout.Value.TotalMilliseconds;
+                    req.Headers.Add(header.Key, header.Value);
             }
 
-            LogRequestDetails(method, new Uri(_vaultClient.Options.BaseUrl + $"/{relativeUrl}"), parameters, additionalHeaders);
-            
-            var response = _vaultClient.Execute(request);
-            _logger.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
-            if (response.ResponseStatus != ResponseStatus.Completed)
-                throw new Exception($"Unable to connect to web service {_vaultClient.Options.BaseUrl}, Error: " + response.ErrorMessage);
+            if ((method == HttpMethod.Post || method == HttpMethod.Put) && body != null)
+                req.Content = new StringContent(body ?? string.Empty, Encoding.UTF8, "application/json");
 
-            if (response.StatusCode == HttpStatusCode.TemporaryRedirect)
+            var cts = new CancellationTokenSource(timeout ?? TimeSpan.FromSeconds(100)); // 100 seconds is the default timeout.
+
+            if (!retry)
             {
-                //Wait 2 seconds and try the request again. The vault sometimes redirects to the same URL.
-                Thread.Sleep(TimeSpan.FromSeconds(2));
-                response = _vaultClient.Execute(request);
-                if (response.ResponseStatus != ResponseStatus.Completed)
-                    throw new Exception($"Unable to connect to web service {_vaultClient.Options.BaseUrl}, Error: " + response.ErrorMessage);
+                LogRequestDetails(method, req.RequestUri, additionalHeaders);
+                _logger.Debug("  Body size: {RequestBodySize}", body == null ? "None" : $"{body.Length}");
             }
 
-            if (!response.IsSuccessful && response.StatusCode != HttpStatusCode.ServiceUnavailable)
-                throw new Exception("Error returned from Safeguard API, Error: " + $"{response.StatusCode} {response.Content}");
+            try
+            {
+                using var res = _vaultClient.SendAsync(req, cts.Token).GetAwaiter().GetResult();
+                var msg = res.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
 
-            var fullResponse = new FullResponse
-            {
-                StatusCode = response.StatusCode,
-                Headers = new Dictionary<string, string>(),
-                Body = response.Content
-            };
-            foreach (var header in response.Headers)
-            {
-                if (header.Name != null)
-                    fullResponse.Headers.Add(header.Name, header.Value?.ToString());
+                if (!retry && res.StatusCode == HttpStatusCode.TemporaryRedirect)
+                {
+                    res.Dispose();
+                    req.Dispose();
+                    cts.Dispose();
+
+                    retry = true;
+                    goto Retry;
+                }
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    throw new Exception($"Error returned from Safeguard API, Error: {res.StatusCode} {msg}");
+                }
+
+                var fullResponse = new FullResponse
+                {
+                    StatusCode = res.StatusCode,
+                    Headers = new Dictionary<string, string>(),
+                    Body = msg
+                };
+
+                foreach (var header in res.Headers)
+                {
+                    if (fullResponse.Headers.ContainsKey(header.Key))
+                    {
+                        if (header.Value.Any())
+                        {
+                            fullResponse.Headers[header.Key] = string.Join(", ", fullResponse.Headers[header.Key], string.Join(", ", header.Value));
+                        }
+                    }
+                    else
+                    {
+                        fullResponse.Headers.Add(header.Key, string.Join(", ", header.Value));
+                    }
+                }
+
+                LogResponseDetails(fullResponse);
+
+                return fullResponse;
             }
-            LogResponseDetails(fullResponse);
-            
-            return fullResponse;
+            catch (TaskCanceledException)
+            {
+                throw new Exception($"Request timeout to {req.RequestUri}.");
+            }
+            finally
+            {
+                req.Dispose();
+                cts.Dispose();
+            }
         }
 
-        internal void LogRequestDetails(Method method, Uri uri, IDictionary<string, string> parameters = null,
-            IDictionary<string, string> additionalHeaders = null)
+        internal void LogRequestDetails(HttpMethod method, Uri uri, IDictionary<string, string> additionalHeaders = null)
         {
             _logger.Debug("Invoking method: {Method} {Endpoint}", method.ToString().ToUpper(),
                 uri);
-            //client.BaseUrl + $"/{relativeUrl}");
-            _logger.Debug("  Query parameters: {QueryParameters}",
-                parameters?.Select(kv => $"{kv.Key}={kv.Value}").Aggregate("", (str, param) => $"{str}{param}&")
-                    .TrimEnd('&') ?? "None");
 
             if (additionalHeaders != null)
             {
@@ -135,6 +165,35 @@ namespace OneIdentity.DevOps.CircleCISecrets
                 // anything to do here
                 _disposed = true;
             }
+        }
+
+        private static string AddQueryParameters(string url, IDictionary<string, string> parameters)
+        {
+            if (parameters == null || parameters.Count == 0)
+            {
+                return url;
+            }
+
+            var sb = new StringBuilder(url ?? string.Empty);
+
+            // Try to be compensating with an existing Url, if it were to be passed in with an existing query string.
+            if (!url.Contains('?'))
+            {
+                sb.Append('?');
+            }
+            else if (!url.EndsWith("&"))
+            {
+                sb.Append('&');
+            }
+
+            foreach (var item in parameters)
+            {
+                sb.Append($"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value)}&");
+            }
+
+            sb.Length -= 1; // Remove the last '&' character.
+
+            return sb.ToString();
         }
     }
 
