@@ -51,11 +51,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		build-publish.yml = build-publish.yml
 		build-test.yml = build-test.yml
 		README.md = README.md
+		SafeguardLogo.ico = SafeguardLogo.ico
+		SafeguardLogo.png = SafeguardLogo.png
+		versionnumber.ps1 = versionnumber.ps1
+		versionnumber.sh = versionnumber.sh
+		zipplugin.ps1 = zipplugin.ps1
+		zipplugin.sh = zipplugin.sh
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SecretsBrokerPlugin", "ExternalPluginProjectTemplate\SecretsBrokerPlugin.csproj", "{1A779CD0-BA9F-436E-9719-3C793FF983A5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoogleCloudServiceAccountKeyRotation", "ExternalPlugins\GoogleCloudServiceAccountKeyRotation\GoogleCloudServiceAccountKeyRotation.csproj", "{FF3226DC-9066-AD72-817F-F07FC21C924B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipeline-templates", "pipeline-templates", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		pipeline-templates\global-variables.yml = pipeline-templates\global-variables.yml
+		pipeline-templates\linux-build-steps.yml = pipeline-templates\linux-build-steps.yml
+		pipeline-templates\windows-build-steps.yml = pipeline-templates\windows-build-steps.yml
+		pipeline-templates\windows-job-variables.yml = pipeline-templates\windows-job-variables.yml
+		pipeline-templates\windows-setup-and-key-vault.yml = pipeline-templates\windows-setup-and-key-vault.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
