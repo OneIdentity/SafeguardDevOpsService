@@ -73,7 +73,7 @@ jobs:
       vmImage: 'ubuntu-22.04'
     steps:
       - template: pipeline-templates/linux-build-steps.yml
-      - task: AzureKeyVault@1
+      - task: AzureKeyVault@2
         inputs:
           azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
           KeyVaultName: 'SafeguardBuildSecrets'
@@ -107,7 +107,7 @@ jobs:
       vmImage: 'ubuntu-22.04'
     steps:
       - template: pipeline-templates/linux-build-steps.yml
-      - task: AzureKeyVault@1
+      - task: AzureKeyVault@2
         inputs:
           azureSubscription: 'OneIdentity.RD.SBox.Safeguard-ServiceConnection'
           KeyVaultName: 'SafeguardBuildSecrets'
