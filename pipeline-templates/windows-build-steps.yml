@@ -1,73 +1,65 @@
 steps:
-  - task: Bash@3
-    inputs:
-      targetType: 'inline'
-      script: 'env | sort'
-    displayName: 'Display environment variables'
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'env | sort'
+  displayName: 'Display environment variables'
 
-  - task: VSBuild@1
-    inputs:
-      solution: '$(solution)'
-      msbuildArgs: '/p:buildId=$(Build.BuildId)'
-      platform: '$(buildPlatform)'
-      configuration: '$(buildConfiguration)'
-    displayName: 'Build $(solution)'
-    
-  - task: VSBuild@1
-    inputs:
-      solution: '$(setupProject)'
-      msbuildArgs: '/p:buildId=$(Build.BuildId)'
-      platform: '$(buildPlatform)'
-      configuration: '$(buildConfiguration)'
-    displayName: 'Build $(setupProject) no signing'
-    condition: and(succeeded(), eq(variables.isReleaseBranch, false))
-    
-  - task: VSBuild@1
-    inputs:
-      solution: '$(setupProject)'
-      msbuildArgs: '/p:SignFiles=true /p:buildId=$(Build.BuildId)'
-      platform: '$(buildPlatform)'
-      configuration: '$(buildConfiguration)'
-    displayName: 'Build $(setupProject) with signing'
-    condition: and(succeeded(), eq(variables.isReleaseBranch, true))
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:buildId=$(Build.BuildId)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+  displayName: 'Build $(solution) no signing'
+  condition: and(succeeded(), eq(variables.isReleaseBranch, false))
 
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: 'custom'
-      custom: 'pack'
-      arguments: '$(Build.SourcesDirectory)\DevOpsPluginCommon\DevOpsPluginCommon.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
-    displayName: Building Plugin Common NuGet packages
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:SignFiles=true /p:buildId=$(Build.BuildId)'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+  displayName: 'Build $(solution) with signing'
+  condition: and(succeeded(), eq(variables.isReleaseBranch, true))
 
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: 'custom'
-      custom: 'pack'
-      arguments: '$(Build.SourcesDirectory)\DevOpsAddonCommon\DevOpsAddonCommon.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
-    displayName: Building Addon Common NuGet packages
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'custom'
+    custom: 'pack'
+    arguments: '$(Build.SourcesDirectory)\DevOpsPluginCommon\DevOpsPluginCommon.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
+  displayName: Building Plugin Common NuGet packages
 
-  - task: CopyFiles@2
-    inputs:
-      sourceFolder: '$(Build.SourcesDirectory)\$(setupProjectDir)'
-      contents: '**\bin\**'
-      targetFolder: $(Build.ArtifactStagingDirectory)
-    displayName: 'Copy files to staging folder'
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'custom'
+    custom: 'pack'
+    arguments: '$(Build.SourcesDirectory)\DevOpsAddonCommon\DevOpsAddonCommon.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
+  displayName: Building Addon Common NuGet packages
 
-  - task: CopyFiles@2
-    inputs:
-      sourceFolder: '$(Build.SourcesDirectory)\$(pluginsDir)\bin\$(buildConfiguration)'
-      contents: '**'
-      targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)
-    displayName: 'Copy plugins to staging folder'
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '$(Build.SourcesDirectory)\$(setupProjectDir)'
+    contents: '**\bin\**'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+  displayName: 'Copy files to staging folder'
 
-  - task: PowerShell@2
-    inputs:
-      targetType: filePath
-      filePath: $(System.DefaultWorkingDirectory)\powershell\install-forpipeline.ps1
-      arguments: $(Build.SourcesDirectory) $(PwShellVersionString) $$(isPrerelease)
-    displayName: 'Building Powershell module'
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '$(Build.SourcesDirectory)\$(pluginsDir)\bin\$(buildConfiguration)'
+    contents: '**'
+    targetFolder: $(Build.ArtifactStagingDirectory)\bin\$(buildConfiguration)\$(pluginsDir)
+  displayName: 'Copy plugins to staging folder'
 
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathToPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: 'SafeguardDevOpsService'
-    displayName: 'Publishing the artifacts'
+- task: PowerShell@2
+  inputs:
+    targetType: filePath
+    filePath: $(System.DefaultWorkingDirectory)\powershell\install-forpipeline.ps1
+    arguments: $(Build.SourcesDirectory) $(PwShellVersionString) $$(isPrerelease)
+  displayName: 'Building Powershell module'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'SafeguardDevOpsService'
+  displayName: 'Publishing the artifacts'
