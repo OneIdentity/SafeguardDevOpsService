@@ -17,7 +17,7 @@ steps:
 - task: VSBuild@1
   inputs:
     solution: '$(solution)'
-    msbuildArgs: '/p:SignFiles=true /p:buildId=$(Build.BuildId)'
+    msbuildArgs: '/p:SignFiles=true /p:buildId=$(Build.BuildId) /p:SignToolPath="C:\Program Files (x86)\Microsoft SDKs\ClickOnce\SignTool\signtool.exe"'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
   displayName: 'Build $(solution) with signing'
