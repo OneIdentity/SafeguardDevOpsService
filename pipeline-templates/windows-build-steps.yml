@@ -45,13 +45,6 @@ steps:
       arguments: '$(Build.SourcesDirectory)\DevOpsAddonCommon\DevOpsAddonCommon.csproj --configuration $(buildConfiguration) --include-symbols -p:SymbolPackageFormat=snupkg --output $(Build.ArtifactStagingDirectory) --no-build --verbosity detailed'
     displayName: Building Addon Common NuGet packages
 
-  - task: DeleteFiles@1
-    inputs:
-      SourceFolder: '$(Build.BinariesDirectory)'
-      Contents: '$(codeSigningCertFileName)'
-    condition: succeededOrFailed()
-    displayName: 'Delete code signing certificate files'
-
   - task: CopyFiles@2
     inputs:
       sourceFolder: '$(Build.SourcesDirectory)\$(setupProjectDir)'
