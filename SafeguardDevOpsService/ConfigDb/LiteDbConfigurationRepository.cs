@@ -12,6 +12,7 @@ using OneIdentity.DevOps.Common;
 using OneIdentity.DevOps.Data;
 using OneIdentity.DevOps.Data.Spp;
 using OneIdentity.DevOps.Exceptions;
+using OneIdentity.DevOps.Extensions;
 using OneIdentity.DevOps.Logic;
 using CredentialType = CredentialManagement.CredentialType;
 
@@ -653,7 +654,7 @@ namespace OneIdentity.DevOps.ConfigDb
                     try
                     {
                         var bytes = Convert.FromBase64String(UserCertificateBase64Data);
-                        var cert = X509CertificateLoader.LoadPkcs12(bytes, UserCertificatePassphrase);
+                        var cert = CertificateExtensions.LoadFromBytes(bytes,UserCertificatePassphrase);
                         return cert;
                     }
                     catch (Exception)
@@ -699,7 +700,7 @@ namespace OneIdentity.DevOps.ConfigDb
                     try
                     {
                         var bytes = Convert.FromBase64String(WebSslCertificateBase64Data);
-                        var cert = X509CertificateLoader.LoadPkcs12(bytes, WebSslCertificatePassphrase);
+                        var cert = CertificateExtensions.LoadFromBytes(bytes, WebSslCertificatePassphrase);
                         return cert;
                     }
                     catch (Exception)

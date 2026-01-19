@@ -1640,7 +1640,7 @@ namespace OneIdentity.DevOps.Logic
             X509Certificate2 cert;
             try
             {
-                cert = X509CertificateLoader.LoadPkcs12(certificateBytes, certificate.Passphrase);
+                cert = CertificateExtensions.LoadFromBytes(certificateBytes, certificate.Passphrase);
                 _logger.Debug(
                     $"Parsed certificate for installation: subject={cert.SubjectName.Name}, thumbprint={cert.Thumbprint}");
             }
@@ -2304,7 +2304,7 @@ namespace OneIdentity.DevOps.Logic
             try
             {
                 var certificateBytes = CertificateHelper.ConvertPemToData(base64CertificateData);
-                var cert = X509CertificateLoader.LoadPkcs12(certificateBytes, passPhrase);
+                var cert = CertificateExtensions.LoadFromBytes(certificateBytes, passPhrase);
                 _logger.Debug(
                     $"Parsed new trusted certificate: subject={cert.SubjectName}, thumbprint={cert.Thumbprint}.");
 
