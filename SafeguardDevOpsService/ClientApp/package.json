@@ -5,6 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build-debug-windows": "ng build --optimization=false && npm run copy-dist-to-debug-windows",
+    "copy-dist-to-debug-windows": "xcopy dist\\* ..\\bin\\Debug\\ClientApp\\dist\\ /y /E",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e"

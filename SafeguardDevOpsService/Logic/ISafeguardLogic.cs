@@ -16,7 +16,7 @@ namespace OneIdentity.DevOps.Logic
         DevOpsSecretsBroker DevOpsSecretsBrokerCache { get; }
 
         ISafeguardConnection Connect();
-        SafeguardDevOpsConnection GetAnonymousSafeguardConnection();
+        SafeguardDevOpsConnection GetAnonymousSafeguardConnection(bool includeDetails);
         SafeguardDevOpsConnection GetSafeguardConnection();
         SafeguardDevOpsLogon GetSafeguardLogon();
         SafeguardDevOpsConnection SetSafeguardData(string token, SafeguardData safeguardData);

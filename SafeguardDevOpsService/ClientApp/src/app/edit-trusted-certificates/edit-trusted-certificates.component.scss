@@ -34,10 +34,6 @@
   min-width:1px;
 }
 
-.cert-list {
-  min-height: 300px;
-}
-
 :host ::ng-deep .mdc-list-item__end {
   display: none;
 }
@@ -53,10 +49,11 @@ mat-list-option:last-of-type {
 .root-container {
   position: relative;
   overflow: hidden;
+  min-height: 300px;
 }
 
 mat-spinner {
-  margin: 60px auto;
+  margin: 0px auto;
 }
 
 .cert-details-container {
@@ -80,6 +77,7 @@ mat-spinner {
   .cert-details-body {
     margin: 20px;
     background-color: $iris-pastel;
+    height: 100%;
 
     .cert-details-title {
       font-weight: 600;

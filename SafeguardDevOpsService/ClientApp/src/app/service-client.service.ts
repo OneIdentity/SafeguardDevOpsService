@@ -64,8 +64,8 @@ export class DevOpsServiceClient {
     return query;
   }
 
-  getSafeguard(): Observable<any> {
-    const url = this.BASE + 'Safeguard';
+  getSafeguard(includeDetails: boolean = true): Observable<any> {
+    const url = this.BASE + 'Safeguard?includeDetails=' + includeDetails;
 
     return this.http.get(url)
       .pipe(

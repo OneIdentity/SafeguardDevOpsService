@@ -45,9 +45,9 @@ namespace OneIdentity.DevOps.Controllers.V2
         /// <response code="200">Success.</response>
         [UnhandledExceptionError]
         [HttpGet]
-        public ActionResult<SafeguardDevOpsConnection> GetSafeguard([FromServices] ISafeguardLogic safeguard)
+        public ActionResult<SafeguardDevOpsConnection> GetSafeguard([FromServices] ISafeguardLogic safeguard, [FromQuery] bool includeDetails = true)
         {
-            var safeguardConnection = safeguard.GetAnonymousSafeguardConnection();
+            var safeguardConnection = safeguard.GetAnonymousSafeguardConnection(includeDetails);
 
             return Ok(safeguardConnection);
         }

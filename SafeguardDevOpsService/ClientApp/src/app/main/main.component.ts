@@ -65,6 +65,8 @@ export class MainComponent implements OnInit, AfterViewInit {
   trustedCertificates = [];
   isMonitoring: boolean;
   isMonitoringAvailable: boolean;
+  isMonitoringStarting: boolean = false;
+  isMonitoringStopping: boolean = false;
   unconfiguredDiv: any;
   footerAbsolute: boolean = true;
   restartingProgress: string = 'Restarting Service';
@@ -575,7 +577,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   }
 
   editAddon(addon: any): void {
-    if (this.isUploading.Plugin || this.isUploading.Addon || this.isRestarting) {
+    if (this.isUploading.Plugin || this.isUploading.Addon || this.isRestarting || this.isMonitoringStarting || this.isMonitoringStopping) {
       return;
     }
 
@@ -612,7 +614,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   }
 
   editPlugin(plugin: any): void {
-    if (this.isUploading.Plugin || this.isUploading.Addon || this.isRestarting || !plugin.IsLoaded) {
+    if (this.isUploading.Plugin || this.isUploading.Addon || this.isRestarting || !plugin.IsLoaded || this.isMonitoringStarting || this.isMonitoringStopping) {
       return;
     }
 
@@ -656,18 +658,17 @@ export class MainComponent implements OnInit, AfterViewInit {
                 const dialogRef = this.dialog.open(ConfirmDialogComponent, {
                   data: {
                     title: 'Plugin Configuration Changed',
-                    message: 'Restart the monitor to apply the new plugin configuration.',
+                    message: 'You will need to restart the monitor to apply the new plugin configuration.',
                     showCancel: false,
-                    confirmText: 'OK'
+                    customText: 'Later',
+                    confirmText: 'Restart Monitoring'
                   }
                 });
 
-                dialogRef.afterClosed().pipe(
-                  filter((dlgResult) => dlgResult?.result === 'OK'),
-                ).subscribe({
-                  next: () => {
-                    if (data.reload === true) {
-                      this.window.location.reload();
+                dialogRef.afterClosed().subscribe({
+                  next: (dlgResult: any) => {
+                    if (dlgResult?.result === 'OK') {
+                      this.restartMonitoring();
                     }
                   }
                 });
@@ -787,23 +788,57 @@ export class MainComponent implements OnInit, AfterViewInit {
 
   updateMonitoring(enabled: boolean): void {
     this.error = null;
+    this.isMonitoringStarting = enabled;
+    this.isMonitoringStopping = !enabled;
     this.serviceClient.postMonitor(enabled).pipe(
+      switchMap(_ => this.initializePlugins()),
       untilDestroyed(this)
     ).subscribe({
       next: () => {
         this.isMonitoring = enabled;
-        this.updateMonitoringAvailable();
-        setTimeout(() => {
-          this.setArrows();
-        }, 100);
+        this.updateMonitoringStatus();
       },
       error: error => {
         this.error = error;
+        this.isMonitoringStarting = false;
+        this.isMonitoringStopping = false;
       }
     });
+  }
 
+  restartMonitoring(): void {
+    this.error = null;
+    this.isMonitoringStopping = true;
+    this.serviceClient.postMonitor(false).pipe(
+      switchMap(_ => {
+        this.isMonitoringStopping = false;
+        this.isMonitoring = false;
+        this.isMonitoringStarting = true;
+        return this.serviceClient.postMonitor(true);
+      }),
+      switchMap(_ => this.initializePlugins()),
+      untilDestroyed(this)
+    ).subscribe({
+      next: () => {
+        this.isMonitoring = true;
+        this.updateMonitoringStatus();
+        
+        this.snackBar.open("Monitoring restarted", 'Dismiss', { duration: 10000 });
+      },
+      error: error => {
+        this.error = error;
+        this.isMonitoringStarting = false;
+        this.isMonitoringStopping = false;
+      }
+    });
+  }
+  
+  updateMonitoringStatus(): void {
     setTimeout(() => {
-      if (enabled === true) {
+      this.updateMonitoringAvailable();
+      this.setArrows();
+      
+      if (this.isMonitoring === true) {
         this.serviceClient.getMonitor().pipe(
           untilDestroyed(this)
         ).subscribe({
@@ -811,13 +846,21 @@ export class MainComponent implements OnInit, AfterViewInit {
             if (status.StatusMessage != null) {
               this.snackBar.open(status.StatusMessage, 'Dismiss', { duration: 10000 });
             }
+            this.isMonitoringStarting = false;
+            this.isMonitoringStopping = false;
           },
           error: error => {
-            this.snackBar.open('Failed to get the monitor status: ' + this.error, 'Dismiss', { duration: 10000 });
+            this.snackBar.open('Failed to get the monitor status: ' + error, 'Dismiss', { duration: 10000 });
+            this.isMonitoringStarting = false;
+            this.isMonitoringStopping = false;
           }
         });
       }
-    }, 3000);
+      else {
+        this.isMonitoringStarting = false;
+        this.isMonitoringStopping = false;
+      }
+    }, 100);
   }
 
   logout(): void {
@@ -1070,12 +1113,15 @@ export class MainComponent implements OnInit, AfterViewInit {
 
     const dialogRef = this.dialog.open(EditTrustedCertificatesComponent, {
       width: '500px',
+      disableClose: true,
       data: { trustedCertificates: this.trustedCertificates }
     });
 
     dialogRef.afterClosed().subscribe({
-      next: () => {
-        this.window.location.reload();
+      next: (needsReload: boolean) => {
+        if (needsReload) {
+          this.window.location.reload();
+        }
       }
     });
   }

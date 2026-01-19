@@ -65,7 +65,7 @@
           </div>
           <p></p>
           <div *ngIf="needsSSLEnabled && !needsTrustedCertificates">
-            <b>Monitoring is unavailable.</b>
+            <b *ngIf="!isMonitoring">Monitoring is unavailable.</b>
             <p></p>
             <div>
               <mat-icon class="yellow-icon" inline=true>error_outline</mat-icon>
@@ -80,12 +80,22 @@
           </div>
           <button mat-flat-button class="monitoring-button start-monitoring"
             *ngIf="!isMonitoring && isMonitoringAvailable && !needsSSLEnabled" (click)="updateMonitoring(true)"
-            [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Start
-            Monitoring</button>
+            [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting || isMonitoringStarting || isMonitoringStopping'>
+            <ng-container *ngIf="!isMonitoringStarting">Start Monitoring</ng-container>
+            <ng-container *ngIf="isMonitoringStarting">
+              <mat-spinner mode="indeterminate" diameter="16"></mat-spinner>
+              Starting Monitoring
+            </ng-container>
+          </button>
           <button mat-flat-button class="monitoring-button stop-monitoring"
             *ngIf="isMonitoring && isMonitoringAvailable" (click)="updateMonitoring(false)"
-            [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting'>Stop
-            Monitoring</button>
+            [disabled]='isUploading.Plugin || isUploading.Addon || isUploading.Backup || isRestarting || isMonitoringStarting || isMonitoringStopping'>
+            <ng-container *ngIf="!isMonitoringStopping">Stop Monitoring</ng-container>
+            <ng-container *ngIf="isMonitoringStopping">
+              <mat-spinner mode="indeterminate" diameter="16"></mat-spinner>
+              <span>Stopping Monitoring</span>
+            </ng-container>
+          </button>
         </div>
 
         <div class="vertical-line"></div>
