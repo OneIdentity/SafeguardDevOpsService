@@ -238,18 +238,26 @@ namespace OneIdentity.DevOps.SppSecrets
                     }
                 }
 
+                var secretSaved = false;
                 switch (AssignedCredentialType)
                 {
                     case CredentialType.Password:
-                        SaveAccountPassword(account, payload);
+                        secretSaved = SaveAccountPassword(account, payload);
                         break;
                     case CredentialType.SshKey:
-                        SaveAccountSshKey(account, payload);
+                        secretSaved = SaveAccountSshKey(account, payload);
                         break;
                     case CredentialType.ApiKey:
-                        SaveAccountApiKey(account, payload);
+                        secretSaved = SaveAccountApiKey(account, payload);
                         break;
                 }
+
+                if (!secretSaved)
+                {
+                    // No need to log here as the specific save method already logged the error.
+                    return false;
+                }
+
                 Logger.Information($"The secret for {assetName}-{accountName} has been successfully stored in the vault.");
 
                 // Look up A2A Registration and create one if needed.
@@ -273,52 +281,56 @@ namespace OneIdentity.DevOps.SppSecrets
             }
         }
 
-        private void SaveAccountPassword(Account account, string password)
+        private bool SaveAccountPassword(Account account, string password)
         {
             if (_sppConnection == null)
-                return;
+                return false;
         
             try
             {
                 var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Put, $"AssetAccounts/{account.Id}/Password", $"\"{password}\"");
-                if (result.StatusCode != HttpStatusCode.NoContent)
+                if (result.StatusCode == HttpStatusCode.NoContent)
                 {
-                    Logger.Error(
-                        $"Failed to save the password for asset {account.Asset.Name} account {account.Name}");
+                    return true;
                 }
+
+                Logger.Error($"Failed to save the password for asset {account.Asset.Name} account {account.Name}");
             }
             catch (Exception ex)
             {
-                Logger.Error(ex,
-                    $"Failed to save the password for asset {account.Asset.Name} account {account.Name}: {ex.Message}");
+                Logger.Error(ex, $"Failed to save the password for asset {account.Asset.Name} account {account.Name}: {ex.Message}");
             }
+
+            return false;
         }
 
-        private void SaveAccountSshKey(Account account, string sshKey)
+        private bool SaveAccountSshKey(Account account, string sshKey)
         {
             if (_sppConnection == null)
-                return;
+                return false;
 
             try
             {
                 var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Put, $"AssetAccounts/{account.Id}/SshKey", $"{{\"PrivateKey\":\"{sshKey.ReplaceLineEndings(string.Empty)}\"}}");
-                if (result.StatusCode != HttpStatusCode.OK)
+                if (result.StatusCode == HttpStatusCode.OK)
                 {
-                    Logger.Error(
-                        $"Failed to save the SSH key for asset {account.Asset.Name} account {account.Name}");
+                    return true;
                 }
+
+                Logger.Error($"Failed to save the SSH key for asset {account.Asset.Name} account {account.Name}");
             }
             catch (Exception ex)
             {
-                Logger.Error(ex,
-                    $"Failed to save the SSH key for asset {account.Asset.Name} account {account.Name}: {ex.Message}");
+                Logger.Error(ex, $"Failed to save the SSH key for asset {account.Asset.Name} account {account.Name}: {ex.Message}");
             }
+
+            return false;
         }
 
-        private void SaveAccountApiKey(Account account, string apiKeyJson)
+        private bool SaveAccountApiKey(Account account, string apiKeyJson)
         {
             if (_sppConnection == null)
-                return;
+                return false;
 
             try
             {
@@ -332,29 +344,31 @@ namespace OneIdentity.DevOps.SppSecrets
                         if (apiKey == null)
                         {
                             Logger.Information($"Failed to store the API key secret due to a failure to create the API key for the account {account.Name}.");
-                            return;
+                            return false;
                         }
                     }
 
                     var result = _sppConnection.InvokeMethodFull(Service.Core, Method.Put,
                         $"AssetAccounts/{account.Id}/ApiKeys/{newApiKey.Id}/ClientSecret", apiKeyJson);
-                    if (result.StatusCode != HttpStatusCode.NoContent)
+                    if (result.StatusCode == HttpStatusCode.NoContent)
                     {
-                        Logger.Error(
-                            $"Failed to save the API key secret for account {account.Name} API key {apiKey.Name} to {DisplayName}.");
+                        return true;
                     }
+
+                    Logger.Error($"Failed to save the API key secret for account {account.Name} API key {apiKey.Name} to {DisplayName}.");
                 }
                 else
                 {
                     Logger.Error($"The ApiKey {apiKey.Name} failed to save to {DisplayName}.");
                 }
-
             }
             catch (Exception ex)
             {
                 Logger.Error(ex,
                     $"Failed to save the Api key for account {account.Name} to {DisplayName}: {ex.Message}");
             }
+
+            return false;
         }
         
         private bool CheckOrAddExternalA2aRegistration()

@@ -7,7 +7,7 @@ The Safeguard for Privileged Passwords plugin allows Secrets Broker to pull pass
 ### Downstream SPP configuration requirements
 
 * Create a local SPP user that will be used by Secrets Broker to manage the A2A registration and accounts group in the downstream SPP appliance.
-  * Assign policy admin permissions to the new SPP user.
+  * Assign asset admin and policy admin permissions to the new SPP user.
   * This user name will be entered as the ```SPP user``` in the configuration of the SPPtoSPP Secrets Broker plugin.
 * Create an A2A certificate with ```Client Authentication``` attribute.
   * Install the A2A certificate with private key .pfx in the ```Local Computer``` certificate store of the Secrets Broker server.
@@ -29,4 +29,4 @@ The Safeguard for Privileged Passwords plugin allows Secrets Broker to pull pass
 * **SPP User** - Downstream user name of an SPP local user with policy admin permissions.
 * **SPP A2A Registration Name** - Name of the downstream A2A registration that is used to provide A2A access to the credentials that are pushed by Secrets Broker.
 * **SPP A2a Certificate User** - Downstream A2A certificate user.
-* **SPP Account Group** - Name of an account group for the credentials that are pushed by Secrets Broker.
+* **SPP Account Group** - (Optional) Name of an account group for the credentials that are pushed by Secrets Broker.

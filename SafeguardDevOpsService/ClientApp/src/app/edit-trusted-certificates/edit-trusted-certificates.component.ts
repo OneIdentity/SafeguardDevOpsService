@@ -1,5 +1,5 @@
-import { Component, OnInit, Inject, ViewChild, AfterViewInit, ElementRef } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
+import { Component, OnInit, Inject, ViewChild, ElementRef } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { DevOpsServiceClient } from '../service-client.service';
 import { MatSelectionList } from '@angular/material/list';
 import * as moment from 'moment-timezone';
@@ -13,15 +13,16 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   templateUrl: './edit-trusted-certificates.component.html',
   styleUrls: ['./edit-trusted-certificates.component.scss']
 })
-export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
+export class EditTrustedCertificatesComponent implements OnInit {
 
   trustedCertificates: any[];
   useSsl: boolean;
   selectedCert: any;
   localizedValidFrom: string;
-  isLoading: boolean;
+  isLoading: boolean = true;
   showExplanatoryText: boolean;
   error = null;
+  needsReload = false;
 
   @ViewChild('certificates', { static: false }) certList: MatSelectionList;
   @ViewChild('fileSelectInputDialog', { static: false }) fileSelectInputDialog: ElementRef;
@@ -30,26 +31,30 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     private serviceClient: DevOpsServiceClient,
     private dialog: MatDialog,
+    private dialogRef: MatDialogRef<EditTrustedCertificatesComponent>,
     private snackbar: MatSnackBar
   ) { }
 
   ngOnInit(): void {
     this.trustedCertificates = this.data?.trustedCertificates ?? [];
 
-    this.serviceClient.getSafeguard().subscribe((data: any) => {
+    this.serviceClient.getSafeguard(false).subscribe((data: any) => {
       if (data) {
         this.useSsl = !data.IgnoreSsl;
       }
+      this.isLoading = false;
     });
+    
+    this.dialogRef.backdropClick().subscribe(() => this.close());
   }
-
-  ngAfterViewInit(): void {
-    this.certList.selectionChange.subscribe((x) => {
-      if (!this.selectedCert) {
-        this.selectedCert = x.options[0].value;
-        this.localizedValidFrom = moment(this.selectedCert.NotBefore).format('LLL (Z)') + ' - ' + moment(this.selectedCert.NotAfter).format('LLL (Z)');
-      }
-    });
+  
+  close() {
+    this.dialogRef.close(this.needsReload);
+  }
+  
+  selectCert(cert) {
+    this.selectedCert = cert;
+    this.localizedValidFrom = moment(this.selectedCert.NotBefore).format('LLL (Z)') + ' - ' + moment(this.selectedCert.NotAfter).format('LLL (Z)');
   }
 
   browse(): void {
@@ -59,6 +64,7 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
 
   updateUseSsl(): void {
     this.error = null;
+    this.needsReload = true;
     this.serviceClient.putSafeguardUseSsl(this.useSsl)
       .subscribe({
         next: () => { },
@@ -121,6 +127,7 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
         next: () => {
           if (isNew) {
             this.snackbar.open(`Added certificate ${fileData.fileName}`, 'Dismiss', { duration: 5000 });
+            this.needsReload = true;
           } else {
             this.snackbar.open(`Certificate ${fileData.fileName} already exists.`, 'Dismiss', { duration: 5000 });
           }
@@ -197,6 +204,10 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
         } else {
           this.snackbar.open(`Imported ${newTrustedCertsCount} new certificates and ${existingTrustedCertsCount} existing certificates.`, 'Dismiss', { duration: 5000 });
         }
+        
+        if (newTrustedCertsCount > 0) {
+          this.needsReload = true;
+        }
       }
     });
   }
@@ -215,6 +226,7 @@ export class EditTrustedCertificatesComponent implements OnInit, AfterViewInit {
           this.updateUseSsl();
         }
         this.isLoading = false;
+        this.needsReload = true;
       },
       error: error => {
         this.isLoading = false;

@@ -71,8 +71,26 @@ body {
   --mdc-filled-button-label-text-color: #ffff;
 }
 
+.mat-mdc-dialog-container .mdc-dialog__title {
+  --mdc-dialog-subhead-line-height: 14px;
+}
+.mdc-dialog__title::before{
+  height: unset !important;
+}
 .mdc-dialog__actions {
   padding: 20px !important;
+}
+
+.mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
+  padding: 7px 0px;
+  min-height: 36px;
+}
+.mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-floating-label {
+  top: 18px;
+  
+  &.mdc-floating-label--float-above {
+    top: 28px;
+  }
 }
 
 // Global styles for modal dialog type header

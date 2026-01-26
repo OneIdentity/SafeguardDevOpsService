@@ -1,6 +1,6 @@
 <div class="root-container">
 
-  <app-error-bar [error]='error' (dismissed)='this.error=null'></app-error-bar>
+  <app-error-bar *ngIf="error" [error]='error' (dismissed)='this.error=null'></app-error-bar>
 
   <div mat-dialog-title>
     <div class='dialog-title-elements'>
@@ -11,7 +11,7 @@
           <mat-icon class="info-icon">info</mat-icon>
         </button>
       </div>
-      <div class='close-button'><button mat-icon-button mat-dialog-close tabindex='-1' class="link-button">
+      <div class='close-button'><button mat-icon-button (click)="close()" tabindex='-1' class="link-button">
           <mat-icon>close</mat-icon>
         </button></div>
     </div>
@@ -21,11 +21,11 @@
     <div class="upload-button">
       <input #fileSelectInputDialog type="file" style="display:none" (change)="onChangeFile($event.target.files)"
         accept=".cer,.crt,.der,.pem" />
-      <button mat-stroked-button (click)="browse()" color="primary">Upload</button>
+      <button mat-stroked-button (click)="browse()" color="primary" [disabled]="isLoading">Upload</button>
     </div>
-    <button mat-flat-button (click)="import()" color="primary" cdkFocusInitial>Import from Safeguard</button>
+    <button mat-flat-button (click)="import()" color="primary" cdkFocusInitial [disabled]="isLoading">Import from Safeguard</button>
     <div class="spacer"></div>
-    <mat-checkbox color="primary" [(ngModel)]="useSsl" (disabled)="trustedCertificates.length == 0" (change)="updateUseSsl()"
+    <mat-checkbox color="primary" [(ngModel)]="useSsl" [disabled]="trustedCertificates.length == 0 || isLoading" (change)="updateUseSsl()"
       matTooltip="Use trusted certificates to validate an SSL connection to Safeguard">Verify TLS Certifcate
     </mat-checkbox>
   </div>
@@ -37,11 +37,13 @@
       Establishing a trusted connection requires that trusted certificates be added to the service.
     </div>
 
-    <mat-selection-list [multiple]="false" #certificates [ngClass]="{'cert-list': trustedCertificates.length > 0}">
-      <mat-list-option *ngFor="let cert of trustedCertificates" [value]="cert">
-        <span class="cert-info">{{cert.Subject}}</span>
-      </mat-list-option>
-    </mat-selection-list>
+    <ng-container *ngIf="!isLoading">
+      <mat-selection-list [multiple]="false" #certificates>
+        <mat-list-option *ngFor="let cert of trustedCertificates" [value]="cert" (click)="selectCert(cert)">
+          <span class="cert-info">{{cert.Subject}}</span>
+        </mat-list-option>
+      </mat-selection-list>
+    </ng-container>
 
     <mat-spinner color="accent" diameter="80" *ngIf="isLoading"></mat-spinner>
   </mat-dialog-content>

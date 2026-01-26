@@ -4,8 +4,18 @@ using System.Text;
 
 namespace OneIdentity.DevOps.Extensions
 {
+    /// <summary>
+    /// Provides utility methods for working with certificates.
+    /// </summary>
     public static class CertificateExtensions
     {
+        /// <summary>
+        /// Loads an X509Certificate2 from a byte array, handling both PKCS12 (PFX) and PEM formats.
+        /// </summary>
+        /// <param name="rawData">The certificate byte array.</param>
+        /// <param name="password">The password used to load the certificate data, if needed.</param>
+        /// <param name="keyStorageFlags">Flags determining how the key is handled.</param>
+        /// <returns></returns>
         public static X509Certificate2 LoadFromBytes(byte[] rawData, string? password = null, X509KeyStorageFlags? keyStorageFlags = null)
         {
             // 1. Detect if the byte array is PKCS12 or PEM

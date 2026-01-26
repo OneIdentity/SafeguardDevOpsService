@@ -23,6 +23,9 @@ using OneIdentity.DevOps.Exceptions;
 using OneIdentity.DevOps.Extensions;
 using A2ARetrievableAccount = OneIdentity.DevOps.Data.Spp.A2ARetrievableAccount;
 using Microsoft.AspNetCore.Http;
+using Polly;
+using Polly.Retry;
+
 // ReSharper disable InconsistentNaming
 
 namespace OneIdentity.DevOps.Logic
@@ -43,6 +46,7 @@ namespace OneIdentity.DevOps.Logic
 
         private ServiceConfiguration _serviceConfiguration => AuthorizedCache.Instance.FindByToken(_threadToken);
         private DevOpsSecretsBroker _devOpsSecretsBrokerCache;
+        private readonly ResiliencePipeline pollyPipeline;
 
         public DevOpsSecretsBroker DevOpsSecretsBrokerCache
         {
@@ -66,6 +70,9 @@ namespace OneIdentity.DevOps.Logic
             _addonLogic = addonLogic;
             _addonManager = addonManager;
             _logger = Serilog.Log.Logger;
+            var options = new RetryStrategyOptions();
+            options.MaxRetryAttempts = 1;
+            pollyPipeline = new ResiliencePipelineBuilder().AddRetry(options).Build();
         }
 
         bool CertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain,
@@ -262,17 +269,20 @@ namespace OneIdentity.DevOps.Logic
         private SafeguardDevOpsConnection GetSafeguardAvailability(ISafeguardConnection sgConnection,
             SafeguardDevOpsConnection safeguardConnection)
         {
-            var safeguard = GetSafeguardAppliance(sgConnection, safeguardConnection.ApplianceAddress);
-            safeguardConnection.ApplianceId = safeguard.ApplianceId;
-            safeguardConnection.ApplianceName = safeguard.ApplianceName;
-            safeguardConnection.ApplianceVersion = safeguard.ApplianceVersion;
-            safeguardConnection.ApplianceState = safeguard.ApplianceState;
-            safeguardConnection.ApplianceSupportsDevOps = safeguard.ApplianceSupportsDevOps;
-            safeguardConnection.DevOpsInstanceId = _configDb.SvcId;
-            safeguardConnection.UserName = safeguard.UserName;
-            safeguardConnection.UserDisplayName = safeguard.UserDisplayName;
-            safeguardConnection.AdminRoles = safeguard.AdminRoles;
-            safeguardConnection.Version = safeguard.Version;
+            pollyPipeline.Execute(_ =>
+            {
+                var safeguard = GetSafeguardAppliance(sgConnection, safeguardConnection.ApplianceAddress);
+                safeguardConnection.ApplianceId = safeguard.ApplianceId;
+                safeguardConnection.ApplianceName = safeguard.ApplianceName;
+                safeguardConnection.ApplianceVersion = safeguard.ApplianceVersion;
+                safeguardConnection.ApplianceState = safeguard.ApplianceState;
+                safeguardConnection.ApplianceSupportsDevOps = safeguard.ApplianceSupportsDevOps;
+                safeguardConnection.DevOpsInstanceId = _configDb.SvcId;
+                safeguardConnection.UserName = safeguard.UserName;
+                safeguardConnection.UserDisplayName = safeguard.UserDisplayName;
+                safeguardConnection.AdminRoles = safeguard.AdminRoles;
+                safeguardConnection.Version = safeguard.Version;
+            });
 
             return safeguardConnection;
         }
@@ -1871,7 +1881,7 @@ namespace OneIdentity.DevOps.Logic
             return GetDevOpsConfiguration(sg);
         }
 
-        public SafeguardDevOpsConnection GetAnonymousSafeguardConnection()
+        public SafeguardDevOpsConnection GetAnonymousSafeguardConnection(bool includeDetails)
         {
             if (string.IsNullOrEmpty(_configDb.SafeguardAddress))
                 return new SafeguardDevOpsConnection();
@@ -1885,6 +1895,11 @@ namespace OneIdentity.DevOps.Logic
                     IgnoreSsl = _configDb.IgnoreSsl,
                     ApiVersion = _configDb.ApiVersion ?? WellKnownData.DefaultApiVersion
                 };
+
+                if (!includeDetails)
+                {
+                    return safeguardConnection;
+                }
 
                 sg = Safeguard.Connect(safeguardConnection.ApplianceAddress,
                     safeguardConnection.ApiVersion ?? WellKnownData.DefaultApiVersion, true);

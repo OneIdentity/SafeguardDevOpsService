@@ -1,6 +1,8 @@
 {
-    // Rename to appsetttings.json (remove the leading underscore), then restart the service.
+    // Rename to appsettings.json (remove the leading underscore), then restart the service.
     // You can change the LogLevel to Debug for more logging.
     "HttpsPort": "443",
-    "LogLevel": "Information"
+    "LogLevel": "Information",
+    "LogRollingInterval": "Day", // Infinite, Minute, Hour, Day, Month, Year
+    "LogFileCountLimit": "31" // Use '0' for no limit 
 }

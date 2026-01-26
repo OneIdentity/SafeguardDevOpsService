@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Configuration;
 using OneIdentity.DevOps.Logic;
 using Serilog;
 using Topshelf;
@@ -15,21 +16,48 @@ namespace OneIdentity.DevOps
 
         private static void Main()
         {
-            // Before doing anything, check of there is a staged restore.
+            // Before doing anything, check if there is a staged restore.
             RestoreManager.CheckForStagedRestore();
 
             Directory.CreateDirectory(WellKnownData.ProgramDataPath);
             var logDirPath = WellKnownData.LogDirPath;
 
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile(WellKnownData.AppSettingsFile, optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
+
+            var rollingInterval = RollingInterval.Day;
+            if (Enum.TryParse(configuration["LogRollingInterval"] ?? "Day", out RollingInterval interval))
+            {
+                rollingInterval = interval;
+            }
+
+            int? logFileCountLimit = 31;
+            if (int.TryParse(configuration["LogFileCountLimit"], out int limit))
+            {
+                logFileCountLimit = limit == 0 ? null : limit;
+            }
+
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.File(logDirPath, shared: true,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u1}] {Message:lj}{NewLine}{Exception}")
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u1}] {Message:lj}{NewLine}{Exception}",
+                    rollingInterval: rollingInterval,
+                    retainedFileCountLimit: logFileCountLimit)
                 .Enrich.FromLogContext()
                 .Enrich.WithThreadId()
                 .MinimumLevel.ControlledBy(LogLevelSwitcher.Instance.LogLevelSwitch)
                 .CreateLogger();
 
             Console.WriteLine($"Safeguard Secrets Broker for DevOps logging to: {logDirPath}");
+            if (rollingInterval != RollingInterval.Infinite)
+            {
+                Console.WriteLine($" - Logs will roll every {rollingInterval}.");
+                if (logFileCountLimit.HasValue)
+                {
+                    Console.WriteLine($" - Only the {logFileCountLimit} most recent log files, including the current one, will be retained.");
+                }
+            }
             RestartManager.Instance.ShouldRestart = false;
 
             HostFactory.Run(hostConfig =>
