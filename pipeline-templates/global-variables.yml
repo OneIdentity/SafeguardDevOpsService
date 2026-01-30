@@ -12,7 +12,7 @@
 # azure pipeline Reached heap limit Allocation failed - JavaScript heap out of memory The command "npm install" exited with code 134    
 variables:
   - name: semanticVersion
-    value: "8.2.2"
+    value: "8.2.3"
   - name: isPrerelease
     value: ${{ false }}
   - name: isReleaseBranch
